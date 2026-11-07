@@ -42,6 +42,17 @@ test('JSON round trip preserves routes, viewport, and circuit state', () => {
   assert.deepEqual(parseProject(serializeProject(project)), project);
 });
 
+test('projects preserve the complete navigation zoom range', () => {
+  for (const zoom of [0.01, 0.1, 1, 4]) {
+    const project = fixture();
+    project.viewport = { x: -100, y: 80, zoom };
+    assert.deepEqual(parseProject(serializeProject(project)).viewport, project.viewport);
+  }
+  for (const zoom of [0.009, 4.001]) {
+    assert.throws(() => validateProject({ ...fixture(), viewport: { x: 0, y: 0, zoom } }));
+  }
+});
+
 test('validation rejects unsafe, malformed, and oversized imports', () => {
   assert.throws(() => parseProject('{ broken'), /valid JSON/);
   assert.throws(() => parseProject(' '.repeat(5_000_001)), /too large/);

@@ -1,4 +1,5 @@
 import { getDefinition } from './catalog.js';
+import { MIN_ZOOM, MAX_ZOOM } from './navigation.js';
 
 export const STORAGE_KEY = 'logic-lab.project.v1';
 const MAX_NODES = 1000;
@@ -180,8 +181,8 @@ export function validateProject(value) {
   }
   if (own(value, 'viewport')) {
     record(value.viewport, 'Viewport');
-    const zoom = finite(value.viewport.zoom, 'Zoom', 4);
-    if (zoom < 0.2) fail('Zoom must be between 0.2 and 4.');
+    const zoom = finite(value.viewport.zoom, 'Zoom', MAX_ZOOM);
+    if (zoom < MIN_ZOOM) fail(`Zoom must be between ${MIN_ZOOM} and ${MAX_ZOOM}.`);
     result.viewport = {
       x: finite(value.viewport.x, 'Viewport X'),
       y: finite(value.viewport.y, 'Viewport Y'),

@@ -57,19 +57,26 @@ The motion sequence progresses from [STEP/DIR fundamentals](./examples/stepper-b
 
 ### Keyboard and navigation
 
-| Action                      | Control                        |
-| --------------------------- | ------------------------------ |
-| Run or pause                | Space                          |
-| Delete selection            | Delete / Backspace             |
-| Undo                        | Ctrl / Cmd + Z                 |
-| Redo                        | Ctrl / Cmd + Shift + Z         |
-| Save project                | Ctrl / Cmd + S                 |
-| Fit circuit                 | F                              |
-| Cancel a pending connection | Escape                         |
-| Zoom                        | Mouse wheel                    |
-| Pan                         | Pan tool or middle-button drag |
+| Action                      | Control                                                   |
+| --------------------------- | --------------------------------------------------------- |
+| Run or pause                | R                                                         |
+| Delete selection            | Delete / Backspace                                        |
+| Undo                        | Ctrl / Cmd + Z                                            |
+| Redo                        | Ctrl / Cmd + Shift + Z                                    |
+| Save project                | Ctrl / Cmd + S                                            |
+| Fit circuit                 | F / Home                                                  |
+| Cancel a pending connection | Escape                                                    |
+| Zoom at the cursor          | Mouse wheel / trackpad pinch                              |
+| Zoom at the center          | + / −                                                     |
+| Reset zoom to 100%          | 0 / click the zoom percentage                             |
+| Pan                         | Hold Space or Shift and drag; middle/right drag; Pan tool |
+| Pan with the wheel          | Shift + wheel / Alt + wheel / horizontal scroll           |
+| Select several components   | Ctrl / Cmd + click                                        |
+| Select an area              | Drag an empty canvas area                                 |
 
 Shortcuts are ignored while editing text or values. On narrow screens the inspector opens over the canvas when a component is selected; close it to return to the full canvas.
+
+Canvas navigation follows WirePad: wheel zoom stays anchored at the cursor, temporary pan restores the chosen tool on release, and the zoom range is 1–400%. The component library exposes every category with a count and separate add/help actions. The laboratory catalog has a topic sidebar, search and difficulty filters, with separate circuit, worksheet and JSON actions.
 
 ## Component library
 

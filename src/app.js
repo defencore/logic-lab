@@ -1,5 +1,5 @@
 import '../style.css';
-import { COMPONENTS, CATEGORIES, getDefinition } from './catalog.js';
+import { COMPONENTS, getDefinition } from './catalog.js';
 import { createRuntime, simulate } from './simulator.js';
 import { EXAMPLES, createExample } from '../examples/index.js';
 import { parseProject, serializeProject, loadProject, saveProject } from './project.js';
@@ -7,7 +7,20 @@ import { TEXT } from './i18n.js';
 import { icon, gateIcon } from './icons.js';
 import { $, $$, esc, format, safeColor, signalClass } from './ui-utils.js';
 import { dimensions, portPoint, route, wirePath, snap } from './geometry.js';
-import { guideMarkup, exampleCards, filterExamples } from './learning-ui.js';
+import { guideMarkup, exampleCards, filterExamples, exampleCatalogShell } from './learning-ui.js';
+import { renderLibraryCategories, renderLibraryItems } from './catalog-ui.js';
+import {
+  clampZoom,
+  zoomAt as zoomViewportAt,
+  panBy,
+  screenToWorld,
+  normalizeWheel,
+  classifyWheel,
+  wheelZoomFactor,
+  fitViewport,
+  ZOOM_IN_FACTOR,
+  ZOOM_OUT_FACTOR,
+} from './navigation.js';
 import { drawMini, paintTraces } from './waveforms.js';
 import { getMotionState } from './motion-data.js';
 
@@ -35,6 +48,9 @@ let lessonOpen = true;
 let lessonStep = 0;
 let highlighted = new Set();
 let tool = 'select';
+let spaceHeld = false;
+let shiftHeld = false;
+let suppressPanClick = false;
 let category = 'all';
 let query = '';
 let selected = new Set();
@@ -104,47 +120,58 @@ function undo(redo = false) {
 }
 function worldPoint(event) {
   const r = $('#viewport').getBoundingClientRect();
-  return {
-    x: (event.clientX - r.left - view.x) / view.zoom,
-    y: (event.clientY - r.top - view.y) / view.zoom,
-  };
+  return screenToWorld(view, { x: event.clientX - r.left, y: event.clientY - r.top });
 }
 function applyView() {
   view.x = boundCoordinate(view.x);
   view.y = boundCoordinate(view.y);
+  view.zoom = clampZoom(view.zoom);
   $('#world').style.transform = `translate(${view.x}px,${view.y}px) scale(${view.zoom})`;
-  $('#viewport').style.backgroundSize = `${20 * view.zoom}px ${20 * view.zoom}px`;
+  // Keep the grid readable while preserving its alignment with circuit coordinates.
+  const gridSize = 20 * view.zoom * 2 ** Math.max(0, Math.ceil(Math.log2(12 / (20 * view.zoom))));
+  $('#viewport').style.backgroundSize = `${gridSize}px ${gridSize}px`;
   $('#viewport').style.backgroundPosition = `${view.x}px ${view.y}px`;
   $('#zoom-value').textContent = `${Math.round(view.zoom * 100)}%`;
 }
 function fit() {
-  const nodes = project.nodes.filter((n) => !['note', 'group'].includes(n.type));
+  const nodes = project.nodes;
   if (!nodes.length) {
     view = { x: 80, y: 80, zoom: 1 };
     applyView();
+    persist();
     return;
   }
-  const minX = Math.min(...nodes.map((n) => n.x)) - 65,
-    minY = Math.min(...project.nodes.map((n) => n.y)) - 65;
-  const maxX = Math.max(...project.nodes.map((n) => n.x + dimensions(n).w)) + 65,
-    maxY = Math.max(...project.nodes.map((n) => n.y + dimensions(n).h)) + 65;
+  let minX = Math.min(...nodes.map((n) => n.x)),
+    minY = Math.min(...nodes.map((n) => n.y)),
+    maxX = Math.max(...nodes.map((n) => n.x + dimensions(n).w)),
+    maxY = Math.max(...nodes.map((n) => n.y + dimensions(n).h));
+  for (const wire of project.wires) {
+    for (const point of wire.points || []) {
+      minX = Math.min(minX, point.x);
+      minY = Math.min(minY, point.y);
+      maxX = Math.max(maxX, point.x);
+      maxY = Math.max(maxY, point.y);
+    }
+  }
   const el = $('#viewport');
-  const zoom = Math.min(
-    1.1,
-    Math.max(0.2, Math.min(el.clientWidth / (maxX - minX), el.clientHeight / (maxY - minY))),
-  );
-  view = {
-    zoom,
-    x: (el.clientWidth - (maxX - minX) * zoom) / 2 - minX * zoom,
-    y: (el.clientHeight - (maxY - minY) * zoom) / 2 - minY * zoom,
-  };
+  view =
+    fitViewport(
+      { x: minX, y: minY, width: maxX - minX, height: maxY - minY },
+      { width: el.clientWidth, height: el.clientHeight },
+    ) || view;
   applyView();
   persist();
 }
 function setTool(next) {
   tool = next;
-  $$('[data-tool]').forEach((el) => el.classList.toggle('active', el.dataset.tool === tool));
-  $('#viewport').dataset.tool = tool;
+  updateTool();
+}
+function updateTool() {
+  const active = spaceHeld || shiftHeld ? 'pan' : tool;
+  $$('.canvas-tools [data-tool]').forEach((el) =>
+    el.classList.toggle('active', el.dataset.tool === active),
+  );
+  $('#viewport').dataset.tool = active;
 }
 function shell() {
   document.documentElement.lang = lang === 'ua' ? 'uk' : 'en';
@@ -153,18 +180,19 @@ function shell() {
     <header class="app-header"><a class="brand" href="./" aria-label="Logic Lab"><img src="./favicon.svg?v=logic-lab-1" alt=""><span>logic<span class="brand-light">lab</span><small>${esc(t('workbench'))}</small></span></a>
     <div class="header-divider"></div><div class="project-heading">${icon('folder', 16)}<input id="project-name" aria-label="${t('namePlaceholder')}" value="${esc(project.name)}" maxlength="100"><span class="project-tag">.logic</span></div>
     <div class="header-actions"><span id="save-state" class="save-state">${icon('check', 13)}${t('saved')}</span>${button('import', 'upload', t('open'))}${button('export', 'download', t('save'))}<span class="divider"></span><button id="motion" class="soft-btn" aria-label="${t('motionView')}" title="${t('motionView')}">${icon('box', 15)}<span>3D</span></button><button id="examples" class="soft-btn" aria-label="${t('examples')}">${icon('grid', 15)}<span>${t('examples')}</span></button><button id="language" class="language-btn" aria-label="Language">${lang === 'en' ? 'EN' : 'UA'}${icon('down', 12)}</button>${button('help', 'help', t('help'))}</div></header>
-    <div class="app-body"><aside class="library"><div class="panel-title"><h2>${t('library')}</h2><span class="count-badge">${COMPONENTS.length}</span></div><div class="search-wrap">${icon('search', 16)}<input id="search" type="search" placeholder="${t('search')}" value="${esc(query)}" autocomplete="off"><kbd>/</kbd></div><div class="category-wrap"><select id="category" aria-label="${t('library')}"><option value="all">${t('all')}</option>${CATEGORIES.map((c) => `<option value="${c.id}" ${category === c.id ? 'selected' : ''}>${esc(title(c))}</option>`).join('')}</select></div><div id="library-list" class="library-list"></div><div class="library-footer"><span class="dot green"></span>${t('browserOnly')}<small>${t('dragHint')}</small></div></aside>
-    <main class="main"><div class="workspace-toolbar"><div class="workspace-title"><span class="breadcrumb">${t('workspace')}</span><span class="slash">/</span><span id="canvas-name">${esc(project.name)}</span></div><div class="simulation-controls">${button('lesson-toggle', 'note', t('showLesson'))}${button('reset', 'reset', t('reset'))}${button('step', 'step', t('step'))}<button id="run" class="run-btn">${icon('play', 14)}<span>${t('run')}</span><kbd>Space</kbd></button></div></div>
+    <div class="app-body"><aside class="library" aria-label="${t('componentLibrary')}"><div class="panel-title"><h2>${t('componentLibrary')}</h2><span class="count-badge">${COMPONENTS.length}</span></div><div class="search-wrap">${icon('search', 16)}<input id="search" type="search" aria-label="${t('searchAllComponents')}" placeholder="${t('searchAllComponents')}" value="${esc(query)}" autocomplete="off"><kbd>/</kbd></div><div class="library-browse-heading">${t('browseCategories')}</div><div id="library-categories"></div><div class="library-results-heading"><span>${t('catalogResults')}</span><span id="library-result-count"></span></div><div id="library-list" class="library-list"></div><div class="library-footer"><span class="dot green"></span>${t('browserOnly')}<small>${t('dragHint')}</small></div></aside>
+    <main class="main"><div class="workspace-toolbar"><div class="workspace-title"><span class="breadcrumb">${t('workspace')}</span><span class="slash">/</span><span id="canvas-name">${esc(project.name)}</span></div><div class="simulation-controls">${button('lesson-toggle', 'note', t('showLesson'))}${button('reset', 'reset', t('reset'))}${button('step', 'step', t('step'))}<button id="run" class="run-btn" title="${t('runKeyboard')}">${icon('play', 14)}<span>${t('run')}</span><kbd>R</kbd></button></div></div>
     <section id="lesson-panel" class="lesson-panel" hidden></section>
     <section id="viewport" class="viewport" aria-label="${t('workspace')}" tabindex="0"><div class="canvas-heading"><span class="eyebrow">LOGIC LAB / 01</span><h1>${t('learn')}</h1><p>${t('learnDesc')}</p></div><div id="world" class="world"><svg id="wires" class="wire-layer" aria-label="${t('wires')}"></svg><div id="nodes" class="node-layer"></div><svg id="draft-layer" class="draft-layer"><path id="draft"/></svg></div><div id="empty-hint" class="empty-hint" hidden>${icon('plus', 32)}<p>${t('dragHint')}</p></div>
-    <div class="canvas-tools"><div class="tool-group">${['select', 'pan', 'wire'].map((x, i) => `<button data-tool="${x}" class="icon-btn ${tool === x ? 'active' : ''}" title="${t(x)}" aria-label="${t(x)}">${icon(['mouse', 'hand', 'wire'][i])}</button>`).join('')}<span class="divider"></span>${button('add-note', 'note', t('note'))}${button('add-group', 'layers', t('group'))}</div><div class="tool-group">${button('undo', 'undo', t('undo'))}${button('redo', 'redo', t('redo'))}</div></div>
-    <div class="canvas-bottom"><div id="canvas-tip" class="canvas-tip">${icon('wire', 15)}${project.name === 'Half adder' ? t('tutorial') : t('connectHint')}</div><div class="zoom-tools">${button('zoom-out', 'minus', t('zoom'))}<button id="zoom-value" class="zoom-value">100%</button><button id="zoom-in" class="icon-btn" aria-label="${t('zoom')}">${icon('plus', 16)}</button><span class="divider"></span>${button('fit', 'fit', t('fit'))}</div></div></section>
+    <div class="canvas-tools"><div class="tool-group">${['select', 'pan', 'wire'].map((x, i) => `<button data-tool="${x}" class="icon-btn ${tool === x ? 'active' : ''}" title="${x === 'pan' ? t('panHint') : t(x)}" aria-label="${t(x)}">${icon(['mouse', 'hand', 'wire'][i])}</button>`).join('')}<span class="divider"></span>${button('add-note', 'note', t('note'))}${button('add-group', 'layers', t('group'))}</div><div class="tool-group">${button('undo', 'undo', t('undo'))}${button('redo', 'redo', t('redo'))}</div></div>
+    <div class="canvas-bottom" title="${t('navigationHint')}"><div id="canvas-tip" class="canvas-tip">${icon('wire', 15)}${project.name === 'Half adder' ? t('tutorial') : t('connectHint')}</div><span class="navigation-hint">${t('navigationShort')}</span><div class="zoom-tools">${button('zoom-out', 'minus', t('zoom'))}<button id="zoom-value" class="zoom-value" title="${t('resetZoom')}" aria-label="${t('resetZoom')}">100%</button><button id="zoom-in" class="icon-btn" aria-label="${t('zoom')}">${icon('plus', 16)}</button><span class="divider"></span>${button('fit', 'fit', t('fit'))}</div></div></section>
     <div class="monitor-controls"><span>${t('traceSelection')}</span><label>${t('timeWindow')} <select id="time-base" aria-label="${t('timeWindow')}">${[0.25, 1, 5].map((value) => `<option value="${value}" ${timeBase === value ? 'selected' : ''}>≈ ${value} ${t('seconds')}</option>`).join('')}</select></label></div>
     <section id="monitor" class="monitor ${monitorOpen ? '' : 'collapsed'}"><button id="monitor-toggle" class="monitor-heading"><span>${icon('signal', 17)}<strong>${t('timing')}</strong><span class="monitor-sub">${t('scopeHint')}</span></span><span id="simulation-badge" class="simulation-badge"><i></i>${t('paused')}</span>${icon('down', 15)}</button><div class="monitor-body"><div id="trace-labels" class="trace-labels"></div><canvas id="trace-canvas" aria-label="${t('trace')}"></canvas></div></section>
     <footer class="status-bar"><span><i class="dot green"></i>${t('status')}</span><button id="diagnostics" class="text-btn" hidden></button><span id="counts"></span><span class="time-label">t = <b id="sim-time">0.000</b> s</span></footer></main>
     <aside class="inspector"><div class="panel-title"><h2>${t('inspector')}</h2><span class="inspector-desktop-icon">${icon('layers', 16)}</span>${button('close-inspector', 'close', t('cancel'))}</div><div id="inspector-content"></div><div class="inspector-footer"><span class="legend"><i class="dot green"></i>1 <i class="dot gray"></i>0 <i class="dot amber"></i>X <span class="z-legend">Z</span></span><button id="inspector-help" class="text-btn">${t('help')}${icon('chevron', 12)}</button></div></aside></div><div id="modal-root"></div>`;
   $('#zoom-out').innerHTML = '<span style="font-size:20px">−</span>';
   bindShell();
+  updateTool();
   renderLibrary();
   renderBoard();
   renderInspector();
@@ -175,31 +203,17 @@ function shell() {
   updateCounts();
 }
 function renderLibrary() {
-  const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-  const matches = COMPONENTS.filter(
-    (d) =>
-      (category === 'all' || d.category === category) &&
-      terms.every((term) =>
-        `${d.type} ${d.label} ${d.ua} ${d.description} ${d.descriptionUa}`
-          .toLowerCase()
-          .includes(term),
-      ),
-  );
-  const groups = CATEGORIES.filter((c) => matches.some((d) => d.category === c.id));
-  $('#library-list').innerHTML = matches.length
-    ? groups
-        .map(
-          (c) =>
-            `<section class="component-category"><div class="category-label">${esc(title(c))}<span>${matches.filter((d) => d.category === c.id).length}</span></div>${matches
-              .filter((d) => d.category === c.id)
-              .map(
-                (d) =>
-                  `<div class="library-row"><button class="library-item" draggable="true" data-component="${d.type}" title="${esc(lang === 'ua' ? d.descriptionUa || d.description : d.description)}"><span class="component-symbol cat-${esc(c.id)}">${['and', 'or', 'not', 'nand', 'nor', 'xor', 'xnor'].includes(d.type) ? gateIcon(d.type) : icon(d.type === 'scope' ? 'signal' : d.type === 'note' ? 'note' : d.type === 'group' ? 'layers' : 'box', 20)}</span><span class="component-info"><strong>${esc(title(d))}</strong><small>${esc(d.type.toUpperCase().replaceAll('_', ' '))}</small></span><span class="item-plus">+</span></button><button class="library-guide" data-read-guide="${d.type}" title="${esc(t('readGuide'))}: ${esc(title(d))}" aria-label="${esc(t('usageGuide'))}: ${esc(title(d))}">${icon('help', 14)}</button></div>`,
-              )
-              .join('')}</section>`,
-        )
-        .join('')
-    : `<div class="no-results">${icon('search', 24)}<p>${t('noResults')}</p></div>`;
+  $('#library-categories').innerHTML = renderLibraryCategories(category, lang);
+  const result = renderLibraryItems({ category, query, language: lang });
+  $('#library-list').innerHTML = result.html;
+  $('#library-result-count').textContent = result.count;
+  $$('[data-category]').forEach((el) => {
+    el.onclick = () => {
+      category = el.dataset.category;
+      renderLibrary();
+      $('#library-list').scrollTop = 0;
+    };
+  });
   $$('[data-read-guide]').forEach(
     (el) => (el.onclick = () => showComponentGuide(el.dataset.readGuide)),
   );
@@ -780,10 +794,9 @@ function nodePointerDown(e) {
   if (e.target.closest('button,input,textarea,select') || e.button !== 0) return;
   e.stopPropagation();
   const id = e.currentTarget.dataset.node;
-  if (tool === 'pan') return startPan(e);
-  if (e.shiftKey || e.metaKey || e.ctrlKey) {
+  if (e.metaKey || e.ctrlKey) {
     selectedWire = null;
-    if (selected.has(id)) selected.delete(id);
+    if (e.shiftKey || selected.has(id)) selected.delete(id);
     else selected.add(id);
     selectionChanged();
     return;
@@ -796,6 +809,7 @@ function nodePointerDown(e) {
   const point = worldPoint(e);
   gesture = {
     kind: 'nodes',
+    pointerId: e.pointerId,
     start: point,
     origins: project.nodes
       .filter((n) => selected.has(n.id))
@@ -873,10 +887,17 @@ function completeWire(target) {
   changed();
   notify(t('connection'));
 }
-function cancelInteraction() {
+function cancelGesture() {
+  if (gesture?.kind === 'pan' && $('#viewport')?.hasPointerCapture(gesture.pointerId)) {
+    $('#viewport').releasePointerCapture(gesture.pointerId);
+  }
   gesture = null;
+  suppressPanClick = false;
   $('#marquee')?.remove();
   $('#viewport')?.classList.remove('panning');
+}
+function cancelInteraction() {
+  cancelGesture();
   if ($('#draft')) cancelWire();
 }
 function cancelWire() {
@@ -887,10 +908,14 @@ function cancelWire() {
     icon('wire', 15) + t(project.exampleId === 'half-adder' ? 'tutorial' : 'connectHint');
 }
 function startPan(e) {
-  gesture = { kind: 'pan', x: e.clientX, y: e.clientY, view: { ...view } };
+  e.preventDefault();
+  suppressPanClick = true;
+  gesture = { kind: 'pan', pointerId: e.pointerId, x: e.clientX, y: e.clientY, view: { ...view } };
   $('#viewport').classList.add('panning');
+  $('#viewport').setPointerCapture(e.pointerId);
 }
 function onPointerMove(e) {
+  if (gesture && gesture.pointerId !== e.pointerId) return;
   if (pending) {
     const n = project.nodes.find((n) => n.id === pending.node);
     if (n) {
@@ -905,8 +930,7 @@ function onPointerMove(e) {
   }
   if (!gesture) return;
   if (gesture.kind === 'pan') {
-    view.x = gesture.view.x + e.clientX - gesture.x;
-    view.y = gesture.view.y + e.clientY - gesture.y;
+    view = panBy(gesture.view, e.clientX - gesture.x, e.clientY - gesture.y);
     applyView();
     return;
   }
@@ -946,7 +970,12 @@ function onPointerMove(e) {
   }
 }
 function onPointerUp(e) {
-  if (pending && Math.hypot(e.clientX - pending.startX, e.clientY - pending.startY) > 5) {
+  if (gesture && gesture.pointerId !== e.pointerId) return;
+  if (
+    gesture?.kind !== 'pan' &&
+    pending &&
+    Math.hypot(e.clientX - pending.startX, e.clientY - pending.startY) > 5
+  ) {
     const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('.pin');
     if (hit)
       completeWire({ node: hit.dataset.node, port: hit.dataset.pin, side: hit.dataset.side });
@@ -967,7 +996,15 @@ function onPointerUp(e) {
     selectionChanged();
   }
   if (gesture.kind === 'nodes' && gesture.moved) persist();
-  if (gesture.kind === 'pan') persist();
+  if (gesture.kind === 'pan') {
+    persist();
+    if ($('#viewport').hasPointerCapture(e.pointerId))
+      $('#viewport').releasePointerCapture(e.pointerId);
+    // Native clicks follow pointerup; consume the click belonging to a pan gesture.
+    setTimeout(() => {
+      suppressPanClick = false;
+    }, 0);
+  }
   gesture = null;
   $('#viewport').classList.remove('panning');
 }
@@ -988,7 +1025,7 @@ function exportProject() {
 function setRunning(next) {
   running = next;
   $('#run').innerHTML =
-    icon(next ? 'pause' : 'play', 14) + `<span>${t(next ? 'pause' : 'run')}</span><kbd>Space</kbd>`;
+    icon(next ? 'pause' : 'play', 14) + `<span>${t(next ? 'pause' : 'run')}</span><kbd>R</kbd>`;
   $('#run').classList.toggle('running', next);
   $('#simulation-badge').innerHTML = `<i></i>${t(next ? 'live' : 'paused')}`;
   $('#simulation-badge').classList.toggle('live', next);
@@ -1020,22 +1057,20 @@ function confirmReplace(next) {
   $('#confirm-replace').onclick = () => replaceProject(typeof next === 'function' ? next() : next);
 }
 function showExamples(filters = {}) {
-  showModal(
-    `<span class="eyebrow">${t('examples')}</span><h2>${t('examplesTitle')}</h2><p>${t('examplesDesc')}</p>
-    <div class="catalog-controls"><div class="search-wrap">${icon('search', 16)}<input id="example-search" type="search" placeholder="${t('searchExamples')}" value="${esc(filters.query || '')}"></div>
-    <select id="example-category" aria-label="${t('allTopics')}"><option value="all">${t('allTopics')}</option>${['basics', 'sequential', 'mixed', 'architecture', 'physical', 'motion'].map((topic) => `<option value="${topic}" ${filters.category === topic ? 'selected' : ''}>${t(topic)}</option>`).join('')}</select>
-    <select id="example-level" aria-label="${t('allLevels')}"><option value="all">${t('allLevels')}</option>${['beginner', 'intermediate'].map((level) => `<option value="${level}">${t(level)}</option>`).join('')}</select></div>
-    <div class="catalog-count" id="catalog-count"></div><div id="example-results" class="example-grid"></div><button id="empty-project" class="text-btn">${icon('plus', 14)}${t('clear')}</button>`,
-    true,
-  );
+  const state = { query: '', category: 'all', level: 'all', ...filters };
+  showModal(exampleCatalogShell(lang, state), true);
+  $('.modal').classList.add('catalog-modal');
   const refresh = () => {
-    const matches = filterExamples(EXAMPLES, {
-      query: $('#example-search').value,
-      category: $('#example-category').value,
-      level: $('#example-level').value,
-    });
+    state.query = $('#example-search').value;
+    state.level = $('#example-level').value;
+    const matches = filterExamples(EXAMPLES, state);
     $('#example-results').innerHTML = exampleCards(matches, lang);
     $('#catalog-count').textContent = `${t('examplesCount')}: ${matches.length}`;
+    $$('[data-topic]').forEach((el) => {
+      const active = el.dataset.topic === state.category;
+      el.classList.toggle('active', active);
+      el.setAttribute('aria-pressed', active);
+    });
     $$('[data-example]').forEach(
       (el) => (el.onclick = () => confirmReplace(() => createExample(el.dataset.example))),
     );
@@ -1044,8 +1079,13 @@ function showExamples(filters = {}) {
     );
   };
   $('#example-search').oninput = refresh;
-  $('#example-category').onchange = refresh;
   $('#example-level').onchange = refresh;
+  $$('[data-topic]').forEach((el) => {
+    el.onclick = () => {
+      state.category = el.dataset.topic;
+      refresh();
+    };
+  });
   $('#empty-project').onclick = () =>
     confirmReplace(() => ({ version: 1, name: t('newName'), nodes: [], wires: [] }));
   refresh();
@@ -1334,6 +1374,10 @@ function showHelp() {
   $('#got-it').onclick = closeModal;
 }
 function showModal(html, wide = false) {
+  spaceHeld = false;
+  shiftHeld = false;
+  cancelInteraction();
+  updateTool();
   if (!modal) modalOpener = document.activeElement;
   disposeMotionView();
   modal = true;
@@ -1364,10 +1408,6 @@ function bindShell() {
     query = e.target.value;
     renderLibrary();
   };
-  $('#category').onchange = (e) => {
-    category = e.target.value;
-    renderLibrary();
-  };
   bindLiveText($('#project-name'), (value) => {
     project.name = value.trim() || t('newName');
     updateCounts();
@@ -1392,13 +1432,9 @@ function bindShell() {
   $('#undo').onclick = () => undo();
   $('#redo').onclick = () => undo(true);
   $('#fit').onclick = fit;
-  $('#zoom-value').onclick = fit;
-  const zoomCenter = (factor) => {
-    const el = $('#viewport');
-    zoomAt(el.clientWidth / 2, el.clientHeight / 2, factor);
-  };
-  $('#zoom-in').onclick = () => zoomCenter(1.2);
-  $('#zoom-out').onclick = () => zoomCenter(1 / 1.2);
+  $('#zoom-value').onclick = resetZoom;
+  $('#zoom-in').onclick = () => zoomCenter(ZOOM_IN_FACTOR);
+  $('#zoom-out').onclick = () => zoomCenter(ZOOM_OUT_FACTOR);
   $('#export').onclick = exportProject;
   $('#import').onclick = () => $('#import-file').click();
   $('#examples').onclick = () => showExamples();
@@ -1411,7 +1447,7 @@ function bindShell() {
   $('#inspector-help').onclick = showHelp;
   $('#add-note').onclick = () => addNode('note');
   $('#add-group').onclick = () => addNode('group');
-  $$('[data-tool]').forEach((el) => (el.onclick = () => setTool(el.dataset.tool)));
+  $$('.canvas-tools [data-tool]').forEach((el) => (el.onclick = () => setTool(el.dataset.tool)));
   $('#time-base').onchange = (e) => {
     timeBase = Number(e.target.value);
     runtime.sampleInterval = timeBase / 255;
@@ -1426,14 +1462,42 @@ function bindShell() {
   };
   const vp = $('#viewport');
   vp.oncontextmenu = (e) => e.preventDefault();
-  vp.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('.canvas-tools,.canvas-bottom,button')) return;
-    if (e.button === 1 || tool === 'pan') {
-      e.preventDefault();
+  // Capture forced pan before pins, sources and nodes can handle the pointer.
+  vp.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (e.target.closest('.canvas-tools,.canvas-bottom')) return;
+      if (gesture) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return;
+      }
+      if (e.ctrlKey || e.metaKey) shiftHeld = false;
+      else if (e.shiftKey) shiftHeld = true;
+      updateTool();
+      const forcePan =
+        e.button === 1 ||
+        (e.button === 2 && !e.ctrlKey && !e.metaKey) ||
+        spaceHeld ||
+        shiftHeld ||
+        tool === 'pan';
+      if (!forcePan) return;
+      e.stopImmediatePropagation();
       startPan(e);
-      return;
-    }
-    if (e.button !== 0) return;
+    },
+    { capture: true },
+  );
+  vp.addEventListener(
+    'click',
+    (e) => {
+      if (!suppressPanClick) return;
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    { capture: true },
+  );
+  vp.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.canvas-tools,.canvas-bottom,button') || e.button !== 0) return;
     if (pending) {
       if (pending.points.length >= 100) {
         notify(t('limitReached'));
@@ -1445,26 +1509,30 @@ function bindShell() {
       });
       return;
     }
-    if (e.shiftKey) {
-      selectedWire = null;
-      selectionChanged();
-      gesture = { kind: 'marquee', start: worldPoint(e) };
-      const box = document.createElement('div');
-      box.id = 'marquee';
-      box.className = 'marquee';
-      $('#world').append(box);
-      return;
-    }
-    selected.clear();
+    if (!e.ctrlKey && !e.metaKey) selected.clear();
     selectedWire = null;
     selectionChanged();
+    gesture = { kind: 'marquee', pointerId: e.pointerId, start: worldPoint(e) };
+    const box = document.createElement('div');
+    box.id = 'marquee';
+    box.className = 'marquee';
+    $('#world').append(box);
   });
   vp.addEventListener(
     'wheel',
     (e) => {
+      if (e.target.closest('.canvas-tools,.canvas-bottom')) return;
       e.preventDefault();
+      if (gesture) return;
+      const delta = normalizeWheel(e, vp.clientHeight);
+      if (classifyWheel(e) === 'pan') {
+        view = panBy(view, -delta.x, -delta.y);
+        applyView();
+        persist();
+        return;
+      }
       const r = vp.getBoundingClientRect();
-      zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0015));
+      zoomAt(e.clientX - r.left, e.clientY - r.top, wheelZoomFactor(delta.y));
     },
     { passive: false },
   );
@@ -1479,24 +1547,29 @@ function bindShell() {
   };
 }
 function zoomAt(x, y, factor) {
-  const next = Math.max(0.2, Math.min(4, view.zoom * factor));
-  const world = { x: (x - view.x) / view.zoom, y: (y - view.y) / view.zoom };
-  view.x = x - world.x * next;
-  view.y = y - world.y * next;
-  view.zoom = next;
+  view = zoomViewportAt(view, { x, y }, factor);
   applyView();
   persist();
 }
+function zoomCenter(factor) {
+  const el = $('#viewport');
+  zoomAt(el.clientWidth / 2, el.clientHeight / 2, factor);
+}
+function resetZoom() {
+  zoomCenter(1 / view.zoom);
+}
 document.addEventListener('pointermove', onPointerMove);
 document.addEventListener('pointerup', onPointerUp);
-document.addEventListener('pointercancel', () => {
-  cancelInteraction();
+document.addEventListener('pointercancel', (e) => {
+  if (gesture && gesture.pointerId !== e.pointerId) return;
+  cancelGesture();
   persist();
 });
 document.addEventListener('keydown', (e) => {
+  if (e.isComposing || e.defaultPrevented) return;
   if (e.key === 'Escape') {
     if (modal) closeModal();
-    else cancelWire();
+    else cancelInteraction();
     return;
   }
   if (modal) {
@@ -1517,6 +1590,10 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (e.target.closest('input,textarea,select,[contenteditable]')) return;
+  if (e.ctrlKey || e.metaKey) {
+    shiftHeld = false;
+    updateTool();
+  }
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
     e.preventDefault();
     exportProject();
@@ -1532,15 +1609,39 @@ document.addEventListener('keydown', (e) => {
     duplicateSelection();
     return;
   }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === ' ') {
+    if (e.target.closest('button,a,summary')) return;
     e.preventDefault();
-    if (!e.repeat) setRunning(!running);
+    spaceHeld = true;
+    updateTool();
+    return;
   }
   if (['Backspace', 'Delete'].includes(e.key)) {
     e.preventDefault();
     deleteSelection();
   }
-  if (e.key.toLowerCase() === 'f') fit();
+  if (e.key.toLowerCase() === 'r' && !e.repeat) setRunning(!running);
+  if (e.key === 'Shift') {
+    shiftHeld = !e.ctrlKey && !e.metaKey;
+    updateTool();
+  }
+  if (e.key.toLowerCase() === 'f' || e.key === 'Home') {
+    e.preventDefault();
+    fit();
+  }
+  if (e.key === '0') {
+    e.preventDefault();
+    resetZoom();
+  }
+  if (e.key === '+' || e.key === '=') {
+    e.preventDefault();
+    zoomCenter(ZOOM_IN_FACTOR);
+  }
+  if (e.key === '-') {
+    e.preventDefault();
+    zoomCenter(ZOOM_OUT_FACTOR);
+  }
   if (e.key === '/') {
     e.preventDefault();
     $('#search').focus();
@@ -1548,15 +1649,41 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'v') setTool('select');
   if (e.key === 'h') setTool('pan');
   if (e.key === 'w') setTool('wire');
-  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && selected.size) {
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
     e.preventDefault();
+    const dx = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
+    const dy = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0;
+    if (!selected.size || tool === 'pan' || spaceHeld || shiftHeld) {
+      const distance = e.shiftKey ? 100 : 40;
+      view = panBy(view, -dx * distance, -dy * distance);
+      applyView();
+      persist();
+      return;
+    }
     checkpoint();
     for (const n of project.nodes.filter((n) => selected.has(n.id))) {
-      n.x = boundCoordinate(n.x + (e.key === 'ArrowLeft' ? -20 : e.key === 'ArrowRight' ? 20 : 0));
-      n.y = boundCoordinate(n.y + (e.key === 'ArrowUp' ? -20 : e.key === 'ArrowDown' ? 20 : 0));
+      n.x = boundCoordinate(n.x + dx * 20);
+      n.y = boundCoordinate(n.y + dy * 20);
     }
     changed();
   }
+});
+document.addEventListener('keyup', (e) => {
+  if (e.key === ' ') spaceHeld = false;
+  if (e.key === 'Shift') shiftHeld = false;
+  if (e.key === 'Control' || e.key === 'Meta') {
+    shiftHeld =
+      e.shiftKey && !modal && !e.target.closest('input,textarea,select,[contenteditable]');
+  }
+  updateTool();
+});
+window.addEventListener('blur', () => {
+  spaceHeld = false;
+  shiftHeld = false;
+  suppressPanClick = false;
+  cancelGesture();
+  updateTool();
+  persist();
 });
 $('#import-file').addEventListener('change', async (e) => {
   const file = e.target.files[0];
