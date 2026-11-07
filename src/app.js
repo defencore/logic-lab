@@ -23,6 +23,7 @@ import {
 } from './navigation.js';
 import { drawMini, paintTraces } from './waveforms.js';
 import { getMotionState } from './motion-data.js';
+import { truthTableMarkup } from './truth-tables.js';
 
 let lang = 'en';
 try {
@@ -369,7 +370,7 @@ function renderInspector() {
           .map(([key, value]) => parameterField(key, value, n.type))
           .join('')}</div>`
       : ''
-  }<div class="property-section"><h4>${t('signalState')}</h4><div id="inspector-signals"></div></div><div class="inspector-node-actions"><button id="duplicate-node" class="soft-btn">${icon('layers', 15)}${t('duplicate')}</button><button id="delete-node" class="danger-btn" title="${t('delete')}">${icon('trash', 15)}</button></div>${['and', 'or', 'not', 'nand', 'nor', 'xor', 'xnor', 'half_adder', 'full_adder'].includes(n.type) ? truthTable(n) : ''}`;
+  }<div class="property-section"><h4>${t('signalState')}</h4><div id="inspector-signals"></div></div><div class="inspector-node-actions"><button id="duplicate-node" class="soft-btn">${icon('layers', 15)}${t('duplicate')}</button><button id="delete-node" class="danger-btn" title="${t('delete')}">${icon('trash', 15)}</button></div>${truthTableMarkup(n.type, lang, n.id)}`;
   bindInspectorTabs();
   bindLiveText($('#node-label'), (value) => {
     n.label = value;
@@ -430,6 +431,7 @@ function renderInspector() {
   $('#duplicate-node').onclick = duplicateSelection;
   $('#delete-node').onclick = deleteSelection;
   updateInspectorSignals();
+  updateGuideSignals();
 }
 const PARAM_NAMES = {
   frequency: ['Frequency (Hz)', 'Частота (Гц)'],
@@ -508,35 +510,7 @@ function parameterField(key, value, componentType) {
       : 'maxlength="16384"';
   return `<label ${type === 'checkbox' ? 'class="toggle-row"' : ''}>${esc(label)}<input data-param="${esc(key)}" type="${type}" ${attributes} ${Array.isArray(value) ? 'data-array="true"' : ''} ${type === 'checkbox' ? (value ? 'checked' : '') : `value="${esc(Array.isArray(value) ? JSON.stringify(value) : value)}"`}>${key === 'duty' ? `<input class="duty-slider" data-slider="duty" type="range" aria-label="${esc(label)}" min="0" max="1" step="0.01" value="${esc(value)}">` : ''}</label>`;
 }
-function truthTable(n) {
-  const d = getDefinition(n.type);
-  const count = d.inputs.length;
-  if (count > 3) return '';
-  let rows = '';
-  for (let i = 0; i < 2 ** count; i++) {
-    const values = d.inputs.map((p, j) => (i >> (count - 1 - j)) & 1);
-    const nodes = values.map((value, j) => ({
-      id: `input${j}`,
-      type: 'switch',
-      params: { value },
-      enabled: true,
-    }));
-    const target = { ...n, id: 'target', enabled: true, params: { ...n.params } };
-    const sample = {
-      nodes: [...nodes, target],
-      wires: values.map((v, j) => ({
-        id: `wire${j}`,
-        from: { node: `input${j}`, port: 'out' },
-        to: { node: 'target', port: d.inputs[j].id },
-        width: 1,
-      })),
-    };
-    const rt = createRuntime();
-    simulate(sample, rt, 0);
-    rows += `<tr>${values.map((v) => `<td>${v}</td>`).join('')}${d.outputs.map((p) => `<td class="${signalClass(rt.outputs.target?.[p.id])}">${format(rt.outputs.target?.[p.id])}</td>`).join('')}</tr>`;
-  }
-  return `<div class="property-section"><h4>${t('truthTable')}</h4><table class="truth-table"><thead><tr>${[...d.inputs, ...d.outputs].map((p) => `<th>${esc(p.label || p.id)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
-}
+
 function updateInspectorSignals() {
   const el = $('#inspector-signals');
   if (!el) return;
@@ -1124,6 +1098,35 @@ function updateGuideSignals() {
       runtime[el.dataset.guideDirection]?.[el.dataset.guideNode]?.[el.dataset.guidePort];
     el.textContent = format(value);
     el.className = `signal-value ${signalClass(value)}`;
+  });
+  $$('[data-truth-node]').forEach((section) => {
+    const node = project.nodes.find((item) => item.id === section.dataset.truthNode);
+    if (!node) return;
+    const definition = getDefinition(node.type);
+    const inputs = definition.inputs.map((port) => runtime.inputs?.[node.id]?.[port.id]);
+    const outputs = definition.outputs.map((port) => runtime.outputs?.[node.id]?.[port.id]);
+    const known =
+      node.enabled !== false &&
+      [...inputs, ...outputs].every((value) => value === 0 || value === 1);
+    const key = inputs.join('');
+    $$('[data-truth-inputs]', section).forEach((row) => {
+      const active = known && row.dataset.truthInputs === key;
+      row.classList.toggle('current-row', active);
+      if (active) row.setAttribute('aria-current', 'true');
+      else row.removeAttribute('aria-current');
+    });
+    const describe = (ports, values) =>
+      ports.map((port, index) => `${port.label || port.id}=${format(values[index])}`).join(', ');
+    const status = $('[data-truth-status]', section);
+    if (status) {
+      const message =
+        node.enabled === false
+          ? t('truthInactive')
+          : known
+            ? `${t('truthCurrent')}: ${describe(definition.inputs, inputs)} → ${describe(definition.outputs, outputs)}`
+            : t('truthPending');
+      if (status.textContent !== message) status.textContent = message;
+    }
   });
 }
 function bindLiveText(input, apply) {

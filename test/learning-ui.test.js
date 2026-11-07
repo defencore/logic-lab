@@ -114,3 +114,26 @@ test('navigation help distinguishes run shortcuts from temporary panning', () =>
     assert.ok(TEXT[language].resetZoom.includes('100%'));
   }
 });
+
+test('logic gate and adder guides expose truth tables in both languages and preserve live hooks', () => {
+  for (const language of ['en', 'ua']) {
+    for (const type of [
+      'and',
+      'or',
+      'not',
+      'nand',
+      'nor',
+      'xor',
+      'xnor',
+      'half_adder',
+      'full_adder',
+    ]) {
+      const html = guideMarkup(type, language, 'live-gate');
+      assert.match(html, /class="truth-table"/);
+      assert.match(html, /data-truth-node="live-gate"/);
+      assert.match(html, /data-truth-inputs="0/);
+      assert.match(html, /data-truth-status/);
+    }
+    assert.doesNotMatch(guideMarkup('stepper', language), /class="truth-table"/);
+  }
+});

@@ -211,6 +211,11 @@ export const TEXT = {
     pin: 'Pin',
     set: 'Set',
     truthTable: 'Truth table',
+    truthCurrent: 'Current state',
+    truthPending:
+      'A row is highlighted when every input and output has a known value of 0 or 1. Connect floating (Z) inputs and resolve unknown (X) signals.',
+    truthInactive:
+      'This component is disabled; its outputs are released (Z). Enable it to compare its state with the table.',
     tableHint: 'Combinational gates only',
     pageTitle: 'Logic Lab — Digital workbench',
     componentLibrary: 'Component library',
@@ -446,6 +451,11 @@ export const TEXT = {
     pin: 'Контакт',
     set: 'Задати',
     truthTable: 'Таблиця істинності',
+    truthCurrent: 'Поточний стан',
+    truthPending:
+      'Рядок підсвічується, коли всі входи й виходи мають відоме значення 0 або 1. Під’єднайте вільні входи (Z) та усуньте невідомі сигнали (X).',
+    truthInactive:
+      'Компонент вимкнений, тому його виходи відпущені (Z). Увімкніть його, щоб порівняти стан із таблицею.',
     tableHint: 'Лише комбінаційна логіка',
     pageTitle: 'Logic Lab — Цифрова лабораторія',
     componentLibrary: 'Бібліотека компонентів',

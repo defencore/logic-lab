@@ -2,6 +2,7 @@ import { getDefinition } from './catalog.js';
 import { EXAMPLES } from '../examples/index.js';
 import { getGuide } from './guides.js';
 import { TEXT } from './i18n.js';
+import { truthTableMarkup } from './truth-tables.js';
 import { esc } from './ui-utils.js';
 import { icon } from './icons.js';
 
@@ -119,6 +120,7 @@ export function guideMarkup(type, language, nodeId = null) {
     .join('');
   return `<div class="component-instructions" data-guide-type="${type}">
     <p class="guide-purpose">${esc(guide.purpose)}</p>
+    ${truthTableMarkup(type, language, nodeId)}
     <section class="guide-section"><h4>${t('howToUse')}</h4><ol class="instruction-steps">${guide.steps.map((step) => `<li>${esc(step)}</li>`).join('')}</ol></section>
     ${pins}<section class="guide-section try-experiment"><h4>${t('tryThis')}</h4><p>${esc(guide.experiment)}</p><strong>${t('expectedResult')}</strong><p>${esc(guide.expected)}</p></section>
     <section class="guide-section"><h4>${t('commonMistakes')}</h4><ul class="guide-pitfalls">${guide.pitfalls.map((pitfall) => `<li>${esc(pitfall)}</li>`).join('')}</ul></section>
