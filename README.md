@@ -133,7 +133,7 @@ The [GitHub Pages workflow](https://docs.github.com/en/pages/getting-started-wit
 3. In DNS, point the `logic-lab` CNAME record to `defencore.github.io`.
 4. Once GitHub validates the domain and provisions the certificate, enable **Enforce HTTPS**.
 
-The build preserves `CNAME` and `.nojekyll`. Static assets use relative paths so the application also works under a GitHub project-site path. Repository settings and DNS must be configured by an account with the relevant access; adding these files alone does not change those external settings.
+The build preserves `CNAME` and `.nojekyll`. Static assets use relative paths so the application also works under a GitHub project-site path. JavaScript and CSS filenames include content hashes, so a new deployment loads matching files instead of reusing a browser's cached application. Repository settings and DNS must be configured by an account with the relevant access; adding these files alone does not change those external settings.
 
 ## Motion and 3D mechanisms
 
