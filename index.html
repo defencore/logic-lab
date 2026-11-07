@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'"
+    />
+    <meta name="theme-color" content="#f7f8f6" />
+    <meta
+      name="description"
+      content="An open digital workbench. Build, simulate, and explore logic circuits entirely in your browser."
+    />
+    <title>Logic Lab — Digital workbench</title>
+    <link rel="icon" href="./favicon.svg?v=logic-lab-1" type="image/svg+xml" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <input type="file" id="import-file" accept=".json,application/json" hidden />
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
