@@ -1,6 +1,7 @@
+import '../style.css';
 import { COMPONENTS, CATEGORIES, getDefinition } from './catalog.js';
 import { createRuntime, simulate } from './simulator.js';
-import { EXAMPLES, createExample } from './examples.js';
+import { EXAMPLES, createExample } from '../examples/index.js';
 import { parseProject, serializeProject, loadProject, saveProject } from './project.js';
 import { TEXT } from './i18n.js';
 import { icon, gateIcon } from './icons.js';
@@ -8,6 +9,7 @@ import { $, $$, esc, format, safeColor, signalClass } from './ui-utils.js';
 import { dimensions, portPoint, route, wirePath, snap } from './geometry.js';
 import { guideMarkup, exampleCards, filterExamples } from './learning-ui.js';
 import { drawMini, paintTraces } from './waveforms.js';
+import { getMotionState } from './motion-data.js';
 
 let lang = 'en';
 try {
@@ -43,6 +45,8 @@ let view = project.viewport || { x: 0, y: 0, zoom: 1 };
 let monitorOpen = true;
 let modal = null;
 let modalOpener = null;
+let motionView = null;
+let motionViewToken = 0;
 let undoStack = [];
 let redoStack = [];
 let storageTimer;
@@ -148,7 +152,7 @@ function shell() {
   $('#app').innerHTML = `
     <header class="app-header"><a class="brand" href="./" aria-label="Logic Lab"><img src="./favicon.svg?v=logic-lab-1" alt=""><span>logic<span class="brand-light">lab</span><small>${esc(t('workbench'))}</small></span></a>
     <div class="header-divider"></div><div class="project-heading">${icon('folder', 16)}<input id="project-name" aria-label="${t('namePlaceholder')}" value="${esc(project.name)}" maxlength="100"><span class="project-tag">.logic</span></div>
-    <div class="header-actions"><span id="save-state" class="save-state">${icon('check', 13)}${t('saved')}</span>${button('import', 'upload', t('open'))}${button('export', 'download', t('save'))}<span class="divider"></span><button id="examples" class="soft-btn" aria-label="${t('examples')}">${icon('grid', 15)}<span>${t('examples')}</span></button><button id="language" class="language-btn" aria-label="Language">${lang === 'en' ? 'EN' : 'UA'}${icon('down', 12)}</button>${button('help', 'help', t('help'))}</div></header>
+    <div class="header-actions"><span id="save-state" class="save-state">${icon('check', 13)}${t('saved')}</span>${button('import', 'upload', t('open'))}${button('export', 'download', t('save'))}<span class="divider"></span><button id="motion" class="soft-btn" aria-label="${t('motionView')}" title="${t('motionView')}">${icon('box', 15)}<span>3D</span></button><button id="examples" class="soft-btn" aria-label="${t('examples')}">${icon('grid', 15)}<span>${t('examples')}</span></button><button id="language" class="language-btn" aria-label="Language">${lang === 'en' ? 'EN' : 'UA'}${icon('down', 12)}</button>${button('help', 'help', t('help'))}</div></header>
     <div class="app-body"><aside class="library"><div class="panel-title"><h2>${t('library')}</h2><span class="count-badge">${COMPONENTS.length}</span></div><div class="search-wrap">${icon('search', 16)}<input id="search" type="search" placeholder="${t('search')}" value="${esc(query)}" autocomplete="off"><kbd>/</kbd></div><div class="category-wrap"><select id="category" aria-label="${t('library')}"><option value="all">${t('all')}</option>${CATEGORIES.map((c) => `<option value="${c.id}" ${category === c.id ? 'selected' : ''}>${esc(title(c))}</option>`).join('')}</select></div><div id="library-list" class="library-list"></div><div class="library-footer"><span class="dot green"></span>${t('browserOnly')}<small>${t('dragHint')}</small></div></aside>
     <main class="main"><div class="workspace-toolbar"><div class="workspace-title"><span class="breadcrumb">${t('workspace')}</span><span class="slash">/</span><span id="canvas-name">${esc(project.name)}</span></div><div class="simulation-controls">${button('lesson-toggle', 'note', t('showLesson'))}${button('reset', 'reset', t('reset'))}${button('step', 'step', t('step'))}<button id="run" class="run-btn">${icon('play', 14)}<span>${t('run')}</span><kbd>Space</kbd></button></div></div>
     <section id="lesson-panel" class="lesson-panel" hidden></section>
@@ -223,6 +227,11 @@ function nodeBody(node) {
       return `<canvas class="mini-scope" width="210" height="65"></canvas>${node.type !== 'scope' ? '<span class="node-readout"></span>' : ''}`;
     case 'servo':
       return `<div class="servo-bank">${[1, 2, 3, 4].map((i) => `<div class="servo-unit"><div class="servo-disc"><div class="servo-arm" data-servo="${i}"></div></div><span>S${i} <b data-angle="${i}">0°</b></span></div>`).join('')}</div>`;
+    case 'stepper':
+      return `<div class="stepper-widget"><div class="stepper-body"><div class="stepper-rotor"></div></div><strong class="node-readout"></strong><button data-motion-open class="text-btn">${t('view3d')}${icon('chevron', 11)}</button></div>`;
+    case 'limit_switch':
+    case 'position_sensor':
+      return `<div class="sensor-widget"><span class="sensor-light"></span><strong class="node-readout"></strong><span class="sensor-status"></span></div>`;
     case 'sevenseg':
       return `<div class="seven-seg">${['a', 'b', 'c', 'd', 'e', 'f', 'g', 'dp'].map((id) => `<i class="segment segment-${id}" data-segment="${id}"></i>`).join('')}</div>`;
     case 'matrix':
@@ -257,12 +266,10 @@ function renderBoard() {
   $$('[data-switch]').forEach((el) =>
     el.addEventListener('click', (e) => {
       e.stopPropagation();
-      checkpoint();
-      const n = project.nodes.find((n) => n.id === el.dataset.switch);
-      n.params.value = n.params.value ? 0 : 1;
-      changed();
+      toggleSource(el.dataset.switch);
     }),
   );
+  $$('[data-motion-open]').forEach((el) => (el.onclick = () => showMotionView()));
   $$('.wire-hit').forEach((el) =>
     el.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
@@ -345,7 +352,7 @@ function renderInspector() {
   el.innerHTML = `${header}${tabs}<div class="property-section"><h4>${t('properties')}</h4><label>${t('label')}<input id="node-label" value="${esc(n.label || '')}" placeholder="${esc(title(d))}" maxlength="100"></label><label class="toggle-row">${t('enabled')}<input type="checkbox" id="node-enabled" class="toggle-input" ${n.enabled !== false ? 'checked' : ''}></label></div>${
     Object.keys(params).length
       ? `<div class="property-section"><h4>${t('parameters')}</h4>${Object.entries(params)
-          .map(([key, value]) => parameterField(key, value))
+          .map(([key, value]) => parameterField(key, value, n.type))
           .join('')}</div>`
       : ''
   }<div class="property-section"><h4>${t('signalState')}</h4><div id="inspector-signals"></div></div><div class="inspector-node-actions"><button id="duplicate-node" class="soft-btn">${icon('layers', 15)}${t('duplicate')}</button><button id="delete-node" class="danger-btn" title="${t('delete')}">${icon('trash', 15)}</button></div>${['and', 'or', 'not', 'nand', 'nor', 'xor', 'xnor', 'half_adder', 'full_adder'].includes(n.type) ? truthTable(n) : ''}`;
@@ -424,6 +431,15 @@ const PARAM_NAMES = {
   maxDuty: ['Maximum duty', 'Максимальне заповнення'],
   text: ['Text', 'Текст'],
   color: ['Color', 'Колір'],
+  stepsPerRevolution: ['Full steps / revolution', 'Повних кроків на оберт'],
+  microsteps: ['Microsteps / full step', 'Мікрокроків на повний крок'],
+  lead: ['Travel / revolution (mm)', 'Хід за оберт (мм)'],
+  min: ['Minimum position (mm)', 'Мінімальна позиція (мм)'],
+  max: ['Maximum position (mm)', 'Максимальна позиція (мм)'],
+  threshold: ['Trip / target position (mm)', 'Поріг / цільова позиція (мм)'],
+  tolerance: ['Position tolerance (mm)', 'Допуск позиції (мм)'],
+  mode: ['Detection mode', 'Режим виявлення'],
+  normallyClosed: ['Normally closed contact (NC)', 'Нормально замкнений контакт (NC)'],
   duration: ['Pulse duration (s)', 'Тривалість імпульсу (с)'],
   low: ['Low threshold', 'Нижній поріг'],
   high: ['High threshold', 'Верхній поріг'],
@@ -431,7 +447,7 @@ const PARAM_NAMES = {
   width: ['Width', 'Ширина'],
   height: ['Height', 'Висота'],
 };
-function parameterField(key, value) {
+function parameterField(key, value, componentType) {
   const label =
     PARAM_NAMES[key]?.[lang === 'ua' ? 1 : 0] ||
     key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
@@ -445,11 +461,23 @@ function parameterField(key, value) {
         : key === 'color'
           ? 'color'
           : 'text';
+  if (key === 'mode' && ['limit_switch', 'position_sensor'].includes(componentType)) {
+    const options =
+      componentType === 'limit_switch' ? ['below', 'above'] : ['below', 'above', 'window'];
+    return `<label>${esc(label)}<select data-param="mode">${options.map((option) => `<option value="${option}" ${value === option ? 'selected' : ''}>${t(option)}</option>`).join('')}</select></label>`;
+  }
   const bounds = {
     duty: [0, 1, 0.01],
     depth: [0, 1, 0.01],
     minDuty: [0, 1, 0.01],
     maxDuty: [0, 1, 0.01],
+    stepsPerRevolution: [1, 10000, 1],
+    microsteps: [1, 256, 1],
+    lead: [0.001, 1000, 0.1],
+    min: [-1000000, 1000000, 0.1],
+    max: [-1000000, 1000000, 0.1],
+    threshold: [-1000000, 1000000, 0.1],
+    tolerance: [0, 1000000, 0.1],
     frequency: [0, 1000, 0.1],
     carrier: [0, 1000, 0.1],
     duration: [0.0005, 1000, 0.01],
@@ -509,7 +537,7 @@ function updateInspectorSignals() {
       ports
         .map((p) => {
           const v = runtime[side === 'in' ? 'inputs' : 'outputs']?.[n.id]?.[p.id];
-          return `<div class="signal-row"><span>${side === 'in' ? '↳' : '↗'} ${esc(p.label || p.id)}${p.width > 1 ? ` <small>[${p.width}]</small>` : ''}</span><b class="signal-value ${signalClass(v)}">${format(v)}${p.analog && typeof v === 'number' ? (n.type === 'servo' && side === 'out' ? '°' : n.type === 'servo' || n.type === 'pwm' ? '' : ' V') : ''}</b></div>`;
+          return `<div class="signal-row"><span>${side === 'in' ? '↳' : '↗'} ${esc(p.label || p.id)}${p.width > 1 ? ` <small>[${p.width}]</small>` : ''}</span><b class="signal-value ${signalClass(v)}">${format(v)}${p.unit && typeof v === 'number' ? ' ' + esc(p.unit) : p.analog && typeof v === 'number' ? (n.type === 'servo' && side === 'out' ? '°' : n.type === 'servo' || n.type === 'pwm' ? '' : ' V') : ''}</b></div>`;
         })
         .join(''),
     )
@@ -541,6 +569,19 @@ function updateSignals() {
       lamp.className = `led-bulb ${signalClass(v)}`;
       $('.led-text', el).textContent = v === 1 ? t('one') : v === 0 ? t('zero') : format(v);
     }
+    if (n.type === 'stepper') {
+      const rotor = $('.stepper-rotor', el);
+      rotor.style.transform = `rotate(${typeof outs.angle === 'number' ? outs.angle % 360 : 0}deg)`;
+      $('.node-readout', el).textContent = `${format(outs.position)} mm`;
+    }
+    if (['limit_switch', 'position_sensor'].includes(n.type)) {
+      const value = outs.out;
+      $('.sensor-light', el).className = `sensor-light ${signalClass(value)}`;
+      $('.node-readout', el).textContent =
+        n.type === 'position_sensor' ? `${format(outs.position)} mm` : format(value);
+      $('.sensor-status', el).textContent =
+        value === 1 ? t('sensorHigh') : value === 0 ? t('sensorLow') : t('unknown');
+    }
     if (n.type === 'servo')
       for (let i = 1; i <= 4; i++) {
         const a = Number(outs[`a${i}`]) || 0;
@@ -569,6 +610,7 @@ function updateSignals() {
   }
   updateGuideSignals();
   updateLessonSignals();
+  updateMotionView();
   $('#sim-time').textContent = (runtime.time || 0).toFixed(3);
   const diagnostics = $('#diagnostics');
   diagnostics.hidden = !runtime.diagnostics?.length;
@@ -585,7 +627,19 @@ function traceNodes() {
     ...signals.filter((n) => selected.has(n.id)),
     ...signals.filter((n) => n.type === 'scope'),
     ...signals.filter((n) =>
-      ['led', 'clock', 'counter', 'pwm', 'dac', 'am', 'fm', 'servo'].includes(n.type),
+      [
+        'led',
+        'clock',
+        'counter',
+        'pwm',
+        'dac',
+        'am',
+        'fm',
+        'servo',
+        'stepper',
+        'position_sensor',
+        'limit_switch',
+      ].includes(n.type),
     ),
   ];
   return [...new Map(priority.map((n) => [n.id, n])).values()].slice(0, 4);
@@ -969,7 +1023,7 @@ function showExamples(filters = {}) {
   showModal(
     `<span class="eyebrow">${t('examples')}</span><h2>${t('examplesTitle')}</h2><p>${t('examplesDesc')}</p>
     <div class="catalog-controls"><div class="search-wrap">${icon('search', 16)}<input id="example-search" type="search" placeholder="${t('searchExamples')}" value="${esc(filters.query || '')}"></div>
-    <select id="example-category" aria-label="${t('allTopics')}"><option value="all">${t('allTopics')}</option>${['basics', 'sequential', 'mixed', 'architecture', 'physical'].map((topic) => `<option value="${topic}" ${filters.category === topic ? 'selected' : ''}>${t(topic)}</option>`).join('')}</select>
+    <select id="example-category" aria-label="${t('allTopics')}"><option value="all">${t('allTopics')}</option>${['basics', 'sequential', 'mixed', 'architecture', 'physical', 'motion'].map((topic) => `<option value="${topic}" ${filters.category === topic ? 'selected' : ''}>${t(topic)}</option>`).join('')}</select>
     <select id="example-level" aria-label="${t('allLevels')}"><option value="all">${t('allLevels')}</option>${['beginner', 'intermediate'].map((level) => `<option value="${level}">${t(level)}</option>`).join('')}</select></div>
     <div class="catalog-count" id="catalog-count"></div><div id="example-results" class="example-grid"></div><button id="empty-project" class="text-btn">${icon('plus', 14)}${t('clear')}</button>`,
     true,
@@ -984,6 +1038,9 @@ function showExamples(filters = {}) {
     $('#catalog-count').textContent = `${t('examplesCount')}: ${matches.length}`;
     $$('[data-example]').forEach(
       (el) => (el.onclick = () => confirmReplace(() => createExample(el.dataset.example))),
+    );
+    $$('[data-lab-guide]').forEach(
+      (el) => (el.onclick = () => showLaboratory(el.dataset.labGuide)),
     );
   };
   $('#example-search').oninput = refresh;
@@ -1107,11 +1164,145 @@ function updateLessonSignals() {
     })
     .join('');
 }
+function resetSimulation() {
+  runtime = newRuntime();
+  simulate(project, runtime, 0);
+  updateSignals();
+}
+function toggleSource(id) {
+  const node = project.nodes.find((item) => item.id === id && item.type === 'switch');
+  if (!node) return;
+  checkpoint();
+  node.params.value = node.params.value ? 0 : 1;
+  changed();
+}
+function disposeMotionView() {
+  motionViewToken++;
+  motionView?.dispose();
+  motionView = null;
+}
+async function showMotionView() {
+  const motors = project.nodes.filter((node) => node.type === 'stepper');
+  if (!motors.length) {
+    showModal(
+      `<span class="eyebrow">${t('motionView')}</span><h2>${t('motionEmptyTitle')}</h2><p>${t('motionEmptyText')}</p><div class="related-examples"><button class="primary-btn" data-learn-example="stepper-basics">${t('openStepperLab')}${icon('chevron', 14)}</button><button class="soft-btn" data-learn-example="printer-homing">${t('openHomingLab')}</button></div>`,
+    );
+    bindLearningActions($('#modal-root'));
+    return;
+  }
+  const switches = project.nodes.filter((node) => node.type === 'switch');
+  const clocks = project.nodes.filter((node) => node.type === 'clock');
+  const values = project.nodes.filter((node) => node.type === 'bus_input');
+  showModal(
+    `<span class="eyebrow">${t('motionView')}</span><h2>${t('motionTitle')}</h2><div class="motion-toolbar"><div class="camera-views">${['perspective', 'front', 'top'].map((view, index) => `<button class="soft-btn ${index === 0 ? 'active' : ''}" data-camera-view="${view}">${t(view)}</button>`).join('')}<button id="motion-camera-reset" class="icon-btn" aria-label="${t('resetCamera')}">${icon('fit', 16)}</button></div><div><button id="motion-reset" class="icon-btn" aria-label="${t('reset')}">${icon('reset', 16)}</button><button id="motion-run" class="primary-btn"></button></div></div>
+    <div class="motion-layout"><div><div id="motion-stage" class="motion-stage" role="img" aria-label="${t('motionScene')}"></div><p class="motion-orbit-help">${t('orbitHelp')}</p><p id="motion-status" class="motion-status">${t('loading3d')}</p></div><aside class="motion-sidebar"><section><h3>${t('axisReadouts')}</h3><div id="motion-readouts"></div></section><section><h3>${t('sensorReadouts')}</h3><div id="motion-sensors"></div></section>${switches.length ? `<section><h3>${t('circuitControls')}</h3><p>${t('circuitControlsHint')}</p><div class="motion-switches">${switches.map((node) => `<button class="motion-source" data-motion-switch="${node.id}"><span>${esc(node.label || title(getDefinition(node.type)))}</span><b>0</b></button>`).join('')}</div></section>` : ''}${clocks.length ? `<section><h3>${t('clockSettings')}</h3>${clocks.map((node) => `<label>${esc(node.label || title(getDefinition(node.type)))} <small>Hz</small><input data-motion-clock="${node.id}" type="number" min="0" max="1000" step="1" value="${esc(node.params.frequency ?? getDefinition(node.type).defaults.frequency)}"></label>`).join('')}</section>` : ''}${values.length ? `<section><h3>${t('inputValues')}</h3>${values.map((node) => `<label>${esc(node.label || title(getDefinition(node.type)))}<input data-motion-value="${node.id}" type="number" min="0" max="255" step="1" value="${esc(node.params.value ?? 0)}"></label>`).join('')}</section>` : ''}</aside></div>`,
+    true,
+  );
+  $('.modal').classList.add('motion-modal');
+  $('#motion-run').onclick = () => {
+    setRunning(!running);
+    updateMotionView();
+  };
+  $('#motion-reset').onclick = resetSimulation;
+  $$('[data-motion-switch]').forEach(
+    (button) => (button.onclick = () => toggleSource(button.dataset.motionSwitch)),
+  );
+  $$('[data-motion-clock],[data-motion-value]').forEach((input) =>
+    bindLiveText(input, (value) => {
+      if (value === '') return;
+      const frequency = Number(value);
+      if (!Number.isFinite(frequency)) return;
+      const isByte = !!input.dataset.motionValue;
+      const node = project.nodes.find(
+        (item) => item.id === (input.dataset.motionValue || input.dataset.motionClock),
+      );
+      node.params[isByte ? 'value' : 'frequency'] = isByte
+        ? Math.round(Math.min(255, Math.max(0, frequency)))
+        : Math.min(1000, Math.max(0, frequency));
+      simulate(project, runtime, 0);
+      renderBoard();
+      updateSignals();
+      persist();
+    }),
+  );
+  const token = motionViewToken;
+  try {
+    const { createMotionView } = await import('./motion-view.js');
+    if (token !== motionViewToken || !$('#motion-stage')) return;
+    motionView = createMotionView($('#motion-stage'), {
+      language: lang,
+      onStatus: (message) => {
+        const status = $('#motion-status');
+        if (status) {
+          status.textContent = message;
+          status.hidden = !message;
+        }
+      },
+    });
+    $$('[data-camera-view]').forEach(
+      (button) =>
+        (button.onclick = () => {
+          motionView.setView(button.dataset.cameraView);
+          $$('[data-camera-view]').forEach((item) =>
+            item.classList.toggle('active', item === button),
+          );
+        }),
+    );
+    $('#motion-camera-reset').onclick = () => motionView.resetCamera();
+    motionView.resize();
+    updateMotionView();
+  } catch {
+    if (token === motionViewToken && $('#motion-status'))
+      $('#motion-status').textContent = t('motionUnavailable');
+  }
+}
+function updateMotionView() {
+  const readouts = $('#motion-readouts');
+  if (!readouts) return;
+  const state = getMotionState(project, runtime);
+  motionView?.update(state);
+  readouts.innerHTML = state.motors
+    .map(
+      (motor, index) =>
+        `<div class="axis-readout"><span class="axis-letter">${['X', 'Y', 'Z'][index] || index + 1}</span><div><strong>${esc(motor.label)}</strong><span>${format(motor.position)} mm <small>· ${format(motor.angle)}°</small></span></div><i class="dot ${motor.moving ? 'green' : 'gray'}" title="${t(motor.enabled ? 'enabled' : 'disabled')}"></i></div>`,
+    )
+    .join('');
+  $('#motion-sensors').innerHTML = state.sensors.length
+    ? state.sensors
+        .map(
+          (sensor) =>
+            `<div class="motion-sensor-row"><i class="dot ${sensor.triggered === null ? 'amber' : sensor.triggered ? 'green' : 'gray'}"></i><span>${esc(sensor.label)}</span><b>${format(sensor.signal)}</b></div>`,
+        )
+        .join('')
+    : `<p>${t('noSensors')}</p>`;
+  $$('[data-motion-switch]').forEach((button) => {
+    const node = project.nodes.find((item) => item.id === button.dataset.motionSwitch);
+    const value = !!node?.params.value;
+    button.setAttribute('aria-pressed', String(value));
+    $('b', button).textContent = value ? '1' : '0';
+  });
+  $('#motion-run').innerHTML = icon(running ? 'pause' : 'play', 14) + t(running ? 'pause' : 'run');
+}
+function showLaboratory(id) {
+  const example = EXAMPLES.find((item) => item.id === id);
+  if (!example?.lab) return;
+  const sections = ['objectives', 'tasks', 'questions', 'deliverables'];
+  showModal(
+    `<span class="eyebrow">${t('laboratory')} · ${example.lab.duration} ${t('minutes')}</span><h2>${esc(title(example))}</h2><p>${esc(lang === 'ua' ? example.descriptionUa : example.description)}</p><div class="lab-resource-actions"><button id="start-lab" class="primary-btn">${icon('play', 15)}${t('startLab')}</button><a class="soft-btn" href="${example.circuitPath}" download="${id}.logic.json">${icon('download', 14)}${t('downloadCircuit')}</a><a class="soft-btn" href="${example.labPath}" download="${id}-lab.md">${icon('note', 14)}${t('downloadWorksheet')}</a></div><div class="lab-sheet">${sections.map((section) => `<section class="guide-section"><h4>${t(section)}</h4><ol>${example.lab[section][lang].map((item) => `<li>${esc(item)}</li>`).join('')}</ol></section>`).join('')}</div>`,
+    true,
+  );
+  $('#start-lab').onclick = () => confirmReplace(() => createExample(id));
+}
+
 function showDiagnostics() {
   const messages = (runtime.diagnostics || []).slice(0, 50).map((d) => {
     const n = project.nodes.find((n) => n.id === d.node);
     const name = n?.label || (n ? title(getDefinition(n.type)) : '');
     if (lang === 'en') return d.message;
+    if (d.code === 'invalid_motion')
+      return `${name}: задайте додатні цілі кроки на оберт і мікрокроки, додатний хід та межі Min ≤ Max.`;
+    if (d.code === 'motion_unknown')
+      return `${name}: позиція невідома після невизначеного керувального сигналу. Подайте Reset для відновлення початкової позиції.`;
     return d.code === 'oscillation'
       ? 'Схема не стабілізувалася. Перевірте комбінаційний зворотний зв’язок.'
       : d.code === 'invalid_sr'
@@ -1144,6 +1335,7 @@ function showHelp() {
 }
 function showModal(html, wide = false) {
   if (!modal) modalOpener = document.activeElement;
+  disposeMotionView();
   modal = true;
   $('#modal-root').innerHTML =
     `<div class="modal-backdrop"><section class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button id="close-modal" class="icon-btn modal-close" aria-label="${t('cancel')}">${icon('close')}</button>${html}</section></div>`;
@@ -1156,6 +1348,7 @@ function showModal(html, wide = false) {
   $('.modal button')?.focus();
 }
 function closeModal() {
+  disposeMotionView();
   modal = null;
   $('#modal-root').innerHTML = '';
   if (modalOpener?.isConnected) modalOpener.focus();
@@ -1195,11 +1388,7 @@ function bindShell() {
     advance(0.01);
     updateSignals();
   };
-  $('#reset').onclick = () => {
-    runtime = newRuntime();
-    simulate(project, runtime, 0);
-    updateSignals();
-  };
+  $('#reset').onclick = resetSimulation;
   $('#undo').onclick = () => undo();
   $('#redo').onclick = () => undo(true);
   $('#fit').onclick = fit;
@@ -1213,6 +1402,7 @@ function bindShell() {
   $('#export').onclick = exportProject;
   $('#import').onclick = () => $('#import-file').click();
   $('#examples').onclick = () => showExamples();
+  $('#motion').onclick = () => showMotionView();
   $('#lesson-toggle').onclick = () => {
     lessonOpen = !lessonOpen;
     renderLesson();

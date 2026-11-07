@@ -2508,6 +2508,198 @@ add('group', {
   examples: ['full-adder', 'bus-mux'],
 });
 
+add('stepper', {
+  purpose: [
+    'A STEP/DIR motor drives a simulated linear carriage, showing how printer motion follows digital pulses rather than a continuous angle command.',
+    'Двигун STEP/DIR рухає модельовану лінійну каретку та показує, як рух принтера залежить від цифрових імпульсів, а не неперервної команди кута.',
+  ],
+  steps: [
+    [
+      'Connect a clock or manual switch to STEP, a direction switch to DIR, and position to a position sensor or endstop.',
+      'Підключіть такт або ручний перемикач до STEP, перемикач напрямку до DIR, а position — до датчика положення чи кінцевика.',
+    ],
+    [
+      'Set StepsPerRevolution=200, Microsteps=1 and Lead=8 mm per revolution. Choose Initial, Min and Max in millimeters, then reset the simulation.',
+      'Задайте StepsPerRevolution=200, Microsteps=1 та Lead=8 мм за оберт. Оберіть Initial, Min і Max у міліметрах, потім скиньте симуляцію.',
+    ],
+    [
+      'Keep EN=1 and RST=0, start STEP at 0, and apply rising edges. DIR=1 moves positive; DIR=0 moves negative. Open the motion view to inspect the carriage.',
+      'Тримайте EN=1 і RST=0, почніть із STEP=0 та подавайте додатні фронти. DIR=1 рухає вперед, DIR=0 назад. Відкрийте вигляд руху для спостереження каретки.',
+    ],
+  ],
+  experiment: [
+    'Apply 200 rising edges with default mechanics, then repeat with Microsteps=4. Reverse DIR and return toward the starting point.',
+    'Подайте 200 додатних фронтів із типовою механікою, потім повторіть із Microsteps=4. Змініть DIR та поверніться до початкової точки.',
+  ],
+  expected: [
+    'Each edge moves Lead/(StepsPerRevolution×Microsteps). Defaults give 0.04 mm and 1.8° per edge; 200 edges travel 8 mm. Four microsteps reduce that distance fourfold.',
+    'Кожен фронт рухає на Lead/(StepsPerRevolution×Microsteps). Типово це 0.04 мм і 1.8° за фронт; 200 фронтів дають 8 мм. Чотири мікрокроки зменшують цю відстань учетверо.',
+  ],
+  pitfalls: [
+    [
+      'A held STEP=1 does not move repeatedly. Enabling, reconnecting or releasing reset while STEP is high does not invent a step; observe a fresh low-to-high transition.',
+      'Утримання STEP=1 не повторює рух. Увімкнення, перепідключення чи відпускання скидання при високому STEP не створює крок; потрібен новий перехід 0→1.',
+    ],
+    [
+      'Unwired EN defaults to 1 and RST to 0. RST returns Initial immediately; it is a teaching reset, not physical homing. Unknown direction or enable at a possible step makes position X until reset.',
+      'Непідключений EN означає 1, RST — 0. RST одразу повертає Initial; це навчальне скидання, а не фізичне базування. Невідомий напрямок чи дозвіл у момент кроку дає положення X до скидання.',
+    ],
+    [
+      'Min and Max clamp carriage travel. The model has no torque, missed steps, acceleration or inertia; an external endstop affects control only when its output is wired into the logic.',
+      'Min і Max обмежують рух каретки. Модель не має моменту, пропущених кроків, прискорення чи інерції; зовнішній кінцевик впливає на керування лише через підключену логіку.',
+    ],
+  ],
+  inputs: {
+    step: [
+      'STEP: one movement command per observed rising edge; its shortest pulse must exceed the simulation time step.',
+      'STEP: одна команда руху за спостереженим додатним фронтом; найкоротший імпульс має перевищувати крок часу симуляції.',
+    ],
+    dir: [
+      'DIR: 1 moves toward increasing position, 0 toward decreasing position; define it before a step.',
+      'DIR: 1 рухає в бік збільшення положення, 0 — зменшення; задайте його перед кроком.',
+    ],
+    enable: [
+      'EN: active-high movement permission; zero holds position and ignores incoming edges. Unwired means 1.',
+      'EN: дозвіл руху одиницею; нуль утримує положення та ігнорує фронти. Без дроту означає 1.',
+    ],
+    reset: [
+      'RST: active-high return to the Initial position, clamped to Min/Max. Unwired means 0.',
+      'RST: повернення до Initial одиницею з обмеженням Min/Max. Без дроту означає 0.',
+    ],
+  },
+  outputs: {
+    position: [
+      'POS: carriage position in millimeters, suitable for a sensor input or the 3D axis view.',
+      'POS: положення каретки в міліметрах для входу датчика або тривимірного вигляду осі.',
+    ],
+    angle: [
+      'ANGLE: unwrapped shaft angle in degrees, calculated as position/Lead×360; it does not wrap at one revolution.',
+      'ANGLE: розгорнутий кут вала в градусах, position/Lead×360; він не обмежується одним обертом.',
+    ],
+    moving: [
+      'MOVE: a one-physics-step indication that the carriage actually changed position; attempts against a hard stop give zero.',
+      'MOVE: індикація протягом одного фізичного кроку, що каретка справді змінила положення; спроби руху в упор дають нуль.',
+    ],
+  },
+  examples: ['stepper-basics', 'printer-homing', 'position-control'],
+});
+
+add('limit_switch', {
+  purpose: [
+    'An endstop turns a mechanical boundary into a digital contact signal, allowing homing and travel-limit logic.',
+    'Кінцевик перетворює механічну межу на цифровий контактний сигнал для базування та обмеження ходу.',
+  ],
+  steps: [
+    [
+      'Connect a stepper POS output to the endstop POS input; both carry millimeters.',
+      'Підключіть вихід POS крокового двигуна до входу POS кінцевика; обидва передають міліметри.',
+    ],
+    [
+      'For a minimum endstop set Threshold=0, Mode=below and NormallyClosed=false. Use Mode=above for a maximum endstop.',
+      'Для мінімального кінцевика задайте Threshold=0, Mode=below та NormallyClosed=false. Для максимального використовуйте Mode=above.',
+    ],
+    [
+      'Connect Q to an LED and through a NOT gate to the motor EN for a simple homing stop. Keep the clock connected directly to STEP.',
+      'Підключіть Q до світлодіода та через НЕ до EN двигуна для простого зупинення базування. Такт залиште безпосередньо підключеним до STEP.',
+    ],
+  ],
+  experiment: [
+    'Start above zero and move with DIR=0 until Q activates. Add OR(DIR,NOT Q) on EN so DIR=1 can move away from the minimum endstop.',
+    'Почніть вище нуля та рухайтеся з DIR=0 до спрацювання Q. Подайте OR(DIR,NOT Q) на EN, щоб DIR=1 дозволяв відійти від мінімального кінцевика.',
+  ],
+  expected: [
+    'Below mode activates at position≤Threshold; above mode activates at position≥Threshold. NormallyClosed=true inverts the known contact result.',
+    'Режим below спрацьовує при position≤Threshold; above — при position≥Threshold. NormallyClosed=true інвертує визначений стан контакту.',
+  ],
+  pitfalls: [
+    [
+      'The sensor does not stop a motor by itself: wire its signal into enable or control logic. A simple NOT Q enable also blocks moving away unless direction is considered.',
+      'Датчик сам не зупиняє двигун: підключіть сигнал до дозволу чи керувальної логіки. Простий EN=NOT Q також блокує відхід, якщо не врахувати напрямок.',
+    ],
+    [
+      'Normally closed describes contact polarity, not a simulated safety circuit. An unconnected or conflicting position is X even with NormallyClosed enabled.',
+      'Нормально замкнений означає полярність контакту, а не модель захисного кола. Непідключене чи конфліктне положення дає X навіть при NormallyClosed.',
+    ],
+  ],
+  inputs: {
+    position: [
+      'POS: measured carriage position in millimeters, usually from a stepper motor.',
+      'POS: виміряне положення каретки в міліметрах, зазвичай від крокового двигуна.',
+    ],
+  },
+  outputs: {
+    out: [
+      'Q: active contact bit. With normally-open polarity, 1 means the configured boundary is reached.',
+      'Q: активний біт контакту. Для нормально розімкненої полярності 1 означає досягнуту межу.',
+    ],
+  },
+  examples: ['printer-homing', 'stepper-basics'],
+});
+
+add('position_sensor', {
+  purpose: [
+    'A position sensor forwards the measured carriage coordinate and detects its relation to a fixed or live target.',
+    'Датчик положення передає виміряну координату каретки та визначає її відношення до сталої або змінної цілі.',
+  ],
+  steps: [
+    [
+      'Connect stepper POS to sensor POS. Leave TARGET unwired to use Threshold, or connect an analog millimeter target such as a DAC output.',
+      'Підключіть POS крокового двигуна до POS датчика. Без TARGET діє Threshold; або подайте аналогову ціль у міліметрах, наприклад вихід ЦАП.',
+    ],
+    [
+      'Choose Mode=below, above or window. In window mode set Tolerance in millimeters around the target.',
+      'Оберіть Mode=below, above або window. У режимі window задайте Tolerance у міліметрах навколо цілі.',
+    ],
+    [
+      'For position control, use a below sensor for DIR and NOT(window sensor Q) for EN, with both sensors sharing the same TARGET.',
+      'Для позиціонування використайте датчик below для DIR та NOT(Q датчика window) для EN; обидва датчики мають спільний TARGET.',
+    ],
+  ],
+  experiment: [
+    'Set target 10 mm and Tolerance=0.5 mm. Compare position 9,9.5,10,10.5,11 mm, then change a wired target while the motor runs.',
+    'Задайте ціль 10 мм і Tolerance=0.5 мм. Порівняйте положення 9,9.5,10,10.5,11 мм, потім змініть підключену ціль під час руху двигуна.',
+  ],
+  expected: [
+    'Window Q is high from 9.5 through 10.5 mm, inclusively. Below and above compare directly to the target; the POS output always forwards the measurement.',
+    'Q у режимі window має 1 від 9.5 до 10.5 мм включно. Below та above порівнюють безпосередньо з ціллю; вихід POS завжди передає вимірювання.',
+  ],
+  pitfalls: [
+    [
+      'A wired TARGET overrides Threshold; a floating wired target is unknown, not a fallback to the property. Tolerance applies only to window mode.',
+      'Підключений TARGET замінює Threshold; непідключений рівень на наявному дроті є невідомим, а не поверненням до властивості. Tolerance діє лише в window.',
+    ],
+    [
+      'A target window narrower than the motor’s reachable step grid can cause endless direction changes. Use a tolerance at least half the step distance and a target inside Min/Max.',
+      'Вікно цілі, вужче за досяжну сітку кроків двигуна, може спричинити нескінченну зміну напрямку. Задайте допуск щонайменше в половину кроку та ціль у межах Min/Max.',
+    ],
+    [
+      'These coordinates are millimeters, even when supplied by a DAC. This block has no optical, magnetic or quantization model of a physical position sensor.',
+      'Ці координати вимірюються в міліметрах, навіть якщо їх задає ЦАП. Блок не моделює оптичні, магнітні чи дискретизаційні властивості реального датчика.',
+    ],
+  ],
+  inputs: {
+    position: [
+      'POS: actual measured coordinate in millimeters; unknown measurements propagate to the outputs.',
+      'POS: фактична виміряна координата в міліметрах; невідомі вимірювання передаються на виходи.',
+    ],
+    target: [
+      'TARGET: optional analog reference in millimeters; when unwired the Threshold property supplies it.',
+      'TARGET: необов’язкова аналогова опора в міліметрах; без дроту її задає властивість Threshold.',
+    ],
+  },
+  outputs: {
+    position: [
+      'POS: unchanged measured position, for chaining sensors or observation.',
+      'POS: незмінене виміряне положення для каскадування датчиків або спостереження.',
+    ],
+    out: [
+      'Q: below means POS≤target, above means POS≥target, window means |POS−target|≤Tolerance.',
+      'Q: below означає POS≤ціль, above — POS≥ціль, window — |POS−ціль|≤Tolerance.',
+    ],
+  },
+  examples: ['position-control', 'stepper-basics'],
+});
+
 export function getGuide(type, language = 'en') {
   return GUIDES[type]?.[language === 'ua' || language === 'uk' ? 'ua' : 'en'];
 }

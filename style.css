@@ -1683,7 +1683,7 @@ a {
   color: #8baab5;
   background-image: radial-gradient(#c8d9df 0.8px, transparent 0.8px);
 }
-.example-card > div:last-child {
+.example-body {
   padding: 15px 17px;
 }
 .example-card h3 {
@@ -2073,7 +2073,7 @@ a {
   .modal > h2 {
     font-size: 21px;
   }
-  .example-card > div:last-child {
+  .example-body {
     padding: 12px;
   }
   .example-card p {
@@ -2183,7 +2183,7 @@ a {
   .example-card h3 {
     font-size: 12px;
   }
-  .example-card > div:last-child {
+  .example-body {
     padding: 12px;
   }
   .modal > h2 {
@@ -2679,4 +2679,379 @@ a {
 
 .main:has(.lesson-panel:not([hidden])) .canvas-heading {
   display: none;
+}
+
+/* Laboratory resources and mechanical controls use the same circuit state. */
+.example-open {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0;
+}
+.example-resources {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-top: 1px solid #e7eddf;
+  background: #fafcf6;
+}
+.example-body {
+  padding: 15px 17px;
+}
+.example-art.art-5 {
+  background-color: #e5efee;
+  color: #729c99;
+}
+.lab-resource-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 22px 0;
+}
+.lab-sheet ol {
+  padding-left: 21px;
+  margin: 0 0 17px;
+}
+.lab-sheet li {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #7c8e70;
+  margin-bottom: 10px;
+}
+.property-section select {
+  width: 100%;
+  border: 1px solid #e1e7da;
+  background: #fafbf7;
+  padding: 8px;
+  border-radius: 5px;
+  color: #6b7f5e;
+  font-size: 10px;
+}
+.stepper-widget {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
+}
+.stepper-body {
+  width: 42px;
+  height: 42px;
+  background: #5a6e65;
+  border: 5px solid #c9d5c7;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 2px #18302112;
+}
+.stepper-rotor {
+  width: 25px;
+  height: 25px;
+  border: 1px solid #b3c7b2;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #e4ebdf, #a8b9a3);
+  position: relative;
+}
+.stepper-rotor:after {
+  content: '';
+  height: 3px;
+  width: 12px;
+  background: #4c8462;
+  position: absolute;
+  left: 11px;
+  top: 10px;
+  border-radius: 2px;
+}
+.stepper-widget .text-btn {
+  font-size: 8px;
+}
+.sensor-widget {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+}
+.sensor-light {
+  height: 15px;
+  width: 15px;
+  border: 3px solid #e5ecde;
+  background: #b3c0a8;
+  border-radius: 4px;
+}
+.sensor-light.high {
+  background: #6ca572;
+}
+.sensor-light.unknown {
+  background: #d1aa58;
+}
+.sensor-status {
+  font-size: 7px;
+  color: #a3af98;
+}
+.motion-modal {
+  width: min(1180px, 96vw) !important;
+  padding: 25px !important;
+}
+.motion-modal > h2 {
+  margin-top: 7px;
+  margin-bottom: 17px;
+}
+.motion-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 13px;
+}
+.motion-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.camera-views .soft-btn {
+  font-size: 10px;
+  padding: 7px 10px;
+}
+.camera-views .active {
+  background: #e7f0df;
+  border-color: #b4c6a2;
+  color: #4f753c;
+}
+.motion-toolbar .primary-btn {
+  padding: 8px 13px;
+  font-size: 11px;
+  min-width: 85px;
+}
+.motion-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 245px;
+  gap: 17px;
+}
+.motion-stage {
+  height: 420px;
+  min-height: 300px;
+  border: 1px solid #dce6d5;
+  background: #f1f5ef;
+  border-radius: 9px;
+  overflow: hidden;
+  position: relative;
+}
+.motion-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+.motion-orbit-help {
+  color: #9caa91;
+  font-size: 9px;
+  line-height: 1.6;
+  margin: 10px 2px 0;
+}
+.motion-status {
+  font-size: 11px;
+  color: #a48c5d;
+  line-height: 1.6;
+}
+.motion-sidebar {
+  max-height: 460px;
+  overflow: auto;
+  padding-right: 5px;
+  scrollbar-width: thin;
+}
+.motion-sidebar section {
+  border-bottom: 1px solid #e9eee1;
+  padding: 0 0 16px;
+  margin: 0 0 16px;
+}
+.motion-sidebar h3 {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #8b9d7d;
+  margin: 4px 0 12px;
+}
+.motion-sidebar p {
+  font-size: 9px;
+  line-height: 1.6;
+  color: #a1af94;
+  margin: 0 0 10px;
+}
+.axis-readout {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #e4ebda;
+  border-radius: 5px;
+  padding: 9px;
+  margin-bottom: 7px;
+}
+.axis-letter {
+  font:
+    13px ui-monospace,
+    monospace;
+  color: #7e9c69;
+  width: 19px;
+}
+.axis-readout > div {
+  flex: 1;
+  min-width: 0;
+}
+.axis-readout strong {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  color: #748968;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.axis-readout > div > span {
+  display: block;
+  font:
+    11px ui-monospace,
+    monospace;
+  color: #456e3c;
+  margin-top: 6px;
+}
+.axis-readout small {
+  font-size: 8px;
+  color: #9cae8e;
+}
+.motion-sensor-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 10px 0;
+  font-size: 9px;
+  color: #92a182;
+}
+.motion-sensor-row span {
+  flex: 1;
+}
+.motion-sensor-row b {
+  font:
+    10px ui-monospace,
+    monospace;
+  color: #6f8e5c;
+}
+.motion-switches {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.motion-source {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  border: 1px solid #e3eadb;
+  border-radius: 5px;
+  padding: 8px 10px;
+  color: #8a9c7b;
+  font-size: 10px;
+  background: #fafcf7;
+}
+.motion-source b {
+  font:
+    11px ui-monospace,
+    monospace;
+  color: #adb99f;
+  margin-left: 8px;
+}
+.motion-source[aria-pressed='true'] {
+  background: #ecf4e4;
+  border-color: #c4d9b4;
+  color: #627f4d;
+}
+.motion-source[aria-pressed='true'] b {
+  color: #5f9044;
+}
+.motion-sidebar label {
+  font-size: 9px;
+  color: #91a17f;
+  display: block;
+  margin: 10px 0;
+}
+.motion-sidebar input {
+  display: block;
+  width: 100%;
+  padding: 7px;
+  border: 1px solid #e2e9d9;
+  border-radius: 5px;
+  margin-top: 6px;
+  background: #fafcf6;
+  color: #6d855b;
+  font-size: 11px;
+}
+.motion-sidebar small {
+  color: #b2bca7;
+}
+@media (max-width: 900px) {
+  .motion-layout {
+    grid-template-columns: minmax(0, 1fr) 210px;
+  }
+  .motion-stage {
+    height: 360px;
+  }
+  .motion-modal {
+    padding: 20px !important;
+  }
+  .motion-sidebar {
+    max-height: 410px;
+  }
+}
+@media (max-width: 650px) {
+  .motion-layout {
+    grid-template-columns: 1fr;
+  }
+  .motion-stage {
+    height: 310px;
+  }
+  .motion-sidebar {
+    max-height: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+  .motion-toolbar {
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .motion-modal {
+    padding: 20px 15px !important;
+  }
+  .motion-toolbar .camera-views {
+    gap: 3px;
+  }
+  .camera-views .soft-btn {
+    font-size: 8px;
+    padding: 7px;
+  }
+  .example-card {
+    display: block !important;
+  }
+  .example-open {
+    display: flex;
+  }
+  .example-art {
+    width: 76px;
+    min-width: 76px;
+    height: auto;
+  }
+  .example-resources {
+    padding: 8px 12px;
+  }
+  .lab-resource-actions .soft-btn,
+  .lab-resource-actions .primary-btn {
+    font-size: 9px;
+  }
+  .motion-sidebar section {
+    margin: 0;
+  }
+  .motion-orbit-help {
+    font-size: 8px;
+  }
 }

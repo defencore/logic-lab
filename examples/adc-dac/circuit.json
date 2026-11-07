@@ -1,0 +1,185 @@
+{
+  "version": 1,
+  "name": "Digital–analog round trip",
+  "nodes": [
+    {
+      "id": "value",
+      "type": "bus_input",
+      "x": 40,
+      "y": 200,
+      "label": "Original byte",
+      "enabled": true,
+      "params": {
+        "value": 128
+      }
+    },
+    {
+      "id": "dac",
+      "type": "dac",
+      "x": 320,
+      "y": 200,
+      "label": "DAC · 5 V",
+      "enabled": true,
+      "params": {
+        "vcc": 5
+      }
+    },
+    {
+      "id": "adc",
+      "type": "adc",
+      "x": 620,
+      "y": 200,
+      "label": "ADC · 5 V",
+      "enabled": true,
+      "params": {
+        "vcc": 5
+      }
+    },
+    {
+      "id": "compare",
+      "type": "comparator",
+      "x": 920,
+      "y": 200,
+      "label": "Compare original and decoded",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "equal",
+      "type": "led",
+      "x": 1220,
+      "y": 40,
+      "label": "Original = decoded",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "less",
+      "type": "led",
+      "x": 1220,
+      "y": 240,
+      "label": "Original < decoded",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "greater",
+      "type": "led",
+      "x": 1220,
+      "y": 440,
+      "label": "Original > decoded",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "voltage",
+      "type": "scope",
+      "x": 320,
+      "y": 460,
+      "label": "Analog voltage",
+      "enabled": true,
+      "params": {
+        "range": 5
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "value-out-dac-in",
+      "from": {
+        "node": "value",
+        "port": "out"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in"
+      },
+      "width": 8
+    },
+    {
+      "id": "dac-out-adc-in",
+      "from": {
+        "node": "dac",
+        "port": "out"
+      },
+      "to": {
+        "node": "adc",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "value-out-compare-a",
+      "from": {
+        "node": "value",
+        "port": "out"
+      },
+      "to": {
+        "node": "compare",
+        "port": "a"
+      },
+      "width": 8
+    },
+    {
+      "id": "adc-out-compare-b",
+      "from": {
+        "node": "adc",
+        "port": "out"
+      },
+      "to": {
+        "node": "compare",
+        "port": "b"
+      },
+      "width": 8
+    },
+    {
+      "id": "compare-eq-equal-in",
+      "from": {
+        "node": "compare",
+        "port": "eq"
+      },
+      "to": {
+        "node": "equal",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "compare-lt-less-in",
+      "from": {
+        "node": "compare",
+        "port": "lt"
+      },
+      "to": {
+        "node": "less",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "compare-gt-greater-in",
+      "from": {
+        "node": "compare",
+        "port": "gt"
+      },
+      "to": {
+        "node": "greater",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "dac-out-voltage-in",
+      "from": {
+        "node": "dac",
+        "port": "out"
+      },
+      "to": {
+        "node": "voltage",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "adc-dac"
+}

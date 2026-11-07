@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { COMPONENTS } from '../src/catalog.js';
-import { EXAMPLES } from '../src/examples.js';
+import { EXAMPLES } from '../examples/index.js';
 import { GUIDES, getGuide } from '../src/guides.js';
 
 test('the beginner guide catalog covers every component without stale entries', () => {

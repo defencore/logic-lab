@@ -1,0 +1,279 @@
+{
+  "version": 1,
+  "name": "Clocked binary counter",
+  "nodes": [
+    {
+      "id": "clock",
+      "type": "clock",
+      "x": 40,
+      "y": 40,
+      "label": "Clock · 2 Hz",
+      "enabled": true,
+      "params": {
+        "frequency": 2,
+        "duty": 0.5
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "x": 40,
+      "y": 260,
+      "label": "Reset",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "enable",
+      "type": "switch",
+      "x": 40,
+      "y": 480,
+      "label": "Enable",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "counter",
+      "type": "counter",
+      "x": 340,
+      "y": 240,
+      "label": "8-bit counter",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "bits",
+      "type": "splitter",
+      "x": 620,
+      "y": 180,
+      "label": "Bus → eight bits",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "bit0",
+      "type": "led",
+      "x": 920,
+      "y": 40,
+      "label": "Bit 0 · weight 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "bit1",
+      "type": "led",
+      "x": 920,
+      "y": 210,
+      "label": "Bit 1 · weight 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "bit2",
+      "type": "led",
+      "x": 920,
+      "y": 380,
+      "label": "Bit 2 · weight 4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "bit3",
+      "type": "led",
+      "x": 920,
+      "y": 550,
+      "label": "Bit 3 · weight 8",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "bit4",
+      "type": "led",
+      "x": 1180,
+      "y": 40,
+      "label": "Bit 4 · weight 16",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "bit5",
+      "type": "led",
+      "x": 1180,
+      "y": 210,
+      "label": "Bit 5 · weight 32",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "bit6",
+      "type": "led",
+      "x": 1180,
+      "y": 380,
+      "label": "Bit 6 · weight 64",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "bit7",
+      "type": "led",
+      "x": 1180,
+      "y": 550,
+      "label": "Bit 7 · weight 128",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "clock-out-counter-clk",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "counter",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-counter-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "counter",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "enable-out-counter-enable",
+      "from": {
+        "node": "enable",
+        "port": "out"
+      },
+      "to": {
+        "node": "counter",
+        "port": "enable"
+      },
+      "width": 1
+    },
+    {
+      "id": "counter-out-bits-in",
+      "from": {
+        "node": "counter",
+        "port": "out"
+      },
+      "to": {
+        "node": "bits",
+        "port": "in"
+      },
+      "width": 8
+    },
+    {
+      "id": "bits-b0-bit0-in",
+      "from": {
+        "node": "bits",
+        "port": "b0"
+      },
+      "to": {
+        "node": "bit0",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "bits-b1-bit1-in",
+      "from": {
+        "node": "bits",
+        "port": "b1"
+      },
+      "to": {
+        "node": "bit1",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "bits-b2-bit2-in",
+      "from": {
+        "node": "bits",
+        "port": "b2"
+      },
+      "to": {
+        "node": "bit2",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "bits-b3-bit3-in",
+      "from": {
+        "node": "bits",
+        "port": "b3"
+      },
+      "to": {
+        "node": "bit3",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "bits-b4-bit4-in",
+      "from": {
+        "node": "bits",
+        "port": "b4"
+      },
+      "to": {
+        "node": "bit4",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "bits-b5-bit5-in",
+      "from": {
+        "node": "bits",
+        "port": "b5"
+      },
+      "to": {
+        "node": "bit5",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "bits-b6-bit6-in",
+      "from": {
+        "node": "bits",
+        "port": "b6"
+      },
+      "to": {
+        "node": "bit6",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "bits-b7-bit7-in",
+      "from": {
+        "node": "bits",
+        "port": "b7"
+      },
+      "to": {
+        "node": "bit7",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "counter"
+}

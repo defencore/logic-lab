@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "name": "Schmitt hysteresis",
+  "nodes": [
+    {
+      "id": "level",
+      "type": "bus_input",
+      "x": 80,
+      "y": 220,
+      "label": "Voltage byte",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "dac",
+      "type": "dac",
+      "x": 360,
+      "y": 220,
+      "label": "Byte → 0–5 V",
+      "enabled": true,
+      "params": {
+        "vcc": 5
+      }
+    },
+    {
+      "id": "schmitt",
+      "type": "schmitt",
+      "x": 660,
+      "y": 220,
+      "label": "Hysteresis · 1.5 / 3.5 V",
+      "enabled": true,
+      "params": {
+        "low": 1.5,
+        "high": 3.5
+      }
+    },
+    {
+      "id": "clean",
+      "type": "led",
+      "x": 960,
+      "y": 220,
+      "label": "Clean digital output",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "voltage",
+      "type": "scope",
+      "x": 360,
+      "y": 460,
+      "label": "Input voltage",
+      "enabled": true,
+      "params": {
+        "range": 5
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "level-out-dac-in",
+      "from": {
+        "node": "level",
+        "port": "out"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in"
+      },
+      "width": 8
+    },
+    {
+      "id": "dac-out-schmitt-in",
+      "from": {
+        "node": "dac",
+        "port": "out"
+      },
+      "to": {
+        "node": "schmitt",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "schmitt-out-clean-in",
+      "from": {
+        "node": "schmitt",
+        "port": "out"
+      },
+      "to": {
+        "node": "clean",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "dac-out-voltage-in",
+      "from": {
+        "node": "dac",
+        "port": "out"
+      },
+      "to": {
+        "node": "voltage",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "schmitt"
+}

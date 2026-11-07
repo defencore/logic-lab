@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "name": "Half adder",
+  "nodes": [
+    {
+      "id": "a",
+      "type": "switch",
+      "x": 100,
+      "y": 140,
+      "label": "Input A",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "b",
+      "type": "switch",
+      "x": 100,
+      "y": 360,
+      "label": "Input B",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "sum",
+      "type": "xor",
+      "x": 420,
+      "y": 140,
+      "label": "SUM · A ⊕ B",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "carry",
+      "type": "and",
+      "x": 420,
+      "y": 360,
+      "label": "CARRY · A ∧ B",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "sum-led",
+      "type": "led",
+      "x": 740,
+      "y": 140,
+      "label": "Sum",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "carry-led",
+      "type": "led",
+      "x": 740,
+      "y": 360,
+      "label": "Carry",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "a-out-sum-a",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "sum",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-sum-b",
+      "from": {
+        "node": "b",
+        "port": "out"
+      },
+      "to": {
+        "node": "sum",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-carry-a",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "carry",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-carry-b",
+      "from": {
+        "node": "b",
+        "port": "out"
+      },
+      "to": {
+        "node": "carry",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "sum-out-sum-led-in",
+      "from": {
+        "node": "sum",
+        "port": "out"
+      },
+      "to": {
+        "node": "sum-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "carry-out-carry-led-in",
+      "from": {
+        "node": "carry",
+        "port": "out"
+      },
+      "to": {
+        "node": "carry-led",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "half-adder"
+}

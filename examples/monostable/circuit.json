@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "name": "One trigger, one pulse",
+  "nodes": [
+    {
+      "id": "trigger",
+      "type": "switch",
+      "x": 100,
+      "y": 120,
+      "label": "Trigger",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "x": 100,
+      "y": 380,
+      "label": "Reset",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "timer",
+      "type": "monostable",
+      "x": 420,
+      "y": 240,
+      "label": "One-shot · 0.5 s",
+      "enabled": true,
+      "params": {
+        "duration": 0.5
+      }
+    },
+    {
+      "id": "pulse",
+      "type": "led",
+      "x": 740,
+      "y": 120,
+      "label": "Pulse output",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "trace",
+      "type": "scope",
+      "x": 740,
+      "y": 380,
+      "label": "Pulse waveform",
+      "enabled": true,
+      "params": {
+        "range": 1
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "trigger-out-timer-trigger",
+      "from": {
+        "node": "trigger",
+        "port": "out"
+      },
+      "to": {
+        "node": "timer",
+        "port": "trigger"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-timer-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "timer",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "timer-out-pulse-in",
+      "from": {
+        "node": "timer",
+        "port": "out"
+      },
+      "to": {
+        "node": "pulse",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "timer-out-trace-in",
+      "from": {
+        "node": "timer",
+        "port": "out"
+      },
+      "to": {
+        "node": "trace",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "monostable"
+}

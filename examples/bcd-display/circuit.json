@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "name": "BCD display decoder",
+  "nodes": [
+    {
+      "id": "digit",
+      "type": "bus_input",
+      "x": 100,
+      "y": 220,
+      "label": "Digit · value 0–9",
+      "enabled": true,
+      "params": {
+        "value": 5
+      }
+    },
+    {
+      "id": "decoder",
+      "type": "decoder",
+      "x": 420,
+      "y": 220,
+      "label": "BCD → seven segments",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "display",
+      "type": "sevenseg",
+      "x": 740,
+      "y": 220,
+      "label": "Decimal digit",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "digit-nibble-decoder-in",
+      "from": {
+        "node": "digit",
+        "port": "nibble"
+      },
+      "to": {
+        "node": "decoder",
+        "port": "in"
+      },
+      "width": 4
+    },
+    {
+      "id": "decoder-out-display-in",
+      "from": {
+        "node": "decoder",
+        "port": "out"
+      },
+      "to": {
+        "node": "display",
+        "port": "in"
+      },
+      "width": 8
+    }
+  ],
+  "exampleId": "bcd-display"
+}

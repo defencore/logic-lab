@@ -11,7 +11,7 @@ export function dimensions(node) {
     };
   if (node.type === 'note') return { w: 240, h: 130 };
   return {
-    w: ['scope', 'servo', 'matrix', 'am', 'fm'].includes(node.type)
+    w: ['scope', 'servo', 'matrix', 'am', 'fm', 'stepper'].includes(node.type)
       ? 228
       : node.type === 'sevenseg'
         ? 164
@@ -19,7 +19,7 @@ export function dimensions(node) {
     h: Math.max(
       100,
       54 + Math.max(d.inputs.length, d.outputs.length) * 25,
-      ['scope', 'servo', 'matrix', 'sevenseg', 'am', 'fm'].includes(node.type) ? 190 : 0,
+      ['scope', 'servo', 'matrix', 'sevenseg', 'am', 'fm', 'stepper'].includes(node.type) ? 190 : 0,
     ),
   };
 }

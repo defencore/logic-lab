@@ -1,0 +1,292 @@
+{
+  "version": 1,
+  "name": "Bus routing and selection",
+  "nodes": [
+    {
+      "id": "a",
+      "type": "bus_input",
+      "x": 40,
+      "y": 40,
+      "label": "Byte A",
+      "enabled": true,
+      "params": {
+        "value": 42
+      }
+    },
+    {
+      "id": "b",
+      "type": "bus_input",
+      "x": 40,
+      "y": 260,
+      "label": "Byte B",
+      "enabled": true,
+      "params": {
+        "value": 165
+      }
+    },
+    {
+      "id": "select",
+      "type": "switch",
+      "x": 40,
+      "y": 480,
+      "label": "Select B",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "mux",
+      "type": "mux",
+      "x": 320,
+      "y": 240,
+      "label": "Choose A or B",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "splitter",
+      "type": "splitter",
+      "x": 600,
+      "y": 180,
+      "label": "Split byte",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "merger",
+      "type": "merger",
+      "x": 880,
+      "y": 180,
+      "label": "Merge the same bits",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "demux",
+      "type": "demux",
+      "x": 1160,
+      "y": 240,
+      "label": "Route selected byte",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "left",
+      "type": "scope",
+      "x": 1440,
+      "y": 80,
+      "label": "Route 0 · byte",
+      "enabled": true,
+      "params": {
+        "range": 255
+      }
+    },
+    {
+      "id": "right",
+      "type": "scope",
+      "x": 1440,
+      "y": 400,
+      "label": "Route 1 · byte",
+      "enabled": true,
+      "params": {
+        "range": 255
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "a-out-mux-a",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "mux",
+        "port": "a"
+      },
+      "width": 8
+    },
+    {
+      "id": "b-out-mux-b",
+      "from": {
+        "node": "b",
+        "port": "out"
+      },
+      "to": {
+        "node": "mux",
+        "port": "b"
+      },
+      "width": 8
+    },
+    {
+      "id": "select-out-mux-sel",
+      "from": {
+        "node": "select",
+        "port": "out"
+      },
+      "to": {
+        "node": "mux",
+        "port": "sel"
+      },
+      "width": 1
+    },
+    {
+      "id": "mux-out-splitter-in",
+      "from": {
+        "node": "mux",
+        "port": "out"
+      },
+      "to": {
+        "node": "splitter",
+        "port": "in"
+      },
+      "width": 8
+    },
+    {
+      "id": "merger-out-demux-in",
+      "from": {
+        "node": "merger",
+        "port": "out"
+      },
+      "to": {
+        "node": "demux",
+        "port": "in"
+      },
+      "width": 8
+    },
+    {
+      "id": "select-out-demux-sel",
+      "from": {
+        "node": "select",
+        "port": "out"
+      },
+      "to": {
+        "node": "demux",
+        "port": "sel"
+      },
+      "width": 1
+    },
+    {
+      "id": "demux-a-left-in",
+      "from": {
+        "node": "demux",
+        "port": "a"
+      },
+      "to": {
+        "node": "left",
+        "port": "in"
+      },
+      "width": 8
+    },
+    {
+      "id": "demux-b-right-in",
+      "from": {
+        "node": "demux",
+        "port": "b"
+      },
+      "to": {
+        "node": "right",
+        "port": "in"
+      },
+      "width": 8
+    },
+    {
+      "id": "splitter-b0-merger-b0",
+      "from": {
+        "node": "splitter",
+        "port": "b0"
+      },
+      "to": {
+        "node": "merger",
+        "port": "b0"
+      },
+      "width": 1
+    },
+    {
+      "id": "splitter-b1-merger-b1",
+      "from": {
+        "node": "splitter",
+        "port": "b1"
+      },
+      "to": {
+        "node": "merger",
+        "port": "b1"
+      },
+      "width": 1
+    },
+    {
+      "id": "splitter-b2-merger-b2",
+      "from": {
+        "node": "splitter",
+        "port": "b2"
+      },
+      "to": {
+        "node": "merger",
+        "port": "b2"
+      },
+      "width": 1
+    },
+    {
+      "id": "splitter-b3-merger-b3",
+      "from": {
+        "node": "splitter",
+        "port": "b3"
+      },
+      "to": {
+        "node": "merger",
+        "port": "b3"
+      },
+      "width": 1
+    },
+    {
+      "id": "splitter-b4-merger-b4",
+      "from": {
+        "node": "splitter",
+        "port": "b4"
+      },
+      "to": {
+        "node": "merger",
+        "port": "b4"
+      },
+      "width": 1
+    },
+    {
+      "id": "splitter-b5-merger-b5",
+      "from": {
+        "node": "splitter",
+        "port": "b5"
+      },
+      "to": {
+        "node": "merger",
+        "port": "b5"
+      },
+      "width": 1
+    },
+    {
+      "id": "splitter-b6-merger-b6",
+      "from": {
+        "node": "splitter",
+        "port": "b6"
+      },
+      "to": {
+        "node": "merger",
+        "port": "b6"
+      },
+      "width": 1
+    },
+    {
+      "id": "splitter-b7-merger-b7",
+      "from": {
+        "node": "splitter",
+        "port": "b7"
+      },
+      "to": {
+        "node": "merger",
+        "port": "b7"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "bus-mux"
+}

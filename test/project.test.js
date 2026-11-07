@@ -9,7 +9,7 @@ import {
   loadProject,
   saveProject,
 } from '../src/project.js';
-import { EXAMPLES, createExample } from '../src/examples.js';
+import { EXAMPLES, createExample } from '../examples/index.js';
 
 function fixture() {
   return {

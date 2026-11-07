@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { EXAMPLES } from '../src/examples.js';
+import { EXAMPLES } from '../examples/index.js';
 import { filterExamples, guideMarkup } from '../src/learning-ui.js';
 import { TEXT } from '../src/i18n.js';
 

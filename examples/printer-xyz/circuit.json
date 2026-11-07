@@ -1,0 +1,519 @@
+{
+  "version": 1,
+  "name": "Three-axis printer motion",
+  "exampleId": "printer-xyz",
+  "nodes": [
+    {
+      "id": "x-axis",
+      "type": "stepper",
+      "x": 440,
+      "y": 80,
+      "label": "X axis",
+      "enabled": true,
+      "params": {
+        "stepsPerRevolution": 200,
+        "microsteps": 1,
+        "lead": 8,
+        "initial": 5,
+        "min": 0,
+        "max": 20
+      }
+    },
+    {
+      "id": "y-axis",
+      "type": "stepper",
+      "x": 440,
+      "y": 380,
+      "label": "Y axis",
+      "enabled": true,
+      "params": {
+        "stepsPerRevolution": 200,
+        "microsteps": 1,
+        "lead": 8,
+        "initial": 10,
+        "min": 0,
+        "max": 20
+      }
+    },
+    {
+      "id": "z-axis",
+      "type": "stepper",
+      "x": 440,
+      "y": 680,
+      "label": "Z axis",
+      "enabled": true,
+      "params": {
+        "stepsPerRevolution": 200,
+        "microsteps": 1,
+        "lead": 2,
+        "initial": 3,
+        "min": 0,
+        "max": 20
+      }
+    },
+    {
+      "id": "clock",
+      "type": "clock",
+      "x": 40,
+      "y": 40,
+      "label": "Shared step clock · 40 Hz",
+      "enabled": true,
+      "params": {
+        "frequency": 40,
+        "duty": 0.5
+      }
+    },
+    {
+      "id": "x-direction",
+      "type": "switch",
+      "x": 40,
+      "y": 180,
+      "label": "X direction · 1 = positive",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "x-enable",
+      "type": "switch",
+      "x": 240,
+      "y": 180,
+      "label": "X enable",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "x-min",
+      "type": "limit_switch",
+      "x": 760,
+      "y": 80,
+      "label": "X min endstop",
+      "enabled": true,
+      "params": {
+        "threshold": 0,
+        "mode": "below",
+        "normallyClosed": false
+      }
+    },
+    {
+      "id": "x-min-led",
+      "type": "led",
+      "x": 1040,
+      "y": 80,
+      "label": "X min reached",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "x-max",
+      "type": "limit_switch",
+      "x": 760,
+      "y": 220,
+      "label": "X max endstop",
+      "enabled": true,
+      "params": {
+        "threshold": 20,
+        "mode": "above",
+        "normallyClosed": false
+      }
+    },
+    {
+      "id": "x-max-led",
+      "type": "led",
+      "x": 1040,
+      "y": 220,
+      "label": "X max reached",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "y-direction",
+      "type": "switch",
+      "x": 40,
+      "y": 480,
+      "label": "Y direction · 1 = positive",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "y-enable",
+      "type": "switch",
+      "x": 240,
+      "y": 480,
+      "label": "Y enable",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "y-min",
+      "type": "limit_switch",
+      "x": 760,
+      "y": 380,
+      "label": "Y min endstop",
+      "enabled": true,
+      "params": {
+        "threshold": 0,
+        "mode": "below",
+        "normallyClosed": false
+      }
+    },
+    {
+      "id": "y-min-led",
+      "type": "led",
+      "x": 1040,
+      "y": 380,
+      "label": "Y min reached",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "y-max",
+      "type": "limit_switch",
+      "x": 760,
+      "y": 520,
+      "label": "Y max endstop",
+      "enabled": true,
+      "params": {
+        "threshold": 20,
+        "mode": "above",
+        "normallyClosed": false
+      }
+    },
+    {
+      "id": "y-max-led",
+      "type": "led",
+      "x": 1040,
+      "y": 520,
+      "label": "Y max reached",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "z-direction",
+      "type": "switch",
+      "x": 40,
+      "y": 780,
+      "label": "Z direction · 1 = positive",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "z-enable",
+      "type": "switch",
+      "x": 240,
+      "y": 780,
+      "label": "Z enable",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "z-min",
+      "type": "limit_switch",
+      "x": 760,
+      "y": 680,
+      "label": "Z min endstop",
+      "enabled": true,
+      "params": {
+        "threshold": 0,
+        "mode": "below",
+        "normallyClosed": false
+      }
+    },
+    {
+      "id": "z-min-led",
+      "type": "led",
+      "x": 1040,
+      "y": 680,
+      "label": "Z min reached",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "z-max",
+      "type": "limit_switch",
+      "x": 760,
+      "y": 820,
+      "label": "Z max endstop",
+      "enabled": true,
+      "params": {
+        "threshold": 20,
+        "mode": "above",
+        "normallyClosed": false
+      }
+    },
+    {
+      "id": "z-max-led",
+      "type": "led",
+      "x": 1040,
+      "y": 820,
+      "label": "Z max reached",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "clock-out-x-axis-step",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "x-axis",
+        "port": "step"
+      },
+      "width": 1
+    },
+    {
+      "id": "x-direction-out-x-axis-dir",
+      "from": {
+        "node": "x-direction",
+        "port": "out"
+      },
+      "to": {
+        "node": "x-axis",
+        "port": "dir"
+      },
+      "width": 1
+    },
+    {
+      "id": "x-enable-out-x-axis-enable",
+      "from": {
+        "node": "x-enable",
+        "port": "out"
+      },
+      "to": {
+        "node": "x-axis",
+        "port": "enable"
+      },
+      "width": 1
+    },
+    {
+      "id": "x-axis-position-x-min-position",
+      "from": {
+        "node": "x-axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "x-min",
+        "port": "position"
+      },
+      "width": 1
+    },
+    {
+      "id": "x-min-out-x-min-led-in",
+      "from": {
+        "node": "x-min",
+        "port": "out"
+      },
+      "to": {
+        "node": "x-min-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "x-axis-position-x-max-position",
+      "from": {
+        "node": "x-axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "x-max",
+        "port": "position"
+      },
+      "width": 1
+    },
+    {
+      "id": "x-max-out-x-max-led-in",
+      "from": {
+        "node": "x-max",
+        "port": "out"
+      },
+      "to": {
+        "node": "x-max-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "clock-out-y-axis-step",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "y-axis",
+        "port": "step"
+      },
+      "width": 1
+    },
+    {
+      "id": "y-direction-out-y-axis-dir",
+      "from": {
+        "node": "y-direction",
+        "port": "out"
+      },
+      "to": {
+        "node": "y-axis",
+        "port": "dir"
+      },
+      "width": 1
+    },
+    {
+      "id": "y-enable-out-y-axis-enable",
+      "from": {
+        "node": "y-enable",
+        "port": "out"
+      },
+      "to": {
+        "node": "y-axis",
+        "port": "enable"
+      },
+      "width": 1
+    },
+    {
+      "id": "y-axis-position-y-min-position",
+      "from": {
+        "node": "y-axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "y-min",
+        "port": "position"
+      },
+      "width": 1
+    },
+    {
+      "id": "y-min-out-y-min-led-in",
+      "from": {
+        "node": "y-min",
+        "port": "out"
+      },
+      "to": {
+        "node": "y-min-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "y-axis-position-y-max-position",
+      "from": {
+        "node": "y-axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "y-max",
+        "port": "position"
+      },
+      "width": 1
+    },
+    {
+      "id": "y-max-out-y-max-led-in",
+      "from": {
+        "node": "y-max",
+        "port": "out"
+      },
+      "to": {
+        "node": "y-max-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "clock-out-z-axis-step",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "z-axis",
+        "port": "step"
+      },
+      "width": 1
+    },
+    {
+      "id": "z-direction-out-z-axis-dir",
+      "from": {
+        "node": "z-direction",
+        "port": "out"
+      },
+      "to": {
+        "node": "z-axis",
+        "port": "dir"
+      },
+      "width": 1
+    },
+    {
+      "id": "z-enable-out-z-axis-enable",
+      "from": {
+        "node": "z-enable",
+        "port": "out"
+      },
+      "to": {
+        "node": "z-axis",
+        "port": "enable"
+      },
+      "width": 1
+    },
+    {
+      "id": "z-axis-position-z-min-position",
+      "from": {
+        "node": "z-axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "z-min",
+        "port": "position"
+      },
+      "width": 1
+    },
+    {
+      "id": "z-min-out-z-min-led-in",
+      "from": {
+        "node": "z-min",
+        "port": "out"
+      },
+      "to": {
+        "node": "z-min-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "z-axis-position-z-max-position",
+      "from": {
+        "node": "z-axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "z-max",
+        "port": "position"
+      },
+      "width": 1
+    },
+    {
+      "id": "z-max-out-z-max-led-in",
+      "from": {
+        "node": "z-max",
+        "port": "out"
+      },
+      "to": {
+        "node": "z-max-led",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ]
+}

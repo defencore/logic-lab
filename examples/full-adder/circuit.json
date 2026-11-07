@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "name": "Full adder",
+  "nodes": [
+    {
+      "id": "a",
+      "type": "switch",
+      "x": 100,
+      "y": 60,
+      "label": "Input A",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "b",
+      "type": "switch",
+      "x": 100,
+      "y": 260,
+      "label": "Input B",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "cin",
+      "type": "switch",
+      "x": 100,
+      "y": 460,
+      "label": "Carry in",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "adder",
+      "type": "full_adder",
+      "x": 420,
+      "y": 240,
+      "label": "A + B + Carry in",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "sum",
+      "type": "led",
+      "x": 740,
+      "y": 120,
+      "label": "Sum",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "carry",
+      "type": "led",
+      "x": 740,
+      "y": 360,
+      "label": "Carry out",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "a-out-adder-a",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "adder",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-adder-b",
+      "from": {
+        "node": "b",
+        "port": "out"
+      },
+      "to": {
+        "node": "adder",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "cin-out-adder-cin",
+      "from": {
+        "node": "cin",
+        "port": "out"
+      },
+      "to": {
+        "node": "adder",
+        "port": "cin"
+      },
+      "width": 1
+    },
+    {
+      "id": "adder-sum-sum-in",
+      "from": {
+        "node": "adder",
+        "port": "sum"
+      },
+      "to": {
+        "node": "sum",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "adder-carry-carry-in",
+      "from": {
+        "node": "adder",
+        "port": "carry"
+      },
+      "to": {
+        "node": "carry",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "full-adder"
+}

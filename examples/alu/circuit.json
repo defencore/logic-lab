@@ -1,0 +1,152 @@
+{
+  "version": 1,
+  "name": "8-bit arithmetic and logic",
+  "nodes": [
+    {
+      "id": "a",
+      "type": "bus_input",
+      "x": 80,
+      "y": 40,
+      "label": "Operand A",
+      "enabled": true,
+      "params": {
+        "value": 5
+      }
+    },
+    {
+      "id": "b",
+      "type": "bus_input",
+      "x": 80,
+      "y": 260,
+      "label": "Operand B",
+      "enabled": true,
+      "params": {
+        "value": 3
+      }
+    },
+    {
+      "id": "op",
+      "type": "bus_input",
+      "x": 80,
+      "y": 480,
+      "label": "Operation · value 0–7",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "alu",
+      "type": "alu",
+      "x": 420,
+      "y": 220,
+      "label": "8-bit ALU",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "result",
+      "type": "scope",
+      "x": 740,
+      "y": 40,
+      "label": "Result · decimal byte",
+      "enabled": true,
+      "params": {
+        "range": 255
+      }
+    },
+    {
+      "id": "carry",
+      "type": "led",
+      "x": 740,
+      "y": 300,
+      "label": "Carry / borrow",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "zero",
+      "type": "led",
+      "x": 740,
+      "y": 500,
+      "label": "Zero result",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "a-out-alu-a",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "alu",
+        "port": "a"
+      },
+      "width": 8
+    },
+    {
+      "id": "b-out-alu-b",
+      "from": {
+        "node": "b",
+        "port": "out"
+      },
+      "to": {
+        "node": "alu",
+        "port": "b"
+      },
+      "width": 8
+    },
+    {
+      "id": "op-address-alu-op",
+      "from": {
+        "node": "op",
+        "port": "address"
+      },
+      "to": {
+        "node": "alu",
+        "port": "op"
+      },
+      "width": 3
+    },
+    {
+      "id": "alu-out-result-in",
+      "from": {
+        "node": "alu",
+        "port": "out"
+      },
+      "to": {
+        "node": "result",
+        "port": "in"
+      },
+      "width": 8
+    },
+    {
+      "id": "alu-carry-carry-in",
+      "from": {
+        "node": "alu",
+        "port": "carry"
+      },
+      "to": {
+        "node": "carry",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "alu-zero-zero-in",
+      "from": {
+        "node": "alu",
+        "port": "zero"
+      },
+      "to": {
+        "node": "zero",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "alu"
+}

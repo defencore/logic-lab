@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "name": "Stepper motor fundamentals",
+  "exampleId": "stepper-basics",
+  "nodes": [
+    {
+      "id": "clock",
+      "type": "clock",
+      "x": 40,
+      "y": 40,
+      "label": "Step clock · 20 Hz",
+      "enabled": true,
+      "params": {
+        "frequency": 20,
+        "duty": 0.5
+      }
+    },
+    {
+      "id": "direction",
+      "type": "switch",
+      "x": 40,
+      "y": 240,
+      "label": "Direction · 1 = positive",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "enable",
+      "type": "switch",
+      "x": 40,
+      "y": 440,
+      "label": "Motion enable",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "x": 40,
+      "y": 640,
+      "label": "Reset to 10 mm",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "axis",
+      "type": "stepper",
+      "x": 380,
+      "y": 240,
+      "label": "X axis · STEP / DIR",
+      "enabled": true,
+      "params": {
+        "stepsPerRevolution": 200,
+        "microsteps": 1,
+        "lead": 8,
+        "initial": 10,
+        "min": 0,
+        "max": 40
+      }
+    },
+    {
+      "id": "sensor",
+      "type": "position_sensor",
+      "x": 700,
+      "y": 160,
+      "label": "Start-position sensor",
+      "enabled": true,
+      "params": {
+        "threshold": 10,
+        "tolerance": 0.08,
+        "mode": "window"
+      }
+    },
+    {
+      "id": "at-start",
+      "type": "led",
+      "x": 1020,
+      "y": 160,
+      "label": "At starting position",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "position",
+      "type": "scope",
+      "x": 700,
+      "y": 460,
+      "label": "Axis position · mm",
+      "enabled": true,
+      "params": {
+        "range": 40
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "clock-out-axis-step",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "axis",
+        "port": "step"
+      },
+      "width": 1
+    },
+    {
+      "id": "direction-out-axis-dir",
+      "from": {
+        "node": "direction",
+        "port": "out"
+      },
+      "to": {
+        "node": "axis",
+        "port": "dir"
+      },
+      "width": 1
+    },
+    {
+      "id": "enable-out-axis-enable",
+      "from": {
+        "node": "enable",
+        "port": "out"
+      },
+      "to": {
+        "node": "axis",
+        "port": "enable"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-axis-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "axis",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "axis-position-sensor-position",
+      "from": {
+        "node": "axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "sensor",
+        "port": "position"
+      },
+      "width": 1
+    },
+    {
+      "id": "sensor-out-at-start-in",
+      "from": {
+        "node": "sensor",
+        "port": "out"
+      },
+      "to": {
+        "node": "at-start",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "axis-position-position-in",
+      "from": {
+        "node": "axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "position",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ]
+}

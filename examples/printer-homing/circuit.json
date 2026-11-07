@@ -1,0 +1,230 @@
+{
+  "version": 1,
+  "name": "Printer X-axis homing",
+  "exampleId": "printer-homing",
+  "nodes": [
+    {
+      "id": "clock",
+      "type": "clock",
+      "x": 40,
+      "y": 40,
+      "label": "Step clock · 100 Hz",
+      "enabled": true,
+      "params": {
+        "frequency": 100,
+        "duty": 0.5
+      }
+    },
+    {
+      "id": "direction",
+      "type": "switch",
+      "x": 40,
+      "y": 260,
+      "label": "Direction · 0 = home",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "x": 40,
+      "y": 480,
+      "label": "Reset to 5 mm",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "axis",
+      "type": "stepper",
+      "x": 380,
+      "y": 240,
+      "label": "X axis · STEP / DIR",
+      "enabled": true,
+      "params": {
+        "stepsPerRevolution": 200,
+        "microsteps": 1,
+        "lead": 8,
+        "initial": 5,
+        "min": 0,
+        "max": 20
+      }
+    },
+    {
+      "id": "home",
+      "type": "limit_switch",
+      "x": 700,
+      "y": 180,
+      "label": "Minimum endstop",
+      "enabled": true,
+      "params": {
+        "threshold": 0,
+        "mode": "below",
+        "normallyClosed": false
+      }
+    },
+    {
+      "id": "not-home",
+      "type": "not",
+      "x": 1000,
+      "y": 180,
+      "label": "Endstop released",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "allow",
+      "type": "or",
+      "x": 1260,
+      "y": 220,
+      "label": "Released OR reverse",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "home-led",
+      "type": "led",
+      "x": 1000,
+      "y": 440,
+      "label": "Home reached",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "position",
+      "type": "scope",
+      "x": 700,
+      "y": 480,
+      "label": "Axis position · mm",
+      "enabled": true,
+      "params": {
+        "range": 20
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "clock-out-axis-step",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "axis",
+        "port": "step"
+      },
+      "width": 1
+    },
+    {
+      "id": "direction-out-axis-dir",
+      "from": {
+        "node": "direction",
+        "port": "out"
+      },
+      "to": {
+        "node": "axis",
+        "port": "dir"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-axis-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "axis",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "axis-position-home-position",
+      "from": {
+        "node": "axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "home",
+        "port": "position"
+      },
+      "width": 1
+    },
+    {
+      "id": "home-out-not-home-a",
+      "from": {
+        "node": "home",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-home",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-home-out-allow-a",
+      "from": {
+        "node": "not-home",
+        "port": "out"
+      },
+      "to": {
+        "node": "allow",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "direction-out-allow-b",
+      "from": {
+        "node": "direction",
+        "port": "out"
+      },
+      "to": {
+        "node": "allow",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "allow-out-axis-enable",
+      "from": {
+        "node": "allow",
+        "port": "out"
+      },
+      "to": {
+        "node": "axis",
+        "port": "enable"
+      },
+      "width": 1
+    },
+    {
+      "id": "home-out-home-led-in",
+      "from": {
+        "node": "home",
+        "port": "out"
+      },
+      "to": {
+        "node": "home-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "axis-position-position-in",
+      "from": {
+        "node": "axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "position",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ]
+}

@@ -1,0 +1,397 @@
+{
+  "version": 1,
+  "name": "Seven logic gates",
+  "nodes": [
+    {
+      "id": "a",
+      "type": "switch",
+      "x": 40,
+      "y": 240,
+      "label": "Input A",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "b",
+      "type": "switch",
+      "x": 40,
+      "y": 440,
+      "label": "Input B",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "and",
+      "type": "and",
+      "x": 360,
+      "y": 40,
+      "label": "AND",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "and-led",
+      "type": "led",
+      "x": 600,
+      "y": 40,
+      "label": "AND output",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "or",
+      "type": "or",
+      "x": 360,
+      "y": 210,
+      "label": "OR",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "or-led",
+      "type": "led",
+      "x": 600,
+      "y": 210,
+      "label": "OR output",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "xor",
+      "type": "xor",
+      "x": 360,
+      "y": 380,
+      "label": "XOR",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "xor-led",
+      "type": "led",
+      "x": 600,
+      "y": 380,
+      "label": "XOR output",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "nand",
+      "type": "nand",
+      "x": 360,
+      "y": 550,
+      "label": "NAND",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "nand-led",
+      "type": "led",
+      "x": 600,
+      "y": 550,
+      "label": "NAND output",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "nor",
+      "type": "nor",
+      "x": 900,
+      "y": 40,
+      "label": "NOR",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "nor-led",
+      "type": "led",
+      "x": 1140,
+      "y": 40,
+      "label": "NOR output",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "xnor",
+      "type": "xnor",
+      "x": 900,
+      "y": 210,
+      "label": "XNOR",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "xnor-led",
+      "type": "led",
+      "x": 1140,
+      "y": 210,
+      "label": "XNOR output",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not",
+      "type": "not",
+      "x": 900,
+      "y": 380,
+      "label": "NOT",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-led",
+      "type": "led",
+      "x": 1140,
+      "y": 380,
+      "label": "NOT output",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "a-out-and-a",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "and",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "and-out-and-led-in",
+      "from": {
+        "node": "and",
+        "port": "out"
+      },
+      "to": {
+        "node": "and-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-and-b",
+      "from": {
+        "node": "b",
+        "port": "out"
+      },
+      "to": {
+        "node": "and",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-or-a",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "or",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "or-out-or-led-in",
+      "from": {
+        "node": "or",
+        "port": "out"
+      },
+      "to": {
+        "node": "or-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-or-b",
+      "from": {
+        "node": "b",
+        "port": "out"
+      },
+      "to": {
+        "node": "or",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-xor-a",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "xor",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "xor-out-xor-led-in",
+      "from": {
+        "node": "xor",
+        "port": "out"
+      },
+      "to": {
+        "node": "xor-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-xor-b",
+      "from": {
+        "node": "b",
+        "port": "out"
+      },
+      "to": {
+        "node": "xor",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-nand-a",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "nand",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "nand-out-nand-led-in",
+      "from": {
+        "node": "nand",
+        "port": "out"
+      },
+      "to": {
+        "node": "nand-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-nand-b",
+      "from": {
+        "node": "b",
+        "port": "out"
+      },
+      "to": {
+        "node": "nand",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-nor-a",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "nor",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "nor-out-nor-led-in",
+      "from": {
+        "node": "nor",
+        "port": "out"
+      },
+      "to": {
+        "node": "nor-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-nor-b",
+      "from": {
+        "node": "b",
+        "port": "out"
+      },
+      "to": {
+        "node": "nor",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-xnor-a",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "xnor",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "xnor-out-xnor-led-in",
+      "from": {
+        "node": "xnor",
+        "port": "out"
+      },
+      "to": {
+        "node": "xnor-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-xnor-b",
+      "from": {
+        "node": "b",
+        "port": "out"
+      },
+      "to": {
+        "node": "xnor",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-not-a",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "not",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-out-not-led-in",
+      "from": {
+        "node": "not",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-led",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "logic-gates"
+}

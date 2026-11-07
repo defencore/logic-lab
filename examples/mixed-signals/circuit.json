@@ -1,0 +1,234 @@
+{
+  "version": 1,
+  "name": "AM and FM modulation",
+  "nodes": [
+    {
+      "id": "clock",
+      "type": "clock",
+      "x": 40,
+      "y": 40,
+      "label": "Sample clock · 8 Hz",
+      "enabled": true,
+      "params": {
+        "frequency": 8,
+        "duty": 0.5
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "x": 40,
+      "y": 260,
+      "label": "Reset",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "enable",
+      "type": "switch",
+      "x": 40,
+      "y": 480,
+      "label": "Enable",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "counter",
+      "type": "counter",
+      "x": 320,
+      "y": 240,
+      "label": "Digital ramp",
+      "enabled": true,
+      "params": {
+        "initial": 128
+      }
+    },
+    {
+      "id": "dac",
+      "type": "dac",
+      "x": 600,
+      "y": 240,
+      "label": "DAC · modulation voltage",
+      "enabled": true,
+      "params": {
+        "vcc": 5
+      }
+    },
+    {
+      "id": "am",
+      "type": "am",
+      "x": 900,
+      "y": 80,
+      "label": "AM carrier",
+      "enabled": true,
+      "params": {
+        "carrier": 8,
+        "frequency": 1,
+        "depth": 0.6,
+        "amplitude": 5
+      }
+    },
+    {
+      "id": "fm",
+      "type": "fm",
+      "x": 900,
+      "y": 400,
+      "label": "FM carrier",
+      "enabled": true,
+      "params": {
+        "carrier": 8,
+        "frequency": 1,
+        "depth": 0.6,
+        "amplitude": 5
+      }
+    },
+    {
+      "id": "ramp-scope",
+      "type": "scope",
+      "x": 600,
+      "y": 500,
+      "label": "Modulation voltage",
+      "enabled": true,
+      "params": {
+        "range": 5
+      }
+    },
+    {
+      "id": "mod-scope",
+      "type": "scope",
+      "x": 1200,
+      "y": 80,
+      "label": "AM waveform",
+      "enabled": true,
+      "params": {
+        "range": 5
+      }
+    },
+    {
+      "id": "fm-scope",
+      "type": "scope",
+      "x": 1200,
+      "y": 400,
+      "label": "FM waveform",
+      "enabled": true,
+      "params": {
+        "range": 5
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "clock-out-counter-clk",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "counter",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-counter-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "counter",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "enable-out-counter-enable",
+      "from": {
+        "node": "enable",
+        "port": "out"
+      },
+      "to": {
+        "node": "counter",
+        "port": "enable"
+      },
+      "width": 1
+    },
+    {
+      "id": "counter-out-dac-in",
+      "from": {
+        "node": "counter",
+        "port": "out"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in"
+      },
+      "width": 8
+    },
+    {
+      "id": "dac-out-am-mod",
+      "from": {
+        "node": "dac",
+        "port": "out"
+      },
+      "to": {
+        "node": "am",
+        "port": "mod"
+      },
+      "width": 1
+    },
+    {
+      "id": "dac-out-fm-mod",
+      "from": {
+        "node": "dac",
+        "port": "out"
+      },
+      "to": {
+        "node": "fm",
+        "port": "mod"
+      },
+      "width": 1
+    },
+    {
+      "id": "dac-out-ramp-scope-in",
+      "from": {
+        "node": "dac",
+        "port": "out"
+      },
+      "to": {
+        "node": "ramp-scope",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "am-out-mod-scope-in",
+      "from": {
+        "node": "am",
+        "port": "out"
+      },
+      "to": {
+        "node": "mod-scope",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "fm-out-fm-scope-in",
+      "from": {
+        "node": "fm",
+        "port": "out"
+      },
+      "to": {
+        "node": "fm-scope",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "mixed-signals"
+}

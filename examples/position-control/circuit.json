@@ -1,0 +1,313 @@
+{
+  "version": 1,
+  "name": "Printer position control loop",
+  "exampleId": "position-control",
+  "nodes": [
+    {
+      "id": "target",
+      "type": "bus_input",
+      "x": 40,
+      "y": 40,
+      "label": "Target byte · 0–255",
+      "enabled": true,
+      "params": {
+        "value": 128
+      }
+    },
+    {
+      "id": "target-dac",
+      "type": "dac",
+      "x": 320,
+      "y": 40,
+      "label": "Target · 0–8 mm",
+      "enabled": true,
+      "params": {
+        "vcc": 8
+      }
+    },
+    {
+      "id": "clock",
+      "type": "clock",
+      "x": 40,
+      "y": 280,
+      "label": "Step clock · 50 Hz",
+      "enabled": true,
+      "params": {
+        "frequency": 50,
+        "duty": 0.5
+      }
+    },
+    {
+      "id": "run",
+      "type": "switch",
+      "x": 40,
+      "y": 480,
+      "label": "Motion enable",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "x": 40,
+      "y": 680,
+      "label": "Reset to 0 mm",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "axis",
+      "type": "stepper",
+      "x": 380,
+      "y": 240,
+      "label": "X axis · STEP / DIR",
+      "enabled": true,
+      "params": {
+        "stepsPerRevolution": 200,
+        "microsteps": 1,
+        "lead": 8,
+        "initial": 0,
+        "min": 0,
+        "max": 8
+      }
+    },
+    {
+      "id": "direction-sensor",
+      "type": "position_sensor",
+      "x": 700,
+      "y": 120,
+      "label": "Below target → DIR",
+      "enabled": true,
+      "params": {
+        "threshold": 4,
+        "tolerance": 0.03,
+        "mode": "below"
+      }
+    },
+    {
+      "id": "target-sensor",
+      "type": "position_sensor",
+      "x": 700,
+      "y": 400,
+      "label": "At target ±0.03 mm",
+      "enabled": true,
+      "params": {
+        "threshold": 4,
+        "tolerance": 0.03,
+        "mode": "window"
+      }
+    },
+    {
+      "id": "not-target",
+      "type": "not",
+      "x": 1020,
+      "y": 400,
+      "label": "Not at target",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "allow",
+      "type": "and",
+      "x": 1280,
+      "y": 400,
+      "label": "Enabled AND not at target",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target-led",
+      "type": "led",
+      "x": 1020,
+      "y": 660,
+      "label": "Target reached",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "position",
+      "type": "scope",
+      "x": 700,
+      "y": 700,
+      "label": "Axis position · mm",
+      "enabled": true,
+      "params": {
+        "range": 8
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "target-out-target-dac-in",
+      "from": {
+        "node": "target",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-dac",
+        "port": "in"
+      },
+      "width": 8
+    },
+    {
+      "id": "target-dac-out-direction-sensor-target",
+      "from": {
+        "node": "target-dac",
+        "port": "out"
+      },
+      "to": {
+        "node": "direction-sensor",
+        "port": "target"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-dac-out-target-sensor-target",
+      "from": {
+        "node": "target-dac",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-sensor",
+        "port": "target"
+      },
+      "width": 1
+    },
+    {
+      "id": "axis-position-direction-sensor-position",
+      "from": {
+        "node": "axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "direction-sensor",
+        "port": "position"
+      },
+      "width": 1
+    },
+    {
+      "id": "axis-position-target-sensor-position",
+      "from": {
+        "node": "axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "target-sensor",
+        "port": "position"
+      },
+      "width": 1
+    },
+    {
+      "id": "direction-sensor-out-axis-dir",
+      "from": {
+        "node": "direction-sensor",
+        "port": "out"
+      },
+      "to": {
+        "node": "axis",
+        "port": "dir"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-sensor-out-not-target-a",
+      "from": {
+        "node": "target-sensor",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-target",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-target-out-allow-a",
+      "from": {
+        "node": "not-target",
+        "port": "out"
+      },
+      "to": {
+        "node": "allow",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "run-out-allow-b",
+      "from": {
+        "node": "run",
+        "port": "out"
+      },
+      "to": {
+        "node": "allow",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "allow-out-axis-enable",
+      "from": {
+        "node": "allow",
+        "port": "out"
+      },
+      "to": {
+        "node": "axis",
+        "port": "enable"
+      },
+      "width": 1
+    },
+    {
+      "id": "clock-out-axis-step",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "axis",
+        "port": "step"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-axis-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "axis",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-sensor-out-target-led-in",
+      "from": {
+        "node": "target-sensor",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "axis-position-position-in",
+      "from": {
+        "node": "axis",
+        "port": "position"
+      },
+      "to": {
+        "node": "position",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ]
+}

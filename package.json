@@ -5,17 +5,21 @@
   "type": "module",
   "description": "A browser-native digital and mixed-signal logic workbench",
   "scripts": {
-    "start": "python3 -m http.server 4173 --bind 127.0.0.1",
+    "start": "node scripts/start.mjs",
     "test": "node --test test/*.test.js",
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
-    "format": "prettier --write \"src/**/*.js\" \"test/**/*.js\" \"scripts/*.mjs\" style.css index.html README.md package.json .github/workflows/pages.yml .prettierrc.json",
-    "format:check": "prettier --check \"src/**/*.js\" \"test/**/*.js\" \"scripts/*.mjs\" style.css index.html README.md package.json .github/workflows/pages.yml .prettierrc.json"
+    "format": "prettier --write \"src/**/*.js\" \"test/**/*.js\" \"examples/**/*.{js,json,md}\" \"scripts/*.mjs\" style.css index.html README.md package.json .github/workflows/pages.yml .prettierrc.json",
+    "format:check": "prettier --check \"src/**/*.js\" \"test/**/*.js\" \"examples/**/*.{js,json,md}\" \"scripts/*.mjs\" style.css index.html README.md package.json .github/workflows/pages.yml .prettierrc.json"
   },
   "engines": {
     "node": ">=22"
   },
   "devDependencies": {
+    "esbuild": "0.28.2",
     "prettier": "3.6.2"
+  },
+  "dependencies": {
+    "three": "0.187.0"
   }
 }

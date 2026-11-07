@@ -36,6 +36,8 @@ const optionalInputs = {
   t_ff: ['reset'],
   shift_register: ['reset'],
   monostable: ['reset'],
+  stepper: ['enable', 'reset'],
+  position_sensor: ['target'],
   ram: ['cs', 'oe', 'we'],
   rom: ['cs', 'oe'],
 };
@@ -55,9 +57,29 @@ export function createRuntime() {
   };
 }
 
+function motionParameters(p) {
+  const stepsPerRevolution = number(p.stepsPerRevolution, NaN);
+  const microsteps = number(p.microsteps, NaN);
+  const lead = number(p.lead, NaN);
+  const minimum = number(p.min, NaN);
+  const maximum = number(p.max, NaN);
+  const valid =
+    Number.isInteger(stepsPerRevolution) &&
+    stepsPerRevolution > 0 &&
+    Number.isInteger(microsteps) &&
+    microsteps > 0 &&
+    lead > 0 &&
+    Number.isFinite(lead) &&
+    Number.isFinite(minimum) &&
+    Number.isFinite(maximum) &&
+    minimum <= maximum;
+  return { valid, lead, minimum, maximum, distance: lead / (stepsPerRevolution * microsteps) };
+}
+
 function initialState(node) {
   const parameters = { ...getDefinition(node.type)?.defaults, ...node.params };
   const initial = Math.round(number(parameters.initial));
+  const motion = node.type === 'stepper' ? motionParameters(parameters) : null;
   return {
     q: ['d_ff', 'jk_ff', 't_ff', 'sr_latch', 'schmitt'].includes(node.type)
       ? Number(initial !== 0)
@@ -67,6 +89,11 @@ function initialState(node) {
     pulseUntil: -1,
     memory: Array(node.type === 'register_file' ? 8 : 16).fill(0),
     angles: [0, 0, 0, 0],
+    position: motion?.valid ? clamp(number(parameters.initial), motion.minimum, motion.maximum) : 0,
+    lastStep: null,
+    stepConnection: null,
+    motionWasEnabled: false,
+    motionMoving: 0,
     servoEdges: Array.from({ length: 4 }, () => ({
       previous: 0,
       rise: null,
@@ -284,6 +311,40 @@ function evaluate(node, runtime, incoming) {
     }
     case 'servo':
       return Object.fromEntries(s.angles.map((angle, index) => [`a${index + 1}`, angle]));
+    case 'stepper': {
+      const motion = motionParameters(p);
+      if (!motion.valid || unknown(s.position)) return { position: 'X', angle: 'X', moving: 'X' };
+      return {
+        position: s.position,
+        angle: (s.position / motion.lead) * 360,
+        moving: s.motionMoving,
+      };
+    }
+    case 'limit_switch': {
+      if (unknown(i.position) || !Number.isFinite(Number(p.threshold))) return out('X');
+      const pressed =
+        p.mode === 'below'
+          ? i.position <= Number(p.threshold)
+          : p.mode === 'above'
+            ? i.position >= Number(p.threshold)
+            : null;
+      return out(pressed === null ? 'X' : Number(p.normallyClosed ? !pressed : pressed));
+    }
+    case 'position_sensor': {
+      const target = incoming.has(`${node.id}:target`) ? i.target : number(p.threshold, NaN);
+      if (unknown(i.position) || unknown(target)) return { position: i.position, out: 'X' };
+      const detected =
+        p.mode === 'below'
+          ? i.position <= target
+          : p.mode === 'above'
+            ? i.position >= target
+            : p.mode === 'window' &&
+                Number.isFinite(Number(p.tolerance)) &&
+                Number(p.tolerance) >= 0
+              ? Math.abs(i.position - target) <= Number(p.tolerance) + 1e-10
+              : null;
+      return { position: i.position, out: detected === null ? 'X' : Number(detected) };
+    }
     case 'alu': {
       if (!allKnown(i.a, i.b, i.op)) return { out: 'X', carry: 'X', zero: 'X' };
       const av = i.a & 255,
@@ -359,11 +420,48 @@ function settle(nodes, incoming, runtime) {
 function advanceState(nodes, runtime, incoming, dt) {
   const updates = new Map();
   for (const node of nodes) {
-    if (node.enabled === false) continue;
     const i = runtime.inputs[node.id],
       s = runtime.state[node.id];
     const p = { ...getDefinition(node.type).defaults, ...node.params };
     const next = { ...s };
+    if (node.type === 'stepper') {
+      const motion = motionParameters(p);
+      const step = logic(i.step);
+      const connection = (incoming.get(`${node.id}:step`) || [])
+        .map((wire) => wire.sourceKey)
+        .sort()
+        .join('|');
+      const enable = incoming.has(`${node.id}:enable`) ? logic(i.enable) : 1;
+      const reset = incoming.has(`${node.id}:reset`) ? logic(i.reset) : 0;
+      const rising = step === 1 && s.lastStep === 0 && s.stepConnection === connection;
+      next.lastStep = step;
+      next.stepConnection = connection;
+      next.motionWasEnabled = node.enabled !== false && enable === 1 && reset === 0;
+      next.motionMoving = 0;
+      if (node.enabled !== false) {
+        if (motion.valid && !unknown(s.position))
+          next.position = clamp(s.position, motion.minimum, motion.maximum);
+        if (!motion.valid || unknown(reset)) next.position = 'X';
+        else if (reset === 1)
+          next.position = clamp(number(p.initial), motion.minimum, motion.maximum);
+        else if (rising && enable !== 0) {
+          if (unknown(enable) || (s.motionWasEnabled && unknown(logic(i.dir)))) next.position = 'X';
+          else if (s.motionWasEnabled && !unknown(s.position)) {
+            const direction = logic(i.dir) === 1 ? 1 : -1;
+            // Commit position once before sensor feedback is settled for the new location.
+            next.position = clamp(
+              s.position + direction * motion.distance,
+              motion.minimum,
+              motion.maximum,
+            );
+            next.motionMoving = Number(Math.abs(next.position - s.position) > 1e-12);
+          }
+        }
+      }
+      updates.set(node.id, next);
+      continue;
+    }
+    if (node.enabled === false) continue;
     if (sequential.has(node.type)) {
       const clock = logic(valueOr(i.clk, 0));
       const rising = clock === 1 && s.lastClock === 0;
@@ -587,6 +685,23 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
         code: 'invalid_sr',
         node: node.id,
         message: `${node.label || definition.label}: S and R cannot both be high.`,
+      });
+    if (
+      node.type === 'stepper' &&
+      !motionParameters({ ...definition.defaults, ...node.params }).valid
+    )
+      runtime.diagnostics.push({
+        level: 'error',
+        code: 'invalid_motion',
+        node: node.id,
+        message: `${node.label || definition.label}: steps per revolution and microsteps must be positive integers, lead must be positive, and Min must not exceed Max.`,
+      });
+    else if (node.type === 'stepper' && unknown(runtime.state[node.id].position))
+      runtime.diagnostics.push({
+        level: 'error',
+        code: 'motion_unknown',
+        node: node.id,
+        message: `${node.label || definition.label}: position is unknown after an uncertain control signal. Apply Reset to restore the initial position.`,
       });
     const outputValues = Object.values(runtime.outputs[node.id] || {});
     const inputValues = Object.values(runtime.inputs[node.id] || {});

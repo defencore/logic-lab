@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "name": "Open-drain wired AND",
+  "nodes": [
+    {
+      "id": "a",
+      "type": "switch",
+      "x": 80,
+      "y": 100,
+      "label": "Release A",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "b",
+      "type": "switch",
+      "x": 80,
+      "y": 380,
+      "label": "Release B",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "drain-a",
+      "type": "open_drain",
+      "x": 380,
+      "y": 100,
+      "label": "Open drain A",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "drain-b",
+      "type": "open_drain",
+      "x": 380,
+      "y": 380,
+      "label": "Open drain B",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "pull",
+      "type": "pullup",
+      "x": 680,
+      "y": 80,
+      "label": "Weak pull-up",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "line",
+      "type": "led",
+      "x": 980,
+      "y": 240,
+      "label": "Shared line",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "a-out-drain-a-in",
+      "from": {
+        "node": "a",
+        "port": "out"
+      },
+      "to": {
+        "node": "drain-a",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-drain-b-in",
+      "from": {
+        "node": "b",
+        "port": "out"
+      },
+      "to": {
+        "node": "drain-b",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "drain-a-out-line-in",
+      "from": {
+        "node": "drain-a",
+        "port": "out"
+      },
+      "to": {
+        "node": "line",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "drain-b-out-line-in",
+      "from": {
+        "node": "drain-b",
+        "port": "out"
+      },
+      "to": {
+        "node": "line",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "pull-out-line-in",
+      "from": {
+        "node": "pull",
+        "port": "out"
+      },
+      "to": {
+        "node": "line",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "wired-and"
+}

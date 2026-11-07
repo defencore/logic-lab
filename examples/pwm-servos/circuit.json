@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "name": "PWM control surfaces",
+  "nodes": [
+    {
+      "id": "course",
+      "type": "pwm",
+      "x": 80,
+      "y": 100,
+      "label": "Course PWM",
+      "enabled": true,
+      "params": {
+        "frequency": 105,
+        "duty": 0.34
+      }
+    },
+    {
+      "id": "height",
+      "type": "pwm",
+      "x": 80,
+      "y": 380,
+      "label": "Height PWM",
+      "enabled": true,
+      "params": {
+        "frequency": 105,
+        "duty": 0.66
+      }
+    },
+    {
+      "id": "course-scope",
+      "type": "scope",
+      "x": 400,
+      "y": 80,
+      "label": "Course PWM waveform",
+      "enabled": true,
+      "params": {
+        "range": 1
+      }
+    },
+    {
+      "id": "height-scope",
+      "type": "scope",
+      "x": 400,
+      "y": 440,
+      "label": "Height PWM waveform",
+      "enabled": true,
+      "params": {
+        "range": 1
+      }
+    },
+    {
+      "id": "servos",
+      "type": "servo",
+      "x": 740,
+      "y": 240,
+      "label": "Control surface bank",
+      "enabled": true,
+      "params": {
+        "minDuty": 0.18,
+        "maxDuty": 0.82,
+        "range": 180
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "course-out-course-scope-in",
+      "from": {
+        "node": "course",
+        "port": "out"
+      },
+      "to": {
+        "node": "course-scope",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "height-out-height-scope-in",
+      "from": {
+        "node": "height",
+        "port": "out"
+      },
+      "to": {
+        "node": "height-scope",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "course-duty-servos-s1",
+      "from": {
+        "node": "course",
+        "port": "duty"
+      },
+      "to": {
+        "node": "servos",
+        "port": "s1"
+      },
+      "width": 1
+    },
+    {
+      "id": "height-duty-servos-s2",
+      "from": {
+        "node": "height",
+        "port": "duty"
+      },
+      "to": {
+        "node": "servos",
+        "port": "s2"
+      },
+      "width": 1
+    },
+    {
+      "id": "course-duty-servos-s3",
+      "from": {
+        "node": "course",
+        "port": "duty"
+      },
+      "to": {
+        "node": "servos",
+        "port": "s3"
+      },
+      "width": 1
+    },
+    {
+      "id": "height-duty-servos-s4",
+      "from": {
+        "node": "height",
+        "port": "duty"
+      },
+      "to": {
+        "node": "servos",
+        "port": "s4"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "pwm-servos"
+}

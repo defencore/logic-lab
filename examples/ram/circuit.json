@@ -1,0 +1,341 @@
+{
+  "version": 1,
+  "name": "Memory read and write",
+  "nodes": [
+    {
+      "id": "address",
+      "type": "bus_input",
+      "x": 40,
+      "y": 40,
+      "label": "Address · value 0–15",
+      "enabled": true,
+      "params": {
+        "value": 2
+      }
+    },
+    {
+      "id": "data",
+      "type": "bus_input",
+      "x": 40,
+      "y": 240,
+      "label": "Write data",
+      "enabled": true,
+      "params": {
+        "value": 42
+      }
+    },
+    {
+      "id": "clock",
+      "type": "switch",
+      "x": 40,
+      "y": 440,
+      "label": "Write clock",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "write",
+      "type": "switch",
+      "x": 40,
+      "y": 640,
+      "label": "Write enable",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "chip",
+      "type": "switch",
+      "x": 340,
+      "y": 640,
+      "label": "Chip select",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "read",
+      "type": "switch",
+      "x": 620,
+      "y": 640,
+      "label": "Output enable",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "ram",
+      "type": "ram",
+      "x": 340,
+      "y": 80,
+      "label": "RAM · writable",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "rom",
+      "type": "rom",
+      "x": 640,
+      "y": 80,
+      "label": "ROM · fixed data",
+      "enabled": true,
+      "params": {
+        "data": "0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150"
+      }
+    },
+    {
+      "id": "registers",
+      "type": "register_file",
+      "x": 940,
+      "y": 80,
+      "label": "Register file",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "ram-view",
+      "type": "scope",
+      "x": 340,
+      "y": 420,
+      "label": "RAM output",
+      "enabled": true,
+      "params": {
+        "range": 255
+      }
+    },
+    {
+      "id": "rom-view",
+      "type": "scope",
+      "x": 640,
+      "y": 420,
+      "label": "ROM output",
+      "enabled": true,
+      "params": {
+        "range": 255
+      }
+    },
+    {
+      "id": "reg-view",
+      "type": "scope",
+      "x": 940,
+      "y": 420,
+      "label": "Register output",
+      "enabled": true,
+      "params": {
+        "range": 255
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "address-nibble-ram-address",
+      "from": {
+        "node": "address",
+        "port": "nibble"
+      },
+      "to": {
+        "node": "ram",
+        "port": "address"
+      },
+      "width": 4
+    },
+    {
+      "id": "data-out-ram-data",
+      "from": {
+        "node": "data",
+        "port": "out"
+      },
+      "to": {
+        "node": "ram",
+        "port": "data"
+      },
+      "width": 8
+    },
+    {
+      "id": "clock-out-ram-clk",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "ram",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "chip-out-ram-cs",
+      "from": {
+        "node": "chip",
+        "port": "out"
+      },
+      "to": {
+        "node": "ram",
+        "port": "cs"
+      },
+      "width": 1
+    },
+    {
+      "id": "read-out-ram-oe",
+      "from": {
+        "node": "read",
+        "port": "out"
+      },
+      "to": {
+        "node": "ram",
+        "port": "oe"
+      },
+      "width": 1
+    },
+    {
+      "id": "write-out-ram-we",
+      "from": {
+        "node": "write",
+        "port": "out"
+      },
+      "to": {
+        "node": "ram",
+        "port": "we"
+      },
+      "width": 1
+    },
+    {
+      "id": "ram-out-ram-view-in",
+      "from": {
+        "node": "ram",
+        "port": "out"
+      },
+      "to": {
+        "node": "ram-view",
+        "port": "in"
+      },
+      "width": 8
+    },
+    {
+      "id": "address-nibble-rom-address",
+      "from": {
+        "node": "address",
+        "port": "nibble"
+      },
+      "to": {
+        "node": "rom",
+        "port": "address"
+      },
+      "width": 4
+    },
+    {
+      "id": "chip-out-rom-cs",
+      "from": {
+        "node": "chip",
+        "port": "out"
+      },
+      "to": {
+        "node": "rom",
+        "port": "cs"
+      },
+      "width": 1
+    },
+    {
+      "id": "read-out-rom-oe",
+      "from": {
+        "node": "read",
+        "port": "out"
+      },
+      "to": {
+        "node": "rom",
+        "port": "oe"
+      },
+      "width": 1
+    },
+    {
+      "id": "rom-out-rom-view-in",
+      "from": {
+        "node": "rom",
+        "port": "out"
+      },
+      "to": {
+        "node": "rom-view",
+        "port": "in"
+      },
+      "width": 8
+    },
+    {
+      "id": "address-address-registers-read",
+      "from": {
+        "node": "address",
+        "port": "address"
+      },
+      "to": {
+        "node": "registers",
+        "port": "read"
+      },
+      "width": 3
+    },
+    {
+      "id": "address-address-registers-write",
+      "from": {
+        "node": "address",
+        "port": "address"
+      },
+      "to": {
+        "node": "registers",
+        "port": "write"
+      },
+      "width": 3
+    },
+    {
+      "id": "data-out-registers-data",
+      "from": {
+        "node": "data",
+        "port": "out"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data"
+      },
+      "width": 8
+    },
+    {
+      "id": "clock-out-registers-clk",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "registers",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "write-out-registers-we",
+      "from": {
+        "node": "write",
+        "port": "out"
+      },
+      "to": {
+        "node": "registers",
+        "port": "we"
+      },
+      "width": 1
+    },
+    {
+      "id": "registers-out-reg-view-in",
+      "from": {
+        "node": "registers",
+        "port": "out"
+      },
+      "to": {
+        "node": "reg-view",
+        "port": "in"
+      },
+      "width": 8
+    }
+  ],
+  "exampleId": "ram"
+}

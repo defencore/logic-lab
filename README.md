@@ -6,9 +6,10 @@ The interface supports English and Ukrainian. Source comments and project docume
 
 ## Run locally
 
-Use Node.js 22 or newer and Python 3 for the local preview server.
+Use Node.js 22 or newer. Install the pinned dependencies before starting the local preview server.
 
 ```sh
+npm ci
 npm start
 ```
 
@@ -22,7 +23,7 @@ npm test
 npm run build
 ```
 
-The application uses native JavaScript modules and has no third-party runtime dependencies. Serve it over HTTP; opening `index.html` directly through a `file:` URL does not support browser module loading reliably.
+The application is written as JavaScript modules. The build bundles Three.js and all application code into local static assets; there are no runtime CDN requests or application servers. The Node preview server serves the same `dist/` layout as GitHub Pages and watches source imports. Open the preview URL over HTTP rather than opening `index.html` as a local file.
 
 ## Build circuits
 
@@ -36,9 +37,9 @@ The application uses native JavaScript modules and has no third-party runtime de
 
 ## Learn with guides and experiments
 
-The library contains 51 components with guides in English and Ukrainian. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
+The library contains 54 components with guides in English and Ukrainian. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
 
-The **Examples** catalog contains 15 editable experiments. Search by name or topic and filter by topic or difficulty. Examples cover gates and arithmetic, clocked state, displays, buses, memory, mixed signals, physical signal behavior, and PWM control surfaces.
+The **Examples** catalog contains 19 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, buses, memory, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback.
 
 After opening an example, a lesson panel appears above the canvas. Follow its steps with **Previous** and **Next**, watch the highlighted components and live pin values, and open the relevant component in the inspector. Change a switch, numeric value, or slider and compare the result with the lesson's expected behavior. Run the circuit to advance clocks and waveforms, or pause and use **Step** to examine changes in smaller increments.
 
@@ -47,6 +48,12 @@ Numeric settings, text fields, colors, and duty-cycle sliders update the circuit
 The signal monitor prioritizes selected components and oscilloscope probes. Choose a 0.25, 1, or 5 second time window; use the shorter window for fast signals such as the 105 Hz PWM example. Changing this window clears the previous trace and starts sampling at the new rate.
 
 Changes are saved automatically in browser local storage when available. Export a project to JSON for a portable backup or import a JSON project to continue editing. Browser storage belongs to this origin and browser profile; private browsing, browser settings, and clearing site data can remove it.
+
+### Reusable laboratory files
+
+The [laboratory collection](./examples/README.md) stores each exercise in its own `examples/<id>/` directory. Download a lab's `circuit.json` and import it directly, or open the same circuit from the in-app catalog. Each folder also contains bilingual `lesson.js` metadata and an English `README.md` lab sheet with an estimated duration, objectives, a procedure, review questions and deliverables. Export completed work as a separate project; the supplied starting circuit stays unchanged.
+
+The motion sequence progresses from [STEP/DIR fundamentals](./examples/stepper-basics/README.md), through [automatic printer-axis homing](./examples/printer-homing/README.md), to [closed-loop position control](./examples/position-control/README.md). Homing uses a minimum endstop and an enable interlock that permits reversing away from home. Position control shares one target between direction and arrival sensors, then stops inside a tolerance window.
 
 ### Keyboard and navigation
 
@@ -96,7 +103,7 @@ RAM, ROM, and register-file sizes are intentionally bounded for interactive exam
 - `src/catalog.js`: component definitions, pins, defaults, and bilingual descriptions.
 - `src/simulator.js`: browser-independent signal evaluation and sequential state.
 - `src/project.js`: validated project import/export and local persistence.
-- `src/examples.js`: editable example circuit factories and bilingual lesson steps.
+- `examples/index.js` and `examples/<id>/`: laboratory registry, canonical JSON circuits, bilingual lessons and English lab sheets.
 - `src/guides.js`: bilingual component manuals, pin descriptions, experiments, and related examples.
 - `src/geometry.js`: grid placement, component dimensions, pin positions, and wire routing.
 - `src/ui-utils.js`: shared escaping, color validation, and signal formatting.
@@ -104,7 +111,7 @@ RAM, ROM, and register-file sizes are intentionally bounded for interactive exam
 - `src/waveforms.js`: sampled signal plotting with gaps for unknown values.
 - `src/app.js`: editor interactions, lesson navigation, and interface state.
 - `test/`: Node.js built-in test runner checks for logic and project integrity.
-- `scripts/`: local serving and static distribution preparation.
+- `scripts/`: esbuild configuration, local preview server, static distribution preparation, and syntax checks.
 
 The canvas uses separate grid, wire, and component layers. The interaction model takes inspiration from [WirePad](https://github.com/defencore/WirePad): a searchable library, direct component manipulation, pin-to-pin wiring, and routed connections. Logic Lab owns its simulation models and project format.
 
@@ -120,3 +127,11 @@ The [GitHub Pages workflow](https://docs.github.com/en/pages/getting-started-wit
 4. Once GitHub validates the domain and provisions the certificate, enable **Enforce HTTPS**.
 
 The build preserves `CNAME` and `.nojekyll`. Static assets use relative paths so the application also works under a GitHub project-site path. Repository settings and DNS must be configured by an account with the relevant access; adding these files alone does not change those external settings.
+
+## Motion and 3D mechanisms
+
+The stepper component accepts rising STEP edges, DIR, enable, and reset. Its travel is derived from full steps per revolution, microsteps, and lead in millimeters per revolution. Mechanical limits constrain travel. Position sensors and normally open or normally closed limit switches feed the circuit so homing and target-position feedback remain logic operations.
+
+Open **3D mechanisms** in the header or **Open 3D view** on a motor. The first three motors control the printer's X carriage, Y bed, and Z gantry. The separate view shows shaft and screw rotation, carriage travel, sensor trip markers, and live readouts. Its switches and pulse-clock controls edit the same source components as the circuit canvas. Camera presets and orbit controls affect only the view. Three.js requires WebGL 2; if graphics are unavailable, the circuit simulation still works.
+
+The mechanical model is idealized: it does not simulate inertia, torque, missed steps, collisions, acceleration planning, or real electrical motor-driver behavior. STEP pulses must be sampled by the simulator; use frequencies comfortably below its sampling limit. Reset sets the configured initial position, while physical homing requires movement and a limit signal.

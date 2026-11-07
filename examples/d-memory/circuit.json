@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "name": "One-bit memory",
+  "nodes": [
+    {
+      "id": "data",
+      "type": "switch",
+      "x": 100,
+      "y": 60,
+      "label": "Data D",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "clock",
+      "type": "switch",
+      "x": 100,
+      "y": 260,
+      "label": "Manual clock",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "x": 100,
+      "y": 460,
+      "label": "Reset",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "memory",
+      "type": "d_ff",
+      "x": 420,
+      "y": 240,
+      "label": "D flip-flop",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "q",
+      "type": "led",
+      "x": 740,
+      "y": 140,
+      "label": "Stored Q",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "nq",
+      "type": "led",
+      "x": 740,
+      "y": 380,
+      "label": "Inverted Q",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "data-out-memory-d",
+      "from": {
+        "node": "data",
+        "port": "out"
+      },
+      "to": {
+        "node": "memory",
+        "port": "d"
+      },
+      "width": 1
+    },
+    {
+      "id": "clock-out-memory-clk",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "memory",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-memory-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "memory",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "memory-q-q-in",
+      "from": {
+        "node": "memory",
+        "port": "q"
+      },
+      "to": {
+        "node": "q",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "memory-nq-nq-in",
+      "from": {
+        "node": "memory",
+        "port": "nq"
+      },
+      "to": {
+        "node": "nq",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "d-memory"
+}
