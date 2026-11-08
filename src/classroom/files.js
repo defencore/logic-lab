@@ -1,4 +1,4 @@
-import { SEQUENCE_LIMITS } from '../action-sequence.js';
+import { SEQUENCE_LIMITS } from '../experiments/actions.js';
 
 export const cleanName = (name) =>
   String(name)

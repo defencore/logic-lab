@@ -1,8 +1,8 @@
-import { COMPONENTS } from '../catalog.js';
-import { getSceneEntries } from '../scene-data.js';
-import { icon } from '../icons.js';
-import { esc } from '../ui-utils.js';
-import { SIMULATION_RATES, TIME_WINDOWS } from '../simulation-time.js';
+import { COMPONENTS } from '../components/catalog/index.js';
+import { getSceneEntries } from '../scenes/data/scenarios.js';
+import { icon } from '../shared/icons.js';
+import { esc } from '../shared/ui.js';
+import { SIMULATION_RATES, TIME_WINDOWS } from '../signals/time.js';
 const button = (id, name, label, extra = '') =>
   `<button id="${id}" class="icon-btn ${extra}" title="${esc(label)}" aria-label="${esc(label)}">${icon(name)}</button>`;
 

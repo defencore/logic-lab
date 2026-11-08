@@ -1,0 +1,169 @@
+/* Circuit nodes, physical contacts and visual components. */
+
+.circuit-node {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #8396a8;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px #1b293817;
+  user-select: none;
+  pointer-events: auto;
+}
+
+.circuit-node.selected {
+  border-color: #62915f;
+  box-shadow:
+    0 0 0 3px #7aa96b21,
+    0 4px 12px #324d2c09;
+}
+
+.circuit-node.disabled {
+  opacity: 0.45;
+}
+
+.node-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 9px;
+  background: #dfe8ef;
+  border-bottom: 1px solid #a9bacb;
+  border-radius: 8px 8px 0 0;
+  cursor: move;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.node-type-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #86a178;
+  flex-shrink: 0;
+}
+
+.node-header > span:not(.node-type-dot) {
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  line-height: var(--leading-ui);
+}
+
+.node-header small {
+  display: none;
+}
+
+.node-content {
+  position: absolute;
+  inset: 33px 22px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.node-content button {
+  pointer-events: auto;
+}
+
+.pin {
+  position: absolute;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  transform: translateY(-50%);
+  z-index: 2;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 10px;
+  color: var(--muted);
+  min-width: 18px;
+}
+
+.pin-in {
+  left: -6px;
+}
+
+.pin-out {
+  right: -6px;
+  flex-direction: row-reverse;
+}
+
+.pin i {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  background: #fff;
+  flex-shrink: 0;
+  transition: background 0.1s;
+}
+
+.pin i::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  width: 9px;
+  height: 2px;
+  background: #8396a8;
+}
+
+.pin-in i::after {
+  left: 7px;
+}
+
+.pin-out i::after {
+  right: 7px;
+}
+
+.pin span {
+  padding: 0 12px;
+  font-size: 10px;
+}
+
+.pin:hover i,
+.pin.connecting i {
+  box-shadow: 0 0 0 5px #7ba77330;
+  background: #8fba82;
+}
+
+.pin.high i {
+  border-color: #4d9366;
+  background: #64a77b;
+}
+
+.pin.low i {
+  border-color: var(--border);
+}
+
+.pin.unknown i {
+  border-color: #d1a34e;
+  background: #f4e0b0;
+}
+
+.pin.floating i {
+  border-style: dashed;
+  background: #f7f8f3;
+}
+
+.pin.analog-pin i {
+  border-radius: 3px;
+  transform: rotate(45deg);
+  width: 8px;
+  height: 8px;
+}
+
+.pin.analog-pin i::after {
+  display: none;
+}
+
+.gate-view {
+  color: var(--muted);
+  opacity: 0.85;
+}

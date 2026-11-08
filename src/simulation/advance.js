@@ -1,4 +1,4 @@
-import { simulate } from '../simulator.js';
+import { simulate } from './index.js';
 import { nextSimulationInterval } from './timing.js';
 
 /** Advance a bounded amount of work, returning all unprocessed simulation time. */

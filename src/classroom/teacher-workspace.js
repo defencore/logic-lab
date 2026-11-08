@@ -1,4 +1,4 @@
-import { createPlayback, advancePlayback } from '../action-sequence.js';
+import { createPlayback, advancePlayback } from '../experiments/actions.js';
 import {
   createAssignment,
   issueAssignment,
@@ -7,7 +7,7 @@ import {
   parseSubmission,
   gradeSubmission,
   compareSubmissionsAsync,
-} from '../lab-assessment.js';
+} from '../assessment/index.js';
 import { readClassroomFile } from './files.js';
 import { sanitizeTeacherForm } from './storage.js';
 import { yieldToMain } from '../assessment/scheduling.js';

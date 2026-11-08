@@ -1,4 +1,4 @@
-import { getDefinition } from '../catalog.js';
+import { getDefinition } from '../components/catalog/index.js';
 
 const EPSILON = Number.EPSILON * 4;
 const MAX_STEP = 0.0005;

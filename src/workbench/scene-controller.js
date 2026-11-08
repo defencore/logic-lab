@@ -1,8 +1,8 @@
-import { getDefinition } from '../catalog.js';
+import { getDefinition } from '../components/catalog/index.js';
 import { createExample } from '../../examples/index.js';
-import { simulate } from '../simulator.js';
-import { $, $$, esc, format, signalClass } from '../ui-utils.js';
-import { icon } from '../icons.js';
+import { simulate } from '../simulation/index.js';
+import { $, $$, esc, format, signalClass } from '../shared/ui.js';
+import { icon } from '../shared/icons.js';
 import {
   getSceneEntries,
   getSceneSnapshot,
@@ -10,7 +10,7 @@ import {
   sceneMessageKey,
   sceneControlSwitch,
   sceneActuatorValues,
-} from '../scene-data.js';
+} from '../scenes/data/scenarios.js';
 
 export function createSceneController(state, actions) {
   let motionView = null;
@@ -129,8 +129,8 @@ export function createSceneController(state, actions) {
     updateMotionView();
     try {
       const renderer = mechanics
-        ? await import('../motion-view.js')
-        : await import('../scenario-view.js');
+        ? await import('../scenes/views/mechanics/index.js')
+        : await import('../scenes/views/scenarios/index.js');
       if (token !== motionViewToken || !$('#motion-stage')) return;
       motionView = mechanics
         ? renderer.createMotionView($('#motion-stage'), { language: state.lang, onStatus })

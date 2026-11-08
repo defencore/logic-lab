@@ -1,0 +1,185 @@
+/* Component instructions, truth tables and laboratory walkthroughs. */
+
+.truth-table {
+  width: 100%;
+  font:
+    13px ui-monospace,
+    monospace;
+  text-align: center;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.truth-table th {
+  font-size: 12px;
+  font-weight: 700;
+  color: #24374a;
+  background: #e8eef5;
+  border: 1px solid #b8c8d6;
+  padding: 9px 6px;
+}
+
+.truth-table td {
+  padding: 8px 6px;
+  border: 1px solid var(--border);
+  color: #24374a;
+  background: #fff;
+}
+
+.truth-table td.high {
+  background: #e5f2e9;
+  color: #145231;
+  font-weight: 700;
+}
+
+.truth-reference {
+  padding: 18px 0;
+  border-top: 1px solid var(--border);
+}
+
+.truth-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.truth-reference h4 {
+  margin: 0 0 8px;
+  color: #24374a;
+  font-size: 13px;
+}
+
+.truth-reference p {
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.65;
+  margin: 8px 0;
+}
+
+.truth-reference .truth-table caption {
+  color: #475569;
+  text-align: left;
+  font:
+    12px/1.6 Inter,
+    sans-serif;
+  padding: 0 0 10px;
+}
+
+.truth-table .truth-output-heading {
+  background: #dcece2;
+  color: #21563b;
+}
+
+.truth-table .truth-output {
+  font-weight: 700;
+  border-left-color: #8fae9b;
+}
+
+.truth-table .current-row td {
+  background: #dcefdc;
+  color: var(--deep);
+  border-top: 2px solid #397954;
+  border-bottom: 2px solid #397954;
+}
+
+.truth-table .current-row td:first-child {
+  box-shadow: inset 4px 0 #397954;
+}
+
+.truth-reference [data-truth-status] {
+  padding: 8px 10px;
+  border: 1px solid #b6cdbf;
+  background: #f0f6f1;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+#inspector-content > .truth-reference {
+  margin: 0 18px;
+}
+
+.component-instructions {
+  padding: 3px 0 10px;
+}
+
+.guide-purpose {
+  color: var(--muted);
+  line-height: 1.75;
+  font-size: 13px;
+  margin: 14px 0 23px;
+}
+
+.guide-section {
+  border-top: 1px solid var(--border);
+  padding: 20px 0 3px;
+}
+
+.guide-section h4 {
+  font-size: var(--text-sm);
+  font-weight: 650;
+  line-height: var(--leading-ui);
+  color: var(--muted);
+  margin: 0 0 13px;
+}
+
+.instruction-steps {
+  padding-left: 22px;
+  margin: 0 0 15px;
+}
+
+.instruction-steps li {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  line-height: 1.7;
+  padding-left: 6px;
+  margin: 0 0 11px;
+}
+
+.instruction-steps li::marker {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.guide-section > p {
+  font-size: var(--text-sm);
+  line-height: 1.75;
+  color: var(--muted);
+}
+
+.guide-section > strong {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.try-experiment {
+  background: #f5f8ee;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 16px 18px 4px;
+  margin: 8px 0 22px;
+}
+
+.guide-pitfalls {
+  padding-left: 17px;
+  margin: 0 0 18px;
+}
+
+.guide-pitfalls li {
+  padding-left: 3px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.related-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0 18px;
+}
+
+.related-examples .soft-btn {
+  font-size: 12px;
+}

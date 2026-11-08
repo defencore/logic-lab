@@ -1,0 +1,77 @@
+.wire-layer,
+.draft-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.wire-layer {
+  z-index: 1;
+}
+
+.node-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.draft-layer {
+  z-index: 4;
+}
+
+#draft {
+  fill: none;
+  stroke: #60936e;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  pointer-events: none;
+}
+
+.wire-group {
+  pointer-events: auto;
+}
+
+.wire-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  pointer-events: stroke;
+  cursor: grab;
+  vector-effect: non-scaling-stroke;
+  touch-action: none;
+}
+
+.wire-line {
+  fill: none;
+  stroke: #a6b1a7;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.wire-line.high {
+  stroke: var(--green);
+}
+
+.wire-line.low {
+  stroke: #64748b;
+}
+
+.wire-line.unknown {
+  stroke: #ad6507;
+}
+
+.wire-line.floating {
+  stroke: #8057ae;
+  stroke-dasharray: 5 4;
+}
+
+.wire-group.selected .wire-line {
+  filter: drop-shadow(0 0 2px #4e8f60);
+  stroke-width: 3.5;
+}

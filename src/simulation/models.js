@@ -1,5 +1,9 @@
-import { getDefinition } from '../catalog.js';
-import { isScenarioType, initialScenarioState, evaluateScenario } from '../scenarios.js';
+import { getDefinition } from '../components/catalog/index.js';
+import {
+  isScenarioType,
+  initialScenarioState,
+  evaluateScenario,
+} from '../scenes/models/scenarios/index.js';
 import { TAU, unknown, logic, clamp, number, complement, active, allKnown } from './signals.js';
 
 const decimalSegments = [0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f];

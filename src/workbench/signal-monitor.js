@@ -1,8 +1,13 @@
-import { getDefinition } from '../catalog.js';
-import { $, esc, format } from '../ui-utils.js';
-import { paintTraces } from '../waveforms.js';
-import { waveformPng } from '../waveform-export.js';
-import { createRecording, appendRecording, stopRecording, recordingCsv } from '../recording.js';
+import { getDefinition } from '../components/catalog/index.js';
+import { $, esc, format } from '../shared/ui.js';
+import { paintTraces } from '../signals/waveforms.js';
+import { waveformPng } from '../signals/export.js';
+import {
+  createRecording,
+  appendRecording,
+  stopRecording,
+  recordingCsv,
+} from '../signals/recording.js';
 
 export function createSignalMonitor(state, { t, title, notify, setWorkspaceView }) {
   let recording = null;

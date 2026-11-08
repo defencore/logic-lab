@@ -1,13 +1,13 @@
 import { SOURCE_PARAMETERS } from '../simulation/input-sources.js';
-import { getDefinition } from '../catalog.js';
-import { validateProject } from '../project.js';
+import { getDefinition } from '../components/catalog/index.js';
+import { validateProject } from '../circuits/project.js';
 import {
   boundedJson,
   boundedSerialize,
   validateProbes,
   validateSequence,
   createPlayback,
-} from '../action-sequence.js';
+} from '../experiments/actions.js';
 import {
   MAX_ISSUED,
   MAX_JOURNAL,

@@ -1,8 +1,13 @@
-import { getDefinition } from '../catalog.js';
+import { getDefinition } from '../components/catalog/index.js';
 import { EXAMPLES, createExample } from '../../examples/index.js';
-import { $, $$, esc, format, signalClass } from '../ui-utils.js';
-import { icon } from '../icons.js';
-import { guideMarkup, exampleCards, filterExamples, exampleCatalogShell } from '../learning-ui.js';
+import { $, $$, esc, format, signalClass } from '../shared/ui.js';
+import { icon } from '../shared/icons.js';
+import {
+  guideMarkup,
+  exampleCards,
+  filterExamples,
+  exampleCatalogShell,
+} from '../learning/views/guides.js';
 
 export function createLearningController(
   workbench,

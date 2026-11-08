@@ -1,0 +1,263 @@
+/* Mechanical and automation scenes and their circuit controls. */
+
+.stepper-widget {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.scene-node-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  max-width: 130px;
+  text-align: center;
+}
+
+.scene-node-widget .text-btn {
+  padding: 5px 8px;
+  min-height: 30px;
+  background: #e7eff7;
+  border: 1px solid #b3c5d7;
+  border-radius: 5px;
+  color: #274e70;
+}
+
+.scene-node-widget .node-readout {
+  font:
+    12px ui-monospace,
+    monospace;
+  color: #25384b;
+}
+
+.scene-node-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 45px;
+  background: #e5ecf8;
+  color: #3e5390;
+  border-radius: 7px;
+}
+
+.scene-node-state {
+  font-size: 10px;
+  line-height: 1.4;
+  color: #9b3c2e;
+  max-width: 110px;
+}
+
+.traffic-mini {
+  display: flex;
+  gap: 7px;
+  padding: 7px 9px;
+  border-radius: 7px;
+  background: #24323b;
+  border: 2px solid #506271;
+}
+
+.traffic-mini i {
+  display: block;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #48545e;
+  border: 1px solid #72808c;
+}
+
+.traffic-mini .lamp-red.lit {
+  background: #ed574a;
+  box-shadow: 0 0 10px #ee4b43aa;
+}
+
+.traffic-mini .lamp-yellow.lit {
+  background: #ffd056;
+  box-shadow: 0 0 10px #ffd05699;
+}
+
+.traffic-mini .lamp-green.lit {
+  background: #52cb89;
+  box-shadow: 0 0 10px #52cb8999;
+}
+
+.scene-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #475569;
+  margin: 0 0 18px;
+}
+
+.scene-picker select {
+  flex: 1;
+  min-width: 0;
+  max-width: 420px;
+  padding: 9px 10px;
+  border: 1px solid #a9bacb;
+  border-radius: 6px;
+  background: #fff;
+  color: #24374a;
+}
+
+.scene-purpose {
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.65;
+  margin: 0 0 18px;
+}
+
+.scene-signal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 8px 0;
+  font-size: 12px;
+}
+
+.scene-signal-row b {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.scene-health {
+  border: 1px solid #bad3c4;
+  border-radius: 7px;
+  background: #edf6ef;
+  color: #23553a;
+  font-size: 12px;
+  line-height: 1.65;
+  padding: 12px 14px;
+  margin: 14px 0 0;
+}
+
+.scene-health[data-status='fault'] {
+  background: #fff0e9;
+  border-color: #dcaa97;
+  color: #923a24;
+}
+
+.scene-health[data-status='warning'],
+.scene-health[data-status='unknown'] {
+  background: #fff6e2;
+  border-color: #d9c089;
+  color: #795011;
+}
+
+.scene-health[data-status='disabled'] {
+  background: var(--canvas);
+  border-color: #bdcbd8;
+  color: var(--muted);
+}
+
+.railway-point-control {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  margin: 6px 0;
+  padding: 9px 10px;
+}
+
+.railway-point-control span {
+  display: grid;
+  gap: 3px;
+}
+
+.railway-point-control small {
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.railway-point-control b {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 18px;
+}
+
+.railway-point-control:disabled {
+  opacity: 0.8;
+  cursor: default;
+}
+
+.scene-actuators {
+  margin: 12px 0 18px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px;
+}
+
+.scene-actuators summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stepper-body {
+  width: 42px;
+  height: 42px;
+  background: #5a6e65;
+  border: 5px solid var(--border);
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 2px #18302112;
+}
+
+.stepper-rotor {
+  width: 25px;
+  height: 25px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: linear-gradient(90deg, #e4ebdf, #a8b9a3);
+  position: relative;
+}
+
+.stepper-rotor:after {
+  content: '';
+  height: 3px;
+  width: 12px;
+  background: #4c8462;
+  position: absolute;
+  left: 11px;
+  top: 10px;
+  border-radius: 2px;
+}
+
+.stepper-widget .text-btn {
+  font-size: 10px;
+}
+
+.sensor-widget {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sensor-light {
+  height: 15px;
+  width: 15px;
+  border: 3px solid var(--border);
+  background: #b3c0a8;
+  border-radius: 4px;
+}
+
+.sensor-light.high {
+  background: #6ca572;
+}
+
+.sensor-light.unknown {
+  background: #d1aa58;
+}
+
+.sensor-status {
+  font-size: 10px;
+  color: var(--muted);
+}

@@ -6,7 +6,7 @@
   "description": "A browser-native digital and mixed-signal logic workbench",
   "scripts": {
     "start": "node scripts/start.mjs",
-    "test": "node --test test/*.test.js",
+    "test": "node scripts/test.mjs",
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
     "format": "prettier --write \"src/**/*.{js,css}\" \"test/**/*.js\" \"examples/**/*.{js,json,md}\" \"scripts/*.mjs\" style.css index.html README.md package.json .github/workflows/pages.yml .prettierrc.json",

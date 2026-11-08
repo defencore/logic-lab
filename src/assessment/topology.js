@@ -1,6 +1,6 @@
 import { SOURCE_PARAMETERS } from '../simulation/input-sources.js';
-import { getDefinition } from '../catalog.js';
-import { validateProject } from '../project.js';
+import { getDefinition } from '../components/catalog/index.js';
+import { validateProject } from '../circuits/project.js';
 import { stable, labelHash } from './canonical.js';
 
 function semanticNodes(project, { ignoreSourceValues = false } = {}) {

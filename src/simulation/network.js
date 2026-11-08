@@ -1,4 +1,4 @@
-import { getDefinition } from '../catalog.js';
+import { getDefinition } from '../components/catalog/index.js';
 
 const compiled = new WeakMap();
 

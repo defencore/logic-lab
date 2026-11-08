@@ -1,0 +1,153 @@
+/* Shared typography, design tokens and accessible controls. */
+
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../../../fonts/InterVariable.woff2') format('woff2');
+}
+
+:root {
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  color: var(--text-color);
+  background: var(--canvas);
+  font-synthesis: none;
+  font-optical-sizing: auto;
+  --text-color: #1b2938;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 1rem;
+  --leading-ui: 1.45;
+  --leading-copy: 1.65;
+  --control-size: 32px;
+  --header-height: 56px;
+  --toolbar-height: 44px;
+  --rail-width: 256px;
+  --inspector-width: 240px;
+  --green: #167043;
+  --deep: #153e30;
+  --muted: #536174;
+  --border: #cbd5e1;
+  --paper: #fff;
+  --canvas: #eef2f6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-ui);
+}
+
+h1,
+h2,
+h3,
+h4,
+strong,
+button {
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: balance;
+}
+
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  color: inherit;
+  border: 0;
+  background: none;
+}
+
+button,
+select,
+input,
+textarea {
+  outline: none;
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #71a98b;
+  outline-offset: 2px;
+}
+
+[tabindex]:focus-visible {
+  outline: 2px solid #71a98b;
+  outline-offset: 2px;
+}
+
+a[href]:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #71a98b;
+  outline-offset: 2px;
+}
+
+svg {
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+input,
+textarea,
+select {
+  min-width: 0;
+  color: inherit;
+}
+
+input[type='number'] {
+  width: 100%;
+}
+
+input[type='checkbox'] {
+  accent-color: var(--green);
+}
+
+input[type='color'] {
+  height: 34px;
+  padding: 3px !important;
+}
+
+textarea {
+  resize: vertical;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

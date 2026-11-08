@@ -1,5 +1,5 @@
-import { parseSequence } from '../action-sequence.js';
-import { parseAssignment, validateAttempt } from '../lab-assessment.js';
+import { parseSequence } from '../experiments/actions.js';
+import { parseAssignment, validateAttempt } from '../assessment/index.js';
 
 const PROFILE = 'logic-lab.classroom-profile';
 const DRAFT = 'logic-lab.classroom-draft';

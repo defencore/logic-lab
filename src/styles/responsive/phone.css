@@ -1,0 +1,229 @@
+@media (max-width: 720px) {
+  .project-heading,
+  .header-actions #help {
+    display: none;
+  }
+
+  .header-actions {
+    gap: 4px;
+  }
+
+  .header-actions .divider {
+    display: none;
+  }
+
+  .header-actions .soft-btn {
+    width: var(--control-size);
+    height: var(--control-size);
+    padding: 0;
+  }
+
+  .header-actions .soft-btn span {
+    display: none;
+  }
+
+  .header-actions .soft-btn > span[aria-hidden='true'] {
+    display: inline;
+  }
+
+  .app-header {
+    padding-inline: 10px;
+    gap: 8px;
+  }
+
+  .workspace-toolbar,
+  .editor-toolstrip {
+    padding-inline: 8px;
+  }
+
+  .run-btn {
+    min-width: 72px;
+    margin-left: 0;
+  }
+
+  .run-btn kbd {
+    display: none;
+  }
+
+  .scope-toolbar {
+    padding: 8px 12px;
+  }
+
+  .scope-toolbar label {
+    font-size: 11px;
+  }
+
+  .scope-actions {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+
+  .lesson-content {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .lesson-content > div:first-child {
+    flex-basis: 100%;
+  }
+
+  .lesson-navigation {
+    flex: 1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0;
+  }
+
+  #more-tools {
+    display: inline-flex;
+  }
+
+  .canvas-tools {
+    gap: 2px;
+  }
+
+  .canvas-tools .secondary-tools {
+    display: none;
+  }
+
+  .canvas-tools.more-tools-open .secondary-tools {
+    display: flex;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 12;
+    width: max-content;
+    min-width: 190px;
+    max-height: calc(100dvh - 180px);
+    overflow: auto;
+    padding: 5px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px #182a3a24;
+  }
+
+  .secondary-tools .icon-btn {
+    width: 100%;
+    justify-content: flex-start;
+    padding-inline: 8px;
+    gap: 8px;
+  }
+
+  .secondary-tools .icon-btn::after {
+    content: attr(title);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+
+  .editor-toolstrip {
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .global-speed > span {
+    display: none;
+  }
+
+  .global-speed {
+    gap: 4px;
+    padding-right: 4px;
+  }
+
+  .simulation-controls {
+    gap: 2px;
+  }
+}
+
+@media (max-width: 650px) {
+  .motion-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .motion-stage {
+    height: 310px;
+  }
+
+  .motion-sidebar {
+    max-height: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+
+  .motion-toolbar {
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .motion-modal {
+    padding: 20px 15px !important;
+  }
+
+  .motion-toolbar .camera-views {
+    gap: 3px;
+  }
+
+  .camera-views .soft-btn {
+    font-size: 10px;
+    padding: 7px;
+  }
+
+  .lab-resource-actions .soft-btn,
+  .lab-resource-actions .primary-btn {
+    font-size: 11px;
+  }
+
+  .motion-sidebar section {
+    margin: 0;
+  }
+
+  .motion-orbit-help {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 450px) {
+  .modal.wide {
+    padding: 22px;
+  }
+
+  .modal > h2 {
+    font-size: 19px;
+  }
+
+  .example-card-header {
+    flex-direction: column;
+  }
+
+  .example-thumbnail {
+    width: 64px;
+    height: 40px;
+  }
+
+  .catalog-main {
+    padding: 14px 12px;
+  }
+
+  .catalog-results-header {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .motion-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .file-menu-panel {
+    position: fixed;
+    top: calc(var(--header-height) + 4px);
+    right: 10px;
+    left: 10px;
+    width: auto;
+  }
+}

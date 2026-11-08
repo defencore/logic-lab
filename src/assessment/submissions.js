@@ -1,5 +1,5 @@
-import { validateProject } from '../project.js';
-import { boundedJson, boundedSerialize, validateSequence } from '../action-sequence.js';
+import { validateProject } from '../circuits/project.js';
+import { boundedJson, boundedSerialize, validateSequence } from '../experiments/actions.js';
 import {
   fail,
   text,

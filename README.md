@@ -188,31 +188,45 @@ RAM, ROM, and register-file sizes are intentionally bounded for interactive exam
 
 ## Architecture
 
-- `index.html`, `style.css`, and `src/styles/`: the HTML entry and ordered presentation modules; `style.css` defines the stylesheet import order.
-- `src/catalog.js`: component definitions, pins, defaults, and bilingual descriptions.
-- `src/simulator.js` and `src/simulation/`: browser-independent simulation orchestration, contact mapping, signal resolution, component models, sequential advancement, and shared periodic-source timing.
-- `src/project.js`: validated project import/export and local persistence.
-- `examples/index.js` and `examples/<id>/`: laboratory registry, canonical JSON circuits, bilingual lessons and lab sheets (the automation, dispatch, and focused memory/addressing sheets include both languages).
-- `src/guides.js`: bilingual component manuals, pin descriptions, experiments, and related examples.
-- `src/geometry.js`: grid placement, component dimensions, pin positions, and wire routing.
-- `src/wiring-ui.js`: transactional wire gestures, endpoint reconnection, and continuity presentation.
-- `src/continuity.js`: physical-net traversal through shared contacts.
-- `src/connections.js`: shared pin compatibility and duplicate-connection validation.
-- `src/ui-utils.js`: shared escaping, color validation, and signal formatting.
-- `src/learning-ui.js`: component guide and example catalog rendering.
-- `src/waveforms.js`: sampled signal plotting with gaps for unknown values.
-- `src/simulation-time.js`: supported playback rates, monitor windows, and bounded animation-frame time.
-- `src/recording.js`: bounded waveform sessions and timestamped CSV export.
-- `src/action-sequence.js`: validated source-action recording and deterministic circuit replay.
-- `src/lab-assessment.js` and `src/assessment/`: the classroom domain API, assignment/variant schemas, canonical data, bounded cancellable replay, submission grading, and topology/similarity evidence.
-- `src/classroom-ui.js` and six `src/classroom/` modules: the student/instructor integration controller; a browser-independent action-session state machine; validated draft/profile storage; file operations and concurrency control; classroom and review views; and the teacher assignment/batch workflow.
-- `src/waveform-export.js`: labeled PNG plots using actual sample timestamps.
-- `src/app.js`: application composition, shared editor state, and top-level input/navigation handlers.
-- Nine `src/workbench/` modules: shell rendering, board rendering, component parameters, inspector behavior, lessons/catalogs, 3D scenes, waveform monitoring, dialogs, and simulation-frame scheduling. Dialogs manage focus, Escape/Tab behavior, and an inert background. The simulation runner advances physics within a bounded per-frame work budget and retains pending simulation time for later frames.
-- `test/`: Node.js built-in test runner checks for logic and project integrity.
-- `scripts/`: esbuild configuration, local preview server, static distribution preparation, and syntax checks.
+The application is organized by feature. `src/app.js` only loads the stylesheet and starts the application; each directory owns its implementation and exposes an explicit entry where it has a public API.
 
-The UI controllers depend on small state/adapter contracts and share the same circuit/runtime; rendering, action-session transitions, and grading do not maintain duplicate circuit models. The canvas uses separate grid, wire, and component layers. The interaction model takes inspiration from [WirePad](https://github.com/defencore/WirePad): a searchable library, direct component manipulation, pin-to-pin wiring, and routed connections. Logic Lab owns its simulation models and project format.
+| Directory                                | Responsibility                                                                                                                                        |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/application/`                       | Application composition, shared editor state, commands, history, input gestures, shell bindings and frame scheduling.                                 |
+| `src/workbench/`                         | Board, inspector, dialogs, lessons, signal monitor, scene controls and transactional wire editing.                                                    |
+| `src/circuits/`                          | Project validation/storage, pin compatibility, net continuity, viewport mathematics and geometry for placement/routing/editing.                       |
+| `src/components/catalog/`                | Component registry, definition factory and one definition module per component category. `src/components/pins.js` owns physical contact presentation. |
+| `src/simulation/`                        | Browser-independent circuit evaluation, electrical nets, contacts, state transitions, periodic timing and bounded advancement.                        |
+| `src/scenes/models/`                     | Scene parameters, initial state, sensors and physics, separated by world type.                                                                        |
+| `src/scenes/views/`                      | Three.js scene builders, with separate automation, transport/resource and mechanical renderers.                                                       |
+| `src/scenes/transport/`                  | Shared vehicle shapes, swept collision contact and route geometry used by both physics and rendering.                                                 |
+| `src/scenes/data/`, `src/scenes/common/` | Read-only runtime snapshots, camera fitting and numeric helpers.                                                                                      |
+| `src/learning/`                          | One bilingual manual per component, truth tables and guide/catalog views.                                                                             |
+| `src/locales/`                           | English and Ukrainian translations grouped by interface topic.                                                                                        |
+| `src/experiments/`                       | Validated source-action recording, observations and deterministic replay.                                                                             |
+| `src/assessment/`                        | Assignments, student variants, submissions, cancellable grading and topology/similarity evidence.                                                     |
+| `src/classroom/`                         | Student/instructor workflows, recording controls, draft storage, file operations and classroom views.                                                 |
+| `src/signals/`                           | Sampled waveform plotting, recording, CSV/PNG export and display time settings.                                                                       |
+| `src/shared/`                            | UI formatting, selectors and icons.                                                                                                                   |
+| `src/styles/`                            | Styles grouped by surface, component and responsive breakpoint. `style.css` defines cascade order.                                                    |
+| `examples/<id>/`                         | Standalone circuit JSON, bilingual lesson metadata and lab worksheet for each exercise. `examples/index.js` registers the collection.                 |
+| `test/`                                  | Domain suites and shared fixtures, discovered recursively by `scripts/test.mjs`.                                                                      |
+| `scripts/`                               | Build, local preview, syntax checks and architecture checks.                                                                                          |
+
+Controllers share one project/runtime through the application model and explicit adapters. Recording, grading and renderers do not maintain independent circuit models. Scene physics never depends on its 3D renderer. Vehicle geometry is shared so the rendered surface and collision calculation describe the same objects. The canvas uses separate grid, wire and component layers, and its pan/zoom behavior follows [WirePad](https://github.com/defencore/WirePad).
+
+### Extending the application
+
+- **Component:** add its category definition in `src/components/catalog/categories/`, its model/state behavior in `src/simulation/`, and its manual under the matching category in `src/learning/guides/`. Register the manual in the guide entry. Digital data is exposed through individual bit contacts. Add behavioral coverage in the corresponding simulation suite.
+- **3D world:** add configuration/state/physics under `src/scenes/models/` and a builder under `src/scenes/views/`, then register them in their domain entries. Connect the world to the component catalog and runtime snapshots. Keep sensor logic in the model and read state from the view; rendering must not advance physics.
+- **Laboratory:** add `examples/<id>/{circuit.json,lesson.js,README.md}` and a registry entry in `examples/index.js`. The starting circuit remains separately downloadable and reusable as a worksheet.
+- **Interface:** extend the relevant workbench/classroom controller, matching style surface and locale namespace. Add application orchestration only when the feature needs cooperation between controllers.
+
+### Architecture checks
+
+`npm run check` validates JavaScript/JSON syntax, resolves local imports, rejects circular dependencies, and prevents simulation, assessment and other domain modules from importing presentation modules. It also enforces **350 physical lines and 24 KiB per JavaScript/CSS module**, including tests, example lesson metadata and build scripts. `src/app.js` is the only root source entry; implementation belongs in its feature directory. Structured circuit JSON remains a complete standalone lab document and is validated as data rather than subject to a code line budget.
+
+`npm test` discovers all nested suites; `npm run format:check` verifies readable formatting, and `npm run build` verifies the deployable site. GitHub Actions runs these checks before publishing. Temporary preview output stays in ignored `.cache/`; only `dist/` is uploaded to Pages.
 
 Project files use `version: 1`, a name, component records, wire records, and optional viewport/routing metadata. The optional `exampleId` preserves the association with a bundled lesson; a custom circuit does not need one. Imports validate known types and pins, unique identifiers, finite positions, connection widths, parameter types, and bounded data sizes. Multiple sources on one input are permitted so contention and open-drain behavior can be explored. Projects allow up to 1,000 components, 5,000 wires, and 100 route points per wire. Invalid imports are rejected without replacing the current circuit, and a failed save preserves the last successfully saved project.
 

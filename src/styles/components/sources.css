@@ -1,0 +1,61 @@
+.switch-control {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 10px;
+  margin-left: 0;
+}
+
+.switch-track {
+  width: 38px;
+  height: 21px;
+  background: #e4e8e0;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  display: block;
+  padding: 3px;
+  transition: background 0.15s;
+}
+
+.switch-track i {
+  width: 13px;
+  height: 13px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px #0002;
+  display: block;
+  transition: transform 0.15s;
+}
+
+.switch-control.is-on .switch-track {
+  background: #6b9e65;
+  border-color: #61945b;
+}
+
+.switch-control.is-on .switch-track i {
+  transform: translateX(16px);
+}
+
+.switch-value {
+  font-size: 20px;
+  font-weight: 550;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+}
+
+.switch-control.is-on .switch-value {
+  color: var(--muted);
+}
+
+.constant-value {
+  font-size: 25px;
+  font-family: ui-monospace, monospace;
+  color: var(--muted);
+}
+
+.constant-value span {
+  font-size: 10px;
+  display: block;
+  text-align: center;
+  color: var(--muted);
+}

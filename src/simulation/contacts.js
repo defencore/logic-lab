@@ -1,4 +1,4 @@
-import { getDefinition } from '../catalog.js';
+import { getDefinition } from '../components/catalog/index.js';
 import { unknown, logic, active, signalValues, resolveDrivers } from './signals.js';
 
 export function outputContacts(node, values, runtime) {

@@ -1,0 +1,179 @@
+.lesson-panel {
+  background: #edf4e9;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 12px;
+  flex-shrink: 0;
+  max-height: 35dvh;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.lesson-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.lesson-heading .eyebrow {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+}
+
+.lesson-heading .icon-btn {
+  width: 23px;
+  height: 23px;
+}
+
+.lesson-content {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.lesson-content > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.lesson-content strong {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.lesson-content p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 6px 0 0;
+}
+
+.lesson-content .lesson-goal {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.lesson-navigation {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 100px;
+  padding-top: 4px;
+  flex-shrink: 0;
+}
+
+.lesson-navigation > span {
+  font:
+    11px ui-monospace,
+    monospace;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lesson-navigation > div {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.lesson-navigation .icon-btn {
+  border: 1px solid var(--border);
+  background: #fcfdf9;
+  width: 27px;
+  height: 27px;
+}
+
+#lesson-prev svg {
+  transform: rotate(180deg);
+}
+
+.lesson-live {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+}
+
+.lesson-live > span {
+  font-size: 10px;
+  background: #fcfdf8;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  white-space: nowrap;
+}
+
+.lesson-live b {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: 6px;
+}
+
+.lesson-live b.high {
+  color: var(--green);
+}
+
+.lesson-live b.unknown {
+  color: #9b5700;
+}
+
+.lesson-result {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+  padding-top: 8px;
+}
+
+.lesson-result b {
+  font-weight: 600;
+  margin-right: 7px;
+  color: var(--muted);
+}
+
+.circuit-node.lesson-highlight {
+  outline: 2px solid #9fb98580;
+  outline-offset: 5px;
+}
+
+.lab-resource-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 22px 0;
+}
+
+.lab-sheet ol {
+  padding-left: 21px;
+  margin: 0 0 17px;
+}
+
+.lab-sheet li {
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.guide-purpose,
+.guide-section p,
+.instruction-steps li,
+.lab-sheet li {
+  line-height: var(--leading-copy);
+}
+
+.modal .component-instructions,
+.lab-sheet {
+  max-width: 68ch;
+  margin-inline: auto;
+}

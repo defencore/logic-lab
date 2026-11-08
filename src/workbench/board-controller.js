@@ -1,11 +1,11 @@
-import { getDefinition } from '../catalog.js';
-import { $, $$, esc, format, safeColor, signalClass } from '../ui-utils.js';
-import { icon, gateIcon } from '../icons.js';
-import { dimensions, wirePath } from '../geometry.js';
-import { componentPins } from '../component-pins.js';
-import { getSceneEntries, getSceneSnapshot, sceneHealth } from '../scene-data.js';
-import { SCENARIO_TYPES } from '../scenarios.js';
-import { drawMini } from '../waveforms.js';
+import { getDefinition } from '../components/catalog/index.js';
+import { $, $$, esc, format, safeColor, signalClass } from '../shared/ui.js';
+import { icon, gateIcon } from '../shared/icons.js';
+import { dimensions, wirePath } from '../circuits/geometry/index.js';
+import { componentPins } from '../components/pins.js';
+import { getSceneEntries, getSceneSnapshot, sceneHealth } from '../scenes/data/scenarios.js';
+import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
+import { drawMini } from '../signals/waveforms.js';
 
 export function createBoardController(
   state,

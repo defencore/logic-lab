@@ -1,0 +1,42 @@
+import { open, source, advance, output, input } from './fixtures/automation-examples.js';
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+test('manual railway dispatch exposes both turnouts, rejects simultaneous requests and safely passes both main-exit routes', () => {
+  const context = open('railway-dispatch');
+  source(context, 'near-points', 1);
+  source(context, 'far-points', 1);
+  assert.equal(output(context, 'world', 'points_state'), 1);
+  assert.equal(output(context, 'world', 'exit_points_state'), 1);
+  source(context, 'near-points', 0);
+  source(context, 'far-points', 0);
+  source(context, 'close-road', 1);
+  advance(context, 1);
+  assert.equal(output(context, 'world', 'gate_closed'), 1);
+  source(context, 'request-a', 1);
+  source(context, 'request-b', 1);
+  assert.equal(input(context, 'signal_a'), 0);
+  assert.equal(input(context, 'signal_b'), 0);
+  source(context, 'request-b', 0);
+  assert.equal(input(context, 'signal_a'), 1);
+  advance(context, 3);
+  source(context, 'request-a', 0);
+  advance(context, 17);
+  assert.equal(output(context, 'world', 'passed'), 1);
+  assert.equal(output(context, 'world', 'occupied'), 0);
+  assert.equal(output(context, 'world', 'fault'), 0);
+
+  source(context, 'near-points', 1);
+  source(context, 'far-points', 1);
+  source(context, 'request-b', 1);
+  assert.equal(input(context, 'signal_b'), 1);
+  advance(context, 3);
+  source(context, 'request-b', 0);
+  advance(context, 17);
+  assert.equal(output(context, 'world', 'passed'), 2);
+  assert.equal(output(context, 'world', 'fault'), 0);
+  assert.equal(output(context, 'world', 'occupied'), 0);
+  source(context, 'close-road', 0);
+  advance(context, 1);
+  assert.equal(output(context, 'world', 'gate_closed'), 0);
+});

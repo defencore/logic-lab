@@ -8,7 +8,7 @@ import {
   advancePlayback,
   stepPlayback,
   captureObservation,
-} from '../action-sequence.js';
+} from '../experiments/actions.js';
 
 /** Owns the recording/replay lifecycle without depending on document or browser storage. */
 export function createActionSession(

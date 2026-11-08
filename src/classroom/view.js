@@ -1,6 +1,6 @@
-import { getDefinition } from '../catalog.js';
-import { SOURCE_PARAMETERS } from '../action-sequence.js';
-import { esc, format } from '../ui-utils.js';
+import { getDefinition } from '../components/catalog/index.js';
+import { SOURCE_PARAMETERS } from '../experiments/actions.js';
+import { esc, format } from '../shared/ui.js';
 import { createReviewView } from './review-view.js';
 
 const sourceTypes = new Set(Object.keys(SOURCE_PARAMETERS));

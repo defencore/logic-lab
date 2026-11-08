@@ -1,3 +1,4 @@
+import { checkArchitecture } from './architecture.mjs';
 import { readdirSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 function inspect(directory) {
@@ -11,3 +12,8 @@ function inspect(directory) {
 }
 for (const directory of ['src', 'scripts', 'test', 'examples']) inspect(directory);
 console.log('All JavaScript and laboratory JSON files passed syntax checks.');
+
+const architecture = checkArchitecture();
+console.log(
+  `Architecture passed: ${architecture.modules} modules; largest ${architecture.largest.name} (${architecture.largest.lines} lines).`,
+);

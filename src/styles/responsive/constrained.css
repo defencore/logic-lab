@@ -1,0 +1,25 @@
+@media (max-width: 380px) {
+  .brand > span {
+    display: none;
+  }
+
+  .editor-toolstrip {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-height: 600px) {
+  .lesson-panel {
+    max-height: min(24dvh, 120px);
+  }
+
+  .motion-stage {
+    height: clamp(180px, 42dvh, 310px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

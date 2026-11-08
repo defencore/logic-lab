@@ -1,0 +1,40 @@
+@media (pointer: coarse) {
+  .wire-handle-hit {
+    r: 20px;
+  }
+
+  .icon-btn,
+  .language-btn,
+  .catalog-topic,
+  .workspace-tabs button,
+  .file-menu-item {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .library-guide {
+    width: 36px;
+    min-width: 36px;
+    height: 40px;
+  }
+
+  .workspace-settings select,
+  .property-section input:not([type='checkbox']),
+  .property-section select,
+  .scope-toolbar select,
+  .scope-actions .soft-btn {
+    min-height: 40px;
+  }
+
+  .property-section .toggle-row {
+    min-height: 40px;
+  }
+
+  .lesson-heading .icon-btn,
+  .lesson-navigation .icon-btn {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    min-height: 36px;
+  }
+}

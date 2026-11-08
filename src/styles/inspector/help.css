@@ -1,0 +1,107 @@
+.inspector-desktop-icon {
+  color: var(--muted);
+}
+
+.inspector-tabs {
+  position: sticky;
+  top: 0;
+  display: flex;
+  padding: 0 12px;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+  z-index: 2;
+  flex-wrap: wrap;
+}
+
+.inspector-tabs button {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 8px;
+  font-size: var(--text-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  flex-basis: 100px;
+}
+
+.inspector-tabs button[aria-selected='true'] {
+  border-color: #779963;
+  color: var(--text-color);
+}
+
+.inspector .component-instructions {
+  padding: 0 18px 12px;
+}
+
+.inspector .guide-purpose {
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+
+.inspector .guide-section {
+  padding-top: 17px;
+}
+
+.inspector .instruction-steps {
+  padding-left: 17px;
+}
+
+.inspector .instruction-steps li,
+.inspector .guide-section > p {
+  font-size: var(--text-sm);
+}
+
+.inspector .pin-reference dd,
+.inspector .guide-pitfalls li {
+  font-size: 12px;
+}
+
+.inspector .try-experiment {
+  padding: 13px 11px 0;
+}
+
+.inspector .related-examples {
+  flex-direction: column;
+}
+
+.property-section select {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: #fafbf7;
+  padding: 8px;
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.parameter-help {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+
+.workspace-settings select,
+.property-section input:not([type='checkbox']),
+.property-section select {
+  min-height: var(--control-size);
+  padding: 6px 8px;
+}
+
+.inspector .inspector-tabs {
+  flex-wrap: nowrap;
+}
+
+.inspector .inspector-tabs button {
+  flex-basis: 0;
+}
+
+.inspector .signal-legend {
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 12px;
+}

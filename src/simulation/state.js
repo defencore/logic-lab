@@ -1,5 +1,9 @@
-import { getDefinition } from '../catalog.js';
-import { SCENARIO_TYPES, isScenarioType, advanceScenario } from '../scenarios.js';
+import { getDefinition } from '../components/catalog/index.js';
+import {
+  SCENARIO_TYPES,
+  isScenarioType,
+  advanceScenario,
+} from '../scenes/models/scenarios/index.js';
 import { motionParameters, modulationInput } from './models.js';
 import {
   TAU,

@@ -1,5 +1,5 @@
-import { $, $$, esc } from '../ui-utils.js';
-import { icon } from '../icons.js';
+import { $, $$, esc } from '../shared/ui.js';
+import { icon } from '../shared/icons.js';
 
 const focusSelector = 'button,input,select,textarea,a[href],summary,[tabindex]';
 

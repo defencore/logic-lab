@@ -1,5 +1,5 @@
-import { getDefinition } from '../catalog.js';
-import { esc, format } from '../ui-utils.js';
+import { getDefinition } from '../components/catalog/index.js';
+import { esc, format } from '../shared/ui.js';
 
 export function createReviewView({ state, language }) {
   const { teacherKey, batch, pairs, batchErrors, busy, reviewing, reviewCancelled } = state;

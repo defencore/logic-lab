@@ -1,4 +1,4 @@
-import { createPlayback, advancePlayback } from '../action-sequence.js';
+import { createPlayback, advancePlayback } from '../experiments/actions.js';
 import { fail, abortIfNeeded } from './schema.js';
 import { yieldToMain } from './scheduling.js';
 

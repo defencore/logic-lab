@@ -1,4 +1,4 @@
-import { esc } from '../ui-utils.js';
+import { esc } from '../shared/ui.js';
 
 export function memoryBytes(value) {
   const values = Array.isArray(value)

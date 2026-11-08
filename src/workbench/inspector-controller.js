@@ -1,10 +1,10 @@
-import { getDefinition } from '../catalog.js';
-import { simulate } from '../simulator.js';
-import { $, $$, esc, format, signalClass } from '../ui-utils.js';
-import { icon, gateIcon } from '../icons.js';
-import { guideMarkup } from '../learning-ui.js';
-import { truthTableMarkup } from '../truth-tables.js';
-import { SCENARIO_TYPES } from '../scenarios.js';
+import { getDefinition } from '../components/catalog/index.js';
+import { simulate } from '../simulation/index.js';
+import { $, $$, esc, format, signalClass } from '../shared/ui.js';
+import { icon, gateIcon } from '../shared/icons.js';
+import { guideMarkup } from '../learning/views/guides.js';
+import { truthTableMarkup } from '../learning/truth-tables.js';
+import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
 import { SOURCE_PARAMETERS } from '../simulation/input-sources.js';
 import { parameterField, memoryBytes } from './component-parameters.js';
 
