@@ -163,3 +163,23 @@
     padding-inline: 7px;
   }
 }
+
+.student-playback.is-previous-version,
+.previous-recording-warning {
+  border: 1px solid #bf8a2d;
+  background: #fff8e8;
+  color: #69420d;
+}
+.student-playback-version {
+  margin: 7px 0;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+.previous-recording-warning {
+  padding: 10px;
+  border-radius: 6px;
+  line-height: 1.5;
+}
+.student-workflow:has(.student-playback.is-previous-version) {
+  max-height: min(52dvh, 340px);
+}

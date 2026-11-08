@@ -17,10 +17,12 @@ export function createShellBindings(context) {
     $('#close-library').onclick = () => actions.setLibraryOpen(false);
     $('#library-backdrop').onclick = () => actions.setLibraryOpen(false);
     $('#close-inspector').onclick = () => {
+      const node = [...state.selected][0];
       actions.setWorkspaceView('canvas');
       state.selected.clear();
       state.selectedWire = null;
       actions.selectionChanged();
+      if (!node || !services.board.restoreComponentFocus(node)) $('#viewport').focus();
     };
     $('#search').oninput = (e) => {
       state.query = e.target.value;

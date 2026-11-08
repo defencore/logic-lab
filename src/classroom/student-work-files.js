@@ -1,13 +1,15 @@
 import { validateProject } from '../circuits/project.js';
-import { boundedJson, boundedSerialize, validateSequence } from '../experiments/actions.js';
+import { boundedSerialize, validateSequence } from '../experiments/actions.js';
 import {
-  parseSubmission,
+  validateSubmission,
   validateAssignment,
   validateAttempt,
   graphFingerprint,
 } from '../assessment/index.js';
 import { digest, payload, stable } from '../assessment/canonical.js';
 import { studentData, text, id } from '../assessment/schema.js';
+import { FileImportError, fileKind } from '../shared/file-errors.js';
+import { parseClassroomImport } from './import-file.js';
 
 function origin(value) {
   if (!value) return null;
@@ -44,9 +46,10 @@ async function verify(value) {
     value.integrity?.algorithm !== 'SHA-256' ||
     (await digest(payload(value))) !== value.integrity.digest
   )
-    throw new Error(
-      'The work file checksum does not match. The original file has been changed or damaged.',
-    );
+    throw new FileImportError('file_checksum', {
+      actual: fileKind(value),
+      expected: 'student-work',
+    });
 }
 export async function createStudentWork(value) {
   const result = content(value);
@@ -60,33 +63,32 @@ export function serializeStudentWork(value) {
   return boundedSerialize({ ...checked, integrity: value.integrity }, 'Student work');
 }
 export async function parseStudentWork(source) {
-  const value = boundedJson(source, 'Student work');
-  if (value.kind === 'logic-lab-submission') {
-    const submission = parseSubmission(source);
-    await verify(submission);
-    const assignment = submission.assignment;
-    const attempt = validateAttempt(
-      {
-        ...submission.attempt,
+  return parseClassroomImport(source, 'student-work', async (value) => {
+    if (value.kind === 'logic-lab-submission') {
+      const submission = validateSubmission(value);
+      await verify(submission);
+      const assignment = submission.assignment;
+      const attempt = validateAttempt(
+        {
+          ...submission.attempt,
+          assignment,
+          student: submission.student,
+          lastFingerprint:
+            submission.attempt.journal.at(-1)?.fingerprint ||
+            graphFingerprint(assignment.starterProject, { ignoreSourceValues: true }),
+        },
         assignment,
-        student: submission.student,
-        lastFingerprint:
-          submission.attempt.journal.at(-1)?.fingerprint ||
-          graphFingerprint(assignment.starterProject, { ignoreSourceValues: true }),
-      },
-      assignment,
-    );
-    if (assignment.variant.studentId && assignment.variant.studentId !== submission.student.id)
-      throw new Error('This work belongs to another student ID.');
-    return {
-      ...submission,
-      attempt,
-      origin: { id: submission.id, digest: submission.integrity.digest },
-      saveKind: 'submission',
-    };
-  }
-  if (value.kind !== 'logic-lab-student-work' || value.version !== 1)
-    throw new Error('Open a saved student work or submission file.');
-  await verify(value);
-  return { ...content(value), integrity: value.integrity, saveKind: 'draft' };
+      );
+      if (assignment.variant.studentId && assignment.variant.studentId !== submission.student.id)
+        throw new Error('This work belongs to another student ID.');
+      return {
+        ...submission,
+        attempt,
+        origin: { id: submission.id, digest: submission.integrity.digest },
+        saveKind: 'submission',
+      };
+    }
+    await verify(value);
+    return { ...content(value), integrity: value.integrity, saveKind: 'draft' };
+  });
 }

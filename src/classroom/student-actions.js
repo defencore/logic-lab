@@ -1,6 +1,6 @@
 import { $ } from '../shared/ui.js';
 import {
-  parseAssignment,
+  validateAssignment,
   createAttempt,
   createSubmission,
   serializeSubmission,
@@ -9,6 +9,7 @@ import { stable } from '../assessment/canonical.js';
 import { createStudentWork, serializeStudentWork, parseStudentWork } from './student-work-files.js';
 import { studentProgress, progressMessage } from './student-progress.js';
 import { cleanName, downloadFile } from './files.js';
+import { parseClassroomImport } from './import-file.js';
 
 export function createStudentActions({
   adapter,
@@ -128,7 +129,7 @@ export function createStudentActions({
     });
   }
   function importAssignment(source) {
-    const assignment = parseAssignment(source);
+    const assignment = parseClassroomImport(source, 'assignment', validateAssignment);
     if (state.attempt && stable(assignment) === stable(state.assignment)) {
       adapter.closeModal();
       adapter.notify(

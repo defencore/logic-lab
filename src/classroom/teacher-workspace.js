@@ -2,12 +2,13 @@ import {
   createAssignment,
   issueAssignment,
   assignmentForVariant,
-  parseAssignmentKey,
-  parseSubmission,
+  validateAssignmentKey,
+  validateSubmission,
   gradeSubmission,
   compareSubmissionsAsync,
 } from '../assessment/index.js';
 import { readClassroomFile } from './files.js';
+import { parseClassroomImport } from './import-file.js';
 import { sanitizeTeacherForm } from './storage.js';
 import { sameCircuitStructure } from '../assessment/topology.js';
 import { yieldToMain } from '../assessment/scheduling.js';
@@ -22,7 +23,10 @@ export { inspectReference } from './reference-inspection.js';
 export { probeKey } from './teacher-state.js';
 
 /** Teacher operations commit a complete result only after validation/replay succeeds. */
-export function createTeacherWorkspace(state, { onSave = () => {}, onProgress = () => {} } = {}) {
+export function createTeacherWorkspace(
+  state,
+  { onSave = () => {}, onProgress = () => {}, formatError = (error) => error.message } = {},
+) {
   let reviewController = null;
   function setKey(key, warnings, project, saved = false) {
     if (state.teacherKey && keySignature(state.teacherKey) !== keySignature(key)) {
@@ -43,6 +47,8 @@ export function createTeacherWorkspace(state, { onSave = () => {}, onProgress = 
     state.batch = [];
     state.pairs = [];
     state.batchErrors = [];
+    state.reviewPairPage = 0;
+    state.reviewDetails = new Map();
     state.reviewCancelled = false;
     state.reviewComparisonComplete = false;
     state.teacherForm = sanitizeTeacherForm({
@@ -69,7 +75,7 @@ export function createTeacherWorkspace(state, { onSave = () => {}, onProgress = 
     setKey(key, await inspectReference(key), project);
   }
   async function importKey(source, project) {
-    const key = parseAssignmentKey(source);
+    const key = parseClassroomImport(source, 'teacher-key', validateAssignmentKey);
     setKey(key, await inspectReference(key), project, true);
   }
   function applyChanges(project) {
@@ -131,6 +137,8 @@ export function createTeacherWorkspace(state, { onSave = () => {}, onProgress = 
     state.batch = [];
     state.pairs = [];
     state.batchErrors = [];
+    state.reviewPairPage = 0;
+    state.reviewDetails = new Map();
     state.reviewCancelled = false;
     state.reviewComparisonComplete = false;
     state.reviewing = true;
@@ -143,14 +151,14 @@ export function createTeacherWorkspace(state, { onSave = () => {}, onProgress = 
         try {
           const source = await readClassroomFile(file);
           signal.throwIfAborted();
-          const submission = parseSubmission(source);
+          const submission = parseClassroomImport(source, 'submission', validateSubmission);
           state.batch.push({
             submission,
             result: await gradeSubmission(submission, key, { signal }),
           });
         } catch (error) {
           if (signal.aborted) throw error;
-          state.batchErrors.push(`${file.name}: ${error.message}`);
+          state.batchErrors.push(`${file.name}: ${formatError(error)}`);
         }
         onProgress();
         await yieldToMain(signal);

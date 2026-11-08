@@ -68,6 +68,55 @@
   white-space: normal;
   text-align: left;
 }
+.review-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  margin-block: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #f4f7fa;
+}
+.review-pagination p {
+  margin: 0;
+  font-weight: 600;
+}
+.review-page-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.review-page-controls button {
+  min-height: 36px;
+}
+.review-page-controls label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.review-page-controls input {
+  width: 5em;
+  min-height: 36px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: #fff;
+}
+.review-mismatch-list {
+  padding-left: 28px;
+}
+.review-mismatch-list li + li {
+  margin-top: 12px;
+}
+.review-observation-table th {
+  min-width: 90px;
+  overflow-wrap: anywhere;
+}
 @media (max-width: 650px) {
   .review-filters {
     grid-template-columns: minmax(0, 1fr);

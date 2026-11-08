@@ -22,12 +22,12 @@ export function syncPlaybackControls(state, language) {
     return;
   }
   const label = preview
-    ? L('Перегляд еталона / роботи', 'Circuit preview')
+    ? L('Перегляд', 'Preview')
     : player.done
-      ? L('Запис завершено', 'Replay complete')
+      ? L('Завершено', 'Complete')
       : state.playbackRunning
-        ? L('Пауза запису', 'Pause replay')
-        : L('Продовжити запис', 'Resume replay');
+        ? L('Пауза', 'Pause')
+        : L('Продовжити', 'Resume');
   for (const selector of ['#run', '#motion-run']) {
     const button = $(selector);
     if (!button) continue;
@@ -38,7 +38,9 @@ export function syncPlaybackControls(state, language) {
             'Завершіть перегляд, щоб повернутися до симуляції.',
             'End preview to return to simulation.',
           )
-        : label;
+        : state.playbackRunning
+          ? L('Пауза запису', 'Pause replay')
+          : L('Продовжити запис', 'Resume replay');
     const html = icon(state.playbackRunning ? 'pause' : 'play', 14) + `<span>${label}</span>`;
     if (button.textContent !== label) button.innerHTML = html;
     button.classList.toggle('running', !!state.playbackRunning);

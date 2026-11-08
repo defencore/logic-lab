@@ -1,3 +1,5 @@
+import { fileErrorMessage } from './file-error-messages.js';
+import { createSequenceVersion } from './sequence-version.js';
 import { createKeyReference } from './key-reference.js';
 import { syncPlaybackControls } from './playback-controls.js';
 import '../styles/classroom.css';
@@ -49,11 +51,14 @@ export function createClassroom(adapter) {
     reviewComparisonComplete: false,
     busy: false,
   });
+  const version = createSequenceVersion(session);
   state.dockOpen ||= !!state.assignment;
   let activeTab = state.mode;
   let fileIntent = 0;
   const teacher = createTeacherWorkspace(state, {
     onSave: persistDraft,
+    formatError: (error) =>
+      fileErrorMessage(error, { language: adapter.getLanguage(), mode: 'teacher' }),
     onProgress: () => {
       if ($('#review-results')) $('#review-results').innerHTML = views().reviewMarkup();
       if ($('#teacher-review-cancel')) $('#teacher-review-cancel').onclick = teacher.cancelReview;
@@ -138,6 +143,7 @@ export function createClassroom(adapter) {
     });
   }
   function updateDock(force = false) {
+    state.sequenceVersion = version.refresh();
     dock.updateDock(force);
     if ($('#project-name')) $('#project-name').disabled = controls.isLocked();
     student.updateProgress();
@@ -151,7 +157,9 @@ export function createClassroom(adapter) {
       try {
         await action(...args);
       } catch (error) {
-        adapter.notify(error?.message || String(error));
+        adapter.notify(
+          fileErrorMessage(error, { language: adapter.getLanguage(), mode: state.mode }),
+        );
       }
     };
   }
@@ -235,15 +243,23 @@ export function createClassroom(adapter) {
             if (intent !== fileIntent) return;
             await action(files);
           }),
-        { multiple, onError: (error) => adapter.notify(error.message) },
+        {
+          multiple,
+          onError: (error) =>
+            adapter.notify(
+              fileErrorMessage(error, { language: adapter.getLanguage(), mode: state.mode }),
+            ),
+        },
       );
     });
   }
   return {
     mount: () => {
+      state.sequenceVersion = version.refresh(true);
       dock.mount();
       student.updateProgress();
     },
+    getMode: () => state.mode,
     refreshTransport: () => syncPlaybackControls(state, adapter.getLanguage()),
     shouldWarnBeforeUnload: () => teacher.hasUnsavedKeys(),
     togglePlaybackRunning: () => {
@@ -279,8 +295,9 @@ export function createClassroom(adapter) {
     allowEdit: () => student.isInstalling() || reference.isInstalling() || controls.allowEdit(),
     allowInput: controls.allowInput,
     observeEdit: () => {
+      state.sequenceVersion = version.refresh(true);
       if (!reference.isInstalling()) student.observeEdit();
-      student.updateProgress();
+      updateDock();
     },
     isLocked: controls.isLocked,
     isRecording: () => state.recording,

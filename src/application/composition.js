@@ -35,6 +35,24 @@ export function composeWorkbench(context) {
     toggleSource: actions.toggleSource,
     openScene: (id) => services.scenes.open(id),
     primarySignal: (node) => services.monitor.primarySignal(node),
+    selectNode: (id, { inspect = false } = {}) => {
+      if (!state.project.nodes.some((node) => node.id === id)) return;
+      state.selected = new Set([id]);
+      state.selectedWire = null;
+      state.inspectorTab = 'properties';
+      actions.selectionChanged();
+      if (inspect) {
+        actions.setWorkspaceView('inspector');
+        requestAnimationFrame(() => {
+          const label = $('#node-label');
+          const target =
+            label && !label.disabled
+              ? label
+              : document.querySelector('[data-inspector-tab="properties"]');
+          target?.focus();
+        });
+      }
+    },
   });
   services.learning = createLearningController(state, {
     t,

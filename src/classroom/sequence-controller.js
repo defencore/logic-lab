@@ -1,9 +1,10 @@
+import { parseClassroomImport } from './import-file.js';
 import { $ } from '../shared/ui.js';
 import {
   createSequence,
   appendAction,
   finishSequence,
-  parseSequence,
+  validateSequence,
   serializeSequence,
 } from '../experiments/actions.js';
 import { cleanName, downloadFile, readClassroomFile } from './files.js';
@@ -26,7 +27,9 @@ export function createSequenceController({
     $('#class-replay').onclick = safe(replay);
     $('#class-next').onclick = safe(nextAction);
     bindFile('#class-sequence-import', async (files) =>
-      session.setSequence(parseSequence(await readClassroomFile(files[0]))),
+      session.setSequence(
+        parseClassroomImport(await readClassroomFile(files[0]), 'sequence', validateSequence),
+      ),
     );
     $('#class-sequence-export').onclick = safe(() =>
       downloadFile(

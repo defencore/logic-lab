@@ -46,3 +46,79 @@
     order: 3;
   }
 }
+
+/* Student work shares the available editor height instead of extending beneath the footer. */
+@media (max-width: 1200px), (max-height: 720px) {
+  .main[data-workspace-view='canvas']:has(.student-workflow:not([hidden])) {
+    overflow: hidden;
+  }
+  .main[data-workspace-view='canvas']:has(.student-workflow:not([hidden])) > .editor-workspace {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+    grid-template-rows: auto minmax(0, 1.25fr) 0 minmax(0, 1fr);
+  }
+  .main[data-workspace-view='canvas']:has(.student-workflow:not([hidden]))
+    > .editor-workspace:has(> .lesson-panel:not([hidden])) {
+    grid-template-rows: auto minmax(0, 1.25fr) minmax(0, 0.75fr) minmax(0, 1fr);
+  }
+  .main[data-workspace-view='canvas']:has(.student-workflow:not([hidden]))
+    .editor-workspace
+    > .student-workflow,
+  .main[data-workspace-view='canvas']:has(.student-workflow:not([hidden]))
+    .editor-workspace
+    > .lesson-panel {
+    min-height: 0;
+    max-height: none;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .main[data-workspace-view='canvas']:has(.student-workflow:not([hidden]))
+    .editor-workspace
+    > .viewport {
+    min-height: 0;
+  }
+  .main[data-workspace-view='canvas'] .student-workflow > *,
+  .main[data-workspace-view='canvas'] .student-workflow .student-playback > * {
+    flex-shrink: 0;
+  }
+  .main[data-workspace-view='canvas'] .student-workflow {
+    scroll-padding-block: 40px 8px;
+  }
+  .main[data-workspace-view='canvas'] .student-workflow button {
+    scroll-margin-block: 6px;
+  }
+  /* Keep the short version marker in view while the complete warning and actions scroll. */
+  .main[data-workspace-view='canvas'] .student-workflow > .student-playback.is-previous-version {
+    display: contents;
+  }
+  .main[data-workspace-view='canvas']
+    .student-workflow
+    .student-playback.is-previous-version
+    > .student-playback-heading {
+    display: contents;
+  }
+  .main[data-workspace-view='canvas']
+    .student-workflow
+    .student-playback.is-previous-version
+    [data-student-playback-summary] {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    height: 30px;
+    min-height: 30px;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 5px 8px;
+    border: 1px solid #bf8a2d;
+    border-radius: 6px;
+    background: #fff8e8;
+    color: #69420d;
+    font-size: var(--text-xs);
+    line-height: 18px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}

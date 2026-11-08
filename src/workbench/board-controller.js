@@ -6,6 +6,7 @@ import { componentPins } from '../components/pins.js';
 import { getSceneEntries, getSceneSnapshot, sceneHealth } from '../scenes/data/scenarios.js';
 import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
 import { drawMini } from '../signals/waveforms.js';
+import { componentHeaderMarkup, createComponentNavigation } from './component-keyboard.js';
 import {
   contactEndpoint,
   createContactNavigation,
@@ -15,9 +16,24 @@ import {
 
 export function createBoardController(
   state,
-  { t, title, applyView, nodePointerDown, pinPointerDown, toggleSource, openScene, primarySignal },
+  {
+    t,
+    title,
+    applyView,
+    nodePointerDown,
+    pinPointerDown,
+    toggleSource,
+    openScene,
+    primarySignal,
+    selectNode,
+  },
 ) {
   const contacts = createContactNavigation(state, applyView);
+  const components = createComponentNavigation(state, {
+    applyView,
+    isKeyboard: contacts.isKeyboard,
+    selectNode,
+  });
   function nodeBody(node) {
     const d = getDefinition(node.type);
     switch (node.type) {
@@ -64,12 +80,13 @@ export function createBoardController(
   function renderBoard() {
     const focused = document.activeElement?.closest?.('.pin');
     const focusedEndpoint = focused ? contactEndpoint(focused) : null;
+    const focusedControl = components.captureFocus();
     $('#nodes').innerHTML = state.project.nodes
       .map((n) => {
         const d = getDefinition(n.type),
           { w, h } = dimensions(n),
           special = ['note', 'group'].includes(n.type);
-        return `<div class="circuit-node ${state.selected.has(n.id) ? 'selected' : ''} ${state.highlighted.has(n.id) ? 'lesson-highlight' : ''} ${n.enabled === false ? 'disabled' : ''} type-${n.type}" data-node="${n.id}" style="left:${n.x}px;top:${n.y}px;width:${w}px;height:${h}px;${special ? `--note-color:${safeColor(n.params.color)};` : ''}" role="group" aria-label="${esc(n.label || title(d))}"><div class="node-header"><span class="node-type-dot"></span><span>${esc(n.label || title(d))}</span><small>${special ? '' : esc(d.type.toUpperCase().replaceAll('_', ' '))}</small></div>${special ? `<div class="note-content">${esc(n.params.text || '')}</div>` : `<div class="node-content">${nodeBody(n)}</div>${componentPins(n, { label: n.label || title(d), inputLabel: t('inputs'), outputLabel: t('outputs') })}`}</div>`;
+        return `<div class="circuit-node ${state.selected.has(n.id) ? 'selected' : ''} ${state.highlighted.has(n.id) ? 'lesson-highlight' : ''} ${n.enabled === false ? 'disabled' : ''} type-${n.type}" data-node="${n.id}" style="left:${n.x}px;top:${n.y}px;width:${w}px;height:${h}px;${special ? `--note-color:${safeColor(n.params.color)};` : ''}" role="group" aria-label="${esc(n.label || title(d))}">${componentHeaderMarkup(n, n.label || title(d), t('properties'), special ? '' : d.type.toUpperCase().replaceAll('_', ' '))}${special ? `<div class="note-content">${esc(n.params.text || '')}</div>` : `<div class="node-content">${nodeBody(n)}</div>${componentPins(n, { label: n.label || title(d), inputLabel: t('inputs'), outputLabel: t('outputs') })}`}</div>`;
       })
       .join('');
     $('#wires').innerHTML = state.project.wires
@@ -82,6 +99,7 @@ export function createBoardController(
     $('.canvas-heading').hidden = state.project.nodes.length > 0;
     $('#draft').setAttribute('d', '');
     $$('.circuit-node').forEach((el) => el.addEventListener('pointerdown', nodePointerDown));
+    $$('[data-node-header]').forEach(components.bind);
     $$('.pin').forEach((el) => {
       el.style.setProperty('--contact-gap', `${el.dataset.contactGap}px`);
       contacts.bind(el, pinPointerDown);
@@ -96,6 +114,7 @@ export function createBoardController(
     applyView();
     updateContactTargets(state.project, state.pending);
     if (focusedEndpoint) focusContact(focusedEndpoint);
+    else if (focusedControl) components.restoreFocus(focusedControl);
     state.wiring?.refresh();
   }
   function updateBoardSignals() {
@@ -221,5 +240,10 @@ export function createBoardController(
     $('#canvas-name').textContent = state.project.name;
   }
 
-  return { render: renderBoard, updateSignals: updateBoardSignals, updateCounts };
+  return {
+    render: renderBoard,
+    updateSignals: updateBoardSignals,
+    updateCounts,
+    restoreComponentFocus: components.returnFocus,
+  };
 }

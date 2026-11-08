@@ -1,3 +1,4 @@
+import { previousVersionMessage } from './sequence-version.js';
 import { $ } from '../shared/ui.js';
 import { studentPlaybackActive } from './student-playback.js';
 
@@ -20,6 +21,8 @@ export function createDockController({ adapter, state, session, L, views, safe, 
       studentWorkflowActive ||
       (!state.dockOpen && !state.recording && !state.player && !state.preview);
     const key = [
+      state.sequenceVersion?.previous,
+      state.sequenceVersion?.currentNodes,
       state.preview?.name,
       state.reviewMode,
       state.recording,
@@ -55,7 +58,12 @@ export function createDockController({ adapter, state, session, L, views, safe, 
           : state.sequence
             ? `${state.sequence.actions.length} ${L('дій', 'actions')} · ${state.sequence.duration.toFixed(3)} s`
             : L('Ще немає запису', 'No sequence yet');
-    if ($('#action-status').textContent !== status) $('#action-status').textContent = status;
+    const visibleStatus =
+      !state.reviewMode && state.sequenceVersion?.previous && !state.recording
+        ? `${previousVersionMessage(state.sequenceVersion, adapter.getLanguage())} · ${status}`
+        : status;
+    if ($('#action-status').textContent !== visibleStatus)
+      $('#action-status').textContent = visibleStatus;
     root.classList.toggle('is-recording', state.recording);
   }
   return { mount, updateDock };

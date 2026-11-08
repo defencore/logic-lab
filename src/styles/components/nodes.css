@@ -56,6 +56,14 @@
   display: none;
 }
 
+.node-header:focus-visible {
+  position: relative;
+  z-index: 3;
+  outline: 3px solid #1e5894;
+  outline-offset: -3px;
+  background: #d8e8f5;
+}
+
 .node-content {
   position: absolute;
   inset: 33px 22px 0;

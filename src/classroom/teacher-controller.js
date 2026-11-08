@@ -8,6 +8,7 @@ import {
 } from '../assessment/index.js';
 import { cleanName, downloadFile, readClassroomFile } from './files.js';
 import { studentTasksZip, reviewCsv } from './teacher-downloads.js';
+import { bindReviewControls } from './review-controller.js';
 
 export function createTeacherController({
   adapter,
@@ -27,6 +28,7 @@ export function createTeacherController({
       try {
         return await action(...args);
       } catch (error) {
+        if (error.code?.startsWith('file_')) throw error;
         const messages = [
           [
             /reference circuit changed after recording/i,
@@ -120,27 +122,7 @@ export function createTeacherController({
     );
   }
   function bindReview() {
-    const root = $('#review-results');
-    if (!root) return;
-    root.onclick = protect(async (event) => {
-      const open = event.target.closest('[data-review-open],[data-review-replay]');
-      if (!open || open.disabled) return;
-      guardEditableSession();
-      const index = Number(open.dataset.reviewOpen ?? open.dataset.reviewReplay);
-      const submission = state.batch[index]?.submission;
-      if (!submission) return;
-      await adapter.openReviewedWork(submission, {
-        replay: open.dataset.reviewReplay !== undefined,
-      });
-    });
-    const filter = (event) => {
-      if (event.target.id === 'review-query') state.reviewQuery = event.target.value;
-      else if (event.target.id === 'review-filter') state.reviewFilter = event.target.value;
-      else return;
-      if ($('#review-cards')) $('#review-cards').innerHTML = views().reviewCardsMarkup();
-    };
-    root.oninput = filter;
-    root.onchange = filter;
+    bindReviewControls({ adapter, state, guardEditableSession, protect, views });
   }
   function bindTeacher() {
     if ($('#teacher-review-cancel')) $('#teacher-review-cancel').onclick = teacher.cancelReview;

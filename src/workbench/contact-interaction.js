@@ -85,6 +85,7 @@ export function createContactNavigation(state, applyView, root = document) {
     { capture: true },
   );
   return {
+    isKeyboard: () => keyboard,
     bind(pin, activate) {
       pin.addEventListener('pointerdown', (event) => {
         keyboard = false;

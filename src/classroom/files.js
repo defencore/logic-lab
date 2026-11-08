@@ -1,4 +1,5 @@
 import { SEQUENCE_LIMITS } from '../experiments/actions.js';
+import { FileImportError } from '../shared/file-errors.js';
 
 export const cleanName = (name) =>
   String(name)
@@ -13,9 +14,13 @@ export function downloadFile(text, name, type = 'application/json') {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export async function readClassroomFile(file) {
-  if (!file || file.size > SEQUENCE_LIMITS.bytes)
-    throw new Error('Classroom files must be at most 10 MB.');
-  return file.text();
+  if (!file) throw new FileImportError('file_unreadable');
+  if (file.size > SEQUENCE_LIMITS.bytes) throw new FileImportError('file_too_large');
+  try {
+    return await file.text();
+  } catch (error) {
+    throw new FileImportError('file_unreadable', {}, error);
+  }
 }
 export function chooseClassroomFiles(onFiles, { multiple = false, onError = () => {} } = {}) {
   const input = document.createElement('input');

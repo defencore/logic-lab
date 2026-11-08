@@ -23,7 +23,8 @@ test('global and 3D play buttons describe the same replay pause/resume state, wh
   const state = { player: { done: false }, playbackRunning: true };
   syncPlaybackControls(state, 'ua');
   for (const id of ['run', 'motion-run']) {
-    assert.match(get(id).innerHTML, /Пауза запису/);
+    assert.match(get(id).innerHTML, /<span>Пауза<\/span>/);
+    assert.equal(get(id).title, 'Пауза запису');
     assert.equal(get(id).disabled, false);
     assert.equal(get(id).classList.contains('running'), true);
   }
@@ -31,7 +32,8 @@ test('global and 3D play buttons describe the same replay pause/resume state, wh
   state.playbackRunning = false;
   syncPlaybackControls(state, 'ua');
   for (const id of ['run', 'motion-run']) {
-    assert.match(get(id).innerHTML, /Продовжити запис/);
+    assert.match(get(id).innerHTML, /<span>Продовжити<\/span>/);
+    assert.equal(get(id).title, 'Продовжити запис');
     assert.equal(get(id).classList.contains('running'), false);
     assert.equal(get(id).disabled, false);
   }
@@ -54,7 +56,7 @@ test('completed replays and static circuit previews disable transport and explai
     }
     for (const id of ['step', 'reset', 'motion-reset']) assert.equal(get(id).disabled, true);
   }
-  assert.match(get('run').innerHTML, /Circuit preview/);
+  assert.match(get('run').innerHTML, /<span>Preview<\/span>/);
 });
 
 test('returning to the editable circuit restores ordinary simulation transport and enables reset and step', (t) => {
@@ -74,7 +76,7 @@ test('returning to the editable circuit restores ordinary simulation transport a
   };
   const simulation = createSimulation(app);
   syncPlaybackControls(playback, 'en');
-  assert.match(get('run').innerHTML, /Pause replay/);
+  assert.match(get('run').innerHTML, /<span>Pause<\/span>/);
   // The session clears its player before asking the app to restore its paused editor.
   playback.player = null;
   playback.playbackRunning = false;

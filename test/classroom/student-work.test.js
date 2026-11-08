@@ -72,7 +72,10 @@ test('a damaged or edited student file is rejected instead of silently rewriting
   const draft = await createStudentWork({ ...f, student, attempt: f.attempt });
   draft.notes = 'Changed after export';
   await assert.rejects(parseStudentWork(JSON.stringify(draft)), /checksum/i);
-  await assert.rejects(parseStudentWork(JSON.stringify(f.key)), /work|submission/i);
+  await assert.rejects(parseStudentWork(JSON.stringify(f.key)), {
+    code: 'file_wrong_kind',
+    actual: 'teacher-key',
+  });
 });
 
 test('student identity and unfinished notes survive local reload together with readiness state', async () => {

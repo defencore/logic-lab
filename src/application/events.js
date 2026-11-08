@@ -1,3 +1,6 @@
+import { parseClassroomImport } from '../classroom/import-file.js';
+import { fileErrorMessage } from '../classroom/file-error-messages.js';
+import { FileImportError } from '../shared/file-errors.js';
 import { protectUnsavedKeys } from './unload-guard.js';
 import { parseProject, saveProject } from '../circuits/project.js';
 import { $ } from '../shared/ui.js';
@@ -150,11 +153,20 @@ export function bindApplicationEvents(context) {
     const file = e.target.files[0];
     if (!file) return;
     try {
-      if (file.size > 10_000_000) throw Error('Project file exceeds 10 MB');
-      const next = parseProject(await file.text());
+      if (file.size > 10_000_000)
+        throw new FileImportError('file_too_large', { expected: 'project' });
+      const source = await file.text().catch((error) => {
+        throw new FileImportError('file_unreadable', { expected: 'project' }, error);
+      });
+      const next = parseClassroomImport(source, 'project', () => parseProject(source));
       actions.confirmReplace(next);
     } catch (error) {
-      actions.notify(`${t('invalid')}: ${error.message}`);
+      actions.notify(
+        fileErrorMessage(error, {
+          language: state.lang,
+          mode: services.classroom?.getMode?.() || 'student',
+        }),
+      );
     }
     e.target.value = '';
   });
