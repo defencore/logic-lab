@@ -17,10 +17,28 @@ test('memory data uses one comma-separated byte format for saved arrays and text
 test('input editors show the supported numeric byte and switch ranges before simulation', () => {
   assert.match(
     parameterField('value', 0, 'bus_input', 'en', (key) => key),
-    /min="0" max="255" step="1"/,
+    /step="1" min="0" max="255" data-integer="true"/,
   );
   assert.match(
     parameterField('value', 0, 'switch', 'en', (key) => key),
-    /min="0" max="1" step="1"/,
+    /step="1" min="0" max="1" data-integer="true"/,
+  );
+});
+
+test('continuous amplitude editors accept fractions independently of the saved value', () => {
+  for (const type of ['am', 'fm']) {
+    for (const value of [5, 3.3]) {
+      const markup = parameterField('amplitude', value, type, 'en', (key) => key);
+      assert.match(markup, /step="0.1"/);
+      assert.doesNotMatch(markup, /data-integer/);
+    }
+  }
+  assert.match(
+    parameterField('initial', 0, 'stepper', 'en', (key) => key),
+    /step="any"/,
+  );
+  assert.match(
+    parameterField('initial', 0, 'register', 'en', (key) => key),
+    /data-integer="true"/,
   );
 });

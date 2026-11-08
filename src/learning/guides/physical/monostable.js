@@ -3,8 +3,8 @@ import { resetPin } from '../pin-descriptions.js';
 // Each text pair contains English first and Ukrainian second.
 export default {
   purpose: [
-    'A monostable produces one fixed-duration pulse after a trigger edge, illustrating a simplified 555 one-shot.',
-    'Одновібратор створює один імпульс фіксованої тривалості після фронту запуску та ілюструє спрощений одновібратор 555.',
+    'A digital one-shot produces one fixed-duration pulse after a rising trigger edge.',
+    'Цифровий одновібратор створює один імпульс фіксованої тривалості після додатного фронту запуску.',
   ],
   steps: [
     [
@@ -30,8 +30,8 @@ export default {
   ],
   pitfalls: [
     [
-      'This teaching block uses a rising trigger and active-high reset; it does not reproduce the pin polarity or analog thresholds of a physical 555.',
-      'Цей навчальний блок має запуск додатним фронтом і скидання одиницею; він не відтворює полярності та аналогові пороги реального 555.',
+      'This ideal digital timer uses a rising trigger and active-high reset. Duration is configured directly; analog RC charging and voltage thresholds are not modeled.',
+      'Цей ідеальний цифровий таймер запускається додатним фронтом і скидається одиницею. Тривалість задається безпосередньо; заряд RC-кола й аналогові пороги напруги не моделюються.',
     ],
     [
       'Hold TRIG=1 after expiration and no second pulse starts: first return it to 0. RST=1 cancels the current pulse.',

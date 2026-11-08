@@ -300,3 +300,16 @@
 #record-status:empty {
   display: none;
 }
+
+.sampling-notice {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: #77531a;
+  line-height: 1.5;
+}
+.sampling-notice .text-btn {
+  color: var(--green);
+}

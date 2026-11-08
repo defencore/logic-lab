@@ -8,7 +8,7 @@ Keep fish alive with temperature, oxygen and water-quality feedback; compare a d
 
 Open **Aquarium: life-support interlocks** in Examples → Automation, or import [circuit.json](./circuit.json). The [bilingual lesson](./lesson.js) follows the same circuit. Open the scene in **3D**; its controls edit the source components on the canvas. Keep both application Run and Scene run active during timed trials.
 
-This accelerated educational model demonstrates logic and feedback; its time, rates and thresholds are teaching parameters.
+This accelerated educational model demonstrates logic and feedback; its time, rates and thresholds are teaching parameters. The tank and actuator capacities are fixed. Increasing fishCount increases food and oxygen consumption and water contamination; four fish are the baseline load. Compare one and eight fish with the same controls.
 
 ## Objectives
 
@@ -54,7 +54,7 @@ Change one control condition, predict the effect, and record the new sensor and 
 
 Відкрийте цю лабораторну в каталозі **Приклади** або імпортуйте [circuit.json](./circuit.json). [lesson.js](./lesson.js) містить той самий двомовний розбір. Відкрийте відповідну сцену в **3D**: перемикачі змінюють джерела тієї самої схеми. Для часових дослідів активуйте запуск застосунку та Scene run.
 
-Час, швидкості та пороги прискореної навчальної моделі призначені для вивчення логіки й зворотного зв’язку.
+Час, швидкості та пороги прискореної навчальної моделі призначені для вивчення логіки й зворотного зв’язку. Об’єм акваріума й потужність механізмів сталі. Більша fishCount збільшує споживання корму й кисню та забруднення води; базове навантаження — чотири рибки. Порівняйте одну й вісім рибок з однаковим керуванням.
 
 ## Мета
 

@@ -12,7 +12,7 @@ test('signal histories trace outputless indicators and numeric processing blocks
       node('counter', 'counter'),
       node('dac', 'dac'),
       node('adc', 'adc'),
-      node('pwm', 'pwm'),
+      node('pwm', 'pwm', { frequency: 50, duty: 0.075 }),
       node('servo', 'servo'),
       node('matrix', 'matrix'),
       node('sevenseg', 'sevenseg'),
@@ -24,7 +24,7 @@ test('signal histories trace outputless indicators and numeric processing blocks
       wire('input', 'out', 'counter', 'clk'),
       wire('data', 'out', 'dac', 'in'),
       wire('dac', 'out', 'adc', 'in'),
-      wire('pwm', 'duty', 'servo', 's1'),
+      wire('pwm', 'out', 'servo', 's1'),
       wire('data', 'out', 'matrix', 'rows'),
       wire('data', 'out', 'matrix', 'cols'),
       wire('data', 'out', 'sevenseg', 'in'),
@@ -42,7 +42,7 @@ test('signal histories trace outputless indicators and numeric processing blocks
   assert.deepEqual(runtime.history.sevenseg, [128, 128]);
   assert.deepEqual(runtime.history.adc, [128, 128]);
   assert.ok(runtime.history.dac.every((value) => Math.abs(value - (128 / 255) * 5) < 1e-10));
-  assert.ok(runtime.history.servo.every((value) => Math.abs(value) < 1e-10));
+  assert.deepEqual(runtime.history.servo, [null, null], 'No valid full pulse has arrived yet.');
   assert.deepEqual(runtime.history.floating, [null, null]);
   simulate(project, runtime, 0);
   assert.equal(runtime.history.led.length, 2);

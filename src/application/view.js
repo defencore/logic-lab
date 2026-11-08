@@ -47,6 +47,7 @@ export function createView(context) {
     actions.applyView();
     actions.updateSignals();
     services.board.updateCounts();
+    services.recovery?.mount();
   }
   function renderLibrary() {
     $('#library-categories').innerHTML = renderLibraryCategories(state.category, state.lang);

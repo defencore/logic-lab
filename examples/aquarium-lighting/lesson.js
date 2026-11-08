@@ -24,7 +24,7 @@ export default {
         },
         {
           title: 'Remove the resting interval',
-          text: 'Turn Unsafe light always on=1 and let the simulation run beyond 90 continuous seconds of light. Health then declines rather than fish dying instantly. Restore the override to 0 and observe survivors recover; pulse Reset process to start a fresh population.',
+          text: 'Turn Unsafe light always on=1 and let the simulation run beyond 1.5 complete dayLength cycles of continuous light (90 seconds at the starting dayLength=60). Health then declines rather than fish dying instantly. Restore the override to 0 and observe survivors recover; pulse Reset process to start a fresh population.',
           nodes: ['force-light', 'light', 'world', 'reset'],
         },
       ],
@@ -46,7 +46,7 @@ export default {
         },
         {
           title: 'Приберіть відпочинок',
-          text: 'Увімкніть Unsafe light always on=1 довше ніж на 90 безперервних секунд світла. Далі Health зменшується, рибки не гинуть миттєво. Поверніть обхід у 0 для відновлення живих; Reset process починає нову популяцію.',
+          text: 'Увімкніть Unsafe light always on=1 довше ніж на 1,5 повного циклу dayLength безперервного світла (90 секунд при початковому dayLength=60). Далі Health зменшується, рибки не гинуть миттєво. Поверніть обхід у 0 для відновлення живих; Reset process починає нову популяцію.',
           nodes: ['force-light', 'light', 'world', 'reset'],
         },
       ],
@@ -72,12 +72,12 @@ export default {
       en: [
         'With Unsafe light always on=0, observe Day and the Light command. Invert light schedule=0 copies Day; setting it to 1 reverses Day. Across both halves of the 60-second day, record all four Day/Invert input pairs and the resulting light.',
         'Change only the lighting switches. Heating, cooling, air, food and filtration retain their sensor feedback. Compare a schedule change with a global pause: pause freezes fish, sensors and the day phase together, while XOR changes only the lamp command.',
-        'Turn Unsafe light always on=1 and let the simulation run beyond 90 continuous seconds of light. Health then declines rather than fish dying instantly. Restore the override to 0 and observe survivors recover; pulse Reset process to start a fresh population.',
+        'Turn Unsafe light always on=1 and let the simulation run beyond 1.5 complete dayLength cycles of continuous light (90 seconds at the starting dayLength=60). Health then declines rather than fish dying instantly. Restore the override to 0 and observe survivors recover; pulse Reset process to start a fresh population.',
       ],
       ua: [
         'При Unsafe light always on=0 спостерігайте Day та команду Light. Invert light schedule=0 повторює Day; значення 1 інвертує Day. За обидві половини 60-секундної доби запишіть чотири пари Day/Invert та світло.',
         'Змінюйте лише перемикачі освітлення. Нагрів, охолодження, повітря, їжа та фільтрація зберігають свої датчики. Порівняйте зміну розкладу з паузою: пауза зупиняє рибок, датчики й добу разом, а XOR змінює тільки лампу.',
-        'Увімкніть Unsafe light always on=1 довше ніж на 90 безперервних секунд світла. Далі Health зменшується, рибки не гинуть миттєво. Поверніть обхід у 0 для відновлення живих; Reset process починає нову популяцію.',
+        'Увімкніть Unsafe light always on=1 довше ніж на 1,5 повного циклу dayLength безперервного світла (90 секунд при початковому dayLength=60). Далі Health зменшується, рибки не гинуть миттєво. Поверніть обхід у 0 для відновлення живих; Reset process починає нову популяцію.',
       ],
     },
     questions: {

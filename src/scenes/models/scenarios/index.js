@@ -137,7 +137,7 @@ export function evaluateScenario(node, state, inputs) {
   switch (node.type) {
     case 'traffic_light': {
       if (uncertain(c)) return { valid: 'X', go: 'X' };
-      const valid = Number(c.red + c.yellow + c.green === 1);
+      const valid = Number(c.green ? !c.red && !c.yellow : c.red || c.yellow);
       return { valid, go: valid && c.green ? 1 : 0 };
     }
     case 'traffic_junction':

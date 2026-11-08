@@ -1,8 +1,10 @@
 import { parseSequence } from '../experiments/actions.js';
 import { parseAssignment, validateAttempt } from '../assessment/index.js';
+import { createStoredRecovery } from '../circuits/project-storage.js';
 
 const PROFILE = 'logic-lab.classroom-profile';
 const DRAFT = 'logic-lab.classroom-draft';
+export const CLASSROOM_RECOVERY_KEY = 'logic-lab.classroom-draft.recovery.v1';
 const fields = (value) => ({
   name: typeof value?.name === 'string' ? value.name.slice(0, 200) : '',
   id: typeof value?.id === 'string' ? value.id.slice(0, 100) : '',
@@ -15,28 +17,62 @@ const parse = (storage, key) => {
     return null;
   }
 };
-const checked = (value, validate) => {
-  try {
-    return value ? validate(value) : null;
-  } catch {
-    return null;
-  }
-};
-export function readClassroomStorage(storage) {
+function current(storage) {
   const profile = parse(storage, PROFILE);
-  const draft = parse(storage, DRAFT);
-  const assignment = checked(draft?.assignment, (value) => parseAssignment(JSON.stringify(value)));
-  return {
+  const raw = storage?.getItem(DRAFT) ?? null;
+  const rejected = [];
+  let draft = null;
+  if (raw) {
+    try {
+      draft = JSON.parse(raw);
+      if (!draft || typeof draft !== 'object' || Array.isArray(draft))
+        throw new Error('The saved classroom draft is not an object.');
+    } catch (error) {
+      rejected.push(error.message);
+      draft = null;
+    }
+  }
+  function checked(value, validate, section) {
+    if (value === undefined || value === null) return null;
+    try {
+      return validate(value);
+    } catch (error) {
+      rejected.push(`${section}: ${error.message}`);
+      return null;
+    }
+  }
+  const assignment = checked(
+    draft?.assignment,
+    (value) => parseAssignment(JSON.stringify(value)),
+    'Assignment',
+  );
+  const attempt = assignment
+    ? checked(draft?.attempt, (value) => validateAttempt(value, assignment), 'Attempt')
+    : null;
+  if (!assignment && draft?.attempt !== undefined && draft?.attempt !== null)
+    rejected.push('The saved attempt cannot be restored without a valid assignment.');
+  const sequence = checked(
+    draft?.sequence,
+    (value) => parseSequence(JSON.stringify(value)),
+    'Action sequence',
+  );
+  const state = {
     mode: profile?.mode === 'teacher' ? 'teacher' : 'student',
     student: fields(profile?.student),
     assignment,
-    attempt: assignment
-      ? checked(draft?.attempt, (value) => validateAttempt(value, assignment))
-      : null,
-    sequence: checked(draft?.sequence, (value) => parseSequence(JSON.stringify(value))),
+    attempt,
+    sequence,
     notes: typeof draft?.notes === 'string' ? draft.notes.slice(0, 10000) : '',
     teacherForm: sanitizeTeacherForm(draft?.teacherForm),
   };
+  return { state, issue: rejected.length ? { raw, reason: rejected.join(' ') } : null };
+}
+export function readClassroomStorage(storage) {
+  try {
+    return current(storage).state;
+  } catch {
+    return current(null).state;
+  }
 }
 export function sanitizeTeacherForm(value = {}) {
   return {
@@ -51,20 +87,61 @@ export function sanitizeTeacherForm(value = {}) {
 }
 export function createClassroomStorage(storage, onFailure = () => {}) {
   let warned = false;
+  const recovery = createStoredRecovery({
+    getStorage: () => storage,
+    backupKey: CLASSROOM_RECOVERY_KEY,
+    kind: 'classroom-draft',
+  });
+  function failure() {
+    if (!warned) onFailure();
+    warned = true;
+    return false;
+  }
   function write(key, value) {
     try {
       if (!storage) throw new Error('Browser storage is unavailable.');
+      if (key === DRAFT) {
+        const snapshot = current(storage);
+        if (snapshot.issue) {
+          const original = recovery.preserve(snapshot.issue.raw, snapshot.issue.reason);
+          if (!original.backedUp || original.raw !== snapshot.issue.raw || !original.handled)
+            return failure();
+        }
+      }
       storage.setItem(key, JSON.stringify(value));
       warned = false;
       return true;
     } catch {
-      if (!warned) onFailure();
-      warned = true;
-      return false;
+      return failure();
     }
   }
+  function load() {
+    try {
+      const value = current(storage);
+      if (value.issue) recovery.preserve(value.issue.raw, value.issue.reason);
+      return value.state;
+    } catch {
+      return readClassroomStorage(null);
+    }
+  }
+  function getRecovery() {
+    try {
+      const value = current(storage);
+      if (value.issue) return recovery.preserve(value.issue.raw, value.issue.reason);
+      return recovery.read();
+    } catch {
+      return recovery.read();
+    }
+  }
+  function acknowledgeRecovery(raw) {
+    const value = getRecovery();
+    if (!value?.backedUp || (raw !== undefined && value.raw !== raw)) return false;
+    return recovery.acknowledge(value.raw);
+  }
   return {
-    load: () => readClassroomStorage(storage),
+    load,
+    recovery: getRecovery,
+    acknowledgeRecovery,
     saveProfile: ({ mode, student }) => write(PROFILE, { mode, student: fields(student) }),
     saveDraft: ({ assignment, attempt, sequence, notes, teacherForm }) =>
       write(DRAFT, {

@@ -4,9 +4,10 @@ import {
   isScenarioType,
   scenarioParameterError,
 } from '../scenes/models/scenarios/index.js';
-import { unknown, number, active, signalValues } from './signals.js';
-import { initialState, motionParameters, evaluate } from './models.js';
-import { readInputs, outputContacts } from './contacts.js';
+import { unknown, number, active } from './signals.js';
+import { initialState, motionParameters } from './models.js';
+import { settleEvents } from './settling.js';
+import { servoParameterError } from './servo.js';
 import { advanceState } from './state.js';
 import { compileCircuit } from './network.js';
 
@@ -54,31 +55,10 @@ export function createRuntime() {
     lastSampleTime: 0,
   };
 }
-function settle(nodes, incoming, runtime) {
-  const limit = Math.min(512, Math.max(32, nodes.length * 3));
-  for (let iteration = 0; iteration < limit; iteration++) {
-    readInputs(nodes, incoming, runtime);
-    const updates = new Map();
-    let changed = false;
-    for (const node of nodes) {
-      const output = outputContacts(node, evaluate(node, runtime, incoming), runtime);
-      updates.set(node, output);
-      if (
-        Object.entries(output).some(([port, value]) => runtime.outputs[node.id]?.[port] !== value)
-      )
-        changed = true;
-    }
-    for (const [node, output] of updates) {
-      runtime.outputs[node.id] = output;
-      runtime.signals.outputs[node.id] = signalValues(
-        getDefinition(node.type).signals.outputs,
-        output,
-      );
-    }
-    if (!changed) return true;
-  }
-  readInputs(nodes, incoming, runtime);
-  return false;
+function appendHistory(runtime, id, value) {
+  const history = (runtime.history[id] ??= []);
+  history.push(unknown(value) ? null : value);
+  if (history.length > HISTORY_CAPACITY) history.splice(0, history.length - HISTORY_CAPACITY);
 }
 /**
  * Advance time once, settle combinational paths, sample state, then settle again.
@@ -125,9 +105,10 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
       getDefinition(node.type).outputs.map((port) => [port.id, 'Z']),
     );
   }
-  const firstSettled = settle(nodes, incoming, runtime);
+  for (const node of nodes) if (node.type === 'stepper') runtime.state[node.id].motionMoving = 0;
+  const firstSettled = settleEvents(nodes, incoming, runtime);
   advanceState(nodes, runtime, incoming, dt);
-  const settled = settle(nodes, incoming, runtime);
+  const settled = settleEvents(nodes, incoming, runtime);
   runtime.wireValues = Object.assign(
     Object.create(null),
     Object.fromEntries(
@@ -142,7 +123,11 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
     });
   for (const node of nodes) {
     const definition = getDefinition(node.type);
-    if (node.enabled === false) continue;
+    if (node.enabled === false) {
+      if (sampleDue && (definition.inputs.length || definition.outputs.length))
+        appendHistory(runtime, node.id, null);
+      continue;
+    }
     const scenarioError = isScenarioType(node.type) && scenarioParameterError(node);
     if (scenarioError)
       runtime.diagnostics.push({
@@ -153,7 +138,11 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
       });
     for (const port of definition.inputs) {
       const value = runtime.inputs[node.id]?.[port.id];
-      if (value === 'Z' && !(optionalInputs[node.type] || []).includes(port.group || port.id))
+      if (
+        value === 'Z' &&
+        (!(optionalInputs[node.type] || []).includes(port.group || port.id) ||
+          incoming.has(`${node.id}:${port.id}`))
+      )
         runtime.diagnostics.push({
           level: 'warning',
           code: 'floating',
@@ -198,6 +187,15 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
         node: node.id,
         message: `${node.label || definition.label}: position is unknown after an uncertain control signal. Apply Reset to restore the initial position.`,
       });
+    const servoError =
+      node.type === 'servo' && servoParameterError({ ...definition.defaults, ...node.params });
+    if (servoError)
+      runtime.diagnostics.push({
+        level: 'error',
+        code: 'invalid_servo',
+        node: node.id,
+        message: `${node.label || definition.label}: ${servoError}`,
+      });
     const outputValues = Object.values(runtime.signals.outputs[node.id] || {});
     const inputValues = Object.values(runtime.signals.inputs[node.id] || {});
     if (sampleDue && (outputValues.length || inputValues.length)) {
@@ -205,9 +203,7 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
         node.type === 'scope'
           ? runtime.inputs[node.id].in
           : (outputValues.length ? outputValues : inputValues)[0];
-      const history = (runtime.history[node.id] ??= []);
-      history.push(unknown(value) ? null : value);
-      if (history.length > HISTORY_CAPACITY) history.splice(0, history.length - HISTORY_CAPACITY);
+      appendHistory(runtime, node.id, value);
     }
   }
   if (sampleDue) {

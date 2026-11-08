@@ -207,6 +207,8 @@ export function createLearningController(
       if (d.code === 'invalid_scenario') return `${name}: ${t('sceneParameters')}`;
       if (d.code === 'invalid_motion')
         return `${name}: задайте додатні цілі кроки на оберт і мікрокроки, додатний хід та межі Min ≤ Max.`;
+      if (d.code === 'invalid_servo')
+        return `${name}: задайте 0 < мінімальний імпульс < центральний < максимальний, додатний кут і час втрати сигналу довший за максимальний імпульс.`;
       if (d.code === 'motion_unknown')
         return `${name}: позиція невідома після невизначеного керувального сигналу. Подайте Reset для відновлення початкової позиції.`;
       return d.code === 'oscillation'

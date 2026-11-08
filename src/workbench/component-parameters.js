@@ -1,3 +1,4 @@
+import { parameterRule } from '../components/parameter-rules.js';
 import { esc } from '../shared/ui.js';
 
 export function memoryBytes(value) {
@@ -55,8 +56,10 @@ const PARAM_NAMES = {
   initial: ['Initial value', 'Початкове значення'],
   value: ['Value', 'Значення'],
   range: ['Range', 'Діапазон'],
-  minDuty: ['Minimum duty', 'Мінімальне заповнення'],
-  maxDuty: ['Maximum duty', 'Максимальне заповнення'],
+  minPulse: ['Minimum pulse (µs)', 'Мінімальний імпульс (мкс)'],
+  centerPulse: ['Center pulse (µs)', 'Центральний імпульс (мкс)'],
+  maxPulse: ['Maximum pulse (µs)', 'Максимальний імпульс (мкс)'],
+  signalTimeout: ['Signal timeout (s)', 'Час втрати сигналу (с)'],
   text: ['Text', 'Текст'],
   color: ['Color', 'Колір'],
   stepsPerRevolution: ['Full steps / revolution', 'Повних кроків на оберт'],
@@ -100,68 +103,10 @@ export function parameterField(key, value, componentType, lang, t) {
       componentType === 'limit_switch' ? ['below', 'above'] : ['below', 'above', 'window'];
     return `<label>${esc(label)}<select data-param="mode">${options.map((option) => `<option value="${option}" ${value === option ? 'selected' : ''}>${t(option)}</option>`).join('')}</select></label>`;
   }
-  const bounds = {
-    carSpeed: [1, 40, 0.5],
-    arrivalInterval: [1, 60, 0.5],
-    initialCars: [0, 8, 1],
-    speedLimit: [1, 255, 1],
-    initialA: [-500, -20, 1],
-    initialB: [-500, -20, 1],
-    hopperCapacity: [1, 100000, 1],
-    bowlCapacity: [1, 10000, 1],
-    initialHopper: [0, 100000, 1],
-    initialLevel: [0, 10000, 1],
-    dispenseRate: [0.1, 10000, 0.1],
-    eatRate: [0, 1000, 0.1],
-    hungryThreshold: [0, 10000, 1],
-    fullThreshold: [0, 10000, 1],
-    alarmThreshold: [0, 10000, 1],
-    portionSize: [1, 10000, 1],
-    capacity: [1, 100000, 1],
-    pumpRate: [0.1, 10000, 0.1],
-    drainRate: [0, 10000, 0.1],
-    lowThreshold: [0, 100, 1],
-    highThreshold: [0, 100, 1],
-    initialTemperature: [-20, 80, 0.5],
-    ambientTemperature: [-20, 50, 0.5],
-    initialOxygen: [0, 100, 1],
-    initialFood: [0, 100, 1],
-    initialCleanliness: [0, 100, 1],
-    fishCount: [1, 8, 1],
-    dayLength: [10, 3600, 1],
-    initialMoisture: [0, 100, 1],
-    initialWater: [0, 100, 1],
-    duty: [0, 1, 0.01],
-    depth: [0, 1, 0.01],
-    minDuty: [0, 1, 0.01],
-    maxDuty: [0, 1, 0.01],
-    stepsPerRevolution: [1, 10000, 1],
-    microsteps: [1, 256, 1],
-    lead: [0.001, 1000, 0.1],
-    min: [-1000000, 1000000, 0.1],
-    max: [-1000000, 1000000, 0.1],
-    threshold: [-1000000, 1000000, 0.1],
-    tolerance: [0, 1000000, 0.1],
-    frequency: [0, 1000, 0.1],
-    carrier: [0, 1000, 0.1],
-    duration: [0.0005, 1000, 0.01],
-    width: [100, 3000, 20],
-    height: [100, 3000, 20],
-    vcc: [0.01, 1000, 0.1],
-  };
-  const limits =
-    key === 'value' && componentType === 'bus_input'
-      ? [0, 255, 1]
-      : key === 'value' && componentType === 'switch'
-        ? [0, 1, 1]
-        : key === 'initialLevel' && componentType === 'water_tank'
-          ? [0, 100, 1]
-          : bounds[key];
+  const limits = parameterRule(componentType, key);
   const attributes =
     type === 'number'
-      ? limits
-        ? `min="${limits[0]}" max="${limits[1]}" step="${limits[2]}"`
-        : `step="${Number.isInteger(value) ? 1 : 0.01}"`
+      ? `step="${limits.step}"${limits.min === undefined ? '' : ` min="${limits.min}" max="${limits.max}"`}${limits.integer ? ' data-integer="true"' : ''}`
       : 'maxlength="16384"';
   return `<label ${type === 'checkbox' ? 'class="toggle-row"' : ''}>${esc(label)}<input data-param="${esc(key)}" type="${type}" ${attributes} ${Array.isArray(value) ? 'data-array="true"' : ''} ${type === 'checkbox' ? (value ? 'checked' : '') : `value="${esc(Array.isArray(value) ? JSON.stringify(value) : value)}"`}>${key === 'duty' ? `<input class="duty-slider" data-slider="duty" type="range" aria-label="${esc(label)}" min="0" max="1" step="0.01" value="${esc(value)}">` : ''}</label>`;
 }

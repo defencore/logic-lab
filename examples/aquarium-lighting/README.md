@@ -21,7 +21,7 @@ This accelerated educational model demonstrates logic and feedback; its time, ra
 
 2. **Preserve other life-support loops.** Change only the lighting switches. Heating, cooling, air, food and filtration retain their sensor feedback. Compare a schedule change with a global pause: pause freezes fish, sensors and the day phase together, while XOR changes only the lamp command.
 
-3. **Remove the resting interval.** Turn Unsafe light always on=1 and let the simulation run beyond 90 continuous seconds of light. Health then declines rather than fish dying instantly. Restore the override to 0 and observe survivors recover; pulse Reset process to start a fresh population.
+3. **Remove the resting interval.** Turn Unsafe light always on=1 and let the simulation run beyond 1.5 complete dayLength cycles of continuous light (90 seconds at the starting dayLength=60). Health then declines rather than fish dying instantly. Restore the override to 0 and observe survivors recover; pulse Reset process to start a fresh population.
 
 ## Expected result
 
@@ -67,7 +67,7 @@ Change one control condition, predict the effect, and record the new sensor and 
 
 2. **Збережіть інші контури життя.** Змінюйте лише перемикачі освітлення. Нагрів, охолодження, повітря, їжа та фільтрація зберігають свої датчики. Порівняйте зміну розкладу з паузою: пауза зупиняє рибок, датчики й добу разом, а XOR змінює тільки лампу.
 
-3. **Приберіть відпочинок.** Увімкніть Unsafe light always on=1 довше ніж на 90 безперервних секунд світла. Далі Health зменшується, рибки не гинуть миттєво. Поверніть обхід у 0 для відновлення живих; Reset process починає нову популяцію.
+3. **Приберіть відпочинок.** Увімкніть Unsafe light always on=1 довше ніж на 1,5 повного циклу dayLength безперервного світла (90 секунд при початковому dayLength=60). Далі Health зменшується, рибки не гинуть миттєво. Поверніть обхід у 0 для відновлення живих; Reset process починає нову популяцію.
 
 ## Очікуваний результат
 

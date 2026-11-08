@@ -24,12 +24,12 @@ import {
   scenarioParameterError,
 } from '../../../../src/scenes/models/scenarios/index.js';
 
-test('traffic light accepts exactly one lamp and unknown lamp controls remain visibly uncertain', () => {
+test('traffic light accepts the red-amber stop phase and rejects conflicting green lamps', () => {
   const n = node('traffic_light');
   for (let mask = 0; mask < 8; mask++) {
     const inputs = { red: mask & 1, yellow: (mask >> 1) & 1, green: (mask >> 2) & 1 };
     const output = evaluateScenario(n, initialScenarioState(n), inputs);
-    assert.equal(output.valid, Number([1, 2, 4].includes(mask)));
+    assert.equal(output.valid, Number([1, 2, 3, 4].includes(mask)));
     assert.equal(output.go, Number(mask === 4));
   }
   assert.deepEqual(evaluateScenario(n, initialScenarioState(n), {}), { valid: 0, go: 0 });

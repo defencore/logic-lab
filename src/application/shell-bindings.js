@@ -1,6 +1,6 @@
 import { $, $$ } from '../shared/ui.js';
 import { ZOOM_IN_FACTOR, ZOOM_OUT_FACTOR } from '../circuits/viewport.js';
-import { SIMULATION_RATES, TIME_WINDOWS } from '../signals/time.js';
+import { SIMULATION_RATES } from '../signals/time.js';
 export function createShellBindings(context) {
   const { state, services, actions, t } = context;
   function bindShell() {
@@ -88,18 +88,8 @@ export function createShellBindings(context) {
     $('#record-download').onclick = services.monitor.downloadRecording;
     $('#trace-image').onclick = services.monitor.downloadImage;
     services.monitor.updateUi();
-    $('#time-base').onchange = (e) => {
-      const value = Number(e.target.value);
-      if (services.monitor.isRecording() || !TIME_WINDOWS.includes(value)) return;
-      state.timeBase = value;
-      services.monitor.saveSettings();
-      state.runtime.sampleInterval = state.timeBase / 255;
-      state.runtime.history = Object.create(null);
-      state.runtime.historyTimes = [];
-      state.runtime.sampleElapsed = 0;
-      state.runtime.lastSampleTime = state.runtime.time;
-      services.monitor.draw();
-    };
+    $('#time-base').onchange = (event) =>
+      services.monitor.setTimeWindow(Number(event.target.value));
     $('#monitor-toggle').onclick = () => {
       if (state.compactLayout.matches) return actions.setWorkspaceView('canvas');
       state.monitorOpen = !state.monitorOpen;

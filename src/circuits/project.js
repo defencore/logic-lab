@@ -1,7 +1,8 @@
 import { getDefinition } from '../components/catalog/index.js';
 import { MIN_ZOOM, MAX_ZOOM } from './viewport.js';
+import { createProjectStorage } from './project-storage.js';
 
-export const STORAGE_KEY = 'logic-lab.project.v1';
+export { STORAGE_KEY, PROJECT_RECOVERY_KEY } from './project-storage.js';
 const MAX_NODES = 1000;
 const MAX_WIRES = 5000;
 const MAX_FILE_LENGTH = 5_000_000;
@@ -56,6 +57,10 @@ function primitive(value, label) {
 
 function parameters(value, label, definition) {
   record(value, label);
+  if (definition.type === 'servo' && (own(value, 'minDuty') || own(value, 'maxDuty')))
+    fail(
+      `${label}: obsolete servo duty-ratio settings. Use digital PWM with minPulse, centerPulse and maxPulse in microseconds; keep the original file for reference.`,
+    );
   const result = {};
   const entries = Object.entries(value);
   if (entries.length > 100) fail(`${label} has too many fields.`);
@@ -266,21 +271,8 @@ export function serializeProject(project) {
   return source;
 }
 
-export function loadProject() {
-  try {
-    const stored = globalThis.localStorage?.getItem(STORAGE_KEY);
-    return stored ? parseProject(stored) : null;
-  } catch {
-    return null;
-  }
-}
-
-export function saveProject(project) {
-  try {
-    if (!globalThis.localStorage) return false;
-    globalThis.localStorage.setItem(STORAGE_KEY, serializeProject(project));
-    return true;
-  } catch {
-    return false;
-  }
-}
+const storage = createProjectStorage({ parse: parseProject, serialize: serializeProject });
+export const loadProject = storage.load;
+export const saveProject = storage.save;
+export const loadProjectRecovery = storage.recovery;
+export const acknowledgeProjectRecovery = storage.acknowledgeRecovery;

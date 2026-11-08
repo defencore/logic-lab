@@ -1,3 +1,4 @@
+import { advanceRuntime } from '../../../src/simulation/advance.js';
 import { open, value, advance, output, input } from './fixtures/examples.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -38,17 +39,32 @@ test('AM/FM lesson advances its ramp and produces different bounded traces', () 
   assert.deepEqual(context.runtime.diagnostics, []);
 });
 
-test('PWM lesson centers and reaches endpoints independently of frequency', () => {
+test('RC servo lesson uses pulse width, reaches endpoints and detects a stopped signal', () => {
   const context = open('pwm-servos');
-  assert.ok(Math.abs(output(context, 'servos', 'a1') + 45) < 1e-8);
-  assert.ok(Math.abs(output(context, 'servos', 'a2') - 45) < 1e-8);
-  value(context, 'course', 0.5, 'duty');
-  assert.ok(Math.abs(output(context, 'servos', 'a1')) < 1e-8);
-  value(context, 'course', 0.18, 'duty');
-  assert.ok(Math.abs(output(context, 'servos', 'a1') + 90) < 1e-8);
-  value(context, 'course', 0.82, 'duty');
-  assert.ok(Math.abs(output(context, 'servos', 'a1') - 90) < 1e-8);
-  value(context, 'course', 77, 'frequency');
-  assert.ok(Math.abs(output(context, 'servos', 'a1') - 90) < 1e-8);
-  assert.ok(Math.abs(output(context, 'servos', 'a2') - 45) < 1e-8);
+  const settle = () =>
+    assert.equal(
+      advanceRuntime(context.project, context.runtime, 0.06, { maxSteps: 5000 }).reached,
+      true,
+    );
+  settle();
+  assert.ok(Math.abs(output(context, 'servos', 'a1') + 45) < 1e-6);
+  assert.ok(Math.abs(output(context, 'servos', 'a2') - 45) < 1e-6);
+  for (const [duty, angle] of [
+    [0.075, 0],
+    [0.05, -90],
+    [0.1, 90],
+  ]) {
+    value(context, 'course', duty, 'duty');
+    settle();
+    assert.ok(Math.abs(output(context, 'servos', 'a1') - angle) < 1e-6);
+  }
+  value(context, 'course', 100, 'frequency');
+  value(context, 'course', 0.15, 'duty');
+  settle();
+  assert.ok(Math.abs(output(context, 'servos', 'a1')) < 1e-6);
+  value(context, 'course', 0, 'duty');
+  settle();
+  settle();
+  assert.equal(output(context, 'servos', 'a1'), 'X');
+  assert.ok(Math.abs(output(context, 'servos', 'a2') - 45) < 1e-6);
 });

@@ -1,5 +1,7 @@
 export const SIMULATION_RATES = [0.001, 0.01, 0.1, 0.25, 0.5, 1, 2, 5, 10];
-export const TIME_WINDOWS = [0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 15, 30, 60];
+export const TIME_WINDOWS = [
+  0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 15, 30, 60,
+];
 
 // Wall-clock stalls must not jump over an unbounded span of simulated time.
 export function frameSimulationDelta(now, previous, rate) {

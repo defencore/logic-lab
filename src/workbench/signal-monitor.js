@@ -1,3 +1,5 @@
+import { samplingAdvice } from '../signals/sampling.js';
+import { TIME_WINDOWS } from '../signals/time.js';
 import { getDefinition } from '../components/catalog/index.js';
 import { $, esc, format } from '../shared/ui.js';
 import { paintTraces } from '../signals/waveforms.js';
@@ -58,6 +60,9 @@ export function createSignalMonitor(state, { t, title, notify, setWorkspaceView 
         history: state.runtime.history[node.id] || [],
         current: primarySignal(node),
         stepped: !port?.analog && !port?.acceptAny,
+        sampleTimes: state.runtime.historyTimes,
+        timeWindow: state.timeBase,
+        endTime: state.runtime.time,
       };
     });
   }
@@ -102,6 +107,7 @@ export function createSignalMonitor(state, { t, title, notify, setWorkspaceView 
     drawMonitor();
   }
   function updateRecordingUi() {
+    updateSamplingUi();
     const active = !!recording?.active;
     const toggle = $('#record-toggle');
     if (!toggle) return;
@@ -126,6 +132,30 @@ export function createSignalMonitor(state, { t, title, notify, setWorkspaceView 
       : '';
     if ($('#record-status').textContent !== statusText)
       $('#record-status').textContent = statusText;
+  }
+  function setTimeWindow(value) {
+    if (recording?.active || !TIME_WINDOWS.includes(value)) return;
+    state.timeBase = value;
+    state.runtime.sampleInterval = value / 255;
+    state.runtime.history = Object.create(null);
+    state.runtime.historyTimes = [];
+    state.runtime.sampleElapsed = 0;
+    state.runtime.lastSampleTime = state.runtime.time;
+    saveSimulationSettings();
+    if ($('#time-base')) $('#time-base').value = String(value);
+    updateSamplingUi();
+    drawMonitor();
+  }
+  function updateSamplingUi() {
+    const notice = $('#sampling-notice');
+    if (!notice) return;
+    const { adequate, target } = samplingAdvice(state.project, state.runtime, state.timeBase);
+    notice.hidden = adequate;
+    $('#sampling-message').textContent = t('samplingNotice');
+    const fit = $('#fit-time-window');
+    fit.textContent = `${t('fitTimeWindow')} · ${formatWindow(target)}`;
+    fit.disabled = !!recording?.active || target === state.timeBase;
+    fit.onclick = () => setTimeWindow(target);
   }
   function downloadBlob(blob, name, extension) {
     const filename = name.replace(/[^\p{L}\p{N} _-]/gu, '').trim() || 'waveforms';
@@ -194,6 +224,7 @@ export function createSignalMonitor(state, { t, title, notify, setWorkspaceView 
     formatRate,
     formatWindow,
     saveSettings: saveSimulationSettings,
+    setTimeWindow,
     toggleRecording,
     updateUi: updateRecordingUi,
     downloadRecording,

@@ -215,7 +215,12 @@ test('packed internal signal names cannot be used as physical connection endpoin
 
 test('single-bit initial states cannot expose nonbinary values', () => {
   for (const type of ['d_ff', 'jk_ff', 't_ff']) {
-    const runtime = evaluate(circuit([node('ff', type, { initial: 2 })]));
+    const runtime = evaluate(
+      circuit(
+        [source('clk', 0), node('ff', type, { initial: 2 })],
+        [wire('clk', 'out', 'ff', 'clk')],
+      ),
+    );
     assert.equal(output(runtime, 'ff', 'q'), 1);
     assert.equal(output(runtime, 'ff', 'nq'), 0);
   }

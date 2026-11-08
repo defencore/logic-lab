@@ -47,8 +47,8 @@ export const ARCHITECTURE = [
     [word('in', 'D')],
     Array.from({ length: 8 }, (_, i) => bit(`b${i}`, `${i}`)),
     {},
-    'Passes each of eight input lines to its matching output; b0 is the least significant bit.',
-    'Передає кожну з восьми вхідних ліній на відповідний вихід; b0 — молодший біт.',
+    'Eight passive conductors preserve bit order, pull strength and electrical continuity.',
+    'Вісім пасивних провідників зберігають порядок бітів, силу підтяжки та електричну неперервність.',
   ),
   component(
     'merger',
@@ -59,7 +59,7 @@ export const ARCHITECTURE = [
     Array.from({ length: 8 }, (_, i) => bit(`b${i}`, `${i}`)),
     [word('out', 'Q')],
     {},
-    'Connects eight independent bit inputs to matching output lines.',
-    'З’єднує вісім незалежних бітових входів із відповідними вихідними лініями.',
+    'Passively connects eight independent bit inputs to matching output contacts.',
+    'Пасивно з’єднує вісім незалежних бітових входів із відповідними вихідними контактами.',
   ),
 ];

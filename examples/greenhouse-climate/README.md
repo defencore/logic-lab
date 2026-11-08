@@ -8,7 +8,7 @@ Maintain a plant-growing climate with mutually exclusive temperature requests an
 
 Open **Greenhouse: climate and growth** in Examples → Automation, or import [circuit.json](./circuit.json). The [bilingual lesson](./lesson.js) follows the same circuit. Open the scene in **3D**; its controls edit the source components on the canvas. Keep both application Run and Scene run active during timed trials.
 
-This accelerated educational model demonstrates logic and feedback; its time, rates and thresholds are teaching parameters.
+This accelerated educational model demonstrates logic and feedback; its time, rates and thresholds are teaching parameters. The vent increases heat exchange with outside air. It cools only when ambientTemperature is lower than the greenhouse temperature and can warm a colder greenhouse.
 
 ## Objectives
 
@@ -54,7 +54,7 @@ Change one control condition, predict the effect, and record the new sensor and 
 
 Відкрийте цю лабораторну в каталозі **Приклади** або імпортуйте [circuit.json](./circuit.json). [lesson.js](./lesson.js) містить той самий двомовний розбір. Відкрийте відповідну сцену в **3D**: перемикачі змінюють джерела тієї самої схеми. Для часових дослідів активуйте запуск застосунку та Scene run.
 
-Час, швидкості та пороги прискореної навчальної моделі призначені для вивчення логіки й зворотного зв’язку.
+Час, швидкості та пороги прискореної навчальної моделі призначені для вивчення логіки й зворотного зв’язку. Кватирка посилює теплообмін із довкіллям. Вона охолоджує лише за нижчої ambientTemperature та може нагрівати холоднішу теплицю.
 
 ## Мета
 

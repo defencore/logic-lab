@@ -14,7 +14,7 @@ export default {
       steps: [
         {
           title: 'Separate request and permission',
-          text: 'Keep Climate enabled=1 and Manual all lights=0. Cold below 19°C starts heat, while Hot above 25°C starts the fan. Set Climate enabled=0: a sensor may still request action, but AND prevents both climate actuators. Temperature then drifts toward ambientTemperature.',
+          text: 'Keep Climate enabled=1 and Manual all lights=0. Cold below 19°C starts heat, while Hot above 25°C starts the fan. Set Climate enabled=0: a sensor may still request action, but AND prevents both climate actuators. Temperature then drifts toward ambientTemperature. The fan exchanges heat with outside air; it cannot cool below ambientTemperature and may warm a colder house.',
           nodes: ['comfort', 'heat', 'fan', 'world'],
         },
         {
@@ -36,7 +36,7 @@ export default {
       steps: [
         {
           title: 'Відокремте запит від дозволу',
-          text: 'Лишіть Climate enabled=1 і Manual all lights=0. Cold нижче 19°C запускає нагрів, Hot вище 25°C — вентилятор. Climate enabled=0 через І блокує механізми навіть за активного датчика. Температура наближається до ambientTemperature.',
+          text: 'Лишіть Climate enabled=1 і Manual all lights=0. Cold нижче 19°C запускає нагрів, Hot вище 25°C — вентилятор. Climate enabled=0 через І блокує механізми навіть за активного датчика. Температура наближається до ambientTemperature. Вентилятор обмінюється теплом із зовнішнім повітрям, не охолоджує нижче ambientTemperature та може нагрівати холодніший будинок.',
           nodes: ['comfort', 'heat', 'fan', 'world'],
         },
         {
@@ -70,12 +70,12 @@ export default {
     },
     tasks: {
       en: [
-        'Keep Climate enabled=1 and Manual all lights=0. Cold below 19°C starts heat, while Hot above 25°C starts the fan. Set Climate enabled=0: a sensor may still request action, but AND prevents both climate actuators. Temperature then drifts toward ambientTemperature.',
+        'Keep Climate enabled=1 and Manual all lights=0. Cold below 19°C starts heat, while Hot above 25°C starts the fan. Set Climate enabled=0: a sensor may still request action, but AND prevents both climate actuators. Temperature then drifts toward ambientTemperature. The fan exchanges heat with outside air; it cannot cool below ambientTemperature and may warm a colder house.',
         'The home clock produces day/night and two motion windows each 60-second day. Indoor Light follows Dark; Outdoor Light requires Dark AND Motion. Record all four input combinations for the outdoor AND gate and compare visible windows and path lights.',
         'Run one full day and record Energy. Reset process, set Manual all lights=1 and run the same duration. Compare Energy at equal simulated times, not equal camera views. Restore manual lights=0 and Climate enabled=1 after the experiment.',
       ],
       ua: [
-        'Лишіть Climate enabled=1 і Manual all lights=0. Cold нижче 19°C запускає нагрів, Hot вище 25°C — вентилятор. Climate enabled=0 через І блокує механізми навіть за активного датчика. Температура наближається до ambientTemperature.',
+        'Лишіть Climate enabled=1 і Manual all lights=0. Cold нижче 19°C запускає нагрів, Hot вище 25°C — вентилятор. Climate enabled=0 через І блокує механізми навіть за активного датчика. Температура наближається до ambientTemperature. Вентилятор обмінюється теплом із зовнішнім повітрям, не охолоджує нижче ambientTemperature та може нагрівати холодніший будинок.',
         'Годинник будинку створює день/ніч і два вікна руху за 60-секундну добу. Світло кімнат повторює Dark, подвір’я вимагає Dark І Motion. Запишіть чотири комбінації входів І та порівняйте вікна й ліхтарі.',
         'Проженіть добу та запишіть Energy. Подайте Reset process, увімкніть Manual all lights=1 і повторіть таку саму тривалість. Порівнюйте Energy при однаковому модельному часі, а не ракурсі. Після досліду поверніть manual lights=0 та Climate enabled=1.',
       ],

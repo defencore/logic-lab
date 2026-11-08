@@ -36,8 +36,8 @@ export default {
       'Цифрові 0/1 дають модуляцію −1/+1; аналогові 0…Amplitude охоплюють той самий діапазон. Frequency керує лише внутрішнім модулятором.',
     ],
     [
-      'Use a carrier slow enough to resolve with several samples per period.',
-      'Використовуйте несучу, період якої містить достатньо відліків.',
+      'Physics adapts to the carrier and modulation frequencies. The displayed trace still needs a short enough time window to resolve the fastest oscillation; heed the sampling warning.',
+      'Фізика підлаштовується під частоти несучої й модуляції. Для відображення найшвидших коливань потрібне достатньо коротке часове вікно; звертайте увагу на попередження про дискретизацію.',
     ],
   ],
   inputs: {

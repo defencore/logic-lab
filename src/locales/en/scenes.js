@@ -11,7 +11,8 @@ export const scenes = {
   sceneUnknown: 'A control signal is unknown. Check the connections before continuing.',
   sceneParameters:
     'The object settings are inconsistent. Check positive capacities and rates, ordered sensor thresholds, and initial levels within capacity.',
-  invalidLights: 'Use one active lamp at a time. A dark or conflicting signal is not valid.',
+  invalidLights:
+    'Use red, amber, red plus amber or green alone. Darkness or green with another lamp is invalid.',
   sceneParamReset: 'Changing these settings resets this object and its fault state.',
   sceneCollision:
     'Collision — two vehicles made physical contact. Separate their routes or entry permissions.',

@@ -1,27 +1,27 @@
+import { readMemoryBits } from './memory.js';
 import { getDefinition } from '../components/catalog/index.js';
-import { unknown, logic, active, signalValues, resolveDrivers } from './signals.js';
+import { unknown, logic, signalValues, resolveDrivers } from './signals.js';
 
-export function outputContacts(node, values, runtime) {
+export function outputContacts(node, values, runtime, incoming) {
   const inputs = runtime.inputs[node.id];
   const control = runtime.signals.inputs[node.id];
+  const memory =
+    ['ram', 'rom', 'register_file'].includes(node.type) && node.enabled !== false
+      ? readMemoryBits(node, inputs, incoming, runtime.state[node.id], {
+          ...getDefinition(node.type).defaults,
+          ...node.params,
+        })
+      : null;
   const state = runtime.state[node.id];
   return Object.fromEntries(
     getDefinition(node.type).outputs.map((port) => {
       const value = values[port.group || port.id] ?? 'Z';
       let result = port.group && !unknown(value) ? (value >> port.bit) & 1 : value;
       if (node.enabled !== false) {
-        if (node.type === 'register' || node.type === 'shift_register') {
+        if (node.type === 'register' || node.type === 'shift_register' || node.type === 'counter') {
           result = state.qBits[port.id === 'serial' ? 7 : port.bit];
-        } else if (
-          node.type === 'ram' &&
-          active(control.cs, 1) &&
-          active(control.oe, 1) &&
-          !active(control.we) &&
-          !unknown(control.address)
-        ) {
-          result = state.memoryBits[control.address & 15][port.bit];
-        } else if (node.type === 'register_file' && !unknown(control.read)) {
-          result = state.memoryBits[control.read & 7][port.bit];
+        } else if (['ram', 'rom', 'register_file'].includes(node.type)) {
+          result = memory[port.bit];
         } else if (node.type === 'mux') {
           const a = inputs[`a${port.bit}`],
             b = inputs[`b${port.bit}`];

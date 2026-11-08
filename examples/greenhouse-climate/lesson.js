@@ -14,7 +14,7 @@ export default {
       steps: [
         {
           title: 'Observe a full greenhouse day',
-          text: 'Open the greenhouse in 3D. Cold below 18°C requests heating; Hot above 28°C requests ventilation. Dry requests irrigation, while Dark turns on grow lights. Watch Temperature, Moisture, Growth and Health for a complete day instead of judging the plants from one frame.',
+          text: 'Open the greenhouse in 3D. Cold below 18°C requests heating; Hot above 28°C requests ventilation, which exchanges heat with outside air rather than cooling below ambientTemperature. Dry requests irrigation, while Dark turns on grow lights. Watch Temperature, Moisture, Growth and Health for a complete day instead of judging the plants from one frame.',
           nodes: ['world', 'heat-safe', 'vent'],
         },
         {
@@ -36,7 +36,7 @@ export default {
       steps: [
         {
           title: 'Спостерігайте повну добу',
-          text: 'Відкрийте теплицю в 3D. Cold нижче 18°C просить нагрів, Hot вище 28°C — вентиляцію. Dry просить полив, Dark вмикає лампи. Стежте за Temperature, Moisture, Growth та Health повну добу замість оцінки за одним кадром.',
+          text: 'Відкрийте теплицю в 3D. Cold нижче 18°C просить нагрів, Hot вище 28°C — вентиляцію, що обмінюється теплом із довкіллям та не охолоджує нижче ambientTemperature. Dry просить полив, Dark вмикає лампи. Стежте за Temperature, Moisture, Growth та Health повну добу замість оцінки за одним кадром.',
           nodes: ['world', 'heat-safe', 'vent'],
         },
         {
@@ -70,12 +70,12 @@ export default {
     },
     tasks: {
       en: [
-        'Open the greenhouse in 3D. Cold below 18°C requests heating; Hot above 28°C requests ventilation. Dry requests irrigation, while Dark turns on grow lights. Watch Temperature, Moisture, Growth and Health for a complete day instead of judging the plants from one frame.',
+        'Open the greenhouse in 3D. Cold below 18°C requests heating; Hot above 28°C requests ventilation, which exchanges heat with outside air rather than cooling below ambientTemperature. Dry requests irrigation, while Dark turns on grow lights. Watch Temperature, Moisture, Growth and Health for a complete day instead of judging the plants from one frame.',
         'Keep Unsafe heater stuck on=0 and inspect Cold AND not hot. Write the conditions under which heat and ventilation can run. Follow the output wires back to the same greenhouse sensors and explain why a manual source alone cannot know the current temperature.',
         'Turn Unsafe heater stuck on=1. Heat remains commanded and ventilation is denied, so temperature rises before Health falls and plants wilt. Restore the switch to 0; surviving plants can recover. Pulse Reset process to compare another fault from the original temperature and moisture.',
       ],
       ua: [
-        'Відкрийте теплицю в 3D. Cold нижче 18°C просить нагрів, Hot вище 28°C — вентиляцію. Dry просить полив, Dark вмикає лампи. Стежте за Temperature, Moisture, Growth та Health повну добу замість оцінки за одним кадром.',
+        'Відкрийте теплицю в 3D. Cold нижче 18°C просить нагрів, Hot вище 28°C — вентиляцію, що обмінюється теплом із довкіллям та не охолоджує нижче ambientTemperature. Dry просить полив, Dark вмикає лампи. Стежте за Temperature, Moisture, Growth та Health повну добу замість оцінки за одним кадром.',
         'Лишіть Unsafe heater stuck on=0 і перевірте Cold І not hot. Запишіть умови нагріву й вентиляції. Простежте дроти до датчиків тієї самої теплиці та поясніть, чому ручне джерело не знає поточної температури.',
         'Увімкніть Unsafe heater stuck on=1. Нагрів триває, вентиляція заблокована, тому спочатку росте температура, потім падає Health і рослини в’януть. Вимкніть несправність; живі рослини відновлюються. Reset process повертає початкові температуру й вологість для наступного досліду.',
       ],

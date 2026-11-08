@@ -24,7 +24,10 @@ test('traffic-light laboratory exposes all eight real lamp states and valid pass
         value(context, 'red', red);
         value(context, 'yellow', yellow);
         value(context, 'green', green);
-        assert.equal(output(context, 'light', 'valid'), Number(red + yellow + green === 1));
+        assert.equal(
+          output(context, 'light', 'valid'),
+          Number(['100', '010', '110', '001'].includes(`${red}${yellow}${green}`)),
+        );
         assert.equal(
           output(context, 'light', 'go'),
           Number(green === 1 && red === 0 && yellow === 0),

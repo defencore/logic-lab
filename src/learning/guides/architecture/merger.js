@@ -28,6 +28,10 @@ export default {
   ],
   pitfalls: [
     [
+      'Each input/output pair is a passive conductor. Pull strength and contention propagate through it in both directions; disabling the block opens its conductors.',
+      'Кожна пара входу/виходу є пасивним провідником. Сила підтяжки й конфлікти передаються в обох напрямках; вимкнення блока розмикає провідники.',
+    ],
+    [
       'An unwired bit is Z, not 0, and makes the assembled byte unknown. Define all eight inputs.',
       'Непідключений біт є Z, а не 0, і робить зібраний байт невідомим. Задайте всі вісім входів.',
     ],

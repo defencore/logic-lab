@@ -55,23 +55,6 @@ test('monostable pulse expires and does not retrigger while active', () => {
   assert.equal(output(runtime, 'timer'), 0);
 });
 
-test('PWM duty maps to four independent servo angles and clock phases remain digital', () => {
-  const project = circuit(
-    [node('pwm', 'pwm', { duty: 0.18, frequency: 105 }), node('servo', 'servo')],
-    [wire('pwm', 'duty', 'servo', 's1')],
-  );
-  const runtime = evaluate(project);
-  assert.equal(output(runtime, 'servo', 'a1'), -90);
-  project.nodes[0].params.duty = 0.5;
-  simulate(project, runtime, 0.1);
-  assert.ok(Math.abs(output(runtime, 'servo', 'a1')) < 1e-10);
-  project.nodes[0].params.duty = 0.82;
-  simulate(project, runtime, 0.1);
-  assert.equal(output(runtime, 'servo', 'a1'), 90);
-  assert.ok([0, 1].includes(output(runtime, 'pwm')));
-  assert.equal(output(runtime, 'servo', 'a2'), 0);
-});
-
 test('AM/FM outputs stay bounded and scopes cap their numeric history', () => {
   for (const type of ['am', 'fm']) {
     const project = circuit(

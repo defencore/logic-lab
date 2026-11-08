@@ -28,12 +28,12 @@ export default {
   ],
   pitfalls: [
     [
-      'This is an accelerated educational ecosystem: one complete dayLength includes day and night. ALARM remembers damage after health drops below 60; correcting a signal does not revive dead fish or clear that history without RESET.',
-      'Це прискорена навчальна екосистема: dayLength охоплює день і ніч. ALARM запам’ятовує шкоду при здоров’ї нижче 60; виправлення сигналу не оживляє загиблих і не очищає історію без RESET.',
+      'One dayLength includes day and night. Light stress begins after 1.5 uninterrupted cycles of illumination (90 seconds with dayLength=60), so DAY-driven lighting remains suitable when the cycle changes. More fish in the same tank consume more food and oxygen and dirty the water faster; four fish are the baseline load.',
+      'dayLength охоплює день і ніч. Світло шкодить після 1,5 безперервного циклу освітлення (90 секунд при dayLength=60), тому керування за DAY працює й після зміни циклу. Більше рибок у тому самому баку потребує більше корму й кисню та швидше забруднює воду; базове навантаження — чотири рибки.',
     ],
     [
-      'FEED is a level-driven actuator, not a one-portion button. Holding it high overfeeds fish; combine HUNGRY with a clock or one-shot. A sensor request and the actual actuator command can differ when permission is denied.',
-      'FEED працює весь час одиниці, а не видає одну порцію за натискання. Постійна 1 перегодовує; поєднайте HUNGRY з генератором або одновібратором. Запит датчика й команда механізму можуть відрізнятися через відсутність дозволу.',
+      'FEED runs for the entire high level. Holding it high overfeeds fish; combine HUNGRY with a clock or one-shot. ALARM remembers health below 60; restoring safe controls can heal living fish, but only RESET clears that history or revives dead fish.',
+      'FEED працює весь час одиниці. Постійна 1 перегодовує; поєднайте HUNGRY з генератором або одновібратором. ALARM запам’ятовує здоров’я нижче 60; безпечні команди лікують живих, але лише RESET очищає історію чи оживляє загиблих.',
     ],
   ],
   inputs: {

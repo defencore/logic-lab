@@ -10,12 +10,12 @@ export default {
       'Задайте Frequency=105 Гц та Duty=0.5; залиште CTRL без дроту для використання налаштування Duty.',
     ],
     [
-      'Connect PWM to a scope with Range=1 and DUTY to a servo input.',
-      'Підключіть PWM до осцилографа з Range=1, а DUTY — до входу сервопривода.',
+      'Connect PWM to a scope with Range=1. An RC servo also requires this digital PWM output; DUTY is an analog ratio for arithmetic/control blocks.',
+      'Підключіть PWM до осцилографа з Range=1. RC-серво також потребує цього цифрового виходу PWM; DUTY є аналоговою часткою для арифметики й керування.',
     ],
     [
-      'Change Duty between 0.18 and 0.82 to move the control surface.',
-      'Змінюйте Duty між 0.18 і 0.82 для руху кермової поверхні.',
+      'Compare Duty=0.25 and 0.75 on the scope. For an RC servo, switch to 50 Hz and use Duty=0.05…0.1 for 1000…2000 µs control pulses.',
+      'Порівняйте Duty=0.25 і 0.75 на осцилографі. Для RC-серво задайте 50 Гц і Duty=0.05…0.1 для керувальних імпульсів 1000…2000 мкс.',
     ],
   ],
   experiment: [
@@ -32,8 +32,8 @@ export default {
       'Duty — частка, тому 0.5 означає 50%. Підключений CTRL замінює властивість і обмежується 0–1.',
     ],
     [
-      'Short digital pulses can be missed by sampling. DUTY gives the servo an exact command without pulse-width quantization.',
-      'Короткі цифрові імпульси можуть пропускатися. DUTY задає сервоприводу точну команду без квантування ширини імпульсу.',
+      'RC servos decode pulse width, not duty alone. At 50 Hz, duty 0.075 makes a 1500 µs center pulse; changing frequency requires recalculating duty. Use a short trace window to display narrow pulses.',
+      'RC-серво декодує ширину імпульсу, а не лише заповнення. При 50 Гц duty 0.075 дає центральний імпульс 1500 мкс; зміна частоти потребує перерахунку duty. Для вузьких імпульсів оберіть коротке вікно осцилограми.',
     ],
   ],
   inputs: {

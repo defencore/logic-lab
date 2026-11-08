@@ -1,4 +1,7 @@
 export const signals = {
+  samplingNotice:
+    'Fast changes may be lost at this time window. Use a shorter window or lower the source frequency.',
+  fitTimeWindow: 'Fit time window',
   moreTools: 'More tools',
   projectFiles: 'Project files',
   circuitView: 'Circuit',

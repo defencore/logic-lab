@@ -3,9 +3,10 @@ import { environment } from './environment.js';
 
 export function homeStep(s, c, p, dt) {
   const env = environment(s, p);
+  // Ventilation exchanges heat with ambient air; it does not provide refrigeration.
   s.temperature = clamp(
     s.temperature +
-      ((p.ambientTemperature - s.temperature) * 0.025 + c.heater * 1.2 - c.fan * 1.1) * dt,
+      ((p.ambientTemperature - s.temperature) * (0.025 + c.fan * 0.08) + c.heater * 1.2) * dt,
     -20,
     80,
   );

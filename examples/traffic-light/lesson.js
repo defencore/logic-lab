@@ -18,18 +18,18 @@ export default {
           nodes: ['red', 'yellow', 'green', 'light'],
         },
         {
-          title: 'Try amber, then green',
-          text: 'Turn Red off and Amber on: the middle lamp lights but Go stays 0. Turn Amber off and Green on: Go becomes 1. Exactly one lamp must be active.',
+          title: 'Try red plus amber, then green',
+          text: 'Keep Red on and add Amber: both lamps light, Valid remains 1 and Go stays 0. This is the stop phase before green. Then turn Red and Amber off and Green on: Go becomes 1. Test amber alone as another valid stop state.',
           nodes: ['red', 'yellow', 'green', 'go'],
         },
         {
           title: 'Create and fix an invalid state',
-          text: 'Leave Green on and also turn Red on. Both lamps visibly light, Valid becomes 0 and Go is withdrawn. All three lamps off is invalid too. Restore a single active lamp.',
+          text: 'Leave Green on and also turn Red on. Both lamps visibly light, Valid becomes 0 and Go is withdrawn. All three lamps off is invalid too. Restore a valid stop phase or green alone.',
           nodes: ['red', 'green', 'valid', 'go'],
         },
       ],
       expected:
-        'A valid state has exactly one active lamp. Go is 1 only for a valid green-only state.',
+        'Red, amber, red plus amber and green alone are valid states. Red plus amber remains a stop command. Go is 1 only for green alone; darkness and conflicting green lamps are invalid.',
     },
     ua: {
       goal: 'Керуйте червоним, жовтим і зеленим та відрізніть правильний стан від дозволу рухатися.',
@@ -40,17 +40,18 @@ export default {
           nodes: ['red', 'yellow', 'green', 'light'],
         },
         {
-          title: 'Спробуйте жовтий і зелений',
-          text: 'Вимкніть Red та увімкніть Amber: середня лампа світиться, Go=0. Вимкніть Amber та увімкніть Green: Go=1. Має працювати рівно одна лампа.',
+          title: 'Спробуйте червоний із жовтим, потім зелений',
+          text: 'Лишіть Red та додайте Amber: обидві лампи світяться, Valid=1, Go=0. Це фаза зупинки перед зеленим. Вимкніть Red і Amber та ввімкніть Green: Go=1. Перевірте окремий жовтий як ще один правильний сигнал зупинки.',
           nodes: ['red', 'yellow', 'green', 'go'],
         },
         {
           title: 'Створіть і виправте неправильний стан',
-          text: 'Залиште Green=1 та увімкніть Red. Обидві лампи світяться, Valid=0 і Go зникає. Усі три вимкнені теж недопустимі. Поверніть одну активну лампу.',
+          text: 'Залиште Green=1 та увімкніть Red. Обидві лампи світяться, Valid=0 і Go зникає. Усі три вимкнені теж недопустимі. Поверніть правильну фазу зупинки або окремий зелений.',
           nodes: ['red', 'green', 'valid', 'go'],
         },
       ],
-      expected: 'Правильний стан має рівно одну активну лампу. Go=1 лише для одного зеленого.',
+      expected:
+        'Червоний, жовтий, червоний із жовтим та окремий зелений — правильні стани. Червоний із жовтим лишається зупинкою. Go=1 лише для окремого зеленого; темрява та зелений з іншими лампами некоректні.',
     },
   },
   circuitPath: 'examples/traffic-light/circuit.json',
@@ -70,23 +71,23 @@ export default {
     tasks: {
       en: [
         'Click 3D and choose the traffic-light scene. Red starts on and the other lamps off. Valid is 1 but Go is 0: a valid stop signal is not permission to drive.',
-        'Turn Red off and Amber on: the middle lamp lights but Go stays 0. Turn Amber off and Green on: Go becomes 1. Exactly one lamp must be active.',
-        'Leave Green on and also turn Red on. Both lamps visibly light, Valid becomes 0 and Go is withdrawn. All three lamps off is invalid too. Restore a single active lamp.',
+        'Keep Red on and add Amber: both lamps light, Valid remains 1 and Go stays 0. This is the stop phase before green. Then turn Red and Amber off and Green on: Go becomes 1. Test amber alone as another valid stop state.',
+        'Leave Green on and also turn Red on. Both lamps visibly light, Valid becomes 0 and Go is withdrawn. All three lamps off is invalid too. Restore a valid stop phase or green alone.',
       ],
       ua: [
         'Натисніть 3D та оберіть сцену світлофора. Червоний спочатку увімкнений, інші лампи вимкнені. Valid=1, Go=0: правильний сигнал зупинки не дозволяє рух.',
-        'Вимкніть Red та увімкніть Amber: середня лампа світиться, Go=0. Вимкніть Amber та увімкніть Green: Go=1. Має працювати рівно одна лампа.',
-        'Залиште Green=1 та увімкніть Red. Обидві лампи світяться, Valid=0 і Go зникає. Усі три вимкнені теж недопустимі. Поверніть одну активну лампу.',
+        'Лишіть Red та додайте Amber: обидві лампи світяться, Valid=1, Go=0. Це фаза зупинки перед зеленим. Вимкніть Red і Amber та ввімкніть Green: Go=1. Перевірте окремий жовтий як ще один правильний сигнал зупинки.',
+        'Залиште Green=1 та увімкніть Red. Обидві лампи світяться, Valid=0 і Go зникає. Усі три вимкнені теж недопустимі. Поверніть правильну фазу зупинки або окремий зелений.',
       ],
     },
     questions: {
       en: [
         'Why can Valid=1 while Go=0?',
-        'What does this simplified model do with red and amber together?',
+        'Why is red plus amber valid while it still forbids movement?',
       ],
       ua: [
         'Чому Valid=1 можливе при Go=0?',
-        'Що спрощена модель робить з одночасним червоним і жовтим?',
+        'Чому червоний із жовтим є коректним станом, але не дозволяє рух?',
       ],
     },
     deliverables: {

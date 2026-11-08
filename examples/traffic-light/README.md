@@ -19,18 +19,18 @@ This is an educational discrete-time model. The lamps, vehicles, trains, food or
 
 1. **Open the traffic-light scene.** Click 3D and choose the traffic-light scene. Red starts on and the other lamps off. Valid is 1 but Go is 0: a valid stop signal is not permission to drive.
 
-2. **Try amber, then green.** Turn Red off and Amber on: the middle lamp lights but Go stays 0. Turn Amber off and Green on: Go becomes 1. Exactly one lamp must be active.
+2. **Try red plus amber, then green.** Keep Red on and add Amber: both lamps light, Valid remains 1 and Go stays 0. This is the stop phase before green. Then turn Red and Amber off and Green on: Go becomes 1. Test amber alone as another valid stop state.
 
-3. **Create and fix an invalid state.** Leave Green on and also turn Red on. Both lamps visibly light, Valid becomes 0 and Go is withdrawn. All three lamps off is invalid too. Restore a single active lamp.
+3. **Create and fix an invalid state.** Leave Green on and also turn Red on. Both lamps visibly light, Valid becomes 0 and Go is withdrawn. All three lamps off is invalid too. Restore a valid stop phase or green alone.
 
 ## Expected result
 
-A valid state has exactly one active lamp. Go is 1 only for a valid green-only state.
+Red, amber, red plus amber and green alone are valid states. Red plus amber remains a stop command. Go is 1 only for green alone; darkness and conflicting green lamps are invalid.
 
 ## Review questions
 
 1. Why can Valid=1 while Go=0?
-2. What does this simplified model do with red and amber together?
+2. Why is red plus amber valid while it still forbids movement?
 
 ## Deliverables
 

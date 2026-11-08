@@ -2,7 +2,8 @@ import { clamp } from '../../common/numbers.js';
 
 export function aquariumStep(s, c, p, dt) {
   const live = s.fish.filter((fish) => fish.alive).length;
-  const inhabitants = live / Math.max(1, p.fishCount);
+  // The fixed tank and actuator capacity are calibrated for four fish.
+  const inhabitants = live / 4;
   s.temperature = clamp(
     s.temperature +
       ((p.ambientTemperature - s.temperature) * 0.035 +
@@ -35,7 +36,7 @@ export function aquariumStep(s, c, p, dt) {
     ['overfed', s.food > 85 ? (s.food - 85) * 0.12 + 0.2 : 0],
     ['starved', s.food < 8 ? (8 - s.food) * 0.15 + 0.2 : 0],
     ['dirty', s.cleanliness < 25 ? (25 - s.cleanliness) * 0.12 + 0.2 : 0],
-    ['light', s.lightExposure > 90 ? 0.7 : 0],
+    ['light', s.lightExposure > p.dayLength * 1.5 ? 0.7 : 0],
   ];
   const danger = risks.reduce((best, risk) => (risk[1] > best[1] ? risk : best), ['', 0]);
   for (let index = 0; index < s.fish.length; index++) {

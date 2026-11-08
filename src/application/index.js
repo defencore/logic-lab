@@ -11,6 +11,7 @@ import { createConnections } from './connections.js';
 import { createSimulation } from './simulation.js';
 import { createShellBindings } from './shell-bindings.js';
 import { createCanvasBindings } from './canvas-bindings.js';
+import { createProjectRecovery } from './project-recovery.js';
 export function startApplication() {
   const state = createApplicationModel(),
     services = {},
@@ -34,6 +35,9 @@ export function startApplication() {
   bindApplicationEvents(context);
   simulate(state.project, state.runtime, 0);
   actions.shell();
+  services.recovery = createProjectRecovery(context);
+  services.recovery.mount();
+  services.recovery.open();
   requestAnimationFrame(() => {
     if (!state.project.viewport) actions.fit({ readable: true });
     requestAnimationFrame(actions.tick);

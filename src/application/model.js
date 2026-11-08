@@ -1,5 +1,5 @@
 import { TEXT } from '../locales/index.js';
-import { loadProject } from '../circuits/project.js';
+import { loadProject, loadProjectRecovery } from '../circuits/project.js';
 import { createExample } from '../../examples/index.js';
 import { SIMULATION_RATES, TIME_WINDOWS } from '../signals/time.js';
 export const boundCoordinate = (value) => Math.max(-1_000_000, Math.min(1_000_000, value));
@@ -23,6 +23,7 @@ export function createApplicationModel() {
   return {
     lang,
     project,
+    projectRecovery: loadProjectRecovery(),
     timeBase,
     simulationRate,
     runtime: null,

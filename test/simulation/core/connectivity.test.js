@@ -138,10 +138,11 @@ test('direct simulator calls safely support identifiers inherited by ordinary ob
   );
   const runtime = createRuntime();
   simulate(project, runtime, 0.001);
-  assert.equal(output(runtime, 'constructor'), 'X');
+  // Every possible unread address contains zero, so the read consensus is known.
+  assert.equal(output(runtime, 'constructor'), 0);
   assert.equal(output(runtime, '__proto__', 'q'), 1);
   assert.deepEqual(runtime.history.toString, [1]);
-  assert.deepEqual(runtime.history.constructor, [null]);
+  assert.deepEqual(runtime.history.constructor, [0]);
   assert.equal(runtime.wireValues.__proto__, 1);
   for (const key of ['outputs', 'inputs', 'wireValues', 'state', 'history'])
     assert.equal(Object.getPrototypeOf(runtime[key]), null, key);

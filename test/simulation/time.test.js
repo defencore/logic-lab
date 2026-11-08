@@ -87,7 +87,10 @@ test('accelerated playback advances model time while retaining clock frequency a
 
 test('speed range supports slow and fast playback and long windows retain fine physics steps', () => {
   assert.deepEqual(SIMULATION_RATES, [0.001, 0.01, 0.1, 0.25, 0.5, 1, 2, 5, 10]);
-  assert.deepEqual(TIME_WINDOWS, [0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 15, 30, 60]);
+  assert.deepEqual(
+    TIME_WINDOWS,
+    [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 15, 30, 60],
+  );
   assert.equal(
     frameSimulationDelta(1000, 0, 10),
     0.5,

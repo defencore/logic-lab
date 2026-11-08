@@ -1,105 +1,107 @@
+const steps = {
+  en: [
+    {
+      title: 'Decode actual control pulses',
+      text: 'Run for at least 50 ms. Course PWM uses 50 Hz and duty 0.0625: 1250 µs gives S1/S3 −45°. Height PWM uses duty 0.0875: 1750 µs gives S2/S4 +45°. Both servos and scopes receive the same digital PWM output.',
+      nodes: ['course', 'height', 'servos'],
+    },
+    {
+      title: 'Center and reach the endpoints',
+      text: 'At 50 Hz, set Course Duty to 0.075 for a 1500 µs center pulse, 0.05 for 1000 µs (−90°), or 0.1 for 2000 µs (+90°). Wait for a complete pulse after each change.',
+      nodes: ['course', 'servos'],
+    },
+    {
+      title: 'Separate pulse width from duty',
+      text: 'Keep a 1500 µs pulse: compare 50 Hz/duty 0.075 with 100 Hz/duty 0.15. Both center the servo. At fixed duty, changing frequency changes pulse width and therefore the angle. Use a short waveform window.',
+      nodes: ['course', 'course-scope', 'height-scope', 'servos'],
+    },
+    {
+      title: 'Detect a missing command',
+      text: 'Set Course Duty to 0 or disconnect its servo wire. A disconnected signal shows X immediately; a stopped pulse train becomes X after Signal timeout (0.1 s). Restore 50 Hz/duty 0.075 and wait for a fresh complete pulse.',
+      nodes: ['course', 'servos'],
+    },
+  ],
+  ua: [
+    {
+      title: 'Декодуйте справжні імпульси керування',
+      text: 'Запустіть щонайменше на 50 мс. Course PWM: 50 Гц і duty 0.0625 дають 1250 мкс та −45° на S1/S3. Height PWM: duty 0.0875 дає 1750 мкс та +45° на S2/S4. Серво й осцилографи отримують той самий цифровий вихід PWM.',
+      nodes: ['course', 'height', 'servos'],
+    },
+    {
+      title: 'Знайдіть центр і крайні положення',
+      text: 'При 50 Гц задайте Course Duty=0.075 для центрального імпульсу 1500 мкс, 0.05 для 1000 мкс (−90°) або 0.1 для 2000 мкс (+90°). Після кожної зміни дочекайтеся повного імпульсу.',
+      nodes: ['course', 'servos'],
+    },
+    {
+      title: 'Відрізніть ширину від заповнення',
+      text: 'Збережіть імпульс 1500 мкс: порівняйте 50 Гц/duty 0.075 і 100 Гц/duty 0.15. Обидва центрують серво. При сталому duty зміна частоти змінює ширину й кут. Оберіть коротке часове вікно осцилограми.',
+      nodes: ['course', 'course-scope', 'height-scope', 'servos'],
+    },
+    {
+      title: 'Виявіть втрату команди',
+      text: 'Задайте Course Duty=0 або від’єднайте дріт серво. Від’єднання одразу дає X; зупинені імпульси дають X після Signal timeout (0.1 с). Поверніть 50 Гц/duty 0.075 і дочекайтеся нового повного імпульсу.',
+      nodes: ['course', 'servos'],
+    },
+  ],
+};
+const goal = {
+  en: 'Control four RC servos by pulse width and distinguish pulse duration, duty ratio and repetition frequency.',
+  ua: 'Керуйте чотирма RC-серво шириною імпульсу та відрізніть тривалість імпульсу, заповнення й частоту повторення.',
+};
 export default {
   id: 'pwm-servos',
-  label: 'PWM & control surfaces',
-  ua: 'ШІМ та кермові поверхні',
+  label: 'RC servo pulse control',
+  ua: 'RC-серво: керування імпульсами',
   category: 'mixed',
   level: 'intermediate',
   description:
-    'Adjust a 105 Hz duty cycle and move four control surfaces using the supplied radio-channel mapping.',
+    'Decode 1000–2000 µs digital pulses, compare 50/100 Hz commands, and detect missing control signals.',
   descriptionUa:
-    'Змінюйте заповнення ШІМ 105 Гц і рухайте чотири рулі за наданим прикладом радіоканалу.',
-  lesson: {
-    en: {
-      goal: 'Separate pulse frequency from duty ratio and turn that ratio into an angle.',
-      steps: [
-        {
-          title: 'Inspect the starting angles',
-          text: 'Course PWM duty=0.34 drives S1/S3 to −45°. Height PWM duty=0.66 drives S2/S4 to +45°. The DUTY wires carry a ratio; the scope wires carry actual pulses.',
-          nodes: ['course', 'height', 'servos'],
-        },
-        {
-          title: 'Move one pair of surfaces',
-          text: 'Select Course PWM and set Duty cycle to 0.5: S1 and S3 center at 0°. Try 0.18 for −90° and 0.82 for +90°. The other pair is independent.',
-          nodes: ['course', 'servos'],
-        },
-        {
-          title: 'Run and compare the pulses',
-          text: 'With the simulation running, both 105 Hz pulse trains draw automatically; press Run only if paused. Change frequency without changing duty: the pulse spacing changes while the duty-driven angles stay fixed. Reference mapping: duty = 0.5 − (command / 360) × 0.32.',
-          nodes: ['course', 'height', 'course-scope', 'height-scope'],
-        },
-      ],
-      expected:
-        'Duty 0.18…0.82 maps to −90°…+90°. At the reference frequency, command ±360 arcmin maps through the supplied duty formula.',
-    },
-    ua: {
-      goal: 'Відрізніть частоту від заповнення й перетворіть заповнення на кут.',
-      steps: [
-        {
-          title: 'Перевірте початкові кути',
-          text: 'Course PWM із duty=0.34 задає S1/S3 кут −45°. Height PWM із duty=0.66 задає S2/S4 кут +45°. Дроти DUTY передають частку, осцилографи — самі імпульси.',
-          nodes: ['course', 'height', 'servos'],
-        },
-        {
-          title: 'Порухайте одну пару рулів',
-          text: 'Оберіть Course PWM та задайте Коефіцієнт заповнення 0.5: S1 і S3 стануть у 0°. Спробуйте 0.18 для −90° та 0.82 для +90°. Інша пара незалежна.',
-          nodes: ['course', 'servos'],
-        },
-        {
-          title: 'Порівняйте імпульси',
-          text: 'В активній симуляції осцилограми 105 Гц малюються автоматично; натисніть Запуск лише після паузи. Змініть частоту при сталому заповненні: період зміниться, кути залишаться сталими. Формула прикладу: duty = 0.5 − (команда / 360) × 0.32.',
-          nodes: ['course', 'height', 'course-scope', 'height-scope'],
-        },
-      ],
-      expected:
-        'Заповнення 0.18…0.82 відповідає кутам −90°…+90°. Команди ±360 кутових мінут перетворюються за наведеною формулою.',
-    },
-  },
+    'Декодуйте цифрові імпульси 1000–2000 мкс, порівняйте команди 50/100 Гц і виявіть втрату керування.',
+  lesson: Object.fromEntries(
+    ['en', 'ua'].map((language) => [
+      language,
+      {
+        goal: goal[language],
+        steps: steps[language],
+        expected:
+          language === 'ua'
+            ? '1000/1500/2000 мкс відповідають −90°/0°/+90°. Стала ширина дає сталий кут; відсутній або некоректний сигнал дає X.'
+            : '1000/1500/2000 µs map to −90°/0°/+90°. Equal pulse widths give equal angles; missing or invalid signals give X.',
+      },
+    ]),
+  ),
   circuitPath: 'examples/pwm-servos/circuit.json',
   labPath: 'examples/pwm-servos/README.md',
   lab: {
     duration: 25,
     objectives: {
-      en: [
-        'Separate pulse frequency from duty ratio and turn that ratio into an angle.',
-        'Verify the predicted behavior through controlled input changes.',
-      ],
-      ua: [
-        'Відрізніть частоту від заповнення й перетворіть заповнення на кут.',
-        'Перевірте очікувану поведінку керованими змінами входів.',
-      ],
+      en: [goal.en, 'Recognize a valid decoded position and an unknown command.'],
+      ua: [goal.ua, 'Розпізнавайте достовірне декодоване положення та невідому команду.'],
     },
-    tasks: {
-      en: [
-        'Course PWM duty=0.34 drives S1/S3 to −45°. Height PWM duty=0.66 drives S2/S4 to +45°. The DUTY wires carry a ratio; the scope wires carry actual pulses.',
-        'Select Course PWM and set Duty cycle to 0.5: S1 and S3 center at 0°. Try 0.18 for −90° and 0.82 for +90°. The other pair is independent.',
-        'With the simulation running, both 105 Hz pulse trains draw automatically; press Run only if paused. Change frequency without changing duty: the pulse spacing changes while the duty-driven angles stay fixed. Reference mapping: duty = 0.5 − (command / 360) × 0.32.',
-      ],
-      ua: [
-        'Course PWM із duty=0.34 задає S1/S3 кут −45°. Height PWM із duty=0.66 задає S2/S4 кут +45°. Дроти DUTY передають частку, осцилографи — самі імпульси.',
-        'Оберіть Course PWM та задайте Коефіцієнт заповнення 0.5: S1 і S3 стануть у 0°. Спробуйте 0.18 для −90° та 0.82 для +90°. Інша пара незалежна.',
-        'В активній симуляції осцилограми 105 Гц малюються автоматично; натисніть Запуск лише після паузи. Змініть частоту при сталому заповненні: період зміниться, кути залишаться сталими. Формула прикладу: duty = 0.5 − (команда / 360) × 0.32.',
-      ],
-    },
+    tasks: Object.fromEntries(
+      ['en', 'ua'].map((language) => [language, steps[language].map((step) => step.text)]),
+    ),
     questions: {
       en: [
-        'Which wire carries pulses and which carries a duty ratio?',
-        'Why can frequency change without changing a duty-driven servo angle?',
-        'What duty centers a surface?',
+        'Why does an RC servo require the digital PWM output rather than the analog DUTY value?',
+        'What duty makes a 1500 µs pulse at 50 Hz and at 100 Hz?',
+        'Why is X different from a valid centered position?',
       ],
       ua: [
-        'Який дріт передає імпульси, а який — заповнення?',
-        'Чому зміна частоти не змінює кута, керованого заповненням?',
-        'Яке заповнення центрує руль?',
+        'Чому RC-серво потребує цифрового виходу PWM, а не аналогового значення DUTY?',
+        'Яке заповнення дає імпульс 1500 мкс при 50 і 100 Гц?',
+        'Чим X відрізняється від достовірного нульового кута?',
       ],
     },
     deliverables: {
       en: [
-        'An exported .logic.json project containing your completed experiment.',
-        'A duty/angle table for 0.18, 0.34, 0.5, 0.66 and 0.82 and two PWM traces.',
+        'An exported circuit and a pulse-width/angle table for 1000, 1250, 1500, 1750 and 2000 µs.',
+        'Two traces showing equal 1500 µs high duration at 50/100 Hz and an explanation of signal loss.',
       ],
       ua: [
-        'Експортований проєкт .logic.json із завершеним дослідом.',
-        'Таблиця заповнення й кута для 0.18, 0.34, 0.5, 0.66 та 0.82 і дві осцилограми ШІМ.',
+        'Експортована схема й таблиця ширини та кута для 1000, 1250, 1500, 1750 і 2000 мкс.',
+        'Дві осцилограми з однаковою тривалістю 1500 мкс при 50/100 Гц та пояснення втрати сигналу.',
       ],
     },
   },

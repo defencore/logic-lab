@@ -32,8 +32,8 @@ export default {
       'Frequency — частота внутрішньої модуляції, а не несучої. Зовнішній MOD замінює внутрішню хвилю.',
     ],
     [
-      'The waveform is centered at Amplitude/2. Sampling must resolve the highest deviated frequency, not just Carrier.',
-      'Сигнал має центр Amplitude/2. Дискретизація має розрізняти найбільшу частоту девіації, а не лише Carrier.',
+      'The waveform is centered at Amplitude/2. Physics resolves the highest deviated frequency; the displayed trace also needs a short time window. Heed the sampling warning instead of treating an aliased trace as a constant voltage.',
+      'Сигнал має центр Amplitude/2. Фізика розрізняє найбільшу частоту девіації; для її відображення також потрібне коротке вікно. Зважайте на попередження про дискретизацію, щоб не прийняти спотворену осцилограму за сталу напругу.',
     ],
   ],
   inputs: {

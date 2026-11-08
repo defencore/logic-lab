@@ -101,7 +101,7 @@ export function createBoardController(
         const first = primarySignal(n);
         readout.textContent =
           n.type === 'pwm'
-            ? `${Math.round(Number(outs.duty ?? n.params.duty ?? 0.5) * 100)}% · ${n.params.frequency ?? 105} Hz`
+            ? `${typeof outs.duty === 'number' ? `${Math.round(outs.duty * 100)}%` : format(outs.duty)} · ${n.params.frequency ?? 105} Hz`
             : n.type === 'splitter'
               ? `D: ${format(state.runtime.signals.inputs[n.id]?.in)}`
               : n.type === 'demux'
@@ -168,9 +168,12 @@ export function createBoardController(
       }
       if (n.type === 'servo')
         for (let i = 1; i <= 4; i++) {
-          const a = Number(outs[`a${i}`]) || 0;
-          $(`[data-servo="${i}"]`, el).style.transform = `rotate(${a}deg)`;
-          $(`[data-angle="${i}"]`, el).textContent = `${a.toFixed(0)}°`;
+          const angle = outs[`a${i}`];
+          const known = typeof angle === 'number' && Number.isFinite(angle);
+          const arm = $(`[data-servo="${i}"]`, el);
+          arm.hidden = !known;
+          arm.style.transform = known ? `rotate(${angle}deg)` : '';
+          $(`[data-angle="${i}"]`, el).textContent = known ? `${angle.toFixed(0)}°` : format(angle);
         }
       if (n.type === 'sevenseg') {
         $$('[data-segment]', el).forEach((segment, bit) =>
@@ -186,7 +189,8 @@ export function createBoardController(
         );
       }
       const canvas = $('.mini-scope', el);
-      if (canvas) drawMini(canvas, state.runtime.history?.[n.id] || [], n);
+      if (canvas)
+        drawMini(canvas, state.runtime.history?.[n.id] || [], n, state.runtime.historyTimes);
     }
     for (const w of state.project.wires) {
       const el = $(`[data-wire="${w.id}"] .wire-line`);

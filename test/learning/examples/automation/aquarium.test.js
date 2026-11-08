@@ -104,3 +104,21 @@ test('aquarium XOR schedule reproduces all four states and permanent light remov
   reset(context);
   assert.equal(output(context, 'world', 'alive'), 4);
 });
+
+test('the complete aquarium lighting circuit survives changed day lengths and fish populations', () => {
+  for (const [dayLength, fishCount, invert] of [
+    [600, 8, 0],
+    [10, 1, 1],
+  ]) {
+    const context = open('aquarium-lighting');
+    source(context, 'world', dayLength, 'dayLength');
+    source(context, 'world', fishCount, 'fishCount');
+    reset(context);
+    source(context, 'invert', invert);
+    advance(context, dayLength * 2);
+    assert.deepEqual(context.runtime.diagnostics, []);
+    assert.equal(output(context, 'world', 'alive'), fishCount);
+    assert.equal(output(context, 'world', 'health'), 100);
+    assert.equal(output(context), 0);
+  }
+});

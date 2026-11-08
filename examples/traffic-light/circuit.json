@@ -50,7 +50,7 @@
       "type": "led",
       "x": 700,
       "y": 120,
-      "label": "Valid one-lamp state",
+      "label": "Valid signal state",
       "enabled": true,
       "params": {}
     },

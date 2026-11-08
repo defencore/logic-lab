@@ -195,6 +195,8 @@ export function createClassroom(adapter) {
   }
   return {
     mount: dock.mount,
+    recovery: store.recovery,
+    acknowledgeRecovery: store.acknowledgeRecovery,
     open,
     tick: controls.tick,
     inputChanged: controls.inputChanged,

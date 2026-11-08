@@ -1,3 +1,4 @@
+import { isPassiveConnector, passiveContacts } from '../circuits/passive-contacts.js';
 import { getDefinition } from '../components/catalog/index.js';
 
 const compiled = new WeakMap();
@@ -9,7 +10,13 @@ function unchanged(project, cache) {
   for (let index = 0; index < nodes.length; index++) {
     const node = nodes[index],
       old = cache.nodes[index];
-    if (node !== old.value || node.id !== old.id || node.type !== old.type) return false;
+    if (
+      node !== old.value ||
+      node.id !== old.id ||
+      node.type !== old.type ||
+      node.enabled !== old.enabled
+    )
+      return false;
   }
   for (let index = 0; index < wires.length; index++) {
     const wire = wires[index],
@@ -26,14 +33,19 @@ function unchanged(project, cache) {
   return true;
 }
 
-/** Compile electrical connectivity once; source values, enable flags and layout remain live. */
+/** Compile electrical connectivity once; source values and layout remain live. */
 export function compileCircuit(project) {
   const previous = compiled.get(project);
   if (previous && unchanged(project, previous)) return previous.network;
   const network = buildNetwork(project);
   compiled.set(project, {
     network,
-    nodes: (project.nodes || []).map((value) => ({ value, id: value.id, type: value.type })),
+    nodes: (project.nodes || []).map((value) => ({
+      value,
+      id: value.id,
+      type: value.type,
+      enabled: value.enabled,
+    })),
     wires: (project.wires || []).map((wire) => ({
       id: wire.id,
       fromNode: wire.from?.node,
@@ -61,6 +73,9 @@ function buildNetwork(project) {
     }
     return root;
   };
+  for (const node of nodes)
+    for (const pair of passiveContacts(node))
+      parents.set(find(`out:${node.id}:${pair.output}`), find(`in:${node.id}:${pair.input}`));
   const validWires = [];
   for (const wire of project.wires || []) {
     const source = nodeById.get(wire.from?.node),
@@ -91,13 +106,17 @@ function buildNetwork(project) {
   // A shared output pin electrically joins all of its fan-out wires into one net.
   const driversByNet = new Map();
   for (const wire of validWires) {
+    if (isPassiveConnector(nodeById.get(wire.from.node))) continue;
     const net = find(wire.sourceKey);
     if (!driversByNet.has(net)) driversByNet.set(net, new Map());
     driversByNet.get(net).set(wire.sourceKey, wire);
   }
-  for (const wire of validWires) {
-    const key = `${wire.to.node}:${wire.to.port}`;
-    incoming.set(key, [...driversByNet.get(find(wire.targetKey)).values()]);
+  for (const node of nodes) {
+    for (const port of getDefinition(node.type).inputs) {
+      const contact = `in:${node.id}:${port.id}`;
+      if (!parents.has(contact)) continue;
+      incoming.set(`${node.id}:${port.id}`, [...(driversByNet.get(find(contact))?.values() || [])]);
+    }
   }
   return { nodes, incoming, validWires };
 }

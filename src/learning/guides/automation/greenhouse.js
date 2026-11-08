@@ -35,8 +35,8 @@ export default {
   inputs: {
     heater: ['HEATER: 1 warms the greenhouse air.', 'HEATER: 1 нагріває повітря теплиці.'],
     vent: [
-      'VENT: 1 opens ventilation and cools air; it also increases drying.',
-      'VENT: 1 відкриває вентиляцію та охолоджує; також посилює висихання.',
+      'VENT: 1 opens ventilation and increases heat exchange with outside air. It cools only when outside is cooler, can warm a colder greenhouse, and increases drying.',
+      'VENT: 1 відкриває вентиляцію та посилює теплообмін із зовнішнім повітрям. Охолоджує лише за прохолоднішого довкілля, може нагрівати холоднішу теплицю та посилює висихання.',
     ],
     pump: ['PUMP: 1 continuously irrigates the soil.', 'PUMP: 1 безперервно поливає ґрунт.'],
     grow_light: [

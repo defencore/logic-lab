@@ -12,8 +12,8 @@ export const SCENES = [
     [bit('red', 'RED'), bit('yellow', 'YELLOW'), bit('green', 'GREEN')],
     [bit('valid', 'VALID'), bit('go', 'GO')],
     SCENARIO_DEFAULTS.traffic_light,
-    'A three-lamp signal. Exactly one lamp is valid; green alone permits movement.',
-    'Триламповий сигнал. Дозволена рівно одна лампа; рух дозволяє лише зелена.',
+    'A three-lamp signal. Red, amber, red plus amber and green alone are valid; only green alone permits movement.',
+    'Триламповий сигнал. Червоний, жовтий, червоний із жовтим та окремий зелений коректні; рух дозволяє лише окремий зелений.',
   ),
   component(
     'traffic_junction',

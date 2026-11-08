@@ -1,8 +1,8 @@
 // Each text pair contains English first and Ukrainian second.
 export default {
   purpose: [
-    'A traffic-light block turns three digital lamp commands into a visible signal and checks whether exactly one lamp is active.',
-    'Блок світлофора перетворює три цифрові команди на видимі лампи й перевіряє, чи активна рівно одна лампа.',
+    'A traffic-light block turns three digital lamp commands into a visible signal. It accepts red, amber, red plus amber and green alone, while only green alone permits movement.',
+    'Блок світлофора перетворює три цифрові команди на видимі лампи. Коректні червоний, жовтий, червоний із жовтим та окремий зелений; рух дозволяє лише окремий зелений.',
   ],
   steps: [
     [
@@ -14,8 +14,8 @@ export default {
       'Підключіть VALID та GO до світлодіодів і відкрийте сцену світлофора через 3D для порівняння ламп із виходами.',
     ],
     [
-      'Test red only, amber only, green only, all off and multiple lamps on. This component has no timing parameters or hidden controller.',
-      'Перевірте окремо червоний, жовтий, зелений, усі вимкнені й кілька ввімкнених. Блок не має параметрів часу чи прихованого контролера.',
+      'Test red, red plus amber, green and amber in sequence. Red plus amber remains a stop command. Then test darkness and green combined with either other lamp; those are invalid. The block has no hidden timing controller.',
+      'Послідовно перевірте червоний, червоний із жовтим, зелений та жовтий. Червоний із жовтим лишається командою зупинки. Темрява та зелений разом з іншою лампою некоректні. Прихованого контролера часу немає.',
     ],
   ],
   experiment: [
@@ -23,13 +23,13 @@ export default {
     'Залиште GREEN=1 та додайте RED=1, потім приберіть RED. Спостерігайте зникнення й відновлення VALID/GO, поки команди ламп лишаються видимими.',
   ],
   expected: [
-    'Exactly one lamp gives VALID=1. Only the green-only combination gives GO=1; the other seven input combinations do not grant passage.',
-    'Рівно одна лампа дає VALID=1. Лише окремий зелений дає GO=1; інші сім комбінацій не дозволяють проїзд.',
+    'Red only, amber only, red plus amber and green only give VALID=1. Only green alone gives GO=1; all other combinations remain stop commands.',
+    'Окремий червоний, окремий жовтий, червоний із жовтим та окремий зелений дають VALID=1. Лише окремий зелений дає GO=1; решта комбінацій не дозволяє проїзд.',
   ],
   pitfalls: [
     [
-      'This intentionally simplified model rejects red plus amber together. It does not implement country-specific traffic rules or automatically sequence the lamps.',
-      'Ця спрощена модель не приймає одночасний червоний із жовтим. Вона не реалізує правила окремої країни чи автоматичне перемикання.',
+      'Red plus amber is a valid stop phase preparing for green. VALID checks the supported lamp combinations, not country-specific timing, flashing modes or the safety of an entire junction.',
+      'Червоний із жовтим — коректна фаза зупинки перед зеленим. VALID перевіряє підтримані комбінації ламп, а не місцеві інтервали, миготіння чи безпеку всього перехрестя.',
     ],
     [
       'Drive every lamp input with a known bit; an unconnected Z is not a deliberate all-off command. VALID describes lamp consistency, not a complete road-safety assessment.',
@@ -43,14 +43,14 @@ export default {
       'YELLOW: одиниця вмикає жовту попереджувальну лампу.',
     ],
     green: [
-      'GREEN: high lights the green lamp; passage still requires a valid one-lamp state.',
-      'GREEN: одиниця вмикає зелену; дозвіл додатково потребує правильного стану однієї лампи.',
+      'GREEN: high lights the green lamp; RED and YELLOW must both be low to permit movement.',
+      'GREEN: одиниця вмикає зелену; для дозволу руху RED та YELLOW мають бути нулями.',
     ],
   },
   outputs: {
     valid: [
-      'VALID: 1 only when exactly one of RED, YELLOW and GREEN is high.',
-      'VALID: 1 лише тоді, коли рівно один RED, YELLOW чи GREEN має 1.',
+      'VALID: 1 for red only, amber only, red plus amber or green only. Darkness or green with another lamp gives 0.',
+      'VALID: 1 для червоного, жовтого, червоного з жовтим або окремого зеленого. Темрява чи зелений з іншою лампою дають 0.',
     ],
     go: ['GO: 1 only for GREEN=1 with RED=YELLOW=0.', 'GO: 1 лише при GREEN=1 та RED=YELLOW=0.'],
   },

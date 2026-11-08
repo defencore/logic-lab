@@ -52,10 +52,10 @@ export const PHYSICAL = [
   ),
   component(
     'monostable',
-    'Monostable · 555',
-    'Одновібратор · 555',
+    'Digital one-shot',
+    'Цифровий одновібратор',
     'physical',
-    '555',
+    'ONE SHOT',
     [bit('trigger', 'TRIG'), bit('reset', 'RST')],
     [bit('out', 'Q')],
     { duration: 0.5 },

@@ -147,7 +147,7 @@ export function createInspectorController(state, actions) {
           if (!Number.isFinite(value) || Math.abs(value) > Number.MAX_SAFE_INTEGER) return;
           if (input.min !== '') value = Math.max(Number(input.min), value);
           if (input.max !== '') value = Math.min(Number(input.max), value);
-          if (input.step === '1' && !Number.isInteger(value)) {
+          if (input.dataset.integer === 'true' && !Number.isInteger(value)) {
             input.setAttribute('aria-invalid', 'true');
             return;
           }

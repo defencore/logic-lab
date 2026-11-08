@@ -1,3 +1,4 @@
+import { passiveContacts } from './passive-contacts.js';
 import { getDefinition } from '../components/catalog/index.js';
 
 const keyForPin = ({ node, port, side }) => JSON.stringify([node, side, port]);
@@ -5,9 +6,8 @@ const compareText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const emptyNet = () => ({ wires: [], pins: [], nodes: [] });
 
 /**
- * Trace one physical net through shared wire endpoints. Component inputs and
- * outputs are separate contacts: logic behavior and crossing paths do not join
- * them. Rebuild the index so edits cannot leave a stale continuity result.
+ * Trace one physical net through shared wire endpoints. Passive connector pairs are conductors; logic inputs/outputs
+ * and geometric crossings remain separate. Rebuild the index so edits cannot leave a stale continuity result.
  */
 export function traceNet(project, seed) {
   if (!seed || typeof seed !== 'object') return emptyNet();
@@ -44,6 +44,19 @@ export function traceNet(project, seed) {
     }
   }
 
+  for (const node of Array.isArray(project?.nodes) ? project.nodes : []) {
+    for (const pair of passiveContacts(node)) {
+      const from = keyForPin({ node: node.id, port: pair.input, side: 'in' });
+      const to = keyForPin({ node: node.id, port: pair.output, side: 'out' });
+      if (!pins.has(from) || !pins.has(to)) continue;
+      const conductor = { from, to };
+      for (const key of [from, to]) {
+        if (!adjacent.has(key)) adjacent.set(key, []);
+        adjacent.get(key).push(conductor);
+      }
+    }
+  }
+
   const start = typeof seed.wire === 'string' ? wires.get(seed.wire)?.from : keyForPin(seed);
   if (!pins.has(start)) return emptyNet();
   const reachedPins = new Set();
@@ -54,7 +67,7 @@ export function traceNet(project, seed) {
     if (reachedPins.has(key)) continue;
     reachedPins.add(key);
     for (const wire of adjacent.get(key) || []) {
-      reachedWires.add(wire.id);
+      if (wire.id) reachedWires.add(wire.id);
       remaining.push(wire.from, wire.to);
     }
   }

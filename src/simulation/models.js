@@ -4,7 +4,10 @@ import {
   initialScenarioState,
   evaluateScenario,
 } from '../scenes/models/scenarios/index.js';
-import { TAU, unknown, logic, clamp, number, complement, active, allKnown } from './signals.js';
+import { readMemoryBits } from './memory.js';
+import { initialServoState } from './servo.js';
+import { periodicLevel } from './timing.js';
+import { TAU, unknown, logic, clamp, number, complement, allKnown, packBits } from './signals.js';
 
 const decimalSegments = [0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f];
 export function motionParameters(p) {
@@ -38,7 +41,12 @@ export function initialState(node) {
       qBits: Array.from({ length: 8 }, (_, bit) => (initial >> bit) & 1),
       lastClock: 0,
     };
-  if (node.type === 'counter') return { q: initial & 255, lastClock: 0 };
+  if (node.type === 'counter')
+    return {
+      q: initial & 255,
+      qBits: Array.from({ length: 8 }, (_, bit) => (initial >> bit) & 1),
+      lastClock: 0,
+    };
   if (node.type === 'ram' || node.type === 'register_file') {
     const size = node.type === 'register_file' ? 8 : 16;
     return {
@@ -47,18 +55,8 @@ export function initialState(node) {
       lastClock: 0,
     };
   }
-  if (node.type === 'monostable') return { lastTrigger: 0, pulseUntil: -1 };
-  if (node.type === 'servo')
-    return {
-      angles: [0, 0, 0, 0],
-      servoEdges: Array.from({ length: 4 }, () => ({
-        previous: 0,
-        rise: null,
-        previousRise: null,
-        high: 0,
-        duty: 0.5,
-      })),
-    };
+  if (node.type === 'monostable') return { lastTrigger: 0, pulseUntil: -1, pulseMaybe: false };
+  if (node.type === 'servo') return initialServoState();
   if (node.type === 'stepper') {
     const motion = motionParameters(parameters);
     return {
@@ -114,10 +112,15 @@ export function evaluate(node, runtime, incoming) {
       const value = Math.round(clamp(number(p.value), 0, 255));
       return { out: value, nibble: value & 15, address: value & 7 };
     }
-    case 'clock': {
-      const phase = (runtime.time * Math.max(0, number(p.frequency, 1))) % 1;
-      return out(Number(phase + 1e-10 >= 1 - clamp(number(p.duty, 0.5), 0, 1)));
-    }
+    case 'clock':
+      return out(
+        periodicLevel(
+          'clock',
+          runtime.time,
+          Math.max(0, number(p.frequency, 1)),
+          clamp(number(p.duty, 0.5), 0, 1),
+        ),
+      );
     case 'and':
     case 'nand': {
       const result = a === 0 || b === 0 ? 0 : a === 1 && b === 1 ? 1 : 'X';
@@ -187,21 +190,9 @@ export function evaluate(node, runtime, incoming) {
     case 'shift_register':
       return { out: s.q, serial: unknown(s.q) ? 'X' : (s.q >> 7) & 1 };
     case 'ram':
-    case 'rom': {
-      if (!active(i.cs, 1) || !active(i.oe, 1) || (node.type === 'ram' && active(i.we)))
-        return out('Z');
-      if (unknown(i.address)) return out('X');
-      const memory =
-        node.type === 'rom'
-          ? String(p.data)
-              .split(/[\s,;]+/)
-              .filter(Boolean)
-              .map((value) => number(value) & 255)
-          : s.memory;
-      return out(memory[i.address & 15] ?? 0);
-    }
+    case 'rom':
     case 'register_file':
-      return out(unknown(i.read) ? 'X' : s.memory[i.read & 7]);
+      return out(packBits(readMemoryBits(node, runtime.inputs[node.id], incoming, s, p)));
     case 'dac':
       return out(unknown(i.in) ? 'X' : (clamp(i.in, 0, 255) / 255) * Math.max(0, number(p.vcc, 5)));
     case 'adc':
@@ -243,7 +234,7 @@ export function evaluate(node, runtime, incoming) {
       return {
         out: unknown(duty)
           ? 'X'
-          : Number((runtime.time * Math.max(0, number(p.frequency, 105))) % 1 < duty),
+          : periodicLevel('pwm', runtime.time, Math.max(0, number(p.frequency, 105)), duty),
         duty,
       };
     }
@@ -302,16 +293,10 @@ export function evaluate(node, runtime, incoming) {
     }
     case 'open_drain':
       return out(logic(i.in) === 0 ? 0 : logic(i.in) === 1 ? 'Z' : 'X');
-    case 'schmitt': {
-      if (unknown(i.in)) return out('X');
-      const low = Math.min(number(p.low, 1.5), number(p.high, 3.5));
-      const high = Math.max(number(p.low, 1.5), number(p.high, 3.5));
-      if (i.in >= high) s.q = 1;
-      else if (i.in <= low) s.q = 0;
+    case 'schmitt':
       return out(s.q);
-    }
     case 'monostable':
-      return out(Number(runtime.time < s.pulseUntil));
+      return out(runtime.time < s.pulseUntil ? (s.pulseMaybe ? 'X' : 1) : 0);
     default:
       return {};
   }

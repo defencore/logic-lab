@@ -28,6 +28,10 @@ export default {
   ],
   pitfalls: [
     [
+      'Each input/output pair is a passive conductor. Pull strength and contention propagate through it in both directions; disabling the block opens its conductors.',
+      'Кожна пара входу/виходу є пасивним провідником. Сила підтяжки й конфлікти передаються в обох напрямках; вимкнення блока розмикає провідники.',
+    ],
+    [
       'Bit 0 is the least significant bit even if the visual pin order runs top to bottom.',
       'Біт 0 — молодший незалежно від того, як контакти розташовані згори донизу.',
     ],

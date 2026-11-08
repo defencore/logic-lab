@@ -3,9 +3,24 @@ const isSample = (value) => typeof value === 'number' && Number.isFinite(value);
 function plot(
   context,
   values,
-  { width, height, top = 0, minimum = 0, maximum = 1, capacity = 256, stepped = false },
+  {
+    width,
+    height,
+    top = 0,
+    minimum = 0,
+    maximum = 1,
+    capacity = 256,
+    stepped = false,
+    sampleTimes,
+    timeWindow,
+    endTime,
+  },
 ) {
   const samples = values.slice(-capacity);
+  const times = sampleTimes?.slice(-samples.length);
+  const end = endTime ?? times?.at(-1);
+  const start = Number.isFinite(timeWindow) ? end - timeWindow : times?.[0];
+  const timed = times?.length === samples.length && Number.isFinite(start) && end > start;
   let previous;
   context.beginPath();
   samples.forEach((value, index) => {
@@ -13,7 +28,13 @@ function plot(
       previous = undefined;
       return;
     }
-    const x = ((capacity - samples.length + index) / (capacity - 1)) * width;
+    if (timed && (times[index] < start || times[index] > end)) {
+      previous = undefined;
+      return;
+    }
+    const x = timed
+      ? ((times[index] - start) / (end - start)) * width
+      : ((capacity - samples.length + index) / (capacity - 1)) * width;
     const normalized = Math.max(0, Math.min(1, (value - minimum) / (maximum - minimum || 1)));
     const y = top + height * 0.8 - normalized * height * 0.6;
     if (previous === undefined) context.moveTo(x, y);
@@ -26,7 +47,7 @@ function plot(
   context.stroke();
 }
 
-export function drawMini(canvas, history, node) {
+export function drawMini(canvas, history, node, sampleTimes) {
   const context = canvas.getContext('2d'),
     width = canvas.width,
     height = canvas.height;
@@ -46,7 +67,14 @@ export function drawMini(canvas, history, node) {
   context.strokeStyle = '#258461';
   context.lineWidth = 1.8;
   const range = Math.max(0.01, Math.abs(Number(node.params.range || node.params.amplitude || 5)));
-  plot(context, history, { width, height, minimum: -range, maximum: range, capacity: 128 });
+  plot(context, history, {
+    width,
+    height,
+    minimum: -range,
+    maximum: range,
+    capacity: 128,
+    sampleTimes,
+  });
 }
 
 export function paintTraces(canvas, traces, pixelRatio = window.devicePixelRatio || 1) {
@@ -80,7 +108,7 @@ export function paintTraces(canvas, traces, pixelRatio = window.devicePixelRatio
   context.stroke();
   context.setLineDash([]);
   traces.forEach((trace, index) => {
-    const history = trace.history.length ? trace.history : Array(256).fill(trace.current);
+    const history = trace.history.length ? trace.history : [trace.current];
     const numbers = history.filter(isSample);
     context.strokeStyle = trace.color;
     context.lineWidth = 1.7;
@@ -91,6 +119,9 @@ export function paintTraces(canvas, traces, pixelRatio = window.devicePixelRatio
       minimum: Math.min(0, ...numbers),
       maximum: Math.max(1, ...numbers),
       stepped: trace.stepped,
+      sampleTimes: trace.history.length ? trace.sampleTimes : [trace.endTime],
+      timeWindow: trace.timeWindow,
+      endTime: trace.endTime,
     });
   });
 }

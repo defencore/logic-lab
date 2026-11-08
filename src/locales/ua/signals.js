@@ -1,4 +1,7 @@
 export const signals = {
+  samplingNotice:
+    'У цьому часовому вікні швидкі зміни можуть губитися. Зменште вікно або частоту джерела.',
+  fitTimeWindow: 'Підібрати вікно',
   moreTools: 'Інші інструменти',
   projectFiles: 'Файли проєкту',
   circuitView: 'Схема',

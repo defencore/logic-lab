@@ -3,12 +3,12 @@ import { environment } from './environment.js';
 
 export function greenhouseStep(s, c, p, dt) {
   const { day } = environment(s, p);
+  // An open vent increases ambient heat exchange, including heat gain on a hot day.
   s.temperature = clamp(
     s.temperature +
-      ((p.ambientTemperature - s.temperature) * 0.035 +
+      ((p.ambientTemperature - s.temperature) * (0.035 + c.vent * 0.1) +
         (day ? 0.22 : 0) +
-        c.heater * 1.6 -
-        c.vent * 1.5) *
+        c.heater * 1.6) *
         dt,
     -20,
     80,

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "name": "PWM control surfaces",
+  "name": "RC servo pulse control",
   "nodes": [
     {
       "id": "course",
@@ -10,8 +10,8 @@
       "label": "Course PWM",
       "enabled": true,
       "params": {
-        "frequency": 105,
-        "duty": 0.34
+        "frequency": 50,
+        "duty": 0.0625
       }
     },
     {
@@ -22,8 +22,8 @@
       "label": "Height PWM",
       "enabled": true,
       "params": {
-        "frequency": 105,
-        "duty": 0.66
+        "frequency": 50,
+        "duty": 0.0875
       }
     },
     {
@@ -56,9 +56,11 @@
       "label": "Control surface bank",
       "enabled": true,
       "params": {
-        "minDuty": 0.18,
-        "maxDuty": 0.82,
-        "range": 180
+        "minPulse": 1000,
+        "centerPulse": 1500,
+        "maxPulse": 2000,
+        "range": 180,
+        "signalTimeout": 0.1
       }
     }
   ],
@@ -88,10 +90,10 @@
       "width": 1
     },
     {
-      "id": "course-duty-servos-s1",
+      "id": "course-pwm-servos-s1",
       "from": {
         "node": "course",
-        "port": "duty"
+        "port": "out"
       },
       "to": {
         "node": "servos",
@@ -100,10 +102,10 @@
       "width": 1
     },
     {
-      "id": "height-duty-servos-s2",
+      "id": "height-pwm-servos-s2",
       "from": {
         "node": "height",
-        "port": "duty"
+        "port": "out"
       },
       "to": {
         "node": "servos",
@@ -112,10 +114,10 @@
       "width": 1
     },
     {
-      "id": "course-duty-servos-s3",
+      "id": "course-pwm-servos-s3",
       "from": {
         "node": "course",
-        "port": "duty"
+        "port": "out"
       },
       "to": {
         "node": "servos",
@@ -124,10 +126,10 @@
       "width": 1
     },
     {
-      "id": "height-duty-servos-s4",
+      "id": "height-pwm-servos-s4",
       "from": {
         "node": "height",
-        "port": "duty"
+        "port": "out"
       },
       "to": {
         "node": "servos",

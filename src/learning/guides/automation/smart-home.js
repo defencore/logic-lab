@@ -38,8 +38,8 @@ export default {
       'HEATER: 1 гріє будинок та витрачає енергію.',
     ],
     fan: [
-      'FAN: 1 cools the home and consumes energy.',
-      'FAN: 1 охолоджує будинок та витрачає енергію.',
+      'FAN: 1 increases ventilation with outside air and consumes energy. It cannot cool the house below outdoor temperature and can warm a colder house; it is not an air conditioner.',
+      'FAN: 1 посилює вентиляцію зовнішнім повітрям і витрачає енергію. Не охолоджує нижче зовнішньої температури та може нагрівати холодніший будинок; це не кондиціонер.',
     ],
     indoor_light: [
       'INDOOR LIGHT: 1 turns on the house lamps.',
