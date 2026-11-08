@@ -47,5 +47,5 @@ export default {
     reset: resetPin,
   },
   outputs: qPins,
-  examples: ['counter', 'd-memory'],
+  examples: ['buzzer-clock-divider', 'counter', 'd-memory'],
 };

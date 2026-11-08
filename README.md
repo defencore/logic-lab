@@ -50,11 +50,11 @@ Hover a pin to preview its connections without changing the circuit. Choose **Tr
 
 ## Learn with guides and experiments
 
-The library contains 63 components with guides in English and Ukrainian. Use the category disclosure above the results to filter the library. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
+The library contains 65 components with guides in English and Ukrainian. Use the category disclosure above the results to filter the library. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
 
 All seven logic gates and both binary adders include truth tables in their guides and properties. Tables distinguish inputs from outputs and explain 0 and 1. When inspecting a component on the circuit, the matching row follows its current binary signals in real time. Floating or unknown signals and disabled components show an explanation instead of highlighting a misleading row.
 
-The **Examples** catalog contains 38 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, parallel data lines, memory, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback, transport dispatch, aquarium life support, greenhouse control, smart-home energy and yard security.
+The **Learning examples** catalog contains 41 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, parallel data lines, memory, audible alarms and melodies, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback, transport dispatch, aquarium life support, greenhouse control, smart-home energy and yard security.
 
 On roomy screens, opening an example shows a lesson panel above the canvas. In compact workspaces, open the walkthrough from the toolbar when needed. Follow its steps with **Previous** and **Next**, watch the highlighted components and live pin values, and open the relevant component in the inspector. Change a switch, numeric value, or slider and compare the result with the lesson's expected behavior. Run the circuit to advance clocks and waveforms, or pause and use **Step** to examine changes in smaller increments.
 
@@ -73,6 +73,8 @@ Changes are saved automatically in browser local storage when available. Export 
 The [laboratory collection](./examples/README.md) stores each exercise in its own `examples/<id>/` directory. Download a lab's `circuit.json` and import it directly, or open the same circuit from the in-app catalog. Each folder also contains bilingual `lesson.js` metadata and a `README.md` lab sheet (the automation, dispatch, and five focused memory/addressing sheets include English and Ukrainian) with an estimated duration, objectives, a procedure, review questions and deliverables. Export completed work as a separate project; the supplied starting circuit stays unchanged.
 
 Five focused exercises extend the memory progression: [manual shift-register loading and replay](./examples/shift-register-sequence/README.md), [RAM address isolation and write protection](./examples/ram-addressing/README.md), [ROM address-to-display lookup](./examples/rom-lookup/README.md), [independent register-file read/write addresses](./examples/register-file-addressing/README.md), and [two-bank memory mapping with A4 chip selection](./examples/memory-bank-select/README.md). Their lesson metadata includes ready input-action presets and observed byte outputs. A preset provides a repeatable experiment; the worksheet also asks learners to choose other data and addresses, predict results, and explain their own observations.
+
+Three bilingual sound laboratories cover an [active-buzzer logic alarm](./examples/active-buzzer-alarm/README.md), a [recorded passive-buzzer melody](./examples/passive-buzzer-melody/README.md), and an [880 → 440 Hz T-flip-flop divider](./examples/buzzer-clock-divider/README.md). The **Sound** category contains active and passive buzzers, each with one digital input and no electrical outputs. Run the simulation and press **Enable sound**; pressing **Sound on** again mutes it, and reloading starts with audio disabled. Active buzzers default to an internal 880 Hz tone and volume 0.15: high enables the tone, low disables it. Passive buzzers reproduce binary edges at volume 0.15; a full period gives `f=1/(T1+T0)`, while constant 0 and 1 produce no sustained tone. At 440 Hz with duty 0.5, the full period is 2.272727 ms=2272.727 µs and each half is 1.136364 ms=1136.364 µs. Use **1×** for note comparisons: changing simulation speed changes passive pitch and duration, while the active buzzer's internal pitch stays fixed. Action recordings can reproduce clock frequency/duty and switch changes; choose buzzer parameters before recording. Recorded clock frequencies are bounded to 0–1000 Hz.
 
 The motion sequence progresses from [STEP/DIR fundamentals](./examples/stepper-basics/README.md), through [automatic printer-axis homing](./examples/printer-homing/README.md), to [closed-loop position control](./examples/position-control/README.md). Homing uses a minimum endstop and an enable interlock that permits reversing away from home. Position control shares one target between direction and arrival sensors, then stops inside a tolerance window.
 
@@ -187,20 +189,21 @@ Canvas navigation follows WirePad: wheel zoom stays anchored at the cursor, temp
 
 ## Component library
 
-| Family                 | Components                                                                                               |
-| ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| Logic gates            | AND, OR, NOT, NAND, NOR, XOR, XNOR                                                                       |
-| Sources and indicators | GND, VCC, toggle switch, numeric byte input, clock, LED, LED matrix, seven-segment display, oscilloscope |
-| Combinational          | Multiplexer, demultiplexer, half adder, full adder, comparator, encoder, decoder                         |
-| Sequential             | SR latch, D / JK / T flip-flops, register, shift register, binary counter                                |
-| Mixed signals          | ADC, DAC, AM / FM generators, PWM generator, servo bank                                                  |
-| Architecture           | ALU, tri-state buffer, priority encoder, bit splitter and merger                                         |
-| Memory                 | RAM, ROM, register file                                                                                  |
-| Physical behavior      | Open-drain output, pull-up and pull-down, Schmitt trigger, monostable                                    |
-| Motion and sensing     | Stepper motor, limit switch, position sensor                                                             |
-| Automation             | Aquarium ecosystem, greenhouse, smart home and yard                                                      |
-| Interactive scenes     | Traffic signal, road junction, railway interlocking, animal feeder, water tank and pump                  |
-| Annotation             | Text notes and colored groups                                                                            |
+| Family                 | Components                                                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Logic gates            | AND, OR, NOT, NAND, NOR, XOR, XNOR                                                                               |
+| Sources and indicators | GND, VCC, toggle switch, Hotkey, numeric byte input, clock, LED, LED matrix, seven-segment display, oscilloscope |
+| Sound                  | Active buzzer with internal tone, passive buzzer driven by binary periods                                        |
+| Combinational          | Multiplexer, demultiplexer, half adder, full adder, comparator, encoder, decoder                                 |
+| Sequential             | SR latch, D / JK / T flip-flops, register, shift register, binary counter                                        |
+| Mixed signals          | ADC, DAC, AM / FM generators, PWM generator, servo bank                                                          |
+| Architecture           | ALU, tri-state buffer, priority encoder, bit splitter and merger                                                 |
+| Memory                 | RAM, ROM, register file                                                                                          |
+| Physical behavior      | Open-drain output, pull-up and pull-down, Schmitt trigger, monostable                                            |
+| Motion and sensing     | Stepper motor, limit switch, position sensor                                                                     |
+| Automation             | Aquarium ecosystem, greenhouse, smart home and yard                                                              |
+| Interactive scenes     | Traffic signal, road junction, railway interlocking, animal feeder, water tank and pump                          |
+| Annotation             | Text notes and colored groups                                                                                    |
 
 Digital connections use separate one-bit lines. Eight-bit data exposes eight numbered pins, while addresses and operation codes expose their required number of lines. The numeric byte source provides D0…D7, BCD0…BCD3, and ADDR0…ADDR2; each contact can connect directly to a digital input. Analog values use a separate analog contact. Use the inspector and pin labels to follow each connection.
 
@@ -298,7 +301,7 @@ These are deterministic educational simulations, not models for controlling real
 
 ## Aquarium, greenhouse and home automation
 
-The **Automation** topic adds seven laboratories using three new circuit-controlled 3D components. Together with the manual railway-dispatch laboratory, the catalog now contains 38 reusable exercises.
+The **Automation** topic adds seven laboratories using three circuit-controlled 3D components. Together with the other topics, including manual railway dispatch and three buzzer laboratories, the catalog contains 41 reusable exercises.
 
 - **Aquarium life support:** build temperature, oxygen and water-quality interlocks with AND, OR and NOT. Individual fish swim, lose health under sustained harmful conditions, and float belly-up with X eyes after death. Cold, overheating, oxygen deprivation, overfeeding, starvation, dirty water and nonstop lighting have different measured causes. Corrected conditions can heal surviving fish; reset starts a fresh ecosystem.
 - **Aquarium feeding:** compare continuous feeding with a clock, one-shot and hunger permission. Observe food, cleanliness and health instead of treating a high control signal as a single portion.

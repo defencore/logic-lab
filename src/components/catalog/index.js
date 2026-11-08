@@ -1,5 +1,6 @@
 import { GATES } from './categories/gates.js';
 import { IO } from './categories/io.js';
+import { AUDIO } from './categories/audio.js';
 import { COMBINATIONAL } from './categories/combinational.js';
 import { SEQUENTIAL } from './categories/sequential.js';
 import { ANALOG } from './categories/analog.js';
@@ -14,6 +15,7 @@ import { ANNOTATION } from './categories/annotation.js';
 const categories = [
   { id: 'gates', label: 'Logic gates', ua: 'Логічні елементи', definitions: GATES },
   { id: 'io', label: 'Inputs & outputs', ua: 'Джерела та індикатори', definitions: IO },
+  { id: 'audio', label: 'Sound', ua: 'Звук', definitions: AUDIO },
   {
     id: 'combinational',
     label: 'Combinational',

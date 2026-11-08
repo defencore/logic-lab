@@ -1,4 +1,6 @@
 const paths = {
+  speaker: '<path d="M3 9h4l5-5v16l-5-5H3ZM16 8a6 6 0 0 1 0 8M19 5a10 10 0 0 1 0 14"/>',
+  'speaker-off': '<path d="M3 9h4l5-5v16l-5-5H3ZM17 9l5 6m0-6-5 6"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   probe: '<path d="m4 20 6-6m-3-3 6 6M9 9l7-7 6 6-7 7Z M16 2l6 6"/>',
   more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',

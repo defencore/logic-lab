@@ -19,6 +19,7 @@ export function dimensions(node) {
     };
   if (node.type === 'note') return { w: 240, h: 130 };
   if (node.type === 'matrix') return { w: 260, h: 270 };
+  if (['active_buzzer', 'passive_buzzer'].includes(node.type)) return { w: 204, h: 158 };
   return {
     w: SCENARIO_TYPES.includes(node.type)
       ? 284

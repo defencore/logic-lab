@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "name": "Active buzzer alarm",
+  "nodes": [
+    {
+      "id": "arm",
+      "type": "switch",
+      "x": 80,
+      "y": 60,
+      "label": "ARM \u00b7 enable alarm",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "door",
+      "type": "switch",
+      "x": 80,
+      "y": 260,
+      "label": "DOOR \u00b7 open",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "test",
+      "type": "switch",
+      "x": 80,
+      "y": 460,
+      "label": "TEST \u00b7 request",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "request",
+      "type": "or",
+      "x": 400,
+      "y": 260,
+      "label": "DOOR OR TEST",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "permission",
+      "type": "and",
+      "x": 700,
+      "y": 100,
+      "label": "ARM AND request",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "buzzer",
+      "type": "active_buzzer",
+      "x": 1000,
+      "y": 100,
+      "label": "Alarm \u00b7 880 Hz",
+      "enabled": true,
+      "params": {
+        "frequency": 880,
+        "volume": 0.15
+      }
+    },
+    {
+      "id": "lamp",
+      "type": "led",
+      "x": 1000,
+      "y": 340,
+      "label": "Alarm command",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "door-out-request-a",
+      "from": {
+        "node": "door",
+        "port": "out"
+      },
+      "to": {
+        "node": "request",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "test-out-request-b",
+      "from": {
+        "node": "test",
+        "port": "out"
+      },
+      "to": {
+        "node": "request",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "arm-out-permission-a",
+      "from": {
+        "node": "arm",
+        "port": "out"
+      },
+      "to": {
+        "node": "permission",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request-out-permission-b",
+      "from": {
+        "node": "request",
+        "port": "out"
+      },
+      "to": {
+        "node": "permission",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "permission-out-buzzer-in",
+      "from": {
+        "node": "permission",
+        "port": "out"
+      },
+      "to": {
+        "node": "buzzer",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "permission-out-lamp-in",
+      "from": {
+        "node": "permission",
+        "port": "out"
+      },
+      "to": {
+        "node": "lamp",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "active-buzzer-alarm"
+}

@@ -8,6 +8,7 @@ import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
 import { SOURCE_PARAMETERS } from '../simulation/input-sources.js';
 import { parameterField, memoryBytes } from './component-parameters.js';
 import { createHotkeyProperties, hotkeyPropertiesMarkup } from './hotkey-properties.js';
+import { audioParameterHelp } from './audio-node.js';
 
 export function createInspectorController(state, actions) {
   let lastInspectorKey = '';
@@ -92,7 +93,7 @@ export function createInspectorController(state, actions) {
     }
     el.innerHTML = `${header}${tabs}<div class="property-section"><h4>${t('properties')}</h4><label>${t('label')}<input id="node-label" value="${esc(n.label || '')}" placeholder="${esc(title(d))}" maxlength="100"></label><label class="toggle-row">${t('enabled')}<input type="checkbox" id="node-enabled" class="toggle-input" ${n.enabled !== false ? 'checked' : ''}></label></div>${
       parameterEntries.length
-        ? `<div class="property-section"><h4>${t('parameters')}</h4>${SCENARIO_TYPES.includes(n.type) ? `<p class="parameter-help">${t('sceneParamReset')}</p>` : ''}${parameterEntries
+        ? `<div class="property-section"><h4>${t('parameters')}</h4>${audioParameterHelp(n.type, state.lang)}${SCENARIO_TYPES.includes(n.type) ? `<p class="parameter-help">${t('sceneParamReset')}</p>` : ''}${parameterEntries
             .map(([key, value]) => parameterField(key, value, n.type, state.lang, t))
             .join('')}</div>`
         : ''

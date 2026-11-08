@@ -47,6 +47,7 @@ const bounds = {
   threshold: [-1000000, 1000000, 0.1],
   tolerance: [0, 1000000, 0.1],
   frequency: [0, 1000, 0.1],
+  volume: [0, 1, 0.01],
   carrier: [0, 1000, 0.1],
   duration: [0.0005, 1000, 0.01],
   width: [100, 3000, 20],
@@ -69,6 +70,7 @@ const byteInitial = new Set(['register', 'shift_register', 'counter']);
 export function parameterRule(type, key) {
   let limits = bounds[key];
   let integer = integerKeys.has(key);
+  if (key === 'frequency' && type === 'active_buzzer') limits = [20, 20000, 1];
   if (key === 'value' && ['switch', 'hotkey', 'bus_input'].includes(type)) {
     limits = [0, type === 'bus_input' ? 255 : 1, 1];
     integer = true;

@@ -8,6 +8,7 @@ const categoryIcon = {
   all: 'grid',
   gates: 'wire',
   io: 'signal',
+  audio: 'speaker',
   combinational: 'layers',
   sequential: 'layers',
   analog: 'signal',

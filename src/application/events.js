@@ -17,6 +17,7 @@ export function bindApplicationEvents(context) {
   document.addEventListener('focusin', (event) => services.hotkeys?.focusChanged(event.target));
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) services.hotkeys?.suspend();
+    if (document.hidden) services.audio?.suspend();
   });
   document.addEventListener('pointermove', actions.onPointerMove);
   document.addEventListener('pointerup', actions.onPointerUp);

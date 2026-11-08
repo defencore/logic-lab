@@ -9,6 +9,7 @@ import { drawMini } from '../signals/waveforms.js';
 import { componentHeaderMarkup, createComponentNavigation } from './component-keyboard.js';
 import { hotkeyNodeMarkup } from './hotkey-node.js';
 import { createInlineNodeLabel } from './inline-node-label.js';
+import { isAudioNode, audioNodeMarkup, updateAudioNode } from './audio-node.js';
 import {
   contactEndpoint,
   createContactNavigation,
@@ -50,6 +51,9 @@ export function createBoardController(
   function nodeBody(node) {
     const d = getDefinition(node.type);
     switch (node.type) {
+      case 'active_buzzer':
+      case 'passive_buzzer':
+        return audioNodeMarkup();
       case 'hotkey':
         return hotkeyNodeMarkup(node, state.lang);
       case 'switch':
@@ -142,6 +146,7 @@ export function createBoardController(
       const ins = state.runtime.inputs?.[n.id] || {},
         outs = state.runtime.outputs?.[n.id] || {};
       const signalOutputs = state.runtime.signals.outputs[n.id] || {};
+      if (isAudioNode(n)) updateAudioNode(el, n, state.runtime, state.lang);
       $$('.pin', el).forEach((pin) => {
         const v = (pin.dataset.side === 'in' ? ins : outs)[pin.dataset.pin];
         pin.classList.remove('high', 'low', 'unknown', 'floating');

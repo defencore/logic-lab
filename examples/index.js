@@ -46,6 +46,12 @@ import circuit0 from './half-adder/circuit.json' with { type: 'json' };
 import lesson0 from './half-adder/lesson.js';
 import keyboardCircuit from './keyboard-inputs/circuit.json' with { type: 'json' };
 import keyboardLesson from './keyboard-inputs/lesson.js';
+import alarmCircuit from './active-buzzer-alarm/circuit.json' with { type: 'json' };
+import alarmLesson from './active-buzzer-alarm/lesson.js';
+import melodyCircuit from './passive-buzzer-melody/circuit.json' with { type: 'json' };
+import melodyLesson from './passive-buzzer-melody/lesson.js';
+import dividerCircuit from './buzzer-clock-divider/circuit.json' with { type: 'json' };
+import dividerLesson from './buzzer-clock-divider/lesson.js';
 import circuit1 from './logic-gates/circuit.json' with { type: 'json' };
 import lesson1 from './logic-gates/lesson.js';
 import circuit2 from './full-adder/circuit.json' with { type: 'json' };
@@ -92,6 +98,9 @@ export const EXAMPLES = [
   { ...memoryLesson4, create: () => structuredClone(memoryCircuit4) },
 
   { ...keyboardLesson, create: () => structuredClone(keyboardCircuit) },
+  { ...alarmLesson, create: () => structuredClone(alarmCircuit) },
+  { ...melodyLesson, create: () => structuredClone(melodyCircuit) },
+  { ...dividerLesson, create: () => structuredClone(dividerCircuit) },
   { ...lesson0, create: () => structuredClone(circuit0) },
   { ...lesson1, create: () => structuredClone(circuit1) },
   { ...lesson2, create: () => structuredClone(circuit2) },

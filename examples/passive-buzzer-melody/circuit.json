@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "name": "Passive buzzer melody",
+  "nodes": [
+    {
+      "id": "tone",
+      "type": "clock",
+      "x": 100,
+      "y": 100,
+      "label": "Note \u00b7 start at A4",
+      "enabled": true,
+      "params": {
+        "frequency": 440,
+        "duty": 0.5
+      }
+    },
+    {
+      "id": "play",
+      "type": "switch",
+      "x": 100,
+      "y": 350,
+      "label": "PLAY \u00b7 enable note",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "gate",
+      "type": "and",
+      "x": 440,
+      "y": 100,
+      "label": "Clock AND PLAY",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "buzzer",
+      "type": "passive_buzzer",
+      "x": 780,
+      "y": 100,
+      "label": "Passive note",
+      "enabled": true,
+      "params": {
+        "volume": 0.15
+      }
+    },
+    {
+      "id": "trace",
+      "type": "scope",
+      "x": 780,
+      "y": 350,
+      "label": "Tone period",
+      "enabled": true,
+      "params": {
+        "range": 1
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "tone-out-gate-a",
+      "from": {
+        "node": "tone",
+        "port": "out"
+      },
+      "to": {
+        "node": "gate",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "play-out-gate-b",
+      "from": {
+        "node": "play",
+        "port": "out"
+      },
+      "to": {
+        "node": "gate",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "gate-out-buzzer-in",
+      "from": {
+        "node": "gate",
+        "port": "out"
+      },
+      "to": {
+        "node": "buzzer",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "gate-out-trace-in",
+      "from": {
+        "node": "gate",
+        "port": "out"
+      },
+      "to": {
+        "node": "trace",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "passive-buzzer-melody"
+}

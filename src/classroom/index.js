@@ -298,6 +298,8 @@ export function createClassroom(adapter) {
     isLocked: controls.isLocked,
     isRecording: () => state.recording,
     isPlaying: () => !!state.player || !!state.preview,
+    isPlaybackRunning: () => !!state.player && !state.player.done && state.playbackRunning,
+    isPlaybackComplete: () => !!state.player?.done,
     stopPlayback: session.stopPlayback,
     stopRecording: controls.stopRecording,
     recordingDelta: session.recordingDelta,

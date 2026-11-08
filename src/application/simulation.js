@@ -25,6 +25,7 @@ export function createSimulation(context) {
     services.monitor.updateUi();
     services.classroom?.onSimulationStateChanged?.(next);
     services.inspector?.updateSignals();
+    services.audio?.sync();
   }
   function toggleRunning() {
     if (services.classroom?.isPlaying()) {
@@ -53,6 +54,7 @@ export function createSimulation(context) {
   function tick(now) {
     services.hotkeys?.reconcile();
     const elapsed = frameSimulationDelta(now, state.lastFrame, state.simulationRate);
+    services.audio?.sync();
     if (services.classroom?.isPlaying()) {
       services.simulationRunner.discard();
       services.classroom.tick(elapsed);
@@ -66,6 +68,7 @@ export function createSimulation(context) {
       services.classroom?.tick(0);
     }
     state.lastFrame = now;
+    services.audio?.sync();
     requestAnimationFrame(tick);
   }
   return { newRuntime, setRunning, toggleRunning, advance, drainSimulation, tick };

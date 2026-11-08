@@ -2,6 +2,7 @@ import { getDefinition } from '../components/catalog/index.js';
 import { createRuntime, simulate } from '../simulation/index.js';
 import { esc } from '../shared/ui.js';
 import { hotkeyStateTableMarkup } from './hotkey-state-table.js';
+import { audioStateTableMarkup } from './audio-state-table.js';
 
 const supported = new Set([
   'and',
@@ -97,6 +98,8 @@ function portLabel(port, type, language) {
 
 export function truthTableMarkup(type, language = 'en', nodeId = null) {
   if (type === 'hotkey') return hotkeyStateTableMarkup(language);
+  if (type === 'active_buzzer' || type === 'passive_buzzer')
+    return audioStateTableMarkup(type, language);
   const model = getTruthTable(type);
   if (!model) return '';
   language = language === 'ua' || language === 'uk' ? 'ua' : 'en';

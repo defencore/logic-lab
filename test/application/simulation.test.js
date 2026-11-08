@@ -140,7 +140,8 @@ test('animation frames advance an active replay without also advancing live simu
   };
   app.actions.advance = () => app.events.push('live frame');
   app.actions.updateSignals = () => app.events.push('live signals');
+  app.services.audio = { sync: () => app.events.push('audio sync') };
   createSimulation(app).tick(1010);
-  assert.deepEqual(app.events, ['discard', ['replay frame', 0.01]]);
+  assert.deepEqual(app.events, ['audio sync', 'discard', ['replay frame', 0.01], 'audio sync']);
   assert.equal(app.state.lastFrame, 1010);
 });

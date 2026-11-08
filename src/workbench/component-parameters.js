@@ -48,6 +48,7 @@ const PARAM_NAMES = {
   initialMoisture: ['Initial soil moisture (%)', 'Початкова вологість ґрунту (%)'],
   initialWater: ['Initial water reserve (%)', 'Початковий запас води (%)'],
   frequency: ['Frequency (Hz)', 'Частота (Гц)'],
+  volume: ['Volume (0–1)', 'Гучність (0–1)'],
   duty: ['Duty cycle (0–1)', 'Коефіцієнт заповнення (0–1)'],
   carrier: ['Carrier (Hz)', 'Несуча (Гц)'],
   depth: ['Modulation depth', 'Глибина модуляції'],

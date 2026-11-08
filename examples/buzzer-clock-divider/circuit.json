@@ -1,0 +1,159 @@
+{
+  "version": 1,
+  "name": "Buzzer clock divider",
+  "nodes": [
+    {
+      "id": "tone",
+      "type": "clock",
+      "x": 100,
+      "y": 100,
+      "label": "Source \u00b7 880 Hz",
+      "enabled": true,
+      "params": {
+        "frequency": 880,
+        "duty": 0.5
+      }
+    },
+    {
+      "id": "toggle",
+      "type": "switch",
+      "x": 100,
+      "y": 300,
+      "label": "T \u00b7 toggle enabled",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "x": 100,
+      "y": 500,
+      "label": "RST \u00b7 clear Q",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "divider",
+      "type": "t_ff",
+      "x": 440,
+      "y": 300,
+      "label": "Divide frequency by two",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "source-trace",
+      "type": "scope",
+      "x": 780,
+      "y": 80,
+      "label": "Source \u00b7 T = 1.136364 ms",
+      "enabled": true,
+      "params": {
+        "range": 1
+      }
+    },
+    {
+      "id": "divided-trace",
+      "type": "scope",
+      "x": 780,
+      "y": 300,
+      "label": "Q \u00b7 T = 2.272727 ms",
+      "enabled": true,
+      "params": {
+        "range": 1
+      }
+    },
+    {
+      "id": "buzzer",
+      "type": "passive_buzzer",
+      "x": 780,
+      "y": 520,
+      "label": "Q note \u00b7 440 Hz",
+      "enabled": true,
+      "params": {
+        "volume": 0.15
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "tone-out-divider-clk",
+      "from": {
+        "node": "tone",
+        "port": "out"
+      },
+      "to": {
+        "node": "divider",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "tone-out-source-trace-in",
+      "from": {
+        "node": "tone",
+        "port": "out"
+      },
+      "to": {
+        "node": "source-trace",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "toggle-out-divider-t",
+      "from": {
+        "node": "toggle",
+        "port": "out"
+      },
+      "to": {
+        "node": "divider",
+        "port": "t"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-divider-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "divider",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "divider-q-divided-trace-in",
+      "from": {
+        "node": "divider",
+        "port": "q"
+      },
+      "to": {
+        "node": "divided-trace",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "divider-q-buzzer-in",
+      "from": {
+        "node": "divider",
+        "port": "q"
+      },
+      "to": {
+        "node": "buzzer",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "buzzer-clock-divider"
+}

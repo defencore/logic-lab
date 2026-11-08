@@ -14,6 +14,8 @@ import hotkeyGuide from './io/hotkey.js';
 import busInputGuide from './io/bus-input.js';
 import clockGuide from './io/clock.js';
 import ledGuide from './io/led.js';
+import activeBuzzerGuide from './io/active-buzzer.js';
+import passiveBuzzerGuide from './io/passive-buzzer.js';
 import matrixGuide from './io/matrix.js';
 import sevensegGuide from './io/sevenseg.js';
 import scopeGuide from './io/scope.js';
@@ -80,6 +82,8 @@ const manuals = [
   ['bus_input', busInputGuide],
   ['clock', clockGuide],
   ['led', ledGuide],
+  ['active_buzzer', activeBuzzerGuide],
+  ['passive_buzzer', passiveBuzzerGuide],
   ['matrix', matrixGuide],
   ['sevenseg', sevensegGuide],
   ['scope', scopeGuide],

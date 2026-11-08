@@ -12,6 +12,7 @@ import { createInspectorController } from '../workbench/inspector-controller.js'
 import { createLearningController } from '../workbench/learning-controller.js';
 import { createDialogs } from '../workbench/dialogs.js';
 import { createHotkeyController } from './hotkey-controller.js';
+import { createAudioController } from './audio-controller.js';
 export function composeWorkbench(context) {
   const { state, services, actions, t, title } = context;
   services.dialogs = createDialogs({
@@ -256,4 +257,5 @@ export function composeWorkbench(context) {
       $('#viewport').focus({ preventScroll: true });
     },
   });
+  services.audio = createAudioController(context);
 }

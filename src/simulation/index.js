@@ -10,6 +10,7 @@ import { settleEvents } from './settling.js';
 import { servoParameterError } from './servo.js';
 import { advanceState } from './state.js';
 import { compileCircuit } from './network.js';
+import { captureAudio, createAudioRuntime } from './audio.js';
 
 const HISTORY_CAPACITY = 256;
 const optionalInputs = {
@@ -40,6 +41,7 @@ const optionalInputs = {
 export function createRuntime() {
   return {
     time: 0,
+    ...createAudioRuntime(),
     outputs: Object.create(null),
     inputs: Object.create(null),
     signals: { inputs: Object.create(null), outputs: Object.create(null) },
@@ -121,6 +123,7 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
       code: 'oscillation',
       message: 'The circuit did not settle. Check combinational feedback.',
     });
+  captureAudio(project, runtime, { settled: firstSettled && settled });
   for (const node of nodes) {
     const definition = getDefinition(node.type);
     if (node.enabled === false) {

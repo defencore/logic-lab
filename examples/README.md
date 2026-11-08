@@ -1,10 +1,10 @@
 # Logic Lab laboratory collection
 
-These 37 reusable laboratories accompany the browser workbench. Each laboratory has a separate directory so its starting circuit, teaching material and assessment tasks can be reviewed or reused independently. The interface lessons and worksheet metadata support English and Ukrainian; the original Markdown lab sheets are in English, and the automation, dispatch, and five memory/addressing sheets include full English and Ukrainian procedures.
+These 41 reusable laboratories accompany the browser workbench. Each laboratory has a separate directory so its starting circuit, teaching material and assessment tasks can be reviewed or reused independently. The interface lessons and worksheet metadata support English and Ukrainian; the original Markdown lab sheets are in English, and the automation, dispatch, memory/addressing, keyboard and buzzer sheets include full English and Ukrainian procedures.
 
 ## Open a laboratory
 
-1. In Logic Lab, open **Examples**, search by component or topic, and select a laboratory.
+1. In Logic Lab, open **Learning examples**, search by component or topic, and select a laboratory.
 2. Alternatively, download its `circuit.json` file from the table below and import the file in the app. The project retains its `exampleId`, so the matching lesson remains available.
 3. Follow the live lesson, change the highlighted controls, and record the requested evidence. Timed experiments start running automatically; pause them for measurements when useful.
 4. Export your completed circuit under a new filename and submit it with the laboratory's requested tables, traces and answers.
@@ -14,6 +14,10 @@ These 37 reusable laboratories accompany the browser workbench. Each laboratory 
 | [Half adder](./half-adder/README.md)                                    | basics       | beginner     | 15 min | [JSON](./half-adder/circuit.json)            |
 | [Seven logic gates](./logic-gates/README.md)                            | basics       | beginner     | 20 min | [JSON](./logic-gates/circuit.json)           |
 | [Full adder](./full-adder/README.md)                                    | basics       | beginner     | 20 min | [JSON](./full-adder/circuit.json)            |
+| [Keyboard inputs](./keyboard-inputs/README.md)                          | basics       | beginner     | 20 min | [JSON](./keyboard-inputs/circuit.json)       |
+| [Active buzzer alarm](./active-buzzer-alarm/README.md)                  | basics       | beginner     | 20 min | [JSON](./active-buzzer-alarm/circuit.json)   |
+| [Passive buzzer: record a melody](./passive-buzzer-melody/README.md)    | mixed        | beginner     | 25 min | [JSON](./passive-buzzer-melody/circuit.json) |
+| [Buzzer: build a clock divider](./buzzer-clock-divider/README.md)       | sequential   | intermediate | 25 min | [JSON](./buzzer-clock-divider/circuit.json)  |
 | [One-bit memory](./d-memory/README.md)                                  | sequential   | beginner     | 20 min | [JSON](./d-memory/circuit.json)              |
 | [Binary counter](./counter/README.md)                                   | sequential   | beginner     | 20 min | [JSON](./counter/circuit.json)               |
 | [BCD display](./bcd-display/README.md)                                  | basics       | beginner     | 15 min | [JSON](./bcd-display/circuit.json)           |
@@ -63,6 +67,10 @@ The [registry](./index.js) imports these files and returns a fresh clone each ti
 ## Addressing and memory experiments
 
 The five focused memory laboratories cover manual SER/CLK/RST serial loading, independent RAM locations and write protection, ROM lookup tables, separate register-file read/write addresses, and a 32-byte map built from two RAM banks. Their bilingual lessons include replayable action presets. Each lab exposes every bit as a separate physical contact and includes a deterministic input sequence, predictions, and independent-work prompts.
+
+## Audible logic and timing
+
+The three buzzer laboratories progress from a Boolean alarm to a recorded melody and a clocked frequency divider. An active buzzer produces its internal 880 Hz tone from a steady enable; a passive buzzer needs repeating binary periods, with `f=1/(T1+T0)` in seconds. At 440 Hz, a complete period is 2.272727 ms, or 2272.727 µs. The divider uses real T-flip-flop clock edges to turn 880 Hz into 440 Hz. Each folder includes an editable circuit, bilingual sheet and legal recorded source actions. Run and press **Enable sound**; use **1×** for passive-note comparisons. Constant 0/1 inputs do not sustain a passive tone, and ideal gate feedback has no modeled propagation delay.
 
 ## Circuit-driven scenes
 

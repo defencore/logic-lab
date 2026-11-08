@@ -42,5 +42,5 @@ export default {
       'Однобітний періодичний сигнал; ця модель починає з низького інтервалу.',
     ],
   },
-  examples: ['counter', 'd-memory', 'mixed-signals'],
+  examples: ['counter', 'passive-buzzer-melody', 'buzzer-clock-divider', 'mixed-signals'],
 };

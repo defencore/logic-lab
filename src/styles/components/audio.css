@@ -1,0 +1,70 @@
+.buzzer-widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px 8px;
+  text-align: center;
+}
+.cat-audio {
+  background: #f4edfc;
+  border-color: #b7a0d2;
+  color: #6d438e;
+}
+.buzzer-speaker {
+  display: grid;
+  place-items: center;
+  position: relative;
+  width: 48px;
+  height: 40px;
+  border: 1px solid #a8b4c3;
+  border-radius: 12px;
+  color: #64748b;
+  background: #edf1f5;
+}
+.buzzer-speaker i {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  top: 4px;
+  right: 4px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+.buzzer-widget.is-sounding .buzzer-speaker {
+  background: #e6f4e8;
+  border-color: #79a785;
+  color: #245f36;
+}
+.buzzer-widget.is-sounding .buzzer-speaker i {
+  background: #3b9956;
+  box-shadow: 0 0 0 3px #3b995622;
+}
+.buzzer-widget strong {
+  font-size: 12px;
+}
+.buzzer-widget small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.sound-toggle {
+  white-space: nowrap;
+  gap: 5px;
+  padding-inline: 8px;
+}
+.sound-toggle[aria-pressed='true'] {
+  color: #245f36;
+  background: #e6f4e8;
+  border-color: #79a785;
+}
+@media (max-width: 450px) {
+  .sound-toggle span {
+    display: none;
+  }
+  .sound-toggle {
+    width: var(--control-size);
+    padding: 0;
+  }
+}

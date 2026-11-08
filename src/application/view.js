@@ -36,6 +36,7 @@ export function createView(context) {
     });
     $('#zoom-out').innerHTML = '<span style="font-size:20px">−</span>';
     actions.bindShell();
+    services.audio?.mount();
     actions.bindCanvas();
     actions.updateHistoryControls();
     services.classroom?.mount();
@@ -105,6 +106,7 @@ export function createView(context) {
     diagnostics.textContent = `${state.runtime.diagnostics?.length || 0} ${t('diagnostics')}`;
     services.inspector.updateSignals();
     services.monitor.draw();
+    services.audio?.sync();
   }
   return { changed, shell, renderLibrary, selectionChanged, updateSignals };
 }
