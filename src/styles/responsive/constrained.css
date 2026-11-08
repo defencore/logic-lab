@@ -1,6 +1,15 @@
 @media (max-width: 380px) {
+  .brand {
+    gap: 6px;
+  }
+
+  .brand img {
+    width: 24px;
+    height: 24px;
+  }
+
   .brand > span {
-    display: none;
+    font-size: 18px;
   }
 
   .editor-toolstrip {
