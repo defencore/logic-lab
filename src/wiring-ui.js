@@ -5,6 +5,7 @@ import { traceNet } from './continuity.js';
 import { checkConnection } from './connections.js';
 import {
   wireVertices,
+  wirePath,
   nearestWireSegment,
   moveWireVertex,
   moveWireSegment,
@@ -73,7 +74,7 @@ export function createWiringEditor(options) {
     );
   }
   function updateGeometry(item) {
-    const d = route(endpoint(item, 'out'), endpoint(item, 'in'), item.points, project().wireStyle);
+    const d = wirePath(item, project());
     $$('path', $(`[data-wire="${item.id}"]`, $('#wires'))).forEach((path) =>
       path.setAttribute('d', d),
     );

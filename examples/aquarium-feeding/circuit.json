@@ -1,0 +1,289 @@
+{
+  "version": 1,
+  "name": "Aquarium: timed portions",
+  "exampleId": "aquarium-feeding",
+  "nodes": [
+    {
+      "id": "run",
+      "type": "switch",
+      "label": "Scene run",
+      "x": 20,
+      "y": 20,
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "label": "Reset process",
+      "x": 20,
+      "y": 210,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "world",
+      "type": "aquarium",
+      "label": "Aquarium pulse feeding",
+      "x": 320,
+      "y": 60,
+      "enabled": true,
+      "params": {
+        "initialTemperature": 24,
+        "ambientTemperature": 18,
+        "initialOxygen": 70,
+        "initialFood": 45,
+        "initialCleanliness": 80,
+        "fishCount": 4,
+        "dayLength": 60
+      }
+    },
+    {
+      "id": "force-feed",
+      "type": "switch",
+      "label": "Unsafe continuous feeding",
+      "x": 20,
+      "y": 400,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "meal-clock",
+      "type": "clock",
+      "label": "Meal clock · every 4 seconds",
+      "x": 650,
+      "y": 20,
+      "enabled": true,
+      "params": {
+        "frequency": 0.25,
+        "duty": 0.1
+      }
+    },
+    {
+      "id": "portion",
+      "type": "monostable",
+      "label": "One-second portion",
+      "x": 650,
+      "y": 225,
+      "enabled": true,
+      "params": {
+        "duration": 1
+      }
+    },
+    {
+      "id": "hungry-portion",
+      "type": "and",
+      "label": "Hungry AND portion pulse",
+      "x": 650,
+      "y": 430,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "feed",
+      "type": "or",
+      "label": "Guarded portion OR unsafe feed",
+      "x": 650,
+      "y": 635,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "alarm",
+      "type": "led",
+      "label": "Process alarm",
+      "x": 1800,
+      "y": 120,
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "run-out-world-run",
+      "from": {
+        "node": "run",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "run"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-world-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-cold-world-heater",
+      "from": {
+        "node": "world",
+        "port": "cold"
+      },
+      "to": {
+        "node": "world",
+        "port": "heater"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-hot-world-cooler",
+      "from": {
+        "node": "world",
+        "port": "hot"
+      },
+      "to": {
+        "node": "world",
+        "port": "cooler"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-low_oxygen-world-aerator",
+      "from": {
+        "node": "world",
+        "port": "low_oxygen"
+      },
+      "to": {
+        "node": "world",
+        "port": "aerator"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-dirty-world-filter",
+      "from": {
+        "node": "world",
+        "port": "dirty"
+      },
+      "to": {
+        "node": "world",
+        "port": "filter"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-day-world-light",
+      "from": {
+        "node": "world",
+        "port": "day"
+      },
+      "to": {
+        "node": "world",
+        "port": "light"
+      },
+      "width": 1
+    },
+    {
+      "id": "meal-clock-out-portion-trigger",
+      "from": {
+        "node": "meal-clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "portion",
+        "port": "trigger"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-portion-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "portion",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-hungry-hungry-portion-a",
+      "from": {
+        "node": "world",
+        "port": "hungry"
+      },
+      "to": {
+        "node": "hungry-portion",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "portion-out-hungry-portion-b",
+      "from": {
+        "node": "portion",
+        "port": "out"
+      },
+      "to": {
+        "node": "hungry-portion",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "hungry-portion-out-feed-a",
+      "from": {
+        "node": "hungry-portion",
+        "port": "out"
+      },
+      "to": {
+        "node": "feed",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "force-feed-out-feed-b",
+      "from": {
+        "node": "force-feed",
+        "port": "out"
+      },
+      "to": {
+        "node": "feed",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "feed-out-world-feed",
+      "from": {
+        "node": "feed",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "feed"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-alarm-alarm-in",
+      "from": {
+        "node": "world",
+        "port": "alarm"
+      },
+      "to": {
+        "node": "alarm",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ]
+}

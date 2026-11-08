@@ -22,6 +22,16 @@ import {
   ZOOM_OUT_FACTOR,
 } from './navigation.js';
 import { drawMini, paintTraces } from './waveforms.js';
+import { truthTableMarkup } from './truth-tables.js';
+import {
+  getSceneEntries,
+  getSceneSnapshot,
+  sceneHealth,
+  sceneMessageKey,
+  sceneControlSwitch,
+  sceneActuatorValues,
+} from './scene-data.js';
+import { SCENARIO_TYPES } from './scenarios.js';
 import { waveformPng } from './waveform-export.js';
 import { createRecording, appendRecording, stopRecording, recordingCsv } from './recording.js';
 import {
@@ -30,8 +40,6 @@ import {
   frameSimulationDelta,
   simulationStepCount,
 } from './simulation-time.js';
-import { getMotionState } from './motion-data.js';
-import { truthTableMarkup } from './truth-tables.js';
 import { createWiringEditor } from './wiring-ui.js';
 import { checkConnection } from './connections.js';
 import { componentPins } from './component-pins.js';
@@ -87,6 +95,7 @@ let monitorOpen = true;
 let modal = null;
 let modalOpener = null;
 let motionView = null;
+let activeSceneEntry = null;
 let motionViewToken = 0;
 let undoStack = [];
 let redoStack = [];
@@ -217,7 +226,7 @@ function shell() {
   $('#app').innerHTML = `
     <header class="app-header"><a class="brand" href="./" aria-label="Logic Lab"><img src="./favicon.svg?v=logic-lab-1" alt=""><span>logic<span class="brand-light">lab</span><small>${esc(t('workbench'))}</small></span></a>
     <div class="header-divider"></div><div class="project-heading">${icon('folder', 16)}<input id="project-name" aria-label="${t('namePlaceholder')}" value="${esc(project.name)}" maxlength="100"><span class="project-tag">.logic</span></div>
-    <div class="header-actions"><span id="save-state" class="save-state">${icon('check', 13)}${t('saved')}</span><details class="project-files"><summary class="icon-btn" aria-label="${t('projectFiles')}" title="${t('projectFiles')}">${icon('folder', 17)}</summary><div class="file-menu-panel"><button type="button" id="import" class="file-menu-item">${icon('upload', 16)}<span>${t('open')}</span></button><button type="button" id="export" class="file-menu-item">${icon('download', 16)}<span>${t('save')}</span></button></div></details><span class="divider"></span><button id="motion" class="soft-btn" aria-label="${t('motionView')}" title="${t('motionView')}">${icon('box', 15)}<span>3D</span></button><button id="examples" class="soft-btn" aria-label="${t('examples')}">${icon('grid', 15)}<span>${t('examples')}</span></button><button id="language" class="language-btn" aria-label="Language">${lang === 'en' ? 'EN' : 'UA'}${icon('down', 12)}</button>${button('help', 'help', t('help'))}</div></header>
+    <div class="header-actions"><span id="save-state" class="save-state">${icon('check', 13)}${t('saved')}</span><details class="project-files"><summary class="icon-btn" aria-label="${t('projectFiles')}" title="${t('projectFiles')}">${icon('folder', 17)}</summary><div class="file-menu-panel"><button type="button" id="import" class="file-menu-item">${icon('upload', 16)}<span>${t('open')}</span></button><button type="button" id="export" class="file-menu-item">${icon('download', 16)}<span>${t('save')}</span></button></div></details><span class="divider"></span><button id="motion" class="soft-btn context-3d-btn" ${getSceneEntries(project).length ? '' : 'hidden'} aria-label="${t('motionView')}" title="${t('motionView')}">${icon('box', 15)}<span>3D</span></button><button id="examples" class="soft-btn" aria-label="${t('examples')}">${icon('grid', 15)}<span>${t('examples')}</span></button><button id="language" class="language-btn" aria-label="Language">${lang === 'en' ? 'EN' : 'UA'}${icon('down', 12)}</button>${button('help', 'help', t('help'))}</div></header>
     <div class="app-body"><aside id="component-library" class="library" aria-label="${t('componentLibrary')}"><div class="panel-title"><h2>${t('componentLibrary')}</h2><span class="count-badge">${COMPONENTS.length}</span>${button('close-library', 'close', t('cancel'))}</div><div class="search-wrap">${icon('search', 16)}<input id="search" type="search" aria-label="${t('searchAllComponents')}" placeholder="${t('searchAllComponents')}" value="${esc(query)}" autocomplete="off"><kbd>/</kbd></div><div id="library-categories"></div><div class="library-results-heading"><span>${t('catalogResults')}</span><span id="library-result-count"></span></div><div id="library-list" class="library-list"></div><div class="library-footer"><span class="dot green"></span>${t('browserOnly')}<small>${t('dragHint')}</small></div></aside><button id="library-backdrop" class="library-backdrop" aria-label="${t('cancel')}" tabindex="-1" hidden></button>
     <main class="main" data-workspace-view="${workspaceView}"><div class="workspace-toolbar"><button id="library-toggle" class="icon-btn" aria-label="${t('componentLibrary')}" title="${t('componentLibrary')}" aria-controls="component-library" aria-expanded="false">${icon('grid', 18)}</button><div class="workspace-title"><span class="breadcrumb">${t('workspace')}</span><span class="slash">/</span><span id="canvas-name">${esc(project.name)}</span></div><div class="simulation-controls"><label class="simulation-rate global-speed" title="${t('simulationRateHint')}">${icon('clock', 14)}<span>${t('simulationRate')}</span><select id="simulation-rate" aria-label="${t('simulationRate')}">${SIMULATION_RATES.map((value) => `<option value="${value}" ${simulationRate === value ? 'selected' : ''}>${formatRate(value)}</option>`).join('')}</select></label>${button('lesson-toggle', 'note', t('showLesson'))}${button('reset', 'reset', t('reset'))}${button('step', 'step', t('step'))}<button id="run" class="run-btn" title="${t('runKeyboard')}">${icon('play', 14)}<span>${t('run')}</span><kbd>R</kbd></button></div></div>
     <nav class="workspace-tabs" aria-label="${t('workspace')}">${['canvas', 'inspector', 'signals'].map((view) => `<button type="button" data-workspace-view="${view}" aria-pressed="${workspaceView === view}">${t(view === 'canvas' ? 'circuitView' : view === 'inspector' ? 'inspector' : 'signalsView')}</button>`).join('')}</nav>
@@ -286,8 +295,18 @@ function nodeBody(node) {
       return `<canvas class="mini-scope" width="210" height="65"></canvas>${node.type !== 'scope' ? '<span class="node-readout"></span>' : ''}`;
     case 'servo':
       return `<div class="servo-bank">${[1, 2, 3, 4].map((i) => `<div class="servo-unit"><div class="servo-disc"><div class="servo-arm" data-servo="${i}"></div></div><span>S${i} <b data-angle="${i}">0°</b></span></div>`).join('')}</div>`;
+    case 'traffic_light':
+      return `<div class="scene-node-widget"><div class="traffic-mini">${['red', 'yellow', 'green'].map((color) => `<i data-lamp="${color}" class="lamp-${color}"></i>`).join('')}</div><strong class="node-readout"></strong><button data-motion-open data-scene-node="${node.id}" class="text-btn">${t('view3d')}${icon('chevron', 11)}</button></div>`;
+    case 'traffic_junction':
+    case 'railway':
+    case 'animal_feeder':
+    case 'water_tank':
+    case 'aquarium':
+    case 'greenhouse':
+    case 'smart_home':
+      return `<div class="scene-node-widget"><span class="scene-node-icon">${icon(node.type === 'railway' ? 'wire' : node.type === 'traffic_junction' ? 'grid' : 'box', 32)}</span><strong class="node-readout"></strong><span class="scene-node-state"></span><button data-motion-open data-scene-node="${node.id}" class="text-btn">${t('view3d')}${icon('chevron', 11)}</button></div>`;
     case 'stepper':
-      return `<div class="stepper-widget"><div class="stepper-body"><div class="stepper-rotor"></div></div><strong class="node-readout"></strong><button data-motion-open class="text-btn">${t('view3d')}${icon('chevron', 11)}</button></div>`;
+      return `<div class="stepper-widget"><div class="stepper-body"><div class="stepper-rotor"></div></div><strong class="node-readout"></strong><button data-motion-open data-scene-node="${node.id}" class="text-btn">${t('view3d')}${icon('chevron', 11)}</button></div>`;
     case 'limit_switch':
     case 'position_sensor':
       return `<div class="sensor-widget"><span class="sensor-light"></span><strong class="node-readout"></strong><span class="sensor-status"></span></div>`;
@@ -329,7 +348,9 @@ function renderBoard() {
       toggleSource(el.dataset.switch);
     }),
   );
-  $$('[data-motion-open]').forEach((el) => (el.onclick = () => showMotionView()));
+  $$('[data-motion-open]').forEach(
+    (el) => (el.onclick = () => showMotionView(el.dataset.sceneNode)),
+  );
   applyView();
   wiring?.refresh();
 }
@@ -401,7 +422,9 @@ function renderInspectorContent() {
   }
   el.innerHTML = `${header}${tabs}<div class="property-section"><h4>${t('properties')}</h4><label>${t('label')}<input id="node-label" value="${esc(n.label || '')}" placeholder="${esc(title(d))}" maxlength="100"></label><label class="toggle-row">${t('enabled')}<input type="checkbox" id="node-enabled" class="toggle-input" ${n.enabled !== false ? 'checked' : ''}></label></div>${
     Object.keys(params).length
-      ? `<div class="property-section"><h4>${t('parameters')}</h4>${Object.entries(params)
+      ? `<div class="property-section"><h4>${t('parameters')}</h4>${SCENARIO_TYPES.includes(n.type) ? `<p class="parameter-help">${t('sceneParamReset')}</p>` : ''}${Object.entries(
+          params,
+        )
           .map(([key, value]) => parameterField(key, value, n.type))
           .join('')}</div>`
       : ''
@@ -449,7 +472,7 @@ function renderInspectorContent() {
       }
       if (n.params[key] === value) return;
       n.params[key] = value;
-      if (key === 'initial') delete runtime.state[n.id];
+      if (key === 'initial' || SCENARIO_TYPES.includes(n.type)) delete runtime.state[n.id];
       const companion = $(`[data-${input.dataset.slider ? 'param' : 'slider'}="${key}"]`);
       if (companion) companion.value = value;
       simulate(project, runtime, 0);
@@ -470,6 +493,36 @@ function renderInspectorContent() {
   updateGuideSignals();
 }
 const PARAM_NAMES = {
+  carSpeed: ['Car speed (m/s)', 'Швидкість авто (м/с)'],
+  arrivalInterval: ['Arrival interval (s)', 'Інтервал прибуття (с)'],
+  initialCars: ['Initial cars per road', 'Початкова кількість авто на напрямок'],
+  initialA: ['Initial train A position (m)', 'Початкова позиція потяга A (м)'],
+  initialB: ['Initial train B position (m)', 'Початкова позиція потяга B (м)'],
+  speedLimit: ['Speed restriction (km/h)', 'Обмеження швидкості (км/год)'],
+  hopperCapacity: ['Hopper capacity (g)', 'Місткість бункера (г)'],
+  bowlCapacity: ['Bowl capacity (g)', 'Місткість миски (г)'],
+  initialHopper: ['Initial food in hopper (g)', 'Початковий корм у бункері (г)'],
+  initialLevel: ['Initial level', 'Початковий рівень'],
+  dispenseRate: ['Food delivery (g/s)', 'Подача корму (г/с)'],
+  eatRate: ['Consumption (g/s)', 'Споживання (г/с)'],
+  hungryThreshold: ['Hungry threshold (g)', 'Поріг голоду (г)'],
+  fullThreshold: ['Bowl target (g)', 'Цільовий рівень миски (г)'],
+  alarmThreshold: ['Unsafe bowl level (g)', 'Небезпечний рівень миски (г)'],
+  portionSize: ['Portion size (g)', 'Розмір порції (г)'],
+  capacity: ['Tank capacity (L)', 'Місткість резервуара (л)'],
+  pumpRate: ['Pump rate (L/s)', 'Подача насоса (л/с)'],
+  drainRate: ['Drain rate (L/s)', 'Витрата води (л/с)'],
+  lowThreshold: ['Low level (%)', 'Низький рівень (%)'],
+  highThreshold: ['High level (%)', 'Високий рівень (%)'],
+  initialTemperature: ['Initial temperature (°C)', 'Початкова температура (°C)'],
+  ambientTemperature: ['Ambient temperature (°C)', 'Температура довкілля (°C)'],
+  initialOxygen: ['Initial oxygen (%)', 'Початковий кисень (%)'],
+  initialFood: ['Initial food (%)', 'Початковий запас корму (%)'],
+  initialCleanliness: ['Initial cleanliness (%)', 'Початкова чистота (%)'],
+  fishCount: ['Fish count', 'Кількість рибок'],
+  dayLength: ['Day and night cycle (s)', 'Повний цикл дня і ночі (с)'],
+  initialMoisture: ['Initial soil moisture (%)', 'Початкова вологість ґрунту (%)'],
+  initialWater: ['Initial water reserve (%)', 'Початковий запас води (%)'],
   frequency: ['Frequency (Hz)', 'Частота (Гц)'],
   duty: ['Duty cycle (0–1)', 'Коефіцієнт заповнення (0–1)'],
   carrier: ['Carrier (Hz)', 'Несуча (Гц)'],
@@ -500,9 +553,13 @@ const PARAM_NAMES = {
   height: ['Height', 'Висота'],
 };
 function parameterField(key, value, componentType) {
-  const label =
+  const baseLabel =
     PARAM_NAMES[key]?.[lang === 'ua' ? 1 : 0] ||
     key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
+  const label =
+    key === 'initialLevel'
+      ? `${baseLabel} (${componentType === 'water_tank' ? '%' : 'g'})`
+      : baseLabel;
   if (key === 'text')
     return `<label>${label}<textarea data-param="${key}" rows="3" maxlength="16384">${esc(value)}</textarea></label>`;
   const type =
@@ -519,6 +576,36 @@ function parameterField(key, value, componentType) {
     return `<label>${esc(label)}<select data-param="mode">${options.map((option) => `<option value="${option}" ${value === option ? 'selected' : ''}>${t(option)}</option>`).join('')}</select></label>`;
   }
   const bounds = {
+    carSpeed: [1, 40, 0.5],
+    arrivalInterval: [1, 60, 0.5],
+    initialCars: [0, 8, 1],
+    speedLimit: [1, 255, 1],
+    initialA: [-500, -20, 1],
+    initialB: [-500, -20, 1],
+    hopperCapacity: [1, 100000, 1],
+    bowlCapacity: [1, 10000, 1],
+    initialHopper: [0, 100000, 1],
+    initialLevel: [0, 10000, 1],
+    dispenseRate: [0.1, 10000, 0.1],
+    eatRate: [0, 1000, 0.1],
+    hungryThreshold: [0, 10000, 1],
+    fullThreshold: [0, 10000, 1],
+    alarmThreshold: [0, 10000, 1],
+    portionSize: [1, 10000, 1],
+    capacity: [1, 100000, 1],
+    pumpRate: [0.1, 10000, 0.1],
+    drainRate: [0, 10000, 0.1],
+    lowThreshold: [0, 100, 1],
+    highThreshold: [0, 100, 1],
+    initialTemperature: [-20, 80, 0.5],
+    ambientTemperature: [-20, 50, 0.5],
+    initialOxygen: [0, 100, 1],
+    initialFood: [0, 100, 1],
+    initialCleanliness: [0, 100, 1],
+    fishCount: [1, 8, 1],
+    dayLength: [10, 3600, 1],
+    initialMoisture: [0, 100, 1],
+    initialWater: [0, 100, 1],
     duty: [0, 1, 0.01],
     depth: [0, 1, 0.01],
     minDuty: [0, 1, 0.01],
@@ -537,7 +624,8 @@ function parameterField(key, value, componentType) {
     height: [100, 3000, 20],
     vcc: [0.01, 1000, 0.1],
   };
-  const limits = bounds[key];
+  const limits =
+    key === 'initialLevel' && componentType === 'water_tank' ? [0, 100, 1] : bounds[key];
   const attributes =
     type === 'number'
       ? limits
@@ -573,6 +661,7 @@ function updateSignals() {
     if (!el) continue;
     const ins = runtime.inputs?.[n.id] || {},
       outs = runtime.outputs?.[n.id] || {};
+    const signalOutputs = runtime.signals.outputs[n.id] || {};
     $$('.pin', el).forEach((pin) => {
       const v = (pin.dataset.side === 'in' ? ins : outs)[pin.dataset.pin];
       pin.classList.remove('high', 'low', 'unknown', 'floating');
@@ -584,7 +673,13 @@ function updateSignals() {
       readout.textContent =
         n.type === 'pwm'
           ? `${Math.round(Number(outs.duty ?? n.params.duty ?? 0.5) * 100)}% · ${n.params.frequency ?? 105} Hz`
-          : format(first);
+          : n.type === 'splitter'
+            ? `D: ${format(runtime.signals.inputs[n.id]?.in)}`
+            : n.type === 'demux'
+              ? getDefinition(n.type)
+                  .signals.outputs.map((port) => `${port.label}: ${format(signalOutputs[port.id])}`)
+                  .join(' · ')
+              : format(first);
     }
     if (n.type === 'led') {
       const v = ins.in;
@@ -592,6 +687,40 @@ function updateSignals() {
       lamp.style.setProperty('--led-color', safeColor(n.params.color || '#72b66e'));
       lamp.className = `led-bulb ${signalClass(v)}`;
       $('.led-text', el).textContent = v === 1 ? t('one') : v === 0 ? t('zero') : format(v);
+    }
+    if (SCENARIO_TYPES.includes(n.type)) {
+      const health = sceneHealth(
+        getSceneSnapshot(project, runtime, { nodeId: n.id, type: n.type }),
+      );
+      el.dataset.sceneHealth = health.status;
+      const readout = $('.node-readout', el);
+      readout.textContent =
+        n.type === 'aquarium'
+          ? `${t('sceneAlive')}: ${format(signalOutputs.alive)} · ${format(outs.temperature)} °C`
+          : n.type === 'greenhouse'
+            ? `${t('sceneGrowth')}: ${format(outs.growth)}%`
+            : n.type === 'smart_home'
+              ? `${format(outs.temperature)} °C · ${format(outs.energy)} kWh`
+              : n.type === 'water_tank'
+                ? `${format(outs.level)}%`
+                : n.type === 'animal_feeder'
+                  ? `${format(outs.level)} g`
+                  : n.type === 'traffic_light'
+                    ? `${t('signalState')}: ${format(outs.valid)}`
+                    : `${t('scenePassed')}: ${format(signalOutputs.passed)}`;
+      const status = $('.scene-node-state', el);
+      if (status)
+        status.textContent =
+          health.status === 'fault'
+            ? t('sceneAlarm')
+            : health.status === 'disabled'
+              ? t('disabled')
+              : health.status === 'unknown'
+                ? 'X'
+                : '';
+      $$('[data-lamp]', el).forEach((lamp) =>
+        lamp.classList.toggle('lit', ins[lamp.dataset.lamp] === 1 && n.enabled !== false),
+      );
     }
     if (n.type === 'stepper') {
       const rotor = $('.stepper-rotor', el);
@@ -811,6 +940,7 @@ function drawMonitor() {
   paintTraces(canvas, traces);
 }
 function updateCounts() {
+  $('#motion').hidden = getSceneEntries(project).length === 0;
   $('#counts').textContent =
     `${project.nodes.length} ${t('nodes')} · ${project.wires.length} ${t('wires')}`;
   $('#canvas-name').textContent = project.name;
@@ -1376,25 +1506,49 @@ function disposeMotionView() {
   motionViewToken++;
   motionView?.dispose();
   motionView = null;
+  activeSceneEntry = null;
 }
-async function showMotionView() {
-  const motors = project.nodes.filter((node) => node.type === 'stepper');
-  if (!motors.length) {
-    showModal(
-      `<span class="eyebrow">${t('motionView')}</span><h2>${t('motionEmptyTitle')}</h2><p>${t('motionEmptyText')}</p><div class="related-examples"><button class="primary-btn" data-learn-example="stepper-basics">${t('openStepperLab')}${icon('chevron', 14)}</button><button class="soft-btn" data-learn-example="printer-homing">${t('openHomingLab')}</button></div>`,
-    );
-    bindLearningActions($('#modal-root'));
-    return;
-  }
+function sceneName(entry) {
+  if (entry.type === 'mechanics') return t('mechanics3d');
+  const node = project.nodes.find((item) => item.id === entry.nodeId);
+  return node?.label || title(getDefinition(entry.type));
+}
+function scenePointsMarkup(entry) {
+  if (entry.type !== 'railway') return '';
+  return `<section class="railway-controls"><h3>${t('railwayPoints')}</h3><p>${t('railwayPointsHint')}</p>${[
+    'points',
+    'exit_points',
+  ]
+    .map((port) => {
+      const source = sceneControlSwitch(project, entry.nodeId, port);
+      return `<button type="button" class="soft-btn railway-point-control" data-point-control="${port}" ${source ? `data-point-source="${esc(source)}"` : 'disabled'}><span>${t(port === 'points' ? 'nearPoints' : 'farPoints')}<small>${t(source ? 'clickToSwitch' : 'circuitControlled')}</small></span><b data-point-state="${port}">0</b></button>`;
+    })
+    .join(
+      '',
+    )}<button type="button" id="manual-railway-lab" class="text-btn">${t('manualRailwayLab')}${icon('chevron', 12)}</button></section>`;
+}
+function sceneControlsMarkup() {
   const switches = project.nodes.filter((node) => node.type === 'switch');
   const clocks = project.nodes.filter((node) => node.type === 'clock');
   const values = project.nodes.filter((node) => node.type === 'bus_input');
+  return `${switches.length ? `<section><h3>${t('circuitControls')}</h3><p>${t('circuitControlsHint')}</p><div class="motion-switches">${switches.map((node) => `<button class="motion-source" data-motion-switch="${node.id}"><span>${esc(node.label || title(getDefinition(node.type)))}</span><b>0</b></button>`).join('')}</div></section>` : ''}${clocks.length ? `<section><h3>${t('clockSettings')}</h3>${clocks.map((node) => `<label>${esc(node.label || title(getDefinition(node.type)))} <small>Hz</small><input data-motion-clock="${node.id}" type="number" min="0" max="1000" step="any" value="${esc(node.params.frequency ?? getDefinition(node.type).defaults.frequency)}"></label>`).join('')}</section>` : ''}${values.length ? `<section><h3>${t('inputValues')}</h3>${values.map((node) => `<label>${esc(node.label || title(getDefinition(node.type)))}<input data-motion-value="${node.id}" type="number" min="0" max="255" step="1" value="${esc(node.params.value ?? 0)}"></label>`).join('')}</section>` : ''}`;
+}
+async function showMotionView(requestedId = null) {
+  const entries = getSceneEntries(project);
+  if (!entries.length) return;
+  const preferred = requestedId || [...selected][0];
+  const entry =
+    entries.find((item) => item.id === preferred || item.nodeIds.includes(preferred)) || entries[0];
+  const mechanics = entry.type === 'mechanics';
   showModal(
-    `<span class="eyebrow">${t('motionView')}</span><h2>${t('motionTitle')}</h2><div class="motion-toolbar"><div class="camera-views">${['perspective', 'front', 'top'].map((view, index) => `<button class="soft-btn ${index === 0 ? 'active' : ''}" data-camera-view="${view}">${t(view)}</button>`).join('')}<button id="motion-camera-reset" class="icon-btn" aria-label="${t('resetCamera')}">${icon('fit', 16)}</button></div><div><button id="motion-reset" class="icon-btn" aria-label="${t('reset')}">${icon('reset', 16)}</button><button id="motion-run" class="primary-btn"></button></div></div>
-    <div class="motion-layout"><div><div id="motion-stage" class="motion-stage" role="img" aria-label="${t('motionScene')}"></div><p class="motion-orbit-help">${t('orbitHelp')}</p><p id="motion-status" class="motion-status">${t('loading3d')}</p></div><aside class="motion-sidebar"><section><h3>${t('axisReadouts')}</h3><div id="motion-readouts"></div></section><section><h3>${t('sensorReadouts')}</h3><div id="motion-sensors"></div></section>${switches.length ? `<section><h3>${t('circuitControls')}</h3><p>${t('circuitControlsHint')}</p><div class="motion-switches">${switches.map((node) => `<button class="motion-source" data-motion-switch="${node.id}"><span>${esc(node.label || title(getDefinition(node.type)))}</span><b>0</b></button>`).join('')}</div></section>` : ''}${clocks.length ? `<section><h3>${t('clockSettings')}</h3>${clocks.map((node) => `<label>${esc(node.label || title(getDefinition(node.type)))} <small>Hz</small><input data-motion-clock="${node.id}" type="number" min="0" max="1000" step="1" value="${esc(node.params.frequency ?? getDefinition(node.type).defaults.frequency)}"></label>`).join('')}</section>` : ''}${values.length ? `<section><h3>${t('inputValues')}</h3>${values.map((node) => `<label>${esc(node.label || title(getDefinition(node.type)))}<input data-motion-value="${node.id}" type="number" min="0" max="255" step="1" value="${esc(node.params.value ?? 0)}"></label>`).join('')}</section>` : ''}</aside></div>`,
+    `<span class="eyebrow">${t('motionView')}</span><h2>${esc(sceneName(entry))}</h2>${entries.length > 1 ? `<label class="scene-picker">${t('sceneObject')}<select id="scene-select">${entries.map((item) => `<option value="${esc(item.id)}" ${item.id === entry.id ? 'selected' : ''}>${esc(sceneName(item))}</option>`).join('')}</select></label>` : ''}<div class="motion-toolbar"><div class="camera-views">${['perspective', 'front', 'top'].map((view, index) => `<button class="soft-btn ${index === 0 ? 'active' : ''}" data-camera-view="${view}">${t(view)}</button>`).join('')}<button id="motion-camera-reset" class="icon-btn" aria-label="${t('resetCamera')}">${icon('fit', 16)}</button></div><div><button id="motion-reset" class="icon-btn" aria-label="${t('reset')}">${icon('reset', 16)}</button><button id="motion-run" class="primary-btn"></button></div></div>
+    <div class="motion-layout"><div><div id="motion-stage" class="motion-stage" role="img" aria-label="${mechanics ? t('motionScene') : esc(sceneName(entry))}"></div><p class="motion-orbit-help">${t('orbitHelp')}</p><div id="scene-summary" class="scene-summary"></div><p id="motion-status" class="motion-status">${t('loading3d')}</p>${mechanics ? '' : '<p id="scene-health" class="scene-health" aria-live="polite"></p>'}</div><aside class="motion-sidebar">${scenePointsMarkup(entry)}${mechanics ? '' : sceneControlsMarkup()}${mechanics ? `<section><h3>${t('axisReadouts')}</h3><div id="motion-readouts"></div></section><section><h3>${t('sensorReadouts')}</h3><div id="motion-sensors"></div></section>` : `<section><p class="scene-purpose">${esc(lang === 'ua' ? getDefinition(entry.type).descriptionUa : getDefinition(entry.type).description)}</p><details class="scene-actuators"><summary>${t('sceneActuators')}</summary><div id="scene-actuators"></div></details><h3>${t('sceneOutputs')}</h3><div id="scene-readouts"></div></section>`}${mechanics ? sceneControlsMarkup() : ''}</aside></div>`,
     true,
   );
+  activeSceneEntry = entry;
   $('.modal').classList.add('motion-modal');
+  if ($('#scene-select'))
+    $('#scene-select').onchange = (event) => showMotionView(event.target.value);
   $('#motion-run').onclick = () => {
     setRunning(!running);
     updateMotionView();
@@ -1403,18 +1557,24 @@ async function showMotionView() {
   $$('[data-motion-switch]').forEach(
     (button) => (button.onclick = () => toggleSource(button.dataset.motionSwitch)),
   );
+  $$('[data-point-source]').forEach((button) => {
+    button.onclick = () => toggleSource(button.dataset.pointSource);
+  });
+  if ($('#manual-railway-lab'))
+    $('#manual-railway-lab').onclick = () =>
+      confirmReplace(() => createExample('railway-dispatch'));
   $$('[data-motion-clock],[data-motion-value]').forEach((input) =>
     bindLiveText(input, (value) => {
       if (value === '') return;
-      const frequency = Number(value);
-      if (!Number.isFinite(frequency)) return;
+      const number = Number(value);
+      if (!Number.isFinite(number)) return;
       const isByte = !!input.dataset.motionValue;
       const node = project.nodes.find(
         (item) => item.id === (input.dataset.motionValue || input.dataset.motionClock),
       );
       node.params[isByte ? 'value' : 'frequency'] = isByte
-        ? Math.round(Math.min(255, Math.max(0, frequency)))
-        : Math.min(1000, Math.max(0, frequency));
+        ? Math.round(Math.min(255, Math.max(0, number)))
+        : Math.min(1000, Math.max(0, number));
       simulate(project, runtime, 0);
       renderBoard();
       updateSignals();
@@ -1422,19 +1582,28 @@ async function showMotionView() {
     }),
   );
   const token = motionViewToken;
+  const onStatus = (message) => {
+    if (token !== motionViewToken) return;
+    const status = $('#motion-status');
+    if (status) {
+      status.textContent = message;
+      status.hidden = !message;
+    }
+  };
+  updateMotionView();
   try {
-    const { createMotionView } = await import('./motion-view.js');
+    const renderer = mechanics
+      ? await import('./motion-view.js')
+      : await import('./scenario-view.js');
     if (token !== motionViewToken || !$('#motion-stage')) return;
-    motionView = createMotionView($('#motion-stage'), {
-      language: lang,
-      onStatus: (message) => {
-        const status = $('#motion-status');
-        if (status) {
-          status.textContent = message;
-          status.hidden = !message;
-        }
-      },
-    });
+    motionView = mechanics
+      ? renderer.createMotionView($('#motion-stage'), { language: lang, onStatus })
+      : renderer.createScenarioView($('#motion-stage'), {
+          type: entry.type,
+          nodeId: entry.nodeId,
+          language: lang,
+          onStatus,
+        });
     $$('[data-camera-view]').forEach(
       (button) =>
         (button.onclick = () => {
@@ -1447,30 +1616,88 @@ async function showMotionView() {
     $('#motion-camera-reset').onclick = () => motionView.resetCamera();
     motionView.resize();
     updateMotionView();
-  } catch {
-    if (token === motionViewToken && $('#motion-status'))
-      $('#motion-status').textContent = t('motionUnavailable');
+  } catch (error) {
+    console.error('The 3D scene could not initialize.', error);
+    onStatus(t('motionUnavailable'));
   }
 }
 function updateMotionView() {
-  const readouts = $('#motion-readouts');
-  if (!readouts) return;
-  const state = getMotionState(project, runtime);
-  motionView?.update(state);
-  readouts.innerHTML = state.motors
-    .map(
-      (motor, index) =>
-        `<div class="axis-readout"><span class="axis-letter">${['X', 'Y', 'Z'][index] || index + 1}</span><div><strong>${esc(motor.label)}</strong><span>${format(motor.position)} mm <small>· ${format(motor.angle)}°</small></span></div><i class="dot ${motor.moving ? 'green' : 'gray'}" title="${t(motor.enabled ? 'enabled' : 'disabled')}"></i></div>`,
-    )
-    .join('');
-  $('#motion-sensors').innerHTML = state.sensors.length
-    ? state.sensors
-        .map(
-          (sensor) =>
-            `<div class="motion-sensor-row"><i class="dot ${sensor.triggered === null ? 'amber' : sensor.triggered ? 'green' : 'gray'}"></i><span>${esc(sensor.label)}</span><b>${format(sensor.signal)}</b></div>`,
-        )
-        .join('')
-    : `<p>${t('noSensors')}</p>`;
+  if (!activeSceneEntry || !$('#motion-stage')) return;
+  const snapshot = getSceneSnapshot(project, runtime, activeSceneEntry);
+  if (!snapshot) {
+    closeModal();
+    return;
+  }
+  motionView?.update(snapshot);
+  if (activeSceneEntry.type === 'mechanics') {
+    $('#motion-readouts').innerHTML = snapshot.motors
+      .map(
+        (motor, index) =>
+          `<div class="axis-readout"><span class="axis-letter">${['X', 'Y', 'Z'][index] || index + 1}</span><div><strong>${esc(motor.label)}</strong><span>${format(motor.position)} mm <small>· ${format(motor.angle)}°</small></span></div><i class="dot ${motor.moving ? 'green' : 'gray'}" title="${t(motor.enabled ? 'enabled' : 'disabled')}"></i></div>`,
+      )
+      .join('');
+    $('#motion-sensors').innerHTML = snapshot.sensors.length
+      ? snapshot.sensors
+          .map(
+            (sensor) =>
+              `<div class="motion-sensor-row"><i class="dot ${sensor.triggered === null ? 'amber' : sensor.triggered ? 'green' : 'gray'}"></i><span>${esc(sensor.label)}</span><b>${format(sensor.signal)}</b></div>`,
+          )
+          .join('')
+      : `<p>${t('noSensors')}</p>`;
+  } else {
+    const definition = getDefinition(snapshot.node.type);
+    const primary =
+      {
+        aquarium: [
+          ['temperature', 'sceneTemperature'],
+          ['oxygen', 'sceneOxygen'],
+          ['alive', 'sceneAlive'],
+          ['health', 'sceneHealthLabel'],
+        ],
+        greenhouse: [
+          ['temperature', 'sceneTemperature'],
+          ['moisture', 'sceneMoisture'],
+          ['growth', 'sceneGrowth'],
+          ['health', 'sceneHealthLabel'],
+        ],
+        smart_home: [
+          ['temperature', 'sceneTemperature'],
+          ['water', 'sceneWater'],
+          ['energy', 'sceneEnergy'],
+        ],
+      }[snapshot.node.type] || [];
+    $('#scene-summary').innerHTML = primary
+      .map(([id, label]) => {
+        const port = definition.signals.outputs.find((item) => item.id === id);
+        return `<div><span>${t(label)}</span><strong>${format(snapshot.outputs[id])}${port.unit ? ` <small>${esc(port.unit)}</small>` : ''}</strong></div>`;
+      })
+      .join('');
+    const actuators = sceneActuatorValues(snapshot);
+    $('#scene-actuators').innerHTML = definition.signals.inputs
+      .filter((port) => !['run', 'reset'].includes(port.id))
+      .map((port) => {
+        const actual = actuators[port.id];
+        return `<div class="scene-signal-row"><span>${esc(port.label)}</span><b class="signal-value ${signalClass(actual)}">${format(actual)}</b></div>`;
+      })
+      .join('');
+    $$('[data-point-state]').forEach((readout) => {
+      const value = snapshot.outputs[`${readout.dataset.pointState}_state`];
+      readout.textContent = format(value);
+      readout.closest('button').setAttribute('aria-pressed', String(value === 1));
+    });
+    $('#scene-readouts').innerHTML = definition.signals.outputs
+      .map(
+        (port) =>
+          `<div class="scene-signal-row"><span>${esc(port.label || port.id)}</span><b class="signal-value ${signalClass(snapshot.outputs[port.id])}">${format(snapshot.outputs[port.id])}${port.unit ? ` <small>${esc(port.unit)}</small>` : ''}</b></div>`,
+      )
+      .join('');
+    const health = sceneHealth(snapshot);
+    const reasonKey = sceneMessageKey(snapshot, health.reason);
+    const status = $('#scene-health');
+    const message = t(reasonKey);
+    if (status.textContent !== message) status.textContent = message;
+    status.dataset.status = health.status;
+  }
   $$('[data-motion-switch]').forEach((button) => {
     const node = project.nodes.find((item) => item.id === button.dataset.motionSwitch);
     const value = !!node?.params.value;
@@ -1479,6 +1706,7 @@ function updateMotionView() {
   });
   $('#motion-run').innerHTML = icon(running ? 'pause' : 'play', 14) + t(running ? 'pause' : 'run');
 }
+
 function showLaboratory(id) {
   const example = EXAMPLES.find((item) => item.id === id);
   if (!example?.lab) return;
@@ -1495,6 +1723,7 @@ function showDiagnostics() {
     const n = project.nodes.find((n) => n.id === d.node);
     const name = n?.label || (n ? title(getDefinition(n.type)) : '');
     if (lang === 'en') return d.message;
+    if (d.code === 'invalid_scenario') return `${name}: ${t('sceneParameters')}`;
     if (d.code === 'invalid_motion')
       return `${name}: задайте додатні цілі кроки на оберт і мікрокроки, додатний хід та межі Min ≤ Max.`;
     if (d.code === 'motion_unknown')

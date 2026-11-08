@@ -1,0 +1,351 @@
+{
+  "version": 1,
+  "name": "Feedback animal feeder",
+  "exampleId": "animal-feeder",
+  "nodes": [
+    {
+      "id": "run",
+      "type": "switch",
+      "x": 20,
+      "y": 20,
+      "label": "Scene run",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "x": 20,
+      "y": 220,
+      "label": "Reset feeder",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "refill",
+      "type": "switch",
+      "x": 20,
+      "y": 420,
+      "label": "Refill hopper · pulse",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "force",
+      "type": "switch",
+      "x": 20,
+      "y": 620,
+      "label": "Force dispensing",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "feeder",
+      "type": "animal_feeder",
+      "x": 320,
+      "y": 240,
+      "label": "Automatic feeder",
+      "enabled": true,
+      "params": {
+        "hopperCapacity": 500,
+        "bowlCapacity": 100,
+        "initialHopper": 300,
+        "initialLevel": 10,
+        "dispenseRate": 25,
+        "eatRate": 4,
+        "hungryThreshold": 20,
+        "fullThreshold": 60,
+        "alarmThreshold": 90,
+        "portionSize": 40
+      }
+    },
+    {
+      "id": "not-reset",
+      "type": "not",
+      "x": 620,
+      "y": 20,
+      "label": "Reset inactive",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "start",
+      "type": "and",
+      "x": 890,
+      "y": 20,
+      "label": "Hungry AND not reset",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "stop",
+      "type": "or",
+      "x": 890,
+      "y": 220,
+      "label": "Full OR reset",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "memory",
+      "type": "sr_latch",
+      "x": 1160,
+      "y": 120,
+      "label": "Remember feeding cycle",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "not-empty",
+      "type": "not",
+      "x": 620,
+      "y": 450,
+      "label": "Hopper has food",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "automatic",
+      "type": "and",
+      "x": 1160,
+      "y": 420,
+      "label": "Feed request AND food available",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "dispense",
+      "type": "or",
+      "x": 1430,
+      "y": 420,
+      "label": "Automatic OR manual",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "alarm",
+      "type": "led",
+      "x": 1710,
+      "y": 240,
+      "label": "Feeder alarm latched",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "run-out-feeder-run",
+      "from": {
+        "node": "run",
+        "port": "out"
+      },
+      "to": {
+        "node": "feeder",
+        "port": "run"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-feeder-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "feeder",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "refill-out-feeder-refill",
+      "from": {
+        "node": "refill",
+        "port": "out"
+      },
+      "to": {
+        "node": "feeder",
+        "port": "refill"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-not-reset-a",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-reset",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "feeder-hungry-start-a",
+      "from": {
+        "node": "feeder",
+        "port": "hungry"
+      },
+      "to": {
+        "node": "start",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-reset-out-start-b",
+      "from": {
+        "node": "not-reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "start",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "feeder-full-stop-a",
+      "from": {
+        "node": "feeder",
+        "port": "full"
+      },
+      "to": {
+        "node": "stop",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-stop-b",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "stop",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "start-out-memory-s",
+      "from": {
+        "node": "start",
+        "port": "out"
+      },
+      "to": {
+        "node": "memory",
+        "port": "s"
+      },
+      "width": 1
+    },
+    {
+      "id": "stop-out-memory-r",
+      "from": {
+        "node": "stop",
+        "port": "out"
+      },
+      "to": {
+        "node": "memory",
+        "port": "r"
+      },
+      "width": 1
+    },
+    {
+      "id": "feeder-empty-not-empty-a",
+      "from": {
+        "node": "feeder",
+        "port": "empty"
+      },
+      "to": {
+        "node": "not-empty",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "memory-q-automatic-a",
+      "from": {
+        "node": "memory",
+        "port": "q"
+      },
+      "to": {
+        "node": "automatic",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-empty-out-automatic-b",
+      "from": {
+        "node": "not-empty",
+        "port": "out"
+      },
+      "to": {
+        "node": "automatic",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "automatic-out-dispense-a",
+      "from": {
+        "node": "automatic",
+        "port": "out"
+      },
+      "to": {
+        "node": "dispense",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "force-out-dispense-b",
+      "from": {
+        "node": "force",
+        "port": "out"
+      },
+      "to": {
+        "node": "dispense",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "dispense-out-feeder-dispense",
+      "from": {
+        "node": "dispense",
+        "port": "out"
+      },
+      "to": {
+        "node": "feeder",
+        "port": "dispense"
+      },
+      "width": 1
+    },
+    {
+      "id": "feeder-alarm-alarm-in",
+      "from": {
+        "node": "feeder",
+        "port": "alarm"
+      },
+      "to": {
+        "node": "alarm",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ]
+}

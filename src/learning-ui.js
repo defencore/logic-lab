@@ -26,7 +26,16 @@ export function filterExamples(examples, { query = '', category = 'all', level =
   });
 }
 
-const TOPICS = ['basics', 'sequential', 'mixed', 'architecture', 'physical', 'motion'];
+const TOPICS = [
+  'basics',
+  'sequential',
+  'mixed',
+  'architecture',
+  'physical',
+  'motion',
+  'scenes',
+  'automation',
+];
 const languageKey = (language) => (language === 'ua' ? 'ua' : 'en');
 const topicIcon = (topic) =>
   topic === 'mixed' || topic === 'physical'
@@ -35,10 +44,16 @@ const topicIcon = (topic) =>
       ? 'layers'
       : topic === 'motion'
         ? 'box'
-        : 'wire';
+        : topic === 'scenes' || topic === 'automation'
+          ? 'grid'
+          : 'wire';
 
 function topicThumbnail(topic) {
   const drawings = {
+    automation:
+      '<path d="M7 70h146M15 31l24-20 24 20v36H15Z M26 48h12v19M44 38h10v10H44Z M79 23h66v44H79Z M87 32h49M91 53c6-15 16-15 23 0s15 9 21-1"/><circle cx="124" cy="39" r="2"/><path d="M69 38v27m-5-7 5 7 5-7"/>',
+    scenes:
+      '<path d="M8 62h144M54 12v60M108 12v60"/><rect x="17" y="12" width="24" height="43" rx="5"/><circle cx="29" cy="23" r="4"/><circle cx="29" cy="34" r="4"/><circle cx="29" cy="45" r="4"/><path d="M29 55v15M72 27h18v18H72Z M122 32h24v22h-24Z"/>',
     basics:
       '<circle cx="16" cy="28" r="4"/><circle cx="16" cy="58" r="4"/><path d="M20 28h28v8h20M20 58h28V50h20M68 24h21a19 19 0 0 1 0 38H68Z M108 43h27"/><circle cx="140" cy="43" r="5"/>',
     sequential:

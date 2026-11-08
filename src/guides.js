@@ -2762,6 +2762,753 @@ add('position_sensor', {
   examples: ['position-control', 'stepper-basics'],
 });
 
+add('traffic_light', {
+  purpose: [
+    'A traffic-light block turns three digital lamp commands into a visible signal and checks whether exactly one lamp is active.',
+    'Блок світлофора перетворює три цифрові команди на видимі лампи й перевіряє, чи активна рівно одна лампа.',
+  ],
+  steps: [
+    [
+      'Connect independent switches to RED, YELLOW and GREEN. Start with RED=1 and the other two inputs at 0.',
+      'Підключіть незалежні перемикачі до RED, YELLOW та GREEN. Почніть з RED=1 та двох інших нулів.',
+    ],
+    [
+      'Connect VALID and GO to LEDs, then open the traffic-light scene from 3D to compare the visible lamps with these outputs.',
+      'Підключіть VALID та GO до світлодіодів і відкрийте сцену світлофора через 3D для порівняння ламп із виходами.',
+    ],
+    [
+      'Test red only, amber only, green only, all off and multiple lamps on. This component has no timing parameters or hidden controller.',
+      'Перевірте окремо червоний, жовтий, зелений, усі вимкнені й кілька ввімкнених. Блок не має параметрів часу чи прихованого контролера.',
+    ],
+  ],
+  experiment: [
+    'Leave GREEN=1 and also set RED=1, then remove RED. Watch VALID and GO drop and recover while the physical lamp commands remain visible.',
+    'Залиште GREEN=1 та додайте RED=1, потім приберіть RED. Спостерігайте зникнення й відновлення VALID/GO, поки команди ламп лишаються видимими.',
+  ],
+  expected: [
+    'Exactly one lamp gives VALID=1. Only the green-only combination gives GO=1; the other seven input combinations do not grant passage.',
+    'Рівно одна лампа дає VALID=1. Лише окремий зелений дає GO=1; інші сім комбінацій не дозволяють проїзд.',
+  ],
+  pitfalls: [
+    [
+      'This intentionally simplified model rejects red plus amber together. It does not implement country-specific traffic rules or automatically sequence the lamps.',
+      'Ця спрощена модель не приймає одночасний червоний із жовтим. Вона не реалізує правила окремої країни чи автоматичне перемикання.',
+    ],
+    [
+      'Drive every lamp input with a known bit; an unconnected Z is not a deliberate all-off command. VALID describes lamp consistency, not a complete road-safety assessment.',
+      'Задайте кожній лампі визначений біт; непідключений Z не є навмисною командою вимкнення. VALID описує узгодженість ламп, а не повну безпеку дороги.',
+    ],
+  ],
+  inputs: {
+    red: ['RED: high lights the stop lamp.', 'RED: одиниця вмикає червону лампу зупинки.'],
+    yellow: [
+      'YELLOW: high lights the amber caution lamp.',
+      'YELLOW: одиниця вмикає жовту попереджувальну лампу.',
+    ],
+    green: [
+      'GREEN: high lights the green lamp; passage still requires a valid one-lamp state.',
+      'GREEN: одиниця вмикає зелену; дозвіл додатково потребує правильного стану однієї лампи.',
+    ],
+  },
+  outputs: {
+    valid: [
+      'VALID: 1 only when exactly one of RED, YELLOW and GREEN is high.',
+      'VALID: 1 лише тоді, коли рівно один RED, YELLOW чи GREEN має 1.',
+    ],
+    go: ['GO: 1 only for GREEN=1 with RED=YELLOW=0.', 'GO: 1 лише при GREEN=1 та RED=YELLOW=0.'],
+  },
+  examples: ['traffic-light', 'traffic-junction'],
+});
+
+add('traffic_junction', {
+  purpose: [
+    'A crossroad process moves real simulated cars according to two-axis signal commands, exposing queues and a latched collision for feedback experiments.',
+    'Процес перехрестя рухає змодельовані машини за сигналами двох напрямків і показує черги та запам’ятоване зіткнення для дослідів керування.',
+  ],
+  steps: [
+    [
+      'Connect mutually exclusive NS_GREEN and EW_GREEN commands and amber clearance phases. Red/amber stops the complete car nose before its stop line and zebra; already admitted vehicles continue through.',
+      'Підключіть взаємно виключні NS_GREEN та EW_GREEN і жовті інтервали очищення. Червоний/жовтий зупиняє всю передню частину машини до лінії й зебри; допущені машини продовжують рух.',
+    ],
+    [
+      'Use a counter/decoder for green, amber, opposite green, opposite amber. Set carSpeed=12 meters/second, arrivalInterval=4 seconds and initialCars=2 per axis for the supplied laboratory.',
+      'Використайте лічильник і декодер для зеленого, жовтого, протилежного зеленого та жовтого. Для лабораторної задайте carSpeed=12 м/с, arrivalInterval=4 с та initialCars=2 на напрямок.',
+    ],
+    [
+      'Drive RUN=1 and RESET=0, open the junction scene in 3D and observe cars, waiting traffic and PASSED. Pulse RESET after removing a deliberately unsafe override.',
+      'Задайте RUN=1 та RESET=0, відкрийте перехрестя в 3D і спостерігайте машини, черги та PASSED. Подавайте RESET після усунення навмисного небезпечного обходу.',
+    ],
+  ],
+  experiment: [
+    'Run the four-phase laboratory safely, then reset and force both green directions at the starting phase. The vehicles can physically meet in the conflict area.',
+    'Запустіть правильні чотири фази, потім скиньте й увімкніть обидва зелені в початковій фазі. Машини можуть фізично зустрітися в зоні конфлікту.',
+  ],
+  expected: [
+    'Safe phases keep stopped noses behind the zebra, preserve body-length queue gaps and increase PASSED. CRASH latches only when actual vehicle footprints contact, then clears with RESET; simultaneous green alone is not a collision.',
+    'Правильні фази тримають передні частини до зебри, зберігають проміжки між кузовами й збільшують PASSED. CRASH запам’ятовується лише при контакті реальних габаритів і скидається RESET; сам одночасний зелений не є зіткненням.',
+  ],
+  pitfalls: [
+    [
+      'Exclusive green signals still need enough yellow or all-red clearance for existing cars. Raising carSpeed or shortening phases can invalidate a previously safe timing plan.',
+      'Навіть взаємно виключні зелені потребують достатнього жовтого чи всечервоного інтервалу. Зміна carSpeed або скорочення фаз може зіпсувати попередній безпечний цикл.',
+    ],
+    [
+      'RUN=0 pauses this process, not the whole circuit. RESET restores initialCars and clears collision history; remove the unsafe command before releasing it.',
+      'RUN=0 зупиняє цей процес, а не всю схему. RESET відновлює initialCars і стирає аварію; усуньте небезпечну команду перед відпусканням.',
+    ],
+  ],
+  inputs: {
+    ns_green: [
+      'NS_GREEN: grants north/south traffic permission to enter the junction.',
+      'NS_GREEN: дозволяє транспортові північ/південь в’їжджати на перехрестя.',
+    ],
+    ns_yellow: [
+      'NS_YELLOW: displays north/south caution and stops new entries.',
+      'NS_YELLOW: жовтий північ/південь, який зупиняє нові в’їзди.',
+    ],
+    ew_green: [
+      'EW_GREEN: grants east/west traffic permission; simultaneous opposing greens can cause a collision.',
+      'EW_GREEN: дозволяє схід/захід; одночасні зелені напрямків можуть спричинити зіткнення.',
+    ],
+    ew_yellow: [
+      'EW_YELLOW: displays east/west caution and stops new entries.',
+      'EW_YELLOW: жовтий схід/захід, який зупиняє нові в’їзди.',
+    ],
+    run: [
+      'RUN: high advances traffic; low holds process positions and arrivals. Unwired defaults high.',
+      'RUN: 1 рухає транспорт, 0 утримує позиції та надходження. Без дроту активний.',
+    ],
+    reset: [
+      'RESET: active-high reset of cars, counters and the latched crash.',
+      'RESET: активне скидання машин, лічильників і запам’ятованої аварії.',
+    ],
+  },
+  outputs: {
+    ns_wait: [
+      'NS_WAIT: one-bit flag; 1 means north/south vehicles are queued and waiting.',
+      'NS_WAIT: однобітний прапорець; 1 означає чергу машин північ/південь.',
+    ],
+    ew_wait: [
+      'EW_WAIT: one-bit flag; 1 means east/west vehicles are queued and waiting.',
+      'EW_WAIT: однобітний прапорець; 1 означає чергу машин схід/захід.',
+    ],
+    crash: [
+      'CRASH: latched collision bit, cleared only by RESET.',
+      'CRASH: запам’ятований біт зіткнення до RESET.',
+    ],
+    passed: [
+      'PASSED: eight-bit count of successfully cleared vehicles.',
+      'PASSED: восьмибітна кількість машин, що успішно виїхали.',
+    ],
+  },
+  examples: ['traffic-junction', 'traffic-light'],
+});
+
+add('railway', {
+  purpose: [
+    'A railway and road crossing models finite train/car bodies, timed road gates and a complete-route reservation, so interlocking prevents physical contact instead of hiding vehicles.',
+    'Залізничний переїзд моделює повні тіла поїздів і машин, часові шлагбауми та повне резервування, щоб блокування запобігало фізичному контакту замість приховування транспорту.',
+  ],
+  steps: [
+    [
+      'Use APPROACH_A/B and OCCUPIED to request one route at a time. Reserve the converging, shared and divergent corridor until the entire train tail clears; retain POINTS with an SR latch throughout that reservation.',
+      'За APPROACH_A/B та OCCUPIED обирайте один маршрут. Резервуйте вхідну, спільну й вихідну ділянки до виходу всього хвоста; утримуйте POINTS через SR увесь час резервування.',
+    ],
+    [
+      'Alternate rail and road windows. Command BARRIER closed for a rail request or occupied reservation, then require GATE_CLOSED=1 and CROSSING_CLEAR=1 before showing green. Road cars already inside must clear before the gates lower. Use THROTTLE=30 km/h with speedLimit=60.',
+      'Чергуйте дорожні й залізничні вікна. Закривайте BARRIER для залізничного запиту чи зайнятого резервування, а перед зеленим вимагайте GATE_CLOSED=1 та CROSSING_CLEAR=1. Машини всередині спершу мають виїхати. Використайте THROTTLE=30 км/год та speedLimit=60.',
+    ],
+    [
+      'Set initialA=-48 and initialB=-85 meters for the supplied spacing. With RUN=1 and RESET=0, inspect moving road traffic, stopped train noses and the train passage counter in 3D. The 40-second laboratory cycle starts with 20 seconds for road traffic.',
+      'Задайте initialA=-48 та initialB=-85 м. При RUN=1, RESET=0 спостерігайте в 3D рух машин, зупинені передні частини поїздів і лічильник проїзду потягів. Цикл лабораторної 40 с починається з 20 с для автодороги.',
+    ],
+  ],
+  experiment: [
+    'Compare the guarded cycle with a forced-open gate: the ready guard keeps trains red. Then bypass signals to inspect actual body contact; test THROTTLE=120 separately for turnout derailment. An empty road must not create a collision merely because the gates are open.',
+    'Порівняйте правильний цикл із примусово відкритими шлагбаумами: захист лишає поїздам червоний. Потім обійдіть сигнали для перевірки справжнього контакту; окремо задайте THROTTLE=120 для сходження. Порожня дорога не створює аварії лише через відкриті шлагбауми.',
+  ],
+  expected: [
+    'Trains and road cars both make repeated safe passages. A committed train keeps its route and closed gates until its full tail clears, even when the rail window ends. Collisions require overlapping physical bodies; overspeed or points violations can cause separate visible derailments.',
+    'Поїзди й машини багаторазово безпечно проїжджають. Допущений поїзд зберігає маршрут і закриті шлагбауми до виходу всього хвоста, навіть після кінця вікна. Зіткнення потребує контакту тіл; швидкість чи стрілка окремо можуть спричинити видиме сходження.',
+  ],
+  pitfalls: [
+    [
+      'OCCUPIED is a complete-body route reservation, not a nose-only test. A train waiting behind its red stop line must not reserve the block; an admitted train must retain it until its rear clears the divergent exit.',
+      'OCCUPIED — резервування для всього тіла, не лише голови. Поїзд перед червоною стоп-лінією не має займати ділянку; допущений зберігає її до виходу хвоста з вихідної стрілки.',
+    ],
+    [
+      'A close command is not closed-gate feedback: lowering takes time and waits for cars inside. Keep a road window so queued cars can move. An open gate is not itself contact, and a static decorative car must never trigger an accident.',
+      'Команда закривання не є підтвердженням: опускання триває певний час і чекає виїзду машин. Лишайте дорожнє вікно для черги. Відкритий шлагбаум сам не є контактом, декоративна нерухома машина не спричиняє аварії.',
+    ],
+  ],
+  inputs: {
+    signal_a: [
+      'SIGNAL_A: high admits train A past its red stop line into the shared track.',
+      'SIGNAL_A: 1 дозволяє поїзду A пройти червону стоп-лінію на спільну колію.',
+    ],
+    signal_b: [
+      'SIGNAL_B: high admits train B from the opposite end of the same track.',
+      'SIGNAL_B: 1 дозволяє поїзду B зайти з іншого боку тієї самої колії.',
+    ],
+    points: [
+      'POINTS: near turnout; 0 connects siding A, 1 connects the straight main. Changing the physical blades beneath a train derails it.',
+      'POINTS: ближня стрілка; 0 з’єднує гілку A, 1 — пряму головну колію. Зміна фізичних рейок під потягом призводить до сходження.',
+    ],
+    exit_points: [
+      'EXIT POINTS: far turnout; 0 connects the straight main, 1 connects siding B. Unwired it follows POINTS; wire a separate switch for independent dispatch.',
+      'EXIT POINTS: дальня стрілка; 0 з’єднує пряму колію, 1 — гілку B. Без дроту повторює POINTS; окремий перемикач дає незалежне керування.',
+    ],
+    barrier: [
+      'BARRIER: 1 requests the gates across the road to close, 0 requests opening. Actual closure is timed and reported by GATE_CLOSED; the gates do not block the rails.',
+      'BARRIER: 1 просить закрити шлагбауми поперек дороги, 0 — відкрити. Закривання має тривалість і підтверджується GATE_CLOSED; шлагбауми не перекривають рейки.',
+    ],
+    throttle: [
+      'THROTTLE: eight-bit speed command in km/h, not a percentage; compare it with speedLimit.',
+      'THROTTLE: восьмибітна команда швидкості в км/год, не відсоток; порівнюйте зі speedLimit.',
+    ],
+    run: [
+      'RUN: high advances train motion; low pauses the process. Unwired defaults high.',
+      'RUN: 1 рухає поїзди, 0 зупиняє процес. Без дроту активний.',
+    ],
+    reset: [
+      'RESET: restores initialA/initialB, clears passage counts and all latched railway failures.',
+      'RESET: відновлює initialA/initialB, очищає проїзди та всі запам’ятовані несправності.',
+    ],
+  },
+  outputs: {
+    approach_a: [
+      'APPROACH_A: train A is approaching the shared block and can request admission.',
+      'APPROACH_A: поїзд A наближається до ділянки та може запитати дозвіл.',
+    ],
+    approach_b: [
+      'APPROACH_B: train B is approaching from the opposite side.',
+      'APPROACH_B: поїзд B наближається з протилежного боку.',
+    ],
+    occupied: [
+      'OCCUPIED: complete protected-route reservation after admission, held until the entire train rear clears the corridor.',
+      'OCCUPIED: повне резервування після дозволеного в’їзду до виходу всього хвоста із захищеного коридору.',
+    ],
+    fault: [
+      'FAULT: any latched collision, overspeed, moving-points or open-barrier failure.',
+      'FAULT: запам’ятоване зіткнення, швидкість, рух стрілки чи відкритий переїзд.',
+    ],
+    speed: [
+      'SPEED: numeric railway speed in km/h for inspection and plotting.',
+      'SPEED: числова швидкість залізниці в км/год для огляду й графіка.',
+    ],
+    passed: [
+      'PASSED: eight-bit count of trains that cleared the route before respawning.',
+      'PASSED: восьмибітна кількість поїздів, що завершили маршрут до повторної появи.',
+    ],
+    gate_closed: [
+      'GATE_CLOSED: actual gate arms are fully lowered, not merely commanded closed.',
+      'GATE_CLOSED: фактичні шлагбауми повністю опущені, а не лише мають команду закривання.',
+    ],
+    crossing_clear: [
+      'CROSSING_CLEAR: no full road-vehicle body remains inside the protected crossing between the gates.',
+      'CROSSING_CLEAR: жодне повне тіло дорожньої машини не лишається в захищеному переїзді між шлагбаумами.',
+    ],
+    points_state: [
+      'POINTS: actual near turnout position, 0 for siding A and 1 for the main.',
+      'POINTS: фактична ближня стрілка, 0 для гілки A, 1 для головної колії.',
+    ],
+    exit_points_state: [
+      'EXIT POINTS: actual far turnout position, 0 for the main and 1 for siding B.',
+      'EXIT POINTS: фактична дальня стрілка, 0 для головної колії, 1 для гілки B.',
+    ],
+    cars_wait: [
+      'CARS_WAIT: road vehicles are queued before the closed/closing gate stop lines.',
+      'CARS_WAIT: дорожні машини чекають перед стоп-лініями закритих чи закриваних шлагбаумів.',
+    ],
+  },
+  examples: ['railway-interlocking', 'railway-dispatch'],
+});
+
+add('animal_feeder', {
+  purpose: [
+    'An animal-feeding process exposes bowl and hopper levels so a digital controller can replenish food only when needed and detect unsafe dispensing.',
+    'Процес годівниці надає рівні миски й бункера, щоб цифрове керування додавало їжу за потреби та виявляло небезпечне насипання.',
+  ],
+  steps: [
+    [
+      'Set hopperCapacity=500, bowlCapacity=100, initialHopper=300 and initialLevel=10 for the supplied lab. Open the feeder in 3D to observe both containers and the animal.',
+      'Для лабораторної задайте hopperCapacity=500, bowlCapacity=100, initialHopper=300 та initialLevel=10. Відкрийте годівницю в 3D для огляду обох місткостей і тварини.',
+    ],
+    [
+      'Use HUNGRY to set an SR latch and FULL to reset it; gate its output with NOT EMPTY before DISPENSE. Set hungryThreshold=20 and fullThreshold=60 so feedback has a useful hysteresis band.',
+      'Подайте HUNGRY на встановлення SR, FULL — на скидання; перед DISPENSE додайте NOT EMPTY. Задайте hungryThreshold=20 і fullThreshold=60 для корисного гістерезису.',
+    ],
+    [
+      'dispenseRate=25 and eatRate=4 set transfer and consumption per second. alarmThreshold=90 detects excessive bowl fill; portionSize=40 defines one FED count. Pulse REFILL from 0 to 1 to refill only the hopper.',
+      'dispenseRate=25 та eatRate=4 задають подавання й споживання за секунду. alarmThreshold=90 виявляє зайву їжу; portionSize=40 визначає одну порцію FED. Фронт REFILL 0→1 наповнює лише бункер.',
+    ],
+  ],
+  experiment: [
+    'Watch automatic fill/consume cycles, pulse hopper refill, then deliberately force DISPENSE past FULL to observe an excessive-fill alarm. Remove the override before RESET.',
+    'Спостерігайте цикли насипання й споживання, подайте Refill, потім навмисно утримуйте DISPENSE після FULL для тривоги переповнення. Приберіть обхід перед RESET.',
+  ],
+  expected: [
+    'Feedback fills until FULL, waits until HUNGRY and stops automatic transfer if EMPTY. REFILL is edge-triggered; consumed food increments FED by portionSize. Unsafe dispensing latches ALARM until reset.',
+    'Керування насипає до FULL, чекає HUNGRY та блокує автоматичне подавання при EMPTY. REFILL діє за фронтом; спожита їжа збільшує FED за portionSize. Небезпечне насипання тримає ALARM до скидання.',
+  ],
+  pitfalls: [
+    [
+      'EMPTY means the hopper is empty, not that the bowl is hungry. Refill adds no food directly to the bowl and holding REFILL high does not perform repeated refills.',
+      'EMPTY означає порожній бункер, а не голодну миску. Refill не насипає прямо до миски; утримання REFILL=1 не повторює наповнення.',
+    ],
+    [
+      'Choose hungryThreshold below fullThreshold and alarmThreshold above the intended full level. A manual override intentionally bypasses the protection; restoring inputs does not erase a latched alarm.',
+      'Задайте hungryThreshold нижче fullThreshold, а alarmThreshold вище робочого повного рівня. Ручний обхід навмисно оминає захист; відновлення входів не стирає тривогу.',
+    ],
+  ],
+  inputs: {
+    dispense: [
+      'DISPENSE: high transfers food from hopper to bowl at dispenseRate.',
+      'DISPENSE: 1 подає їжу з бункера до миски зі швидкістю dispenseRate.',
+    ],
+    refill: [
+      'REFILL: rising edge fills the hopper to hopperCapacity; return to 0 to re-arm.',
+      'REFILL: додатний фронт наповнює бункер до hopperCapacity; поверніть 0 для наступного запуску.',
+    ],
+    run: [
+      'RUN: high advances transfer and eating; low pauses this process. Unwired defaults high.',
+      'RUN: 1 запускає подавання й споживання, 0 зупиняє процес. Без дроту активний.',
+    ],
+    reset: [
+      'RESET: restores initialHopper and initialLevel and clears alarm/portion history.',
+      'RESET: відновлює initialHopper й initialLevel та очищає тривоги й порції.',
+    ],
+  },
+  outputs: {
+    hungry: [
+      'HUNGRY: bowl level is at or below hungryThreshold; use it as a feeding request.',
+      'HUNGRY: рівень миски не вищий за hungryThreshold; запит годування.',
+    ],
+    full: [
+      'FULL: bowl level is at or above fullThreshold; use it to stop feeding.',
+      'FULL: рівень миски не нижчий за fullThreshold; команда зупинення подавання.',
+    ],
+    empty: [
+      'EMPTY: the hopper has no food available for transfer.',
+      'EMPTY: у бункері немає їжі для подавання.',
+    ],
+    alarm: [
+      'ALARM: latched unsafe dispensing or excessive bowl fill, cleared by RESET.',
+      'ALARM: запам’ятоване небезпечне подавання чи надмірний рівень до RESET.',
+    ],
+    level: [
+      'LEVEL: current bowl food mass in grams for observation and feedback.',
+      'LEVEL: поточна маса їжі в мисці в грамах для огляду й керування.',
+    ],
+    hopper: [
+      'HOPPER: remaining stored food mass in grams.',
+      'HOPPER: залишок запасу їжі в бункері в грамах.',
+    ],
+    fed: [
+      'FED: eight-bit number of portionSize portions consumed by the animal.',
+      'FED: восьмибітна кількість порцій розміром portionSize, які з’їла тварина.',
+    ],
+  },
+  examples: ['animal-feeder'],
+});
+
+add('water_tank', {
+  purpose: [
+    'A water-tank process turns pump and drain commands into a measured level, exposing low/high switches and a remembered overflow for hysteresis control.',
+    'Процес резервуара перетворює команди насоса й зливу на рівень і надає нижній/верхній датчики та пам’ять переливу для гістерезисного керування.',
+  ],
+  steps: [
+    [
+      'Set capacity=100 liters and initialLevel=35 percent. Connect a drain switch to DRAIN and a controller output to PUMP, then open the tank in 3D.',
+      'Задайте capacity=100 літрів та initialLevel=35 відсотків. Підключіть перемикач зливу до DRAIN і вихід керування до PUMP та відкрийте резервуар у 3D.',
+    ],
+    [
+      'Use LOW to set an SR latch and HIGH to reset it. Set lowThreshold=20 and highThreshold=80 percent; the latch holds the pump decision between these thresholds.',
+      'LOW встановлює SR, HIGH скидає її. Задайте lowThreshold=20 та highThreshold=80 відсотків; пам’ять утримує рішення насоса між порогами.',
+    ],
+    [
+      'Set pumpRate=12 liters/second and drainRate=4 liters/second. With both active the net inflow is 8 liters/second. RUN advances the process; RESET restores the initial level and clears overflow history.',
+      'Задайте pumpRate=12 л/с та drainRate=4 л/с. При обох активних чистий приплив — 8 л/с. RUN запускає процес; RESET повертає початковий рівень і стирає перелив.',
+    ],
+  ],
+  experiment: [
+    'Observe an automatic fill/drain cycle, then bypass the latch with a forced pump and close DRAIN. After spilling, remove the override and pulse RESET to recover.',
+    'Спостерігайте автоматичний цикл, потім обійдіть пам’ять примусовим насосом і закрийте DRAIN. Після переливу приберіть обхід та подайте RESET.',
+  ],
+  expected: [
+    'The latch keeps the level near the low/high band without chattering at one threshold. An unchecked pump can reach capacity and spill; OVERFLOW remains high until reset even if the pump is later stopped.',
+    'Пам’ять утримує рівень поблизу смуги Low/High без перемикань біля одного порогу. Насос без обмеження досягає місткості й переливає; OVERFLOW тримається до скидання навіть після зупинення насоса.',
+  ],
+  pitfalls: [
+    [
+      'LEVEL and thresholds are percentages, while capacity is liters and pumpRate/drainRate are liters per second. Doubling capacity changes the percentage rate at the same flow.',
+      'LEVEL та пороги — відсотки, capacity — літри, pumpRate/drainRate — літри за секунду. Подвоєння місткості змінює відсоткову швидкість при тому самому потоці.',
+    ],
+    [
+      'LOW and HIGH can both be zero in the middle band; that is why the controller needs memory. Keep lowThreshold below highThreshold and remove a forced-pump command before resetting.',
+      'LOW і HIGH можуть одночасно бути нулями посередині; тому потрібна пам’ять. lowThreshold має бути нижчим за highThreshold; приберіть примусовий насос перед скиданням.',
+    ],
+  ],
+  inputs: {
+    pump: [
+      'PUMP: high adds water at pumpRate while the process runs.',
+      'PUMP: 1 додає воду зі швидкістю pumpRate під час роботи.',
+    ],
+    drain: [
+      'DRAIN: high opens the outlet at drainRate; low closes it.',
+      'DRAIN: 1 відкриває злив зі швидкістю drainRate, 0 закриває.',
+    ],
+    run: [
+      'RUN: high advances fill/drain physics; low freezes the process. Unwired defaults high.',
+      'RUN: 1 запускає наповнення й злив, 0 зупиняє процес. Без дроту активний.',
+    ],
+    reset: [
+      'RESET: restores initialLevel and clears the latched overflow.',
+      'RESET: відновлює initialLevel та очищає запам’ятований перелив.',
+    ],
+  },
+  outputs: {
+    low: [
+      'LOW: level is at or below lowThreshold, a request to begin filling.',
+      'LOW: рівень не вищий за lowThreshold, запит початку наповнення.',
+    ],
+    high: [
+      'HIGH: level is at or above highThreshold, a request to stop filling.',
+      'HIGH: рівень не нижчий за highThreshold, запит зупинення наповнення.',
+    ],
+    overflow: [
+      'OVERFLOW: latched record of water spilling beyond capacity.',
+      'OVERFLOW: запам’ятований факт переливу за місткість.',
+    ],
+    level: [
+      'LEVEL: current fill percentage, bounded between 0 and 100.',
+      'LEVEL: поточний відсоток наповнення в межах від 0 до 100.',
+    ],
+  },
+  examples: ['water-tank'],
+});
+
+add('aquarium', {
+  purpose: [
+    'Build a complete fish life-support controller from logic gates. Temperature, oxygen, food and water quality change continuously; sustained unsafe conditions reduce health and can kill individual fish.',
+    'Побудуйте керування життям рибок із логічних елементів. Температура, кисень, корм і чистота змінюються безперервно; тривалі небезпечні умови погіршують здоров’я та можуть убити окремих рибок.',
+  ],
+  steps: [
+    [
+      'Start with initialTemperature=24 °C, ambientTemperature=18 °C, initialOxygen=70, initialFood=45, initialCleanliness=80, fishCount=4 and dayLength=60 seconds. Open 3D to watch fish, bubbles, feeding and the thermometer.',
+      'Почніть з initialTemperature=24 °C, ambientTemperature=18 °C, initialOxygen=70, initialFood=45, initialCleanliness=80, fishCount=4 і dayLength=60 секунд. Відкрийте 3D та спостерігайте рибок, бульбашки, корм і термометр.',
+    ],
+    [
+      'Connect COLD to HEATER, HOT to COOLER, LOW OXYGEN to AERATOR and DIRTY to FILTER. Qualify each request with a permission switch through AND; use NOT HOT to block unnecessary heating.',
+      'Підключіть COLD до HEATER, HOT до COOLER, LOW OXYGEN до AERATOR та DIRTY до FILTER. Через І додайте до запитів перемикачі дозволу; NOT HOT може блокувати зайве нагрівання.',
+    ],
+    [
+      'Use HUNGRY to permit bounded feeding and DAY to schedule LIGHT. RUN=1 advances the ecosystem; pulse RESET and return it to 0 to restore the configured fish and initial quantities.',
+      'За HUNGRY дозволяйте обмежену годівлю, за DAY плануйте LIGHT. RUN=1 запускає екосистему; імпульс RESET із поверненням у 0 відновлює заданих рибок і початкові показники.',
+    ],
+  ],
+  experiment: [
+    'Deny aerator permission or force the heater or feeder on. Record the changing measurement, declining HEALTH, alarm and ALIVE. Restore safe control before death, then compare with a full RESET after death.',
+    'Заблокуйте помпу або примусово ввімкніть нагрівач чи годівницю. Запишіть зміну вимірювання, падіння HEALTH, тривогу й ALIVE. Поверніть безпечне керування до загибелі, потім порівняйте зі скиданням RESET після загибелі.',
+  ],
+  expected: [
+    'Healthy fish swim. Low temperature, excess heat, low oxygen, excess food, starvation, dirt or uninterrupted light cause cumulative harm. Dead fish turn belly-up, show X eyes and float to the surface; surviving fish can recover.',
+    'Здорові рибки плавають. Холод, перегрів, брак кисню, надмір корму, голод, бруд чи постійне світло поступово шкодять. Загиблі рибки перевертаються черевом догори, мають очі X та спливають; живі можуть одужати.',
+  ],
+  pitfalls: [
+    [
+      'This is an accelerated educational ecosystem: one complete dayLength includes day and night. ALARM remembers damage after health drops below 60; correcting a signal does not revive dead fish or clear that history without RESET.',
+      'Це прискорена навчальна екосистема: dayLength охоплює день і ніч. ALARM запам’ятовує шкоду при здоров’ї нижче 60; виправлення сигналу не оживляє загиблих і не очищає історію без RESET.',
+    ],
+    [
+      'FEED is a level-driven actuator, not a one-portion button. Holding it high overfeeds fish; combine HUNGRY with a clock or one-shot. A sensor request and the actual actuator command can differ when permission is denied.',
+      'FEED працює весь час одиниці, а не видає одну порцію за натискання. Постійна 1 перегодовує; поєднайте HUNGRY з генератором або одновібратором. Запит датчика й команда механізму можуть відрізнятися через відсутність дозволу.',
+    ],
+  ],
+  inputs: {
+    heater: [
+      'HEATER: 1 heats water; use COLD and a permission interlock.',
+      'HEATER: 1 нагріває воду; використовуйте COLD та дозвіл.',
+    ],
+    cooler: [
+      'COOLER: 1 cools water; use HOT to stop excess heat.',
+      'COOLER: 1 охолоджує воду; HOT допомагає прибрати перегрів.',
+    ],
+    aerator: [
+      'AERATOR: 1 runs the oxygen pump and produces visible bubbles.',
+      'AERATOR: 1 вмикає кисневу помпу та видимі бульбашки.',
+    ],
+    feed: [
+      'FEED: 1 continuously adds food; pulse it or stop at HUNGRY=0.',
+      'FEED: 1 безперервно додає корм; подавайте імпульси або зупиняйте при HUNGRY=0.',
+    ],
+    light: [
+      'LIGHT: 1 lights the aquarium; fish need dark resting periods.',
+      'LIGHT: 1 освітлює акваріум; рибкам потрібні темні періоди відпочинку.',
+    ],
+    filter: [
+      'FILTER: 1 cleans the water and rotates the visible filter.',
+      'FILTER: 1 очищує воду та обертає видимий фільтр.',
+    ],
+    water_change: [
+      'WATER CHANGE: 1 replenishes oxygen and cleans the water.',
+      'WATER CHANGE: 1 поповнює кисень та очищує воду.',
+    ],
+    run: [
+      'RUN: 1 advances time and biology, 0 pauses; unwired defaults to 1.',
+      'RUN: 1 рухає час і біологію, 0 призупиняє; без дроту діє 1.',
+    ],
+    reset: [
+      'RESET: high restores configured levels, fish health, life and alarm history.',
+      'RESET: 1 відновлює задані рівні, здоров’я, життя рибок та історію тривог.',
+    ],
+  },
+  outputs: {
+    cold: ['COLD: 1 below 22 °C, a request for heating.', 'COLD: 1 нижче 22 °C, запит нагрівання.'],
+    hot: ['HOT: 1 above 28 °C, a request for cooling.', 'HOT: 1 вище 28 °C, запит охолодження.'],
+    low_oxygen: [
+      'LOW OXYGEN: 1 below 55% oxygen, a request for air.',
+      'LOW OXYGEN: 1 при кисні нижче 55%, запит повітря.',
+    ],
+    hungry: [
+      'HUNGRY: 1 when FOOD is below 35%, a feeding request.',
+      'HUNGRY: 1 при FOOD нижче 35%, запит годівлі.',
+    ],
+    dirty: [
+      'DIRTY: 1 below 45% cleanliness; request filtration or fresh water.',
+      'DIRTY: 1 при чистоті нижче 45%; потрібен фільтр або свіжа вода.',
+    ],
+    day: [
+      'DAY: 1 in the first half of the simulated dayLength cycle.',
+      'DAY: 1 у першій половині модельного циклу dayLength.',
+    ],
+    alarm: [
+      'ALARM: latched record of serious health loss or fish death.',
+      'ALARM: запам’ятований значний спад здоров’я або загибель рибок.',
+    ],
+    alive: [
+      'ALIVE: eight-bit count of living fish, from 0 to fishCount.',
+      'ALIVE: восьмибітна кількість живих рибок від 0 до fishCount.',
+    ],
+    temperature: [
+      'TEMP: measured water temperature in degrees Celsius.',
+      'TEMP: виміряна температура води у градусах Цельсія.',
+    ],
+    oxygen: [
+      'OXYGEN: current oxygen level from 0 to 100%.',
+      'OXYGEN: поточний рівень кисню від 0 до 100%.',
+    ],
+    food: [
+      'FOOD: current available food from 0 to 100%; excess is harmful.',
+      'FOOD: поточний доступний корм від 0 до 100%; надлишок шкодить.',
+    ],
+    cleanliness: [
+      'CLEANLINESS: water quality from 0 to 100%; higher is cleaner.',
+      'CLEANLINESS: якість води від 0 до 100%; більше означає чистіше.',
+    ],
+    health: [
+      'HEALTH: average fish health, including zero health of dead fish.',
+      'HEALTH: середнє здоров’я рибок із урахуванням нуля в загиблих.',
+    ],
+  },
+  examples: ['aquarium-life-support', 'aquarium-feeding', 'aquarium-lighting'],
+});
+
+add('greenhouse', {
+  purpose: [
+    'Control a greenhouse using temperature, soil moisture and daylight feedback. Plants grow under suitable conditions and lose health when exposed to cold, heat, drought, flooding or prolonged darkness.',
+    'Керуйте теплицею за температурою, вологістю ґрунту та денним світлом. Рослини ростуть за належних умов і втрачають здоров’я від холоду, спеки, посухи, затоплення чи тривалої темряви.',
+  ],
+  steps: [
+    [
+      'Set initialTemperature=20 °C, ambientTemperature=12 °C, initialMoisture=45% and dayLength=60 seconds. In 3D locate the heater, roof vent, irrigation and growing plants.',
+      'Задайте initialTemperature=20 °C, ambientTemperature=12 °C, initialMoisture=45% та dayLength=60 секунд. У 3D знайдіть нагрівач, кватирку, полив і рослини.',
+    ],
+    [
+      'Use COLD for HEATER and HOT for VENT. Add permission switches through AND and block heating during an excessive-heat request.',
+      'За COLD керуйте HEATER, за HOT — VENT. Через І додайте дозволи та блокуйте нагрів за запиту надлишкової температури.',
+    ],
+    [
+      'For irrigation, connect DRY to SR set and WET to reset; drive PUMP with Q and a permission. Use DARK for GROW LIGHT, then observe MOISTURE, GROWTH and HEALTH over several days.',
+      'Для поливу підключіть DRY до S, WET до R SR-защіпки; керуйте PUMP виходом Q із дозволом. За DARK вмикайте GROW LIGHT, спостерігайте MOISTURE, GROWTH і HEALTH протягом кількох діб.',
+    ],
+  ],
+  experiment: [
+    'Compare direct DRY control with SR hysteresis. Force the pump on or deny watering, and record when wet soil or drought starts harming plants. Restore control and reset for a fresh trial.',
+    'Порівняйте пряме керування DRY з гістерезисом SR. Примусово ввімкніть насос або забороніть полив та запишіть початок шкоди від перезволоження чи посухи. Відновіть керування та скиньте для нового досліду.',
+  ],
+  expected: [
+    'A working circuit keeps soil within its chosen band and temperature suitable for growth. The roof vent moves, water spray follows the pump, grow lights illuminate, and plant size and leaf condition follow GROWTH and HEALTH.',
+    'Правильна схема тримає вологість у заданому діапазоні та придатну для росту температуру. Кватирка рухається, полив відповідає насосу, лампи світять, а розмір рослин і стан листя відповідають GROWTH та HEALTH.',
+  ],
+  pitfalls: [
+    [
+      'DRY and WET are different thresholds, so both are normally 0 inside the middle band. Use a latch to remember whether irrigation is filling that band. Alarm history persists until RESET even when plant health recovers.',
+      'DRY та WET мають різні пороги, тому всередині діапазону обидва зазвичай 0. Защіпка запам’ятовує, чи триває наповнення. Історія тривоги лишається до RESET навіть після відновлення здоров’я.',
+    ],
+  ],
+  inputs: {
+    heater: ['HEATER: 1 warms the greenhouse air.', 'HEATER: 1 нагріває повітря теплиці.'],
+    vent: [
+      'VENT: 1 opens ventilation and cools air; it also increases drying.',
+      'VENT: 1 відкриває вентиляцію та охолоджує; також посилює висихання.',
+    ],
+    pump: ['PUMP: 1 continuously irrigates the soil.', 'PUMP: 1 безперервно поливає ґрунт.'],
+    grow_light: [
+      'GROW LIGHT: 1 supplies artificial light when daylight is absent.',
+      'GROW LIGHT: 1 додає штучне світло за відсутності денного.',
+    ],
+    run: [
+      'RUN: 1 advances climate and plant life, 0 pauses; defaults high.',
+      'RUN: 1 рухає клімат і життя рослин, 0 призупиняє; типово 1.',
+    ],
+    reset: [
+      'RESET: 1 restores initial temperature, moisture, growth and health.',
+      'RESET: 1 відновлює початкові температуру, вологість, ріст і здоров’я.',
+    ],
+  },
+  outputs: {
+    cold: ['COLD: 1 below 18 °C; request heating.', 'COLD: 1 нижче 18 °C; запит нагрівання.'],
+    hot: ['HOT: 1 above 28 °C; request ventilation.', 'HOT: 1 вище 28 °C; запит вентиляції.'],
+    dry: ['DRY: 1 below 35% soil moisture.', 'DRY: 1 при вологості ґрунту нижче 35%.'],
+    wet: ['WET: 1 above 75% soil moisture.', 'WET: 1 при вологості ґрунту вище 75%.'],
+    dark: ['DARK: 1 during the night half of dayLength.', 'DARK: 1 у нічній половині dayLength.'],
+    day: ['DAY: 1 during the daylight half of dayLength.', 'DAY: 1 у денній половині dayLength.'],
+    alarm: [
+      'ALARM: latched record of plant health falling below 60%.',
+      'ALARM: запам’ятоване падіння здоров’я рослин нижче 60%.',
+    ],
+    temperature: [
+      'TEMP: measured greenhouse air temperature in °C.',
+      'TEMP: виміряна температура повітря теплиці у °C.',
+    ],
+    moisture: [
+      'MOISTURE: soil moisture from 0 to 100%.',
+      'MOISTURE: вологість ґрунту від 0 до 100%.',
+    ],
+    growth: [
+      'GROWTH: accumulated plant growth from 0 to 100%.',
+      'GROWTH: накопичений ріст рослин від 0 до 100%.',
+    ],
+    health: [
+      'HEALTH: current plant health from 0 to 100%.',
+      'HEALTH: поточне здоров’я рослин від 0 до 100%.',
+    ],
+  },
+  examples: ['greenhouse-climate', 'greenhouse-irrigation'],
+});
+
+add('smart_home', {
+  purpose: [
+    'Automate a house and yard using logic for climate, occupancy lighting, authorized access and water-saving irrigation. The simulated environment supplies periodic daylight, visitors and rain.',
+    'Автоматизуйте будинок і подвір’я логікою клімату, світла за присутністю, дозволеного доступу та ощадного поливу. Модельне довкілля дає періодичні день, відвідувачів і дощ.',
+  ],
+  steps: [
+    [
+      'Start with initialTemperature=20 °C, ambientTemperature=12 °C, initialWater=70% and dayLength=60 seconds. Observe the house, sliding gate, water tank and visitor in 3D.',
+      'Почніть з initialTemperature=20 °C, ambientTemperature=12 °C, initialWater=70% та dayLength=60 секунд. У 3D спостерігайте будинок, відсувні ворота, бак і відвідувача.',
+    ],
+    [
+      'Gate HEATER with COLD and FAN with HOT. Combine DARK AND MOTION for OUTDOOR LIGHT; an occupancy permission can also control INDOOR LIGHT.',
+      'Дозволяйте HEATER за COLD, FAN за HOT. Поєднайте DARK І MOTION для OUTDOOR LIGHT; дозвіл присутності також може керувати INDOOR LIGHT.',
+    ],
+    [
+      'Use MOTION AND authorization for GATE, and NOT authorization for ALARM ARM. Permit SPRINKLER only when NOT RAIN AND NOT TANK LOW. Compare ENERGY and WATER for guarded and unconditional operation.',
+      'За MOTION І авторизацією керуйте GATE, за NOT авторизацією — ALARM ARM. Дозволяйте SPRINKLER лише за NOT RAIN І NOT TANK LOW. Порівняйте ENERGY та WATER за захищеної й постійної роботи.',
+    ],
+  ],
+  experiment: [
+    'Deny visitor authorization before a motion window and compare gate travel with the current alarm. Then start at initialWater=0 and deliberately bypass the irrigation guard to record a dry-pump fault; restore the level and reset.',
+    'Забороніть доступ перед вікном руху та порівняйте переміщення воріт із поточною тривогою. Потім задайте initialWater=0 та навмисно обійдіть захист поливу для несправності сухого насоса; відновіть запас і скиньте.',
+  ],
+  expected: [
+    'The sliding gate takes time to open; GATE OPEN confirms full travel. Rain replenishes the tank, guarded sprinklers stop during rain or low water, and ENERGY accumulates actual actuator use in kWh. Lighting and climate react to circuit outputs.',
+    'Відкриття відсувних воріт потребує часу; GATE OPEN підтверджує повний хід. Дощ поповнює бак, захищений полив зупиняється за дощу чи браку води, ENERGY накопичує роботу механізмів у кВт·год. Світло й клімат реагують на схему.',
+  ],
+  pitfalls: [
+    [
+      'MOTION, RAIN and DARK are deterministic simulated sensors, not real camera or weather services. A security alarm clears when its current condition ends; a dry-pump fault is remembered until RESET. A gate command does not instantly mean GATE OPEN=1.',
+      'MOTION, RAIN і DARK — визначені модельні датчики, не камера чи погодний сервіс. Охоронна тривога зникає з поточною умовою; сухий насос запам’ятовується до RESET. Команда воріт не означає миттєве GATE OPEN=1.',
+    ],
+  ],
+  inputs: {
+    heater: [
+      'HEATER: 1 heats the home and consumes energy.',
+      'HEATER: 1 гріє будинок та витрачає енергію.',
+    ],
+    fan: [
+      'FAN: 1 cools the home and consumes energy.',
+      'FAN: 1 охолоджує будинок та витрачає енергію.',
+    ],
+    indoor_light: [
+      'INDOOR LIGHT: 1 turns on the house lamps.',
+      'INDOOR LIGHT: 1 вмикає лампи в будинку.',
+    ],
+    outdoor_light: [
+      'OUTDOOR LIGHT: 1 turns on the yard lamps.',
+      'OUTDOOR LIGHT: 1 вмикає ліхтарі подвір’я.',
+    ],
+    gate: [
+      'GATE: 1 opens the sliding gate, 0 closes it over time.',
+      'GATE: 1 відкриває відсувні ворота, 0 поступово закриває.',
+    ],
+    sprinkler: [
+      'SPRINKLER: 1 requests irrigation and draws from the finite water tank.',
+      'SPRINKLER: 1 запитує полив та витрачає скінченний запас бака.',
+    ],
+    alarm_arm: [
+      'ALARM ARM: 1 arms motion detection while the gate is not fully open.',
+      'ALARM ARM: 1 вмикає виявлення руху, поки ворота не відкриті повністю.',
+    ],
+    run: [
+      'RUN: 1 advances climate, weather and actuators; 0 pauses.',
+      'RUN: 1 рухає клімат, погоду та механізми; 0 призупиняє.',
+    ],
+    reset: [
+      'RESET: 1 restores initial water and temperature and clears energy and alarms.',
+      'RESET: 1 відновлює початкові воду й температуру, очищає енергію та тривоги.',
+    ],
+  },
+  outputs: {
+    cold: ['COLD: 1 below 19 °C, requesting heating.', 'COLD: 1 нижче 19 °C, запит нагрівання.'],
+    hot: ['HOT: 1 above 25 °C, requesting the fan.', 'HOT: 1 вище 25 °C, запит вентилятора.'],
+    dark: ['DARK: 1 during the night half of dayLength.', 'DARK: 1 у нічній половині dayLength.'],
+    motion: [
+      'MOTION: periodic simulated visitor requests during day and night.',
+      'MOTION: періодичні модельні відвідувачі вдень і вночі.',
+    ],
+    rain: [
+      'RAIN: periodic rainfall that replenishes the water tank.',
+      'RAIN: періодичний дощ, що поповнює водяний бак.',
+    ],
+    tank_low: [
+      'TANK LOW: 1 when the tank contains less than 15% water.',
+      'TANK LOW: 1 при запасі води в баку нижче 15%.',
+    ],
+    gate_open: [
+      'GATE OPEN: 1 only after the gate has completed its opening travel.',
+      'GATE OPEN: 1 лише після завершення повного відкриття воріт.',
+    ],
+    alarm: [
+      'ALARM: current armed motion alert or a latched empty-tank fault.',
+      'ALARM: поточна охоронна тривога руху або запам’ятований порожній бак.',
+    ],
+    temperature: [
+      'TEMP: measured indoor temperature in °C.',
+      'TEMP: виміряна температура в будинку у °C.',
+    ],
+    water: [
+      'WATER: available irrigation water from 0 to 100%.',
+      'WATER: доступна для поливу вода від 0 до 100%.',
+    ],
+    energy: [
+      'ENERGY: cumulative actuator electricity in kWh since reset.',
+      'ENERGY: накопичена електроенергія механізмів у кВт·год від скидання.',
+    ],
+  },
+  examples: ['home-climate', 'yard-security'],
+});
+
 export function getGuide(type, language = 'en') {
   return GUIDES[type]?.[language === 'ua' || language === 'uk' ? 'ua' : 'en'];
 }

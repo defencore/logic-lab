@@ -4,6 +4,13 @@ import { readFile } from 'node:fs/promises';
 import { EXAMPLES, createExample } from '../examples/index.js';
 import { validateProject, parseProject, serializeProject } from '../src/project.js';
 import { createRuntime, simulate } from '../src/simulator.js';
+import {
+  JUNCTION,
+  RAILWAY,
+  RAIL_RESERVATION,
+  trainFootprint,
+  carFootprint,
+} from '../src/transport-geometry.js';
 import { dimensions } from '../src/geometry.js';
 
 function open(id) {
@@ -24,13 +31,20 @@ const output = (context, node, port = 'out') => context.runtime.signals.outputs[
 const input = (context, node, port = 'in') => context.runtime.signals.inputs[node][port];
 
 test('all learning examples have valid fresh circuits and complete bilingual lessons', () => {
-  assert.equal(EXAMPLES.length, 19);
+  assert.equal(EXAMPLES.length, 32);
   assert.equal(new Set(EXAMPLES.map((example) => example.id)).size, EXAMPLES.length);
   for (const example of EXAMPLES) {
     assert.ok(
-      ['basics', 'sequential', 'mixed', 'architecture', 'physical', 'motion'].includes(
-        example.category,
-      ),
+      [
+        'basics',
+        'sequential',
+        'mixed',
+        'architecture',
+        'physical',
+        'motion',
+        'scenes',
+        'automation',
+      ].includes(example.category),
     );
     assert.ok(['beginner', 'intermediate'].includes(example.level));
     const project = createExample(example.id),
@@ -477,4 +491,318 @@ test('three-axis printer lab exposes six inclusive limit indicators at hard endp
     }
     assert.deepEqual(context.runtime.diagnostics, []);
   }
+});
+
+function advanceProcess(context, seconds, observe = () => {}) {
+  const count = Math.ceil(seconds / 0.02);
+  for (let index = 0; index < count; index++) {
+    simulate(context.project, context.runtime, seconds / count);
+    observe(context);
+  }
+}
+const processState = (context, node) => context.runtime.state[node].scenario;
+
+test('traffic-light laboratory exposes all eight real lamp states and valid passage', () => {
+  const context = open('traffic-light');
+  for (const red of [0, 1])
+    for (const yellow of [0, 1])
+      for (const green of [0, 1]) {
+        value(context, 'red', red);
+        value(context, 'yellow', yellow);
+        value(context, 'green', green);
+        assert.equal(output(context, 'light', 'valid'), Number(red + yellow + green === 1));
+        assert.equal(
+          output(context, 'light', 'go'),
+          Number(green === 1 && red === 0 && yellow === 0),
+        );
+        assert.deepEqual(processState(context, 'light').lamps, { red, yellow, green });
+      }
+});
+
+test('junction laboratory decodes safe phases, then creates a physical collision and resets', () => {
+  const context = open('traffic-junction'),
+    phases = new Set();
+  advanceProcess(context, 120, (current) => {
+    const signals = current.runtime.inputs.junction;
+    assert.ok(!(signals.ns_green && signals.ew_green));
+    assert.equal(output(current, 'junction', 'crash'), 0);
+    const cars = processState(current, 'junction').cars;
+    for (const car of cars.filter((car) => car.stopped)) {
+      const nose = car.position * JUNCTION.scale + JUNCTION.carLength / 2;
+      assert.ok(
+        nose <= JUNCTION.stopLine + 1e-7,
+        'Stopped car body must remain behind its stop line.',
+      );
+      assert.ok(nose < JUNCTION.zebraNear, 'A red queue must not occupy the zebra.');
+    }
+    for (const axis of ['ns', 'ew']) {
+      const lane = cars.filter((car) => car.axis === axis).sort((a, b) => b.position - a.position);
+      for (let index = 1; index < lane.length; index++) {
+        const gap =
+          (lane[index - 1].position - lane[index].position) * JUNCTION.scale - JUNCTION.carLength;
+        assert.ok(
+          gap >= JUNCTION.queueGap - 1e-7,
+          'Queued bodies must retain their physical clearance.',
+        );
+      }
+    }
+    phases.add([signals.ns_green, signals.ns_yellow, signals.ew_green, signals.ew_yellow].join(''));
+  });
+  assert.equal(phases.size, 4);
+  assert.ok(output(context, 'junction', 'passed') > 5);
+  value(context, 'reset', 1);
+  value(context, 'reset', 0);
+  value(context, 'unsafe', 1);
+  advanceProcess(context, 8);
+  assert.equal(output(context, 'junction', 'crash'), 1);
+  assert.ok(processState(context, 'junction').cars.filter((car) => car.crashed).length >= 2);
+  const collision = processState(context, 'junction');
+  const bodies = collision.collisionPair.map((id) =>
+    carFootprint(collision.cars.find((car) => car.id === id)),
+  );
+  assert.ok(
+    bodiesContact(...bodies),
+    'A junction crash must be actual contact, not just simultaneous signals.',
+  );
+  assert.ok(
+    Number.isFinite(collision.collisionPoint.x) && Number.isFinite(collision.collisionPoint.z),
+  );
+  value(context, 'unsafe', 0);
+  advanceProcess(context, 0.2);
+  assert.equal(output(context, 'junction', 'crash'), 1);
+  value(context, 'reset', 1);
+  assert.equal(output(context, 'junction', 'crash'), 0);
+  value(context, 'reset', 0);
+  advanceProcess(context, 20);
+  assert.equal(output(context, 'junction', 'crash'), 0);
+  assert.ok(output(context, 'junction', 'passed') > 0);
+});
+
+function bodyCorners(body) {
+  const cosine = Math.cos(body.heading),
+    sine = Math.sin(body.heading);
+  return [
+    [-1, -1],
+    [-1, 1],
+    [1, 1],
+    [1, -1],
+  ].map(([right, forward]) => ({
+    x: body.x + right * body.halfWidth * cosine + forward * body.halfLength * sine,
+    z: body.z - right * body.halfWidth * sine + forward * body.halfLength * cosine,
+  }));
+}
+function bodiesContact(first, second) {
+  const a = bodyCorners(first),
+    b = bodyCorners(second);
+  for (const polygon of [a, b])
+    for (let index = 0; index < polygon.length; index++) {
+      const next = polygon[(index + 1) % polygon.length];
+      const normal = { x: polygon[index].z - next.z, z: next.x - polygon[index].x };
+      const project = (points) => points.map((point) => point.x * normal.x + point.z * normal.z);
+      const ap = project(a),
+        bp = project(b);
+      if (Math.max(...ap) < Math.min(...bp) - 1e-7 || Math.max(...bp) < Math.min(...ap) - 1e-7)
+        return false;
+    }
+  return true;
+}
+function collisionBodies(state) {
+  const objects = [...state.trains, ...(state.roadCars || [])];
+  return state.collisionPair.map((id) => {
+    const object = objects.find((item) => item.id === id);
+    assert.ok(object && object.crashed, `Missing crashed body ${id}`);
+    return object.track ? trainFootprint(object) : carFootprint(object, 'railway');
+  });
+}
+
+test('canonical railway circuit safely alternates real road and train traffic for three minutes', () => {
+  const context = open('railway-interlocking');
+  let previousPoints = processState(context, 'railway').points;
+  let handovers = 0,
+    queues = 0,
+    railWindows = 0;
+  const movingRoadCars = new Set();
+  assert.equal(output(context, 'window'), 0, 'The laboratory must begin with moving road traffic.');
+  advanceProcess(context, 180, (current) => {
+    const state = processState(current, 'railway');
+    const controls = current.runtime.inputs.railway;
+    assert.equal(output(current, 'railway', 'fault'), 0);
+    assert.ok(state.trains.every((train) => !train.crashed && !train.derailed));
+    assert.ok(state.roadCars.every((car) => !car.crashed));
+    assert.ok(!(controls.signal_a && controls.signal_b));
+    if (controls.signal_a || controls.signal_b) {
+      railWindows++;
+      assert.equal(output(current, 'window'), 1);
+      assert.equal(output(current, 'railway', 'gate_closed'), 1);
+      assert.equal(output(current, 'railway', 'crossing_clear'), 1);
+    }
+    if (state.points !== previousPoints) {
+      handovers++;
+      assert.ok(
+        state.trains.every((train) => !bodiesContact(trainFootprint(train), RAIL_RESERVATION)),
+        'Points changed before the entire train cleared the protected corridor.',
+      );
+      previousPoints = state.points;
+    }
+    for (const train of state.trains)
+      if (train.stopped && train.position <= RAILWAY.stopPosition + 1e-7) {
+        assert.ok(
+          !bodiesContact(trainFootprint(train), RAIL_RESERVATION),
+          'A red-signal waiting train must not reserve the protected route.',
+        );
+      }
+    for (const car of state.roadCars) {
+      if (car.speed > 0) movingRoadCars.add(car.id);
+      if (car.stopped && car.position < 0) {
+        queues++;
+        assert.ok(
+          car.position * RAILWAY.roadScale + JUNCTION.carLength / 2 < -RAILWAY.gateX,
+          'A queued road vehicle nose must stop before the gate.',
+        );
+      }
+    }
+  });
+  const state = processState(context, 'railway');
+  assert.ok(state.passed >= 6);
+  assert.ok(state.roadPassed >= 6);
+  assert.ok(handovers >= 4 && railWindows > 0 && queues > 0);
+  assert.equal(movingRoadCars.size, 2);
+});
+
+test('railway unsafe overrides report actual train/train and train/road body contact', () => {
+  for (const open of [0, 1]) {
+    const context = openRailwayUnsafe(open);
+    advanceProcess(context, 16);
+    const state = processState(context, 'railway');
+    assert.equal(output(context, 'railway', 'fault'), 1);
+    assert.ok(state.faults.includes(open ? 'open_barrier' : 'collision'));
+    const bodies = collisionBodies(state);
+    assert.ok(
+      bodiesContact(...bodies),
+      'A recorded collision must involve contacting physical bodies.',
+    );
+    assert.ok(Number.isFinite(state.collisionPoint.x) && Number.isFinite(state.collisionPoint.z));
+    assert.ok(
+      open
+        ? state.collisionPair.some((id) => id.startsWith('road-'))
+        : state.collisionPair.every((id) => id.startsWith('train-')),
+    );
+    value(context, 'unsafe', 0);
+    value(context, 'open', 0);
+    advanceProcess(context, 0.1);
+    assert.equal(output(context, 'railway', 'fault'), 1);
+    value(context, 'reset', 1);
+    assert.equal(output(context, 'railway', 'fault'), 0);
+  }
+});
+function openRailwayUnsafe(openBarrier = 0) {
+  const context = open('railway-interlocking');
+  value(context, 'unsafe', 1);
+  value(context, 'open', openBarrier);
+  return context;
+}
+
+test('an open railway gate is protected by red signals and cannot invent a crash on an empty road', () => {
+  const guarded = open('railway-interlocking');
+  value(guarded, 'open', 1);
+  advanceProcess(guarded, 45);
+  assert.equal(output(guarded, 'railway', 'fault'), 0);
+  assert.ok(processState(guarded, 'railway').roadPassed > 0);
+  assert.ok(
+    processState(guarded, 'railway').trains.every(
+      (train) => train.stopped && train.position === RAILWAY.stopPosition,
+    ),
+  );
+  const empty = openRailwayUnsafe(1);
+  const state = processState(empty, 'railway');
+  state.roadCars = [];
+  state.trains = state.trains.filter((train) => train.track === 'a');
+  advanceProcess(empty, 25);
+  assert.equal(output(empty, 'railway', 'fault'), 0);
+  assert.equal(processState(empty, 'railway').collisionPair, null);
+  assert.ok(
+    processState(empty, 'railway').passed >= 1,
+    'The isolated train must actually cross, not merely remain stopped.',
+  );
+});
+
+test('railway overspeed remains a physical derailment independently of crossing accidents', () => {
+  const context = open('railway-interlocking');
+  value(context, 'unsafe', 1);
+  value(context, 'throttle', 120);
+  advanceProcess(context, 4);
+  const state = processState(context, 'railway');
+  assert.ok(state.faults.includes('overspeed'));
+  assert.ok(state.trains.some((train) => train.derailed));
+});
+
+test('feeder laboratory maintains bowl feedback, guards empty storage and refills on an edge', () => {
+  const context = open('animal-feeder'),
+    requests = new Set();
+  advanceProcess(context, 35, (current) => {
+    assert.equal(output(current, 'feeder', 'alarm'), 0);
+    assert.ok(output(current, 'feeder', 'level') <= 61);
+    requests.add(input(current, 'feeder', 'dispense'));
+  });
+  assert.deepEqual([...requests].sort(), [0, 1]);
+  assert.ok(output(context, 'feeder', 'fed') >= 3);
+  const bowl = output(context, 'feeder', 'level');
+  value(context, 'refill', 1);
+  assert.equal(output(context, 'feeder', 'hopper'), 500);
+  assert.equal(output(context, 'feeder', 'level'), bowl);
+  value(context, 'force', 1);
+  advanceProcess(context, 0.1);
+  const reduced = output(context, 'feeder', 'hopper');
+  assert.ok(reduced < 500);
+  value(context, 'refill', 1);
+  assert.equal(output(context, 'feeder', 'hopper'), reduced);
+  const project = createExample('animal-feeder');
+  project.nodes.find((node) => node.id === 'feeder').params.initialHopper = 0;
+  const empty = { project, runtime: createRuntime() };
+  simulate(project, empty.runtime, 0);
+  assert.equal(output(empty, 'feeder', 'empty'), 1);
+  assert.equal(input(empty, 'feeder', 'dispense'), 0);
+  value(empty, 'refill', 1);
+  assert.equal(output(empty, 'feeder', 'empty'), 0);
+  assert.equal(input(empty, 'feeder', 'dispense'), 1);
+});
+
+test('feeder manual bypass visibly overfills and records an alarm until reset', () => {
+  const context = open('animal-feeder');
+  value(context, 'force', 1);
+  advanceProcess(context, 8);
+  assert.equal(output(context, 'feeder', 'alarm'), 1);
+  assert.ok(processState(context, 'feeder').spilled > 0);
+  value(context, 'force', 0);
+  advanceProcess(context, 0.1);
+  assert.equal(output(context, 'feeder', 'alarm'), 1);
+  value(context, 'reset', 1);
+  assert.equal(output(context, 'feeder', 'alarm'), 0);
+  assert.equal(output(context, 'feeder', 'level'), 10);
+});
+
+test('tank laboratory holds the hysteresis band and creates a real latched overflow on bypass', () => {
+  const context = open('water-tank'),
+    middle = new Set();
+  assert.equal(input(context, 'tank', 'pump'), 0);
+  advanceProcess(context, 40, (current) => {
+    const level = output(current, 'tank', 'level');
+    assert.equal(output(current, 'tank', 'overflow'), 0);
+    assert.ok(level >= 19.5 && level <= 80.5);
+    if (level > 40 && level < 50) middle.add(input(current, 'tank', 'pump'));
+  });
+  assert.deepEqual([...middle].sort(), [0, 1]);
+  value(context, 'drain', 0);
+  value(context, 'force', 1);
+  advanceProcess(context, 10);
+  assert.equal(output(context, 'tank', 'level'), 100);
+  assert.equal(output(context, 'tank', 'overflow'), 1);
+  assert.ok(processState(context, 'tank').spilled > 0);
+  value(context, 'force', 0);
+  value(context, 'drain', 1);
+  advanceProcess(context, 0.1);
+  assert.equal(output(context, 'tank', 'overflow'), 1);
+  value(context, 'reset', 1);
+  assert.equal(output(context, 'tank', 'overflow'), 0);
+  assert.equal(output(context, 'tank', 'level'), 35);
 });

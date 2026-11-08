@@ -2,7 +2,7 @@
 
 A browser-based digital and mixed-signal circuit playground, designed for [logic-lab.defencore.com](https://logic-lab.defencore.com) on GitHub Pages. The editor and simulator run entirely on the visitor's device. No account, application server, external font, or runtime service is required.
 
-The interface supports English and Ukrainian. Source comments and project documentation are in English.
+The interface supports English and Ukrainian. Source comments are in English; the new automation and dispatch worksheets include English and Ukrainian.
 
 ## Run locally
 
@@ -47,11 +47,11 @@ Hover a pin to preview its connections without changing the circuit. Choose **Tr
 
 ## Learn with guides and experiments
 
-The library contains 54 components with guides in English and Ukrainian. Use the category disclosure above the results to filter the library. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
+The library contains 62 components with guides in English and Ukrainian. Use the category disclosure above the results to filter the library. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
 
 All seven logic gates and both binary adders include truth tables in their guides and properties. Tables distinguish inputs from outputs and explain 0 and 1. When inspecting a component on the circuit, the matching row follows its current binary signals in real time. Floating or unknown signals and disabled components show an explanation instead of highlighting a misleading row.
 
-The **Examples** catalog contains 19 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, parallel data lines, memory, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback.
+The **Examples** catalog contains 32 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, parallel data lines, memory, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback, transport dispatch, aquarium life support, greenhouse control, smart-home energy and yard security.
 
 On roomy screens, opening an example shows a lesson panel above the canvas. In compact workspaces, open the walkthrough from the toolbar when needed. Follow its steps with **Previous** and **Next**, watch the highlighted components and live pin values, and open the relevant component in the inspector. Change a switch, numeric value, or slider and compare the result with the lesson's expected behavior. Run the circuit to advance clocks and waveforms, or pause and use **Step** to examine changes in smaller increments.
 
@@ -67,7 +67,7 @@ Changes are saved automatically in browser local storage when available. Export 
 
 ### Reusable laboratory files
 
-The [laboratory collection](./examples/README.md) stores each exercise in its own `examples/<id>/` directory. Download a lab's `circuit.json` and import it directly, or open the same circuit from the in-app catalog. Each folder also contains bilingual `lesson.js` metadata and an English `README.md` lab sheet with an estimated duration, objectives, a procedure, review questions and deliverables. Export completed work as a separate project; the supplied starting circuit stays unchanged.
+The [laboratory collection](./examples/README.md) stores each exercise in its own `examples/<id>/` directory. Download a lab's `circuit.json` and import it directly, or open the same circuit from the in-app catalog. Each folder also contains bilingual `lesson.js` metadata and a `README.md` lab sheet (the eight new automation/dispatch sheets include English and Ukrainian) with an estimated duration, objectives, a procedure, review questions and deliverables. Export completed work as a separate project; the supplied starting circuit stays unchanged.
 
 The motion sequence progresses from [STEP/DIR fundamentals](./examples/stepper-basics/README.md), through [automatic printer-axis homing](./examples/printer-homing/README.md), to [closed-loop position control](./examples/position-control/README.md). Homing uses a minimum endstop and an enable interlock that permits reversing away from home. Position control shares one target between direction and arrival sensors, then stops inside a tolerance window.
 
@@ -98,17 +98,20 @@ Canvas navigation follows WirePad: wheel zoom stays anchored at the cursor, temp
 
 ## Component library
 
-| Family                 | Components                                                                                                |
-| ---------------------- | --------------------------------------------------------------------------------------------------------- |
-| Logic gates            | AND, OR, NOT, NAND, NOR, XOR, XNOR                                                                        |
-| Sources and indicators | GND, VCC, toggle switch, numeric byte source, clock, LED, LED matrix, seven-segment display, oscilloscope |
-| Combinational          | Multiplexer, demultiplexer, half adder, full adder, comparator, encoder, decoder                          |
-| Sequential             | SR latch, D / JK / T flip-flops, register, shift register, binary counter                                 |
-| Mixed signals          | ADC, DAC, AM / FM generators, PWM generator, servo bank                                                   |
-| Architecture           | ALU, tri-state buffer, priority encoder, line breakout and line bank                                      |
-| Memory                 | RAM, ROM, register file                                                                                   |
-| Physical behavior      | Open-drain output, pull-up and pull-down, Schmitt trigger, monostable                                     |
-| Annotation             | Text notes and colored groups                                                                             |
+| Family                 | Components                                                                                               |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| Logic gates            | AND, OR, NOT, NAND, NOR, XOR, XNOR                                                                       |
+| Sources and indicators | GND, VCC, toggle switch, numeric byte input, clock, LED, LED matrix, seven-segment display, oscilloscope |
+| Combinational          | Multiplexer, demultiplexer, half adder, full adder, comparator, encoder, decoder                         |
+| Sequential             | SR latch, D / JK / T flip-flops, register, shift register, binary counter                                |
+| Mixed signals          | ADC, DAC, AM / FM generators, PWM generator, servo bank                                                  |
+| Architecture           | ALU, tri-state buffer, priority encoder, bit splitter and merger                                         |
+| Memory                 | RAM, ROM, register file                                                                                  |
+| Physical behavior      | Open-drain output, pull-up and pull-down, Schmitt trigger, monostable                                    |
+| Motion and sensing     | Stepper motor, limit switch, position sensor                                                             |
+| Automation             | Aquarium ecosystem, greenhouse, smart home and yard                                                      |
+| Interactive scenes     | Traffic signal, road junction, railway interlocking, animal feeder, water tank and pump                  |
+| Annotation             | Text notes and colored groups                                                                            |
 
 Digital connections use separate one-bit lines. Eight-bit data exposes eight numbered pins, while addresses and operation codes expose their required number of lines. The numeric byte source provides D0…D7, BCD0…BCD3, and ADDR0…ADDR2; each contact can connect directly to a digital input. Analog values use a separate analog contact. Use the inspector and pin labels to follow each connection.
 
@@ -128,7 +131,7 @@ RAM, ROM, and register-file sizes are intentionally bounded for interactive exam
 - `src/catalog.js`: component definitions, pins, defaults, and bilingual descriptions.
 - `src/simulator.js`: browser-independent signal evaluation and sequential state.
 - `src/project.js`: validated project import/export and local persistence.
-- `examples/index.js` and `examples/<id>/`: laboratory registry, canonical JSON circuits, bilingual lessons and English lab sheets.
+- `examples/index.js` and `examples/<id>/`: laboratory registry, canonical JSON circuits, bilingual lessons and lab sheets (the new automation/dispatch sheets include both languages).
 - `src/guides.js`: bilingual component manuals, pin descriptions, experiments, and related examples.
 - `src/geometry.js`: grid placement, component dimensions, pin positions, and wire routing.
 - `src/wiring-ui.js`: transactional wire gestures, endpoint reconnection, and continuity presentation.
@@ -166,3 +169,31 @@ The stepper component accepts rising STEP edges, DIR, enable, and reset. Its tra
 Open **3D mechanisms** in the header or **Open 3D view** on a motor. The first three motors control the printer's X carriage, Y bed, and Z gantry. The separate view shows shaft and screw rotation, carriage travel, sensor trip markers, and live readouts. Its switches and pulse-clock controls edit the same source components as the circuit canvas. Camera presets and orbit controls affect only the view. Three.js requires WebGL 2; if graphics are unavailable, the circuit simulation still works.
 
 The mechanical model is idealized: it does not simulate inertia, torque, missed steps, collisions, acceleration planning, or real electrical motor-driver behavior. STEP pulses must be sampled by the simulator; use frequencies comfortably below its sampling limit. Reset sets the configured initial position, while physical homing requires movement and a limit signal.
+
+## Interactive 3D laboratories
+
+The header's **3D** action appears only when the circuit contains a stepper mechanism or an interactive scene object. Sensors alone and ordinary logic circuits do not show it. Each scene component also has its own **Open 3D view** action; when several objects are present, choose one in the scene selector. The scene, source controls, sensor outputs, simulation pause and reset all use the same circuit runtime. Camera presets fit the apparatus to the available viewport; resizing preserves the orbit direction. Railway perspective and front views focus on the crossing and turnouts, while the top view shows the complete layout.
+
+The **3D scenes & automation** example topic contains the transport, feeder and water-tank laboratories with editable circuits, bilingual walkthroughs and standalone worksheets:
+
+- **Traffic light:** drive red, amber and green separately and inspect the VALID and GO outputs. Multiple lamps or darkness are invalid.
+- **Traffic junction:** use a counter and clearance phases to manage real queues. Conflicting releases can cause a collision; CRASH stays latched until reset.
+- **Railway interlocking:** alternate road and rail windows, wait for physically closed road gates and a clear crossing, and reserve the complete train route until its tail clears. Both road cars and trains move from the same physics state. Collision checks use the visible vehicle parts rather than the larger route-reservation rectangle. Unsafe bypasses can cause actual body collisions or derailments; an open empty crossing does not invent an accident.
+- **Railway manual dispatch:** wire separate near/far turnout switches, guard requests with actual closed/clear feedback and dispatch each main-exit route. Selected switch paths affect real trajectories; an occupied receiving siding is still unsafe.
+- **Animal feeder:** use hunger, bowl-full and empty-hopper feedback to control an auger. The animal consumes measured food, the hopper is finite, and unsafe filling triggers an alarm.
+- **Water tank:** use LOW and HIGH feedback with a latch to regulate the pump against a drain. Flow rates change the measured water level; overflow stays latched until reset.
+
+These are deterministic educational simulations, not models for controlling real traffic, railways, animals or industrial equipment. Scene mechanics advance once per simulation step; camera animation does not change physical state. Missing optional controls use the defaults documented in each guide. Unknown controls pause the affected mechanics and expose uncertainty. Disabled components stop advancing and release their outputs. Changing a scene's parameters resets that object; changing circuit sources keeps its physical and latched fault state. Use **Reset** after correcting an unsafe design.
+
+## Aquarium, greenhouse and home automation
+
+The **Automation** topic adds seven laboratories using three new circuit-controlled 3D components. Together with the manual railway-dispatch laboratory, the catalog now contains 32 reusable exercises.
+
+- **Aquarium life support:** build temperature, oxygen and water-quality interlocks with AND, OR and NOT. Individual fish swim, lose health under sustained harmful conditions, and float belly-up with X eyes after death. Cold, overheating, oxygen deprivation, overfeeding, starvation, dirty water and nonstop lighting have different measured causes. Corrected conditions can heal surviving fish; reset starts a fresh ecosystem.
+- **Aquarium feeding:** compare continuous feeding with a clock, one-shot and hunger permission. Observe food, cleanliness and health instead of treating a high control signal as a single portion.
+- **Aquarium lighting:** use DAY and a manual XOR override to study day/night schedules and the need for a dark resting period.
+- **Greenhouse climate and irrigation:** control a visible roof vent, heating, grow lights and water spray. Compare direct threshold control with SR-latch hysteresis; plants grow or wilt according to measured temperature, soil moisture and health.
+- **Home climate and smart yard:** qualify lighting by darkness and occupancy; combine authorization and motion for the sliding gate; block irrigation during rain or low water. The tank refills during simulated rain and electricity use accumulates in kWh.
+- **Manual railway dispatch:** independently switch the near and far turnouts from their circuit switches or the 3D control panel. Their highlighted rails show the selected physical route, and trains actually enter the selected exit. Keep blades stationary under a train and use the gate-closed/clearance feedback before admission.
+
+Every new component has bilingual pin-by-pin instructions, live sensor and actuator readouts, editable source controls, and runnable worksheets in its own example directory. The scene never supplies a hidden controller: learners can remove a gate, deny a permission or create their own feedback circuit and observe the consequences. Day length and initial conditions are editable; pause and reset act on the same runtime as the canvas.

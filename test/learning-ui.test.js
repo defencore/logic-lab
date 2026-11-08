@@ -43,7 +43,7 @@ test('laboratory topics are visible counted buttons and preserve initial search 
     const topics = [
       ...html.matchAll(/<button\b[^>]*data-topic="([^"]+)"[^>]*>[\s\S]*?<\/button>/g),
     ];
-    assert.equal(topics.length, 7);
+    assert.equal(topics.length, 9);
     assert.equal((html.match(/aria-pressed="true"/g) || []).length, 1);
     assert.ok(topics.find((match) => match[1] === 'motion')[0].includes('aria-pressed="true"'));
     for (const topic of topics) {

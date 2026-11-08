@@ -264,3 +264,54 @@ test('nearest segments use projection distance, and invalid edits cannot create 
   ];
   assert.equal(insertWirePoint(dense, point(200, 100)), null);
 });
+
+test('3D scene widgets retain their width and every exposed byte bit gets a routed contact', () => {
+  for (const type of [
+    'railway',
+    'aquarium',
+    'greenhouse',
+    'smart_home',
+    'water_tank',
+    'traffic_junction',
+  ]) {
+    const node = { id: 'scene', type, x: 500, y: 120, params: {} };
+    const definition = COMPONENTS.find((component) => component.type === type);
+    const size = dimensions(node);
+    assert.equal(size.w, 284, type);
+    assert.ok(size.h >= 190, type);
+    assert.ok(
+      [...definition.inputs, ...definition.outputs].every((pin) => pin.width === 1),
+      type,
+    );
+  }
+  const source = { id: 'data', type: 'bus_input', x: 0, y: 0, params: { value: 30 } };
+  const railway = { id: 'rail', type: 'railway', x: 500, y: 120, params: {} };
+  const project = { nodes: [source, railway], wireStyle: 'orthogonal' };
+  const lanes = [];
+  for (let bit = 0; bit < 8; bit++) {
+    const wire = {
+      from: { node: source.id, port: `out${bit}` },
+      to: { node: railway.id, port: `throttle${bit}` },
+      width: 1,
+    };
+    const vertices = wireVertices(wire, project);
+    assert.deepEqual(vertices[0], portPoint(source, wire.from.port, 'out'));
+    assert.deepEqual(vertices.at(-1), portPoint(railway, wire.to.port, 'in'));
+    assert.deepEqual(parseVertices(wirePath(wire, project)), vertices);
+    lanes.push(vertices[1].x);
+  }
+  assert.equal(
+    new Set(lanes).size,
+    8,
+    'Scene speed commands keep independent automatic wire lanes',
+  );
+  const aquarium = { id: 'aqua', type: 'aquarium', x: 500, y: 120, params: {} };
+  const markup = componentPins(aquarium, {
+    label: 'Aquarium',
+    inputLabel: 'Input',
+    outputLabel: 'Output',
+  });
+  for (let bit = 0; bit < 8; bit++) assert.ok(markup.includes(`data-pin="alive${bit}"`));
+  assert.ok(!markup.includes('data-pin="alive"'));
+  assert.ok(!markup.includes('bus-pin'));
+});
