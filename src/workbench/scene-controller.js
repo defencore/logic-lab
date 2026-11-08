@@ -153,7 +153,7 @@ export function createSceneController(state, actions) {
     if (!snapshot) return dispose();
     view?.update(snapshot);
     updateSceneMetadata(state, entry, actions.t, actions.title);
-    updateSceneControls(state);
+    updateSceneControls(state, actions.getKeypadStatus);
     updateSceneReadouts(state, entry, snapshot, actions.t, links);
     links.decorate();
   }

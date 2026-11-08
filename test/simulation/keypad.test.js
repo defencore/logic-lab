@@ -51,7 +51,7 @@ function portable(project) {
 
 test('keypad has seven separate scan contacts and a bounded recordable 12-bit key mask', () => {
   const definition = getDefinition('keypad');
-  assert.deepEqual(definition.defaults, { mode: 'hold', keys: 0 });
+  assert.deepEqual(definition.defaults, { mode: 'pulse', keys: 0, pulseDuration: 0.04 });
   assert.deepEqual(
     definition.inputs.map(({ id }) => id),
     ['row0', 'row1', 'row2', 'row3'],
@@ -72,8 +72,8 @@ test('keypad has seven separate scan contacts and a bounded recordable 12-bit ke
   assert.deepEqual(parameterRule('keypad', 'keys'), { min: 0, max: 4095, step: 1, integer: true });
 });
 
-test('all twelve keys return only their own column on the selected physical row in either UI mode', () => {
-  for (const mode of ['hold', 'toggle']) {
+test('all twelve keys return only their own column on the selected physical row in every UI mode', () => {
+  for (const mode of ['pulse', 'hold', 'toggle']) {
     const f = fixture({ mode });
     for (const key of KEYPAD_KEYS) {
       f.keypad.params.keys = key.mask;

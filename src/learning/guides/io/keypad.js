@@ -15,8 +15,12 @@ export default {
       'Задайте R2=1, а решті рядків — 0. Натисніть 5: C2 стане 1. Натомість натисніть 2: усі стовпці залишаться 0, бо перший рядок не вибрано.',
     ],
     [
-      'Choose Hold for a contact that closes only while pressed, or Toggle to latch each key until its next activation. Several keys can be active together. Choose the mode before recording.',
-      'Оберіть режим mode: «Поки утримується», щоб контакт замикався лише під час натискання, або «Перемикати», щоб кожна клавіша фіксувалася до наступного натискання. Можна активувати декілька клавіш. Обирайте режим до запису.',
+      'The default Pulse mode queues each tap as a contact lasting at least 0.04 simulated seconds, followed by at least 0.01 seconds released. Edges apply on simulation updates; recordings preserve their actual times. Rapid taps play in order. Set pulseDuration from 0.02 to 10 seconds; use at least one full four-row scan cycle. Run the simulation to process the queue.',
+      'Типовий режим «Імпульс» ставить натискання в чергу: контакт активний щонайменше 0.04 модельної секунди, потім відпущений щонайменше 0.01 секунди. Фронти застосовуються при оновленні симуляції; запис зберігає їхній фактичний час. Швидкі натискання виконуються по черзі. Задайте pulseDuration від 0.02 до 10 секунд, не менше повного циклу чотирьох рядків. Запустіть симуляцію для виконання черги.',
+    ],
+    [
+      'Choose Hold for exact physical contact duration and simultaneous chords, or Toggle to latch each key until its next activation. Pulse mode accepts one queued key at a time. Choose the mode before recording.',
+      'Оберіть режим (mode) «Поки утримується» для точної тривалості фізичного контакту й одночасних клавіш або «Перемикати» для фіксації до наступного натискання. «Імпульс» виконує по одній клавіші з черги. Обирайте режим до запису.',
     ],
     [
       'Use a counter and gates to select R1, R2, R3 and R4 in sequence. Decode the selected row and the high column externally. Record presses and releases to repeat the same experiment.',
@@ -41,8 +45,16 @@ export default {
       'Не залишайте вибрані рядки плаваючими: Z не є відомим рівнем сканування. Якщо всі рядки мають 1, виходи визначають лише стовпець: без сканування неможливо відрізнити 1, 4, 7 і *.',
     ],
     [
-      'The keys action value is a 12-bit contact mask, not a digit or ASCII code: bit 0 is 1, bit 1 is 2, …, bit 9 is *, bit 10 is 0, bit 11 is #. The component does not store a password or create an entry pulse. Add scan timing and one-event-per-press logic to your circuit.',
-      'Значення дії keys є 12-бітною маскою контактів, не цифрою й не ASCII: біт 0 — 1, біт 1 — 2, …, біт 9 — *, біт 10 — 0, біт 11 — #. Елемент не зберігає пароль і не формує імпульс введення. Додайте сканування та логіку однієї події на натискання у власну схему.',
+      'The keys action value is a 12-bit contact mask, not a digit or ASCII code: bit 0 is 1, bit 1 is 2, …, bit 9 is *, bit 10 is 0, bit 11 is #. Pulse mode times only virtual contacts; the circuit still owns scanning, digit decoding, one-event-per-press logic and passwords.',
+      'Значення дії keys є 12-бітною маскою контактів, не цифрою й не ASCII: біт 0 — 1, біт 1 — 2, …, біт 9 — *, біт 10 — 0, біт 11 — #. Режим «Імпульс» задає лише час віртуальних контактів; сканування, розпізнавання цифр, одна подія на натискання й пароль залишаються у вашій схемі.',
+    ],
+    [
+      'Pulse time follows simulated time: pausing keeps the active contact and queue visibly pending; slow motion takes longer in real time. No clock advances secretly. A hidden page, window blur, disabling, mode changes, replacement or explicit cancellation clears live queued inputs. The queue holds at most 128 outstanding keys.',
+      'Імпульси відлічують модельний час: на паузі активний контакт і черга залишаються видимими та очікують; уповільнення збільшує реальний час очікування. Прихованого руху часу немає. Прихована сторінка, втрата фокуса вікна, вимкнення, зміна режиму, заміна схеми або явне скасування очищують живу чергу. У ній може бути не більше 128 невиконаних натискань.',
+    ],
+    [
+      'Recording saves the actual keys mask when a queued contact starts and ends, including its applied timestamp. Replay uses those saved electrical changes directly; it does not queue or stretch them again.',
+      'Запис зберігає фактичну маску keys на початку й наприкінці контакту з часом застосування. Повтор використовує ці збережені електричні зміни напряму, без повторної черги або розтягування.',
     ],
   ],
   inputs: Object.fromEntries(

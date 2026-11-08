@@ -41,7 +41,30 @@
 }
 .type-keypad .node-content {
   inset: 37px 24px 27px;
+  justify-content: flex-start;
 }
 .inspector .keypad-widget {
   margin: 12px auto;
+}
+.keypad-notice {
+  margin: 5px 0 0;
+  color: #825007;
+  background: #fff5df;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.compact-keypad {
+  padding: 3px 10px;
+}
+.compact-keypad .keypad-mode,
+.compact-keypad .keypad-notice {
+  margin: 4px 0 0;
+  padding: 0;
+  font-size: 8px;
+  line-height: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

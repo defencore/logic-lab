@@ -5,7 +5,9 @@ import {
 } from '../components/catalog/hotkey-bindings.js';
 
 const textTarget = (target) =>
-  !!target?.closest?.('input,textarea,select,[contenteditable],[role="textbox"]');
+  !!target?.closest?.(
+    'input,textarea,select,[contenteditable],[role="textbox"],.memory-map-scroll',
+  );
 const nativeActivation = (event) =>
   (['Space', 'Enter', 'NumpadEnter'].includes(event.code) &&
     !!event.target?.closest?.('button,a,summary,[role="button"]')) ||

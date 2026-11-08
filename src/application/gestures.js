@@ -12,7 +12,8 @@ import { boundCoordinate } from './model.js';
 export function createGestures(context) {
   const { state, services, actions } = context;
   function nodePointerDown(e) {
-    if (e.target.closest('button,input,textarea,select') || e.button !== 0) return;
+    if (e.target.closest('button,input,textarea,select,.memory-map-scroll') || e.button !== 0)
+      return;
     $('#viewport').focus({ preventScroll: true });
     services.wiring.clear();
     e.stopPropagation();

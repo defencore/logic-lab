@@ -2,7 +2,7 @@ const steps = {
   en: [
     {
       title: 'Scan the row/column matrix',
-      text: 'A 200 Hz counter and visible gates activate one keypad row at a time. A detected column stops scanning until release. Hold one key for at least 0.02 s so the four-row cycle can see it; use one key at a time. KEY MAP is an external ROM translating row/column addresses into digits 0–9, star=10 and hash=11. The keypad contains no digit encoder.',
+      text: 'A 200 Hz counter and visible gates activate one keypad row at a time. A detected column stops scanning until release. The default Pulse mode queues each ordinary click as a 0.04 s simulated press, with a released gap between keys. Run the simulation to process the queue; while paused, inputs wait without advancing time. Hold mode instead needs at least 0.02 simulated seconds per key. KEY MAP is an external ROM translating row/column addresses into digits 0–9, star=10 and hash=11. The keypad contains no digit encoder.',
       nodes: ['keypad', 'scan-clock', 'scan', 'row0', 'row1', 'row2', 'row3', 'present', 'key-map'],
     },
     {
@@ -12,7 +12,7 @@ const steps = {
     },
     {
       title: 'Enter and confirm 2580',
-      text: 'Press and release 2,5,8,0 separately. Progress becomes 1,2,3,4 and Ready lights, but UNLOCK stays 0 until #. Match and Seen flip-flops capture a decision before advancing the ROM address. Holding a key counts once. Enter # to confirm: UNLOCK becomes 1. The last-key register preserves the most recently detected code for inspection.',
+      text: 'Click 2,5,8,0 separately while the simulation runs; Pulse mode preserves their order. Progress becomes 1,2,3,4 and Ready lights, but UNLOCK stays 0 until #. Match and Seen flip-flops capture a decision before advancing the ROM address. Holding a key counts once. Enter # to confirm: UNLOCK becomes 1. The last-key register preserves the most recently detected code for inspection.',
       nodes: [
         'keypad',
         'accepted',
@@ -47,7 +47,7 @@ const steps = {
   ua: [
     {
       title: 'Скануйте матрицю рядків і стовпців',
-      text: 'Лічильник 200 Гц і видимі вентилі вмикають один рядок клавіатури за раз. Виявлений стовпець зупиняє сканування до відпускання. Утримуйте одну клавішу щонайменше 0.02 с для повного циклу чотирьох рядків; вводьте по одній. Зовнішня ПЗП KEY MAP перетворює адресу на цифри 0–9, зірочку=10 та решітку=11. Прихованого кодувальника в клавіатурі немає.',
+      text: 'Лічильник 200 Гц і видимі вентилі вмикають один рядок клавіатури за раз. Виявлений стовпець зупиняє сканування до відпускання. Типовий режим Pulse ставить звичайні кліки в чергу імпульсів по 0.04 модельної секунди з відпусканням між клавішами. Запустіть симуляцію для обробки; на паузі черга чекає без прихованого просування часу. У режимі Hold потрібне утримання щонайменше 0.02 модельної секунди. Зовнішня ПЗП KEY MAP перетворює адресу на цифри 0–9, зірочку=10 та решітку=11. Прихованого кодувальника в клавіатурі немає.',
       nodes: ['keypad', 'scan-clock', 'scan', 'row0', 'row1', 'row2', 'row3', 'present', 'key-map'],
     },
     {
@@ -57,7 +57,7 @@ const steps = {
     },
     {
       title: 'Введіть і підтвердьте 2580',
-      text: 'Окремо натискайте й відпускайте 2,5,8,0. Progress стає 1,2,3,4 і вмикає Ready, але UNLOCK лишається 0 до #. Тригери Match і Seen фіксують рішення до зміни адреси ПЗП. Утримання рахується один раз. Підтвердьте # — UNLOCK стане 1. Регістр last-key зберігає останній виявлений код для перегляду.',
+      text: 'При працюючій симуляції по черзі клацніть 2,5,8,0; Pulse зберігає їхній порядок. Progress стає 1,2,3,4 і вмикає Ready, але UNLOCK лишається 0 до #. Тригери Match і Seen фіксують рішення до зміни адреси ПЗП. Утримання рахується один раз. Підтвердьте # — UNLOCK стане 1. Регістр last-key зберігає останній виявлений код для перегляду.',
       nodes: [
         'keypad',
         'accepted',
@@ -71,7 +71,7 @@ const steps = {
     },
     {
       title: 'Відхиліть і очистіть хибні спроби',
-      text: 'Очистіть через *, потім введіть 2 та 9: Progress скинеться в 0 й увімкнеться Error. Ранній #, п’ята цифра або кілька активних стовпців також дають помилку. * очищає прогрес, відкриття, помилку та last-key; RESET також скидає сканування. Спробуйте SECRET=1,3,7,9 та підтвердьте 1379; 2580 тепер хибний. Поверніть 2580 для готового сценарію. Перед іншою клавішею відпускайте попередню: повного багатоклавішного декодера тут немає.',
+      text: 'Очистіть через *, потім введіть 2 та 9: Progress скинеться в 0 й увімкнеться Error. Ранній #, п’ята цифра або кілька активних стовпців також дають помилку. * очищає прогрес, відкриття, помилку та last-key; RESET також скидає сканування. Спробуйте SECRET=1,3,7,9 та підтвердьте 1379; 2580 тепер хибний. Поверніть 2580 для готового сценарію. Pulse обробляє клавіші послідовно. Для досліду кількох стовпців оберіть Hold та утримуйте дві клавіші одного рядка; вони відхиляються. Повного багатоклавішного декодера тут немає.',
       nodes: [
         'star',
         'wrong-digit',

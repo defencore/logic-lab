@@ -169,9 +169,13 @@ export function createCommands(context) {
     toggleSource,
     setMomentarySource: (id, value) =>
       value === 1 ? !!services.buttons?.press(id) : value === 0 && !!services.buttons?.release(id),
-    setKeypadKey: (id, index, value) =>
-      value === 1
-        ? !!services.keypads?.press(id, index)
-        : value === 0 && !!services.keypads?.release(id, index),
+    setKeypadKey: (id, index, value) => {
+      const accepted =
+        value === 1
+          ? !!services.keypads?.press(id, index)
+          : value === 0 && !!services.keypads?.release(id, index);
+      if (accepted) actions.updateSignals?.();
+      return accepted;
+    },
   };
 }

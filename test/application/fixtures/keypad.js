@@ -29,6 +29,7 @@ export function keypadFixture(t, mode = 'hold') {
   f.canWrite = () => f.flags.writable && (!f.session?.isLocked() || f.session.state.recording);
   f.controller = createKeypadController({
     getProject: () => f.project,
+    getTime: () => f.runtime.time,
     canPress: () => f.flags.active && f.canWrite(),
     canWrite: f.canWrite,
     writeKeys(node, keys) {

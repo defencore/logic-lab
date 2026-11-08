@@ -90,7 +90,11 @@ export function createInspectorController(state, actions) {
     const params = { ...d.defaults, ...n.params };
     const parameterEntries = ['hotkey', 'button'].includes(n.type)
       ? []
-      : Object.entries(params).filter(([key]) => n.type !== 'keypad' || key !== 'keys');
+      : Object.entries(params).filter(
+          ([key]) =>
+            n.type !== 'keypad' ||
+            (key !== 'keys' && (key !== 'pulseDuration' || params.mode === 'pulse')),
+        );
     const header = `<div class="inspector-selected"><span class="inspector-symbol">${['and', 'or', 'not', 'nand', 'nor', 'xor', 'xnor'].includes(n.type) ? gateIcon(n.type, 36) : icon('box', 28)}</span><span class="eyebrow">${esc(n.type.toUpperCase().replaceAll('_', ' '))}</span><h3>${esc(title(d))}</h3><p>${esc(state.lang === 'ua' ? d.descriptionUa || d.description : d.description)}</p></div>`;
     const tabs = `<div class="inspector-tabs" role="tablist"><button role="tab" aria-selected="${state.inspectorTab === 'properties'}" data-inspector-tab="properties">${t('properties')}</button><button role="tab" aria-selected="${state.inspectorTab === 'guide'}" data-inspector-tab="guide">${icon('help', 13)}${t('usageGuide')}</button></div>`;
     if (state.inspectorTab === 'guide') {
@@ -249,6 +253,7 @@ export function createInspectorController(state, actions) {
       $('#inspector-content'),
       selectedNode,
       playback || (!!state.classroom?.isLocked() && !recording),
+      { running: state.running, ...actions.getKeypadStatus?.(selectedNode?.id) },
     );
     updateStateInspection(
       $('#inspector-content'),

@@ -42,6 +42,7 @@ export function composeWorkbench(context) {
     toggleSource: actions.toggleSource,
     setMomentarySource: actions.setMomentarySource,
     setKeypadKey: actions.setKeypadKey,
+    getKeypadStatus: (id) => services.keypads?.status(id),
     canRenameNode: () => !services.classroom || services.classroom.allowEdit(),
     renameNode: actions.renameNode,
     cancelInteraction: actions.cancelInteraction,
@@ -109,6 +110,7 @@ export function composeWorkbench(context) {
     enableSelected: actions.enableSelected,
     beginHotkeyCapture: (request) => services.hotkeys.beginCapture(request),
     setKeypadKey: actions.setKeypadKey,
+    getKeypadStatus: (id) => services.keypads?.status(id),
   });
   services.scenes = createSceneController(state, {
     t,
@@ -122,6 +124,7 @@ export function composeWorkbench(context) {
     toggleSource: actions.toggleSource,
     setMomentarySource: actions.setMomentarySource,
     setKeypadKey: actions.setKeypadKey,
+    getKeypadStatus: (id) => services.keypads?.status(id),
     bindLiveText: actions.bindLiveText,
     renderBoard: services.board.render,
     updateSignals: actions.updateSignals,
@@ -252,6 +255,7 @@ export function composeWorkbench(context) {
   });
   services.keypads = createKeypadController({
     getProject: () => state.project,
+    getTime: () => state.runtime.time,
     canPress: () => !services.dialogs.isOpen() && services.classroom.allowInput(),
     canWrite: canWriteHotkey,
     writeKeys: (node, keys) => {

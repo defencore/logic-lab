@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { EXAMPLES, createExample } from '../../../examples/index.js';
 import { KEYPAD_KEYS } from '../../../src/components/keypad.js';
+import { createKeypadController } from '../../../src/application/keypad-controller.js';
 import { validateProject, parseProject, serializeProject } from '../../../src/circuits/project.js';
 import { createRuntime, simulate } from '../../../src/simulation/index.js';
 import {
@@ -32,11 +33,11 @@ function setKeys(context, keys) {
   context.project.nodes.find(({ id }) => id === 'keypad').params.keys = keys;
   simulate(context.project, context.runtime, 0);
 }
-function press(context, label, held = 0.05) {
+function press(context, label, held = 0.05, gap = 0.02) {
   setKeys(context, mask(label));
   advance(context, held);
   setKeys(context, 0);
-  advance(context, 0.02);
+  advance(context, gap);
 }
 function enter(context, text) {
   for (const key of text) press(context, key);
@@ -49,7 +50,7 @@ test('the lock exposes real matrix wiring, an external key-map ROM and a separat
   assert.deepEqual(parseProject(serializeProject(project)), project);
   assert.ok(project.nodes.length <= 200);
   const keypad = project.nodes.find(({ id }) => id === 'keypad');
-  assert.deepEqual(keypad.params, { mode: 'hold', keys: 0 });
+  assert.deepEqual(keypad.params, { mode: 'pulse', keys: 0, pulseDuration: 0.04 });
   for (const row of [0, 1, 2, 3]) {
     const wire = project.wires.find(({ to }) => to.node === 'keypad' && to.port === `row${row}`);
     assert.equal(wire.from.node, `row${row}`);
@@ -163,4 +164,101 @@ test('the recorded matrix masks replay a correct attempt with independent source
   assert.equal(result.project.nodes.find(({ id }) => id === 'keypad').params.keys, 0);
   assert.deepEqual(result.runtime.diagnostics, []);
   assert.deepEqual(sequence.initialProject, initial);
+});
+
+test('a complete scan pulse accepts2580# at varying phases with immediate release-to-next-key transitions', () => {
+  for (const phase of [0, 0.001, 0.006, 0.011, 0.019]) {
+    const context = open();
+    advance(context, phase);
+    for (const [index, key] of [...'2580#'].entries()) {
+      press(context, key, 0.025, 0);
+      assert.equal(output(context, 'progress'), Math.min(index + 1, 4), `phase${phase}: key${key}`);
+      assert.equal(output(context, 'alarm', 'q'), 0);
+    }
+    assert.equal(output(context, 'unlocked', 'q'), 1);
+  }
+});
+
+test('a fresh valid attempt after each error succeeds without RESET and * clears every partial state', () => {
+  for (const invalid of ['29', '25#', '25800']) {
+    const context = open();
+    enter(context, invalid);
+    assert.equal(output(context, 'progress'), 0);
+    assert.equal(output(context, 'alarm', 'q'), 1);
+    for (const key of '2580#') press(context, key, 0.025, 0);
+    assert.equal(output(context, 'progress'), 4);
+    assert.equal(output(context, 'unlocked', 'q'), 1);
+    assert.equal(output(context, 'alarm', 'q'), 0);
+    press(context, '*', 0.025, 0);
+    assert.equal(output(context, 'progress'), 0);
+    assert.equal(output(context, 'unlocked', 'q'), 0);
+    assert.equal(output(context, 'alarm', 'q'), 0);
+    assert.equal(output(context, 'seen', 'q'), 0);
+  }
+});
+
+test('repeated digits require distinct releases and do not create address or acceptance races', () => {
+  const context = open();
+  context.project.nodes.find(({ id }) => id === 'secret').params.data =
+    '1,1,2,2,0,0,0,0,0,0,0,0,0,0,0,0';
+  for (const [index, key] of [...'1122'].entries()) {
+    press(context, key, 0.025, 0);
+    assert.equal(output(context, 'progress'), index + 1);
+    assert.equal(output(context, 'alarm', 'q'), 0);
+  }
+  assert.equal(output(context, 'unlocked', 'q'), 0);
+  press(context, '#', 0.025, 0);
+  assert.equal(output(context, 'unlocked', 'q'), 1);
+});
+
+test('instantaneous queued UI taps survive paused time and unlock the actual scanned circuit after resume', (t) => {
+  const previous = { window: globalThis.window, document: globalThis.document };
+  globalThis.window = new EventTarget();
+  globalThis.document = new EventTarget();
+  t.after(() => {
+    for (const key of ['window', 'document']) {
+      if (previous[key] === undefined) delete globalThis[key];
+      else globalThis[key] = previous[key];
+    }
+  });
+  const context = open(),
+    edges = [];
+  const controller = createKeypadController({
+    getProject: () => context.project,
+    getTime: () => context.runtime.time,
+    canPress: () => true,
+    canWrite: () => true,
+    writeKeys: (node, keys) => {
+      edges.push({ at: context.runtime.time, keys });
+      node.params.keys = keys;
+      simulate(context.project, context.runtime, 0);
+    },
+  });
+  for (const label of '2580#') {
+    const key = KEYPAD_KEYS.find((key) => key.label === label);
+    assert.equal(controller.press('keypad', key.index), true);
+    controller.release('keypad', key.index);
+  }
+  for (let frame = 0; frame < 5; frame++) controller.reconcile();
+  assert.equal(context.runtime.time, 0);
+  assert.equal(output(context, 'unlocked', 'q'), 0);
+  assert.deepEqual(controller.status('keypad'), { pending: 4, active: true });
+  for (let frame = 0; frame < 40; frame++) {
+    advance(context, 0.016);
+    controller.reconcile();
+  }
+  assert.deepEqual(
+    edges.map(({ keys }) => keys),
+    [2, 0, 16, 0, 128, 0, 1024, 0, 2048, 0],
+  );
+  for (let index = 0; index < edges.length; index += 2) {
+    assert.ok(edges[index + 1].at - edges[index].at >= 0.04 - 1e-9);
+    if (index + 2 < edges.length)
+      assert.ok(edges[index + 2].at - edges[index + 1].at >= 0.01 - 1e-9);
+  }
+  assert.equal(output(context, 'progress'), 4);
+  assert.equal(output(context, 'unlocked', 'q'), 1);
+  assert.equal(output(context, 'alarm', 'q'), 0);
+  assert.deepEqual(controller.status('keypad'), { pending: 0, active: false });
+  controller.dispose();
 });

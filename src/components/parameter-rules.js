@@ -1,4 +1,4 @@
-import { KEYPAD_MAX_MASK } from './keypad.js';
+import { KEYPAD_MAX_MASK, KEYPAD_PULSE_MIN, KEYPAD_PULSE_MAX } from './keypad.js';
 
 const bounds = {
   carSpeed: [1, 40, 0.5],
@@ -82,6 +82,8 @@ export function parameterRule(type, key) {
     limits = [0, KEYPAD_MAX_MASK, 1];
     integer = true;
   }
+  if (key === 'pulseDuration' && type === 'keypad')
+    limits = [KEYPAD_PULSE_MIN, KEYPAD_PULSE_MAX, 0.01];
   if (key === 'value' && ['switch', 'button', 'hotkey', 'bus_input'].includes(type)) {
     limits = [0, type === 'bus_input' ? 255 : 1, 1];
     integer = true;

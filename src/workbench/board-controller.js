@@ -34,6 +34,7 @@ export function createBoardController(
     toggleSource,
     setMomentarySource,
     setKeypadKey,
+    getKeypadStatus = () => ({}),
     openScene,
     primarySignal,
     selectNode,
@@ -59,7 +60,7 @@ export function createBoardController(
   });
   function nodeBody(node) {
     const d = getDefinition(node.type);
-    if (BYTE_TYPES.has(node.type)) return byteWidgetMarkup(node, state.lang);
+    if (BYTE_TYPES.has(node.type)) return byteWidgetMarkup(node, state.lang, { compact: true });
     if (MEMORY_TYPES.has(node.type)) return memoryMapMarkup(node, state.lang, { compact: true });
     switch (node.type) {
       case 'active_buzzer':
@@ -68,7 +69,7 @@ export function createBoardController(
       case 'hotkey':
         return hotkeyNodeMarkup(node, state.lang);
       case 'keypad':
-        return keypadNodeMarkup(node, state.lang);
+        return keypadNodeMarkup(node, state.lang, { compact: true });
       case 'switch':
         return `<button class="switch-control ${node.params.value ? 'is-on' : ''}" data-switch="${node.id}" aria-label="${esc(node.label || title(d))}" aria-pressed="${!!node.params.value}"><span class="switch-track"><i></i></span><span class="switch-value">${node.params.value ? '1' : '0'}</span></button>`;
       case 'button':
@@ -180,6 +181,7 @@ export function createBoardController(
         n,
         !!state.classroom?.isPlaying() ||
           (!!state.classroom?.isLocked() && !state.classroom?.isRecording()),
+        { running: state.running, ...getKeypadStatus(n.id) },
       );
       updateStateInspection(el, n, state.project, state.runtime, state.lang);
       $$('.pin', el).forEach((pin) => {

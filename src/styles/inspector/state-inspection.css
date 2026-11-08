@@ -143,40 +143,125 @@
 }
 .compact-memory {
   width: 100%;
-  max-width: 182px;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 .compact-memory > p {
-  font-size: 8px;
-  line-height: 1.25;
-  margin: 3px 0;
+  flex-shrink: 0;
+  font-size: 9px;
+  line-height: 12px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .compact-memory .memory-map-scroll {
-  overflow: hidden;
-  max-height: none;
+  min-height: 0;
+  max-height: 100%;
+  overflow: auto;
+  scrollbar-width: thin;
+  pointer-events: auto;
+  overscroll-behavior: contain;
 }
 .compact-memory .memory-map {
-  border-spacing: 0 1px;
-  font-size: 8px;
+  border-spacing: 0;
+  font-size: 9px;
+  line-height: 11px;
 }
 .compact-memory .memory-map caption {
-  font-size: 9px;
-  margin-bottom: 2px;
+  display: none;
 }
 .compact-memory .memory-map th,
 .compact-memory .memory-map td {
-  padding: 0 2px;
+  padding: 0;
+  border-block-width: 0;
+  height: 11px;
+}
+.compact-memory .memory-map th:first-child {
+  text-align: left;
+}
+.compact-memory [data-memory-marker] {
+  font-size: 7px;
 }
 .compact-memory .inspection-bit {
-  width: 7px;
+  width: 7.5px;
+  margin-inline: 0;
+  border: 0;
   border-radius: 1px;
+  vertical-align: top;
 }
 .compact-memory .inspection-bit b {
-  font-size: 7px;
-  line-height: 9px;
-}
-.node-content .byte-widget {
-  font-size: 10px;
-}
-.node-content .byte-widget > p {
   font-size: 9px;
+  line-height: 11px;
+}
+.compact-memory .memory-possible > * {
+  outline: 1px dashed #76a2d1;
+  outline-offset: -1px;
+}
+
+/* A fixed body region protects the title and individual electrical-contact labels. */
+.circuit-node:is(
+    .type-ram,
+    .type-rom,
+    .type-register_file,
+    .type-bus_input,
+    .type-register,
+    .type-shift_register,
+    .type-counter
+  )
+  > .node-content {
+  inset: 42px var(--inspection-right, 40px) 12px var(--inspection-left, 40px);
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.circuit-node:is(.type-ram, .type-rom, .type-register_file) {
+  --inspection-left: 60px;
+}
+.circuit-node:is(.type-register, .type-shift_register, .type-counter) {
+  --inspection-left: 50px;
+}
+.circuit-node.type-shift_register {
+  --inspection-right: 54px;
+}
+.circuit-node.type-bus_input {
+  --inspection-right: 60px;
+}
+.compact-byte {
+  max-height: 100%;
+  overflow: hidden;
+}
+.compact-byte .byte-bits {
+  gap: 2px;
+}
+.compact-byte .inspection-bit small {
+  font-size: 8px;
+  line-height: 12px;
+}
+.compact-byte .inspection-bit b {
+  font-size: 11px;
+  line-height: 15px;
+}
+.compact-byte .byte-formats {
+  margin-top: 4px;
+  gap: 2px 6px;
+  font-size: 9px;
+  line-height: 12px;
+}
+.compact-byte .byte-output-status:empty {
+  display: none;
+}
+.compact-byte .byte-change-inspection {
+  padding-top: 4px;
+  margin: 4px 0 0;
+  gap: 1px;
+  font-size: 9px;
+  line-height: 12px;
+}
+.compact-byte .byte-change-inspection > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

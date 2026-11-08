@@ -19,6 +19,7 @@ const at = (time) => (Number.isFinite(time) ? `${time.toFixed(4)} s` : '');
 
 function updateByte(root, node, runtime, language) {
   const data = inspectByte(node, runtime);
+  const compact = root.dataset.inspectionCompact === 'true';
   for (const element of root.querySelectorAll('[data-byte-bit]')) {
     const bit = Number(element.dataset.byteBit);
     bitValue(
@@ -32,17 +33,21 @@ function updateByte(root, node, runtime, language) {
   text(
     root,
     '[data-byte-status]',
-    !data.enabled
-      ? L(
-          language,
-          data.stored ? 'Стан збережено; виходи вимкнені (Z).' : 'Виходи вимкнені (Z).',
-          data.stored ? 'State retained; outputs disabled (Z).' : 'Outputs disabled (Z).',
-        )
-      : L(
-          language,
-          data.stored ? 'Поточний збережений байт.' : 'Поточний вихідний байт.',
-          data.stored ? 'Current stored byte.' : 'Current output byte.',
-        ),
+    compact
+      ? data.enabled
+        ? ''
+        : 'OUT Z'
+      : !data.enabled
+        ? L(
+            language,
+            data.stored ? 'Стан збережено; виходи вимкнені (Z).' : 'Виходи вимкнені (Z).',
+            data.stored ? 'State retained; outputs disabled (Z).' : 'Outputs disabled (Z).',
+          )
+        : L(
+            language,
+            data.stored ? 'Поточний збережений байт.' : 'Поточний вихідний байт.',
+            data.stored ? 'Current stored byte.' : 'Current output byte.',
+          ),
   );
   if (!data.stored) return;
   const change = data.change;
@@ -68,13 +73,17 @@ function updateByte(root, node, runtime, language) {
   text(
     root,
     '[data-byte-event]',
-    change
-      ? `${labels[kind]} #${change.sequence} · ${at(change.at)}${kind === 'shift' ? ` · SER=${change.ser}` : ''}`
-      : L(
-          language,
-          'Немає події після ініціалізації/скидання.',
-          'No event since initialization/reset.',
-        ),
+    compact
+      ? change
+        ? `${L(language, kind === 'shift' ? 'Зсув' : kind === 'count' ? 'Лічба' : 'Запис', kind === 'shift' ? 'Shift' : kind === 'count' ? 'Count' : 'Capture')} #${change.sequence}${change.definite ? '' : '?'}${kind === 'shift' ? ` · SER=${change.ser}` : ''}`
+        : '—'
+      : change
+        ? `${labels[kind]} #${change.sequence} · ${at(change.at)}${kind === 'shift' ? ` · SER=${change.ser}` : ''}`
+        : L(
+            language,
+            'Немає події після ініціалізації/скидання.',
+            'No event since initialization/reset.',
+          ),
   );
   text(
     root,
@@ -104,6 +113,19 @@ function updateByte(root, node, runtime, language) {
 
 function updateMemory(root, node, project, runtime, language) {
   const data = inspectMemory(node, project, runtime);
+  const location = (values) =>
+    values.length === 1 ? `0x${values[0].toString(16).toUpperCase()}` : `?${values.length}`;
+  text(
+    root,
+    '[data-memory-compact]',
+    [
+      data.readActive ? `R${location(data.read)}${data.readCertain ? '' : '?'}` : 'R—',
+      ...(node.type === 'rom'
+        ? []
+        : [data.writeActive ? `W${location(data.write)}${data.writeCertain ? '' : '?'}` : 'W—']),
+      ...(data.lastWrite ? [`★${location(data.lastWrite.addresses)}`] : []),
+    ].join(' · '),
+  );
   const readStatus = data.readActive
     ? L(
         language,

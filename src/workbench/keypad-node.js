@@ -2,17 +2,21 @@ import { KEYPAD_KEYS } from '../components/keypad.js';
 import { esc } from '../shared/ui.js';
 import { bindMomentaryButton } from './momentary-button.js';
 
-export function keypadNodeMarkup(node, lang) {
+export function keypadNodeMarkup(node, lang, { compact = false } = {}) {
   const hold = node.params.mode !== 'toggle';
   const caption =
-    lang === 'ua'
-      ? hold
-        ? 'Утримання · 1 лише під час натискання'
-        : 'Фіксація · натисніть ще раз для відпускання'
-      : hold
-        ? 'Hold · active while pressed'
-        : 'Latch · press again to release';
-  return `<div class="keypad-widget" data-keypad="${esc(node.id)}" role="group" aria-label="${esc(node.label || (lang === 'ua' ? 'Матрична клавіатура' : 'Matrix keypad'))}"><div class="keypad-grid">${KEYPAD_KEYS.map(({ index, label, row, column }) => `<button type="button" data-keypad-key="${index}" aria-label="${esc(label)} · R${row + 1} C${column + 1}" aria-pressed="false">${esc(label)}</button>`).join('')}</div><p class="keypad-mode">${caption}</p></div>`;
+    node.params.mode === 'pulse'
+      ? lang === 'ua'
+        ? `Імпульс ≥ ${node.params.pulseDuration ?? 0.04} с симуляції`
+        : `Pulse ≥ ${node.params.pulseDuration ?? 0.04} simulation s`
+      : lang === 'ua'
+        ? hold
+          ? 'Утримання · 1 лише під час натискання'
+          : 'Фіксація · натисніть ще раз для відпускання'
+        : hold
+          ? 'Hold · active while pressed'
+          : 'Latch · press again to release';
+  return `<div class="keypad-widget ${compact ? 'compact-keypad' : ''}" data-keypad="${esc(node.id)}" data-language="${lang}" role="group" aria-label="${esc(node.label || (lang === 'ua' ? 'Матрична клавіатура' : 'Matrix keypad'))}"><div class="keypad-grid">${KEYPAD_KEYS.map(({ index, label, row, column }) => `<button type="button" data-keypad-key="${index}" aria-label="${esc(label)} · R${row + 1} C${column + 1}" aria-pressed="false">${esc(label)}</button>`).join('')}</div><p class="keypad-mode" title="${esc(caption)}">${caption}</p><p data-keypad-notice class="keypad-notice" role="status" hidden></p></div>`;
 }
 
 export function bindKeypadControls(root, node, setKeypadKey) {
@@ -61,11 +65,34 @@ export function bindKeypadControls(root, node, setKeypadKey) {
   return () => disposers.forEach((dispose) => dispose());
 }
 
-export function updateKeypadControls(root, node, locked) {
+export function updateKeypadControls(
+  root,
+  node,
+  locked,
+  { running = true, pending = 0, active = false } = {},
+) {
   if (node?.type !== 'keypad' || !root) return;
   for (const button of root.querySelectorAll('[data-keypad-key]')) {
     const active = !!((node.params.keys || 0) & KEYPAD_KEYS[Number(button.dataset.keypadKey)].mask);
     button.disabled = locked || node.enabled === false;
     button.setAttribute('aria-pressed', String(active));
+  }
+  const widget = root.querySelector?.('[data-keypad]');
+  const notice = widget?.querySelector('[data-keypad-notice]');
+  if (notice) {
+    const ua = widget.dataset.language === 'ua';
+    const count = pending + Number(active);
+    const text = !running
+      ? ua
+        ? `Пауза: натисніть «Запуск».${count ? ` У черзі: ${count}.` : ''}`
+        : `Paused: press Run.${count ? ` Pending: ${count}.` : ''}`
+      : count
+        ? ua
+          ? `Виконується ввід · залишилось ${count}`
+          : `Entering keys · ${count} remaining`
+        : '';
+    notice.hidden = !text;
+    notice.textContent = text;
+    notice.title = text;
   }
 }

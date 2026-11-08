@@ -12,7 +12,9 @@ export function createCanvasBindings(context) {
       'pointerdown',
       (e) => {
         if (
-          e.target.closest('.canvas-tools,.canvas-bottom,input,textarea,select,[contenteditable]')
+          e.target.closest(
+            '.canvas-tools,.canvas-bottom,input,textarea,select,[contenteditable],.memory-map-scroll',
+          )
         )
           return;
         if (state.gesture || services.wiring.busy) {
@@ -45,7 +47,11 @@ export function createCanvasBindings(context) {
       { capture: true },
     );
     vp.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.canvas-tools,.canvas-bottom,button') || e.button !== 0) return;
+      if (
+        e.target.closest('.canvas-tools,.canvas-bottom,button,.memory-map-scroll') ||
+        e.button !== 0
+      )
+        return;
       if (services.wiring.blankPointerDown(e)) return;
       if (state.pending) {
         if (state.pending.points.length >= 100) {
@@ -70,7 +76,7 @@ export function createCanvasBindings(context) {
     vp.addEventListener(
       'wheel',
       (e) => {
-        if (e.target.closest('.canvas-tools,.canvas-bottom')) return;
+        if (e.target.closest('.canvas-tools,.canvas-bottom,.memory-map-scroll')) return;
         e.preventDefault();
         if (state.gesture) return;
         const delta = normalizeWheel(e, vp.clientHeight);

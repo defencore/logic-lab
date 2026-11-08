@@ -89,13 +89,16 @@ export function bindSceneControls(state, actions, links, open) {
   return () => disposers.forEach((dispose) => dispose());
 }
 
-export function updateSceneControls(state) {
+export function updateSceneControls(state, getKeypadStatus = () => ({})) {
   const locked =
     !!state.classroom?.isPlaying() ||
     (!!state.classroom?.isLocked() && !state.classroom?.isRecording());
   $$('.scene-keypad-controls').forEach((root) => {
     const node = state.project.nodes.find((node) => node.id === root.dataset.sceneSource);
-    updateKeypadControls(root, node, locked);
+    updateKeypadControls(root, node, locked, {
+      running: state.running,
+      ...getKeypadStatus(node?.id),
+    });
   });
   $$('[data-motion-switch],[data-motion-button]').forEach((button) => {
     const node = state.project.nodes.find(

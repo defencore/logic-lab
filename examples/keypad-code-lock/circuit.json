@@ -7,11 +7,12 @@
       "type": "keypad",
       "x": 80,
       "y": 80,
-      "label": "KEYPAD · press one key, then release",
+      "label": "KEYPAD · tap to queue a scan pulse",
       "enabled": true,
       "params": {
-        "mode": "hold",
-        "keys": 0
+        "mode": "pulse",
+        "keys": 0,
+        "pulseDuration": 0.04
       }
     },
     {

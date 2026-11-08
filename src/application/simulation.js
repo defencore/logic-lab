@@ -25,6 +25,7 @@ export function createSimulation(context) {
     services.monitor.updateUi();
     services.classroom?.onSimulationStateChanged?.(next);
     services.inspector?.updateSignals();
+    services.board?.updateSignals();
     services.audio?.sync();
   }
   function toggleRunning() {
