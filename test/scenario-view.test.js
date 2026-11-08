@@ -255,8 +255,11 @@ test('every actual scene constructor builds and updates normal and failed Three.
   }
 });
 
-test('all five scenario kinds are explicit and invalid scenes fail before graphics allocation', () => {
+test('all eight scenario kinds are explicit and invalid scenes fail before graphics allocation', () => {
   assert.deepEqual(SCENARIO_VIEW_TYPES, [
+    'aquarium',
+    'greenhouse',
+    'smart_home',
     'traffic_light',
     'traffic_junction',
     'railway',

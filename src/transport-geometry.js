@@ -1,3 +1,4 @@
+import { collisionBody, boxCollisionBody, collisionPair } from './transport-shapes.js';
 export const JUNCTION = Object.freeze({
   scale: 0.1,
   carLength: 0.84,
@@ -78,8 +79,16 @@ export function railwayPoint(track, position) {
 }
 
 export function railwayPose(train) {
-  const p = finite(train.position),
-    t = clamp((p + 55) / 55, 0, 1);
+  const p = finite(train.position);
+  if (p > RAILWAY.sharedLength && train.exitRoute !== undefined) {
+    const diverted = train.track === 'a' ? train.exitRoute === 1 : train.exitRoute === 0;
+    if (diverted) {
+      const opposite = train.track === 'a' ? 'b' : 'a';
+      const pose = railwayPose({ track: opposite, position: RAILWAY.sharedLength - p });
+      return { x: pose.x, z: pose.z, heading: pose.heading + Math.PI };
+    }
+  }
+  const t = clamp((p + 55) / 55, 0, 1);
   const dx = ((train.track === 'b' ? -1 : 1) * 2.7 * 6 * t * (1 - t)) / 55;
   const dz = train.track === 'b' ? -RAILWAY.scale : RAILWAY.scale;
   return { ...railwayPoint(train.track, p), heading: Math.atan2(dx, dz) };
@@ -119,6 +128,14 @@ export function footprint(pose, front, rear, width) {
 export function trainFootprint(train) {
   return footprint(railwayPose(train), RAILWAY.trainFront, RAILWAY.trainRear, RAILWAY.trainWidth);
 }
+
+export const trainCollisionBody = (train) =>
+  collisionBody('train', { ...railwayPose(train), y: 0.3 });
+export const carCollisionBody = (car, kind = 'junction') =>
+  collisionBody('car', {
+    ...(kind === 'railway' ? roadCarPose(car) : junctionCarPose(car)),
+    y: 0.18,
+  });
 
 export function carFootprint(car, kind = 'junction') {
   return footprint(
@@ -162,51 +179,22 @@ export function footprintCorners(box) {
   }));
 }
 
-function contains(box, point) {
-  const [right, forward] = axes(box),
-    delta = { x: point.x - box.x, z: point.z - box.z };
-  return (
-    Math.abs(dot(delta, right)) <= box.halfWidth + EPSILON &&
-    Math.abs(dot(delta, forward)) <= box.halfLength + EPSILON
-  );
-}
-
-export function contactPoint(a, b) {
-  if (!overlaps(a, b)) return null;
-  const ac = footprintCorners(a),
-    bc = footprintCorners(b);
-  const points = [
-    ...ac.filter((point) => contains(b, point)),
-    ...bc.filter((point) => contains(a, point)),
-  ];
-  for (let i = 0; i < 4; i++)
-    for (let j = 0; j < 4; j++) {
-      const p = ac[i],
-        q = bc[j],
-        r = { x: ac[(i + 1) % 4].x - p.x, z: ac[(i + 1) % 4].z - p.z },
-        s = { x: bc[(j + 1) % 4].x - q.x, z: bc[(j + 1) % 4].z - q.z };
-      const cross = (u, v) => u.x * v.z - u.z * v.x,
-        denominator = cross(r, s);
-      if (Math.abs(denominator) < EPSILON) continue;
-      const difference = { x: q.x - p.x, z: q.z - p.z };
-      const t = cross(difference, s) / denominator,
-        u = cross(difference, r) / denominator;
-      if (t >= -EPSILON && t <= 1 + EPSILON && u >= -EPSILON && u <= 1 + EPSILON)
-        points.push({ x: p.x + t * r.x, z: p.z + t * r.z });
-    }
-  return points.length
-    ? {
-        x: points.reduce((sum, point) => sum + point.x, 0) / points.length,
-        z: points.reduce((sum, point) => sum + point.z, 0) / points.length,
-      }
-    : { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
-}
-
 export const trainReservesSection = (train) => overlaps(trainFootprint(train), RAIL_RESERVATION);
-export const trainInTurnout = (train) =>
-  TURNOUT_ZONES.some((zone) => overlaps(trainFootprint(train), zone));
-export const trainAtEntryTurnout = (train) =>
-  overlaps(trainFootprint(train), TURNOUT_ZONES[train.track === 'b' ? 1 : 0]);
+export const trainAtTurnout = (train, end) => {
+  if (!overlaps(trainFootprint(train), TURNOUT_ZONES[end])) return false;
+  const body = trainCollisionBody(train);
+  const wheels = { ...body, parts: body.parts.filter((part) => part.wheel) };
+  const zone = TURNOUT_ZONES[end];
+  return (
+    collisionPair(
+      wheels,
+      boxCollisionBody([0.42, 0.12, 0.9], { x: 0, y: 0.32, z: zone.z, heading: 0 }),
+    ) !== null
+  );
+};
+export const trainInTurnout = (train) => [0, 1].some((end) => trainAtTurnout(train, end));
+export const trainAtEntryTurnout = (train) => trainAtTurnout(train, train.track === 'b' ? 1 : 0);
+export const trainAtExitTurnout = (train) => trainAtTurnout(train, train.track === 'b' ? 0 : 1);
 export const crossingClear = (cars) =>
   !cars.some(
     (car) =>

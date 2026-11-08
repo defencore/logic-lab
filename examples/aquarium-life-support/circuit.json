@@ -1,0 +1,307 @@
+{
+  "version": 1,
+  "name": "Aquarium: life-support interlocks",
+  "exampleId": "aquarium-life-support",
+  "nodes": [
+    {
+      "id": "run",
+      "type": "switch",
+      "label": "Scene run",
+      "x": 20,
+      "y": 20,
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "label": "Reset process",
+      "x": 20,
+      "y": 210,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "world",
+      "type": "aquarium",
+      "label": "Aquarium life support",
+      "x": 320,
+      "y": 60,
+      "enabled": true,
+      "params": {
+        "initialTemperature": 24,
+        "ambientTemperature": 18,
+        "initialOxygen": 70,
+        "initialFood": 45,
+        "initialCleanliness": 80,
+        "fishCount": 4,
+        "dayLength": 60
+      }
+    },
+    {
+      "id": "unsafe-heat",
+      "type": "switch",
+      "label": "Unsafe stuck heater",
+      "x": 20,
+      "y": 400,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "air-permit",
+      "type": "switch",
+      "label": "Air pump permitted",
+      "x": 20,
+      "y": 590,
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "heat",
+      "type": "or",
+      "label": "Cold OR stuck heater",
+      "x": 650,
+      "y": 20,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "heat-ok",
+      "type": "not",
+      "label": "No heater fault",
+      "x": 650,
+      "y": 225,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "cool",
+      "type": "and",
+      "label": "Hot AND cooling available",
+      "x": 650,
+      "y": 430,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "air",
+      "type": "and",
+      "label": "Low oxygen AND pump permitted",
+      "x": 650,
+      "y": 635,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "alarm",
+      "type": "led",
+      "label": "Process alarm",
+      "x": 1800,
+      "y": 120,
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "run-out-world-run",
+      "from": {
+        "node": "run",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "run"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-world-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-hungry-world-feed",
+      "from": {
+        "node": "world",
+        "port": "hungry"
+      },
+      "to": {
+        "node": "world",
+        "port": "feed"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-dirty-world-filter",
+      "from": {
+        "node": "world",
+        "port": "dirty"
+      },
+      "to": {
+        "node": "world",
+        "port": "filter"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-day-world-light",
+      "from": {
+        "node": "world",
+        "port": "day"
+      },
+      "to": {
+        "node": "world",
+        "port": "light"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-cold-heat-a",
+      "from": {
+        "node": "world",
+        "port": "cold"
+      },
+      "to": {
+        "node": "heat",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "unsafe-heat-out-heat-b",
+      "from": {
+        "node": "unsafe-heat",
+        "port": "out"
+      },
+      "to": {
+        "node": "heat",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "heat-out-world-heater",
+      "from": {
+        "node": "heat",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "heater"
+      },
+      "width": 1
+    },
+    {
+      "id": "unsafe-heat-out-heat-ok-a",
+      "from": {
+        "node": "unsafe-heat",
+        "port": "out"
+      },
+      "to": {
+        "node": "heat-ok",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-hot-cool-a",
+      "from": {
+        "node": "world",
+        "port": "hot"
+      },
+      "to": {
+        "node": "cool",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "heat-ok-out-cool-b",
+      "from": {
+        "node": "heat-ok",
+        "port": "out"
+      },
+      "to": {
+        "node": "cool",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "cool-out-world-cooler",
+      "from": {
+        "node": "cool",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "cooler"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-low_oxygen-air-a",
+      "from": {
+        "node": "world",
+        "port": "low_oxygen"
+      },
+      "to": {
+        "node": "air",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "air-permit-out-air-b",
+      "from": {
+        "node": "air-permit",
+        "port": "out"
+      },
+      "to": {
+        "node": "air",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "air-out-world-aerator",
+      "from": {
+        "node": "air",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "aerator"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-alarm-alarm-in",
+      "from": {
+        "node": "world",
+        "port": "alarm"
+      },
+      "to": {
+        "node": "alarm",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ]
+}

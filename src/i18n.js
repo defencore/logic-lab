@@ -1,5 +1,44 @@
 export const TEXT = {
   en: {
+    automation: 'Automation',
+    sceneActuators: 'Live actuator states',
+    sceneAlive: 'Fish alive',
+    sceneTemperature: 'Temperature',
+    sceneOxygen: 'Oxygen',
+    sceneHealthLabel: 'Health',
+    sceneMoisture: 'Soil moisture',
+    sceneWater: 'Water reserve',
+    sceneEnergy: 'Electricity used',
+    sceneGrowth: 'Plant growth',
+    railwayPoints: 'Turnouts',
+    railwayPointsHint:
+      'The near and far turnouts choose the actual route. Switch before a train reaches the blades.',
+    nearPoints: 'Near: 0 siding A / 1 main',
+    farPoints: 'Far: 0 main / 1 siding B',
+    clickToSwitch: 'Click to toggle the circuit switch',
+    circuitControlled: 'Controlled by circuit logic',
+    manualRailwayLab: 'Open manual dispatch laboratory',
+    fishCold:
+      'Cold-water stress was recorded. Use COLD feedback for the heater; reset clears the alarm and restores fish after a death.',
+    fishHeat: 'Hot-water stress was recorded. Stop heating and use HOT feedback for cooling.',
+    fishOxygen:
+      'Low-oxygen stress was recorded. Use LOW OXYGEN for the aerator and monitor fish health.',
+    fishOverfed:
+      'Overfeeding was recorded. Too much food harms fish and dirties water. Stop feeding when HUNGRY returns to 0.',
+    fishStarved: 'Starvation was recorded. Add controlled feeding and check FOOD and HUNGRY.',
+    fishDirty:
+      'Dirty-water stress was recorded. Use DIRTY feedback for filtration or a water change.',
+    fishLight: 'Continuous-light stress was recorded. Use DAY to provide a dark resting period.',
+    plantCold: 'Cold damage was recorded. Use COLD feedback to enable heating.',
+    plantHeat: 'Heat damage was recorded. Stop heating and open ventilation using HOT.',
+    plantDry: 'Drought damage was recorded. Use DRY for irrigation and monitor MOISTURE.',
+    plantWet: 'Waterlogging damage was recorded. Stop the pump when WET is high.',
+    plantDark:
+      'Light deprivation was recorded. Use the day/night sensor to control the grow light.',
+    homeEmptyTank:
+      'The garden water reserve ran empty. Block irrigation using TANK LOW and let rainfall replenish the tank.',
+    homeSecurity:
+      'Security alert: motion was detected before the gate cleared the passage. Check your gate and alarm conditions.',
     inputValues: 'Input byte values',
     motion: 'Motion & control',
     motionView: '3D scenes',
@@ -15,7 +54,8 @@ export const TEXT = {
       'The object settings are inconsistent. Check positive capacities and rates, ordered sensor thresholds, and initial levels within capacity.',
     invalidLights: 'Use one active lamp at a time. A dark or conflicting signal is not valid.',
     sceneParamReset: 'Changing these settings resets this object and its fault state.',
-    sceneCollision: 'Collision — conflicting movements entered the same crossing.',
+    sceneCollision:
+      'Collision — two vehicles made physical contact. Separate their routes or entry permissions.',
     sceneOverspeed:
       'Speed restriction exceeded. Entering the turnout at this speed derails the train.',
     sceneWrongRoute: 'Derailment — the turnout was aligned for the other approach.',
@@ -266,6 +306,45 @@ export const TEXT = {
     panHint: 'Hold Space or Shift and drag to pan',
   },
   ua: {
+    automation: 'Автоматизація',
+    sceneActuators: 'Стан механізмів наживо',
+    sceneAlive: 'Живих рибок',
+    sceneTemperature: 'Температура',
+    sceneOxygen: 'Кисень',
+    sceneHealthLabel: 'Здоров’я',
+    sceneMoisture: 'Вологість ґрунту',
+    sceneWater: 'Запас води',
+    sceneEnergy: 'Витрачена енергія',
+    sceneGrowth: 'Ріст рослин',
+    railwayPoints: 'Залізничні стрілки',
+    railwayPointsHint:
+      'Ближня й дальня стрілки обирають справжній маршрут. Перемикайте до в’їзду потяга на вістряки.',
+    nearPoints: 'Ближня: 0 колія A / 1 головна',
+    farPoints: 'Дальня: 0 головна / 1 колія B',
+    clickToSwitch: 'Натисніть для зміни перемикача схеми',
+    circuitControlled: 'Керується логікою схеми',
+    manualRailwayLab: 'Відкрити ручне диспетчерування',
+    fishCold:
+      'Зафіксовано переохолодження рибок. Керуйте обігрівом за COLD; скидання очищає тривогу й відновлює рибок після загибелі.',
+    fishHeat: 'Зафіксовано перегрів рибок. Вимкніть нагрівач і керуйте охолодженням за HOT.',
+    fishOxygen:
+      'Зафіксовано нестачу кисню. Керуйте аератором за LOW OXYGEN і стежте за здоров’ям рибок.',
+    fishOverfed:
+      'Зафіксовано перегодовування. Зайвий корм шкодить рибкам і забруднює воду. Припиняйте подачу при HUNGRY=0.',
+    fishStarved: 'Зафіксовано голодування. Додайте кероване годування та перевірте FOOD і HUNGRY.',
+    fishDirty:
+      'Зафіксовано шкоду від брудної води. Використайте DIRTY для фільтрації чи заміни води.',
+    fishLight:
+      'Зафіксовано шкоду від безперервного світла. Сигнал DAY має забезпечувати темний період відпочинку.',
+    plantCold: 'Зафіксовано шкоду від холоду. Увімкніть обігрів за COLD.',
+    plantHeat: 'Зафіксовано шкоду від спеки. Вимкніть обігрів і відкрийте вентиляцію за HOT.',
+    plantDry: 'Зафіксовано пересихання рослин. Керуйте поливом за DRY і стежте за MOISTURE.',
+    plantWet: 'Зафіксовано перезволоження. Зупиняйте насос при WET=1.',
+    plantDark: 'Зафіксовано нестачу світла. Керуйте лампою за датчиком дня і ночі.',
+    homeEmptyTank:
+      'Запас води для подвір’я вичерпано. Блокуйте полив за TANK LOW та дочекайтеся поповнення дощем.',
+    homeSecurity:
+      'Охоронна тривога: виявлено рух, поки ворота перекривали проїзд. Перевірте умови відкривання й увімкнення охорони.',
     inputValues: 'Значення вхідних байтів',
     motion: 'Рух і керування',
     motionView: '3D-сцени',
@@ -281,7 +360,8 @@ export const TEXT = {
       'Налаштування об’єкта суперечливі. Перевірте додатні місткості й подачу, порядок порогів датчиків та початкові рівні в межах місткості.',
     invalidLights: 'Увімкніть лише одну лампу. Вимкнений або суперечливий сигнал не є коректним.',
     sceneParamReset: 'Зміна цих налаштувань скидає об’єкт і його стан аварії.',
-    sceneCollision: 'Зіткнення — конфліктні потоки одночасно в’їхали на перехрестя.',
+    sceneCollision:
+      'Зіткнення — транспорт фізично торкнувся один одного. Розділіть маршрути або дозволи на в’їзд.',
     sceneOverspeed:
       'Перевищено дозволену швидкість. На стрілці це призводить до сходження з рейок.',
     sceneWrongRoute: 'Сходження з рейок — стрілка була переведена для іншого напрямку.',

@@ -1,17 +1,28 @@
 import {
+  AUTOMATION_TYPES,
+  AUTOMATION_DEFAULTS,
+  AUTOMATION_INPUT_DEFAULTS,
+  automationParameterError,
+  initialAutomationState,
+  advanceAutomation,
+  evaluateAutomation,
+} from './automation-worlds.js';
+import {
   JUNCTION,
   RAILWAY,
-  carFootprint,
-  trainFootprint,
-  overlaps,
-  contactPoint,
   trainReservesSection,
   trainInTurnout,
   trainAtEntryTurnout,
+  trainAtExitTurnout,
+  trainAtTurnout,
   crossingClear,
+  trainCollisionBody,
+  carCollisionBody,
 } from './transport-geometry.js';
+import { bodiesOverlap, bodyContact } from './transport-shapes.js';
 
 export const SCENARIO_TYPES = Object.freeze([
+  ...AUTOMATION_TYPES,
   'traffic_light',
   'traffic_junction',
   'railway',
@@ -20,6 +31,7 @@ export const SCENARIO_TYPES = Object.freeze([
 ]);
 
 export const SCENARIO_DEFAULTS = Object.freeze({
+  ...AUTOMATION_DEFAULTS,
   traffic_light: Object.freeze({}),
   traffic_junction: Object.freeze({ carSpeed: 12, arrivalInterval: 4, initialCars: 2 }),
   railway: Object.freeze({ initialA: -48, initialB: -85, speedLimit: 60 }),
@@ -46,6 +58,7 @@ export const SCENARIO_DEFAULTS = Object.freeze({
 });
 
 export const SCENARIO_INPUT_DEFAULTS = Object.freeze({
+  ...AUTOMATION_INPUT_DEFAULTS,
   traffic_light: Object.freeze({ red: 0, yellow: 0, green: 0 }),
   traffic_junction: Object.freeze({
     ns_green: 0,
@@ -59,6 +72,7 @@ export const SCENARIO_INPUT_DEFAULTS = Object.freeze({
     signal_a: 0,
     signal_b: 0,
     points: 0,
+    exit_points: 0,
     barrier: 0,
     throttle: 30,
     run: 1,
@@ -76,6 +90,7 @@ const parameters = (node) => ({ ...SCENARIO_DEFAULTS[node.type], ...node.params 
 export const isScenarioType = (type) => SCENARIO_TYPES.includes(type);
 
 export function scenarioParameterError(node) {
+  if (AUTOMATION_TYPES.includes(node.type)) return automationParameterError(node);
   const p = parameters(node);
   const finite = (...keys) =>
     keys.every((key) => typeof p[key] === 'number' && Number.isFinite(p[key]));
@@ -134,7 +149,7 @@ export function scenarioParameterError(node) {
 }
 
 function controls(type, inputs = {}) {
-  return Object.fromEntries(
+  const result = Object.fromEntries(
     Object.entries(SCENARIO_INPUT_DEFAULTS[type] || {}).map(([id, fallback]) => {
       const value = inputs[id] === 'Z' || inputs[id] === undefined ? fallback : inputs[id];
       return [
@@ -147,12 +162,17 @@ function controls(type, inputs = {}) {
       ];
     }),
   );
+  // An unwired far turnout is intentionally ganged to the near turnout.
+  if (type === 'railway' && (inputs.exit_points === 'Z' || inputs.exit_points === undefined))
+    result.exit_points = result.points;
+  return result;
 }
 
 const uncertain = (control) => Object.values(control).some((value) => value === 'X');
 const flag = (latched, control) => (latched ? 1 : uncertain(control) ? 'X' : 0);
 
 export function initialScenarioState(node) {
+  if (AUTOMATION_TYPES.includes(node.type)) return initialAutomationState(node);
   const p = parameters(node);
   const base = { kind: node.type, time: 0, uncertain: false, failure: null };
   switch (node.type) {
@@ -204,6 +224,7 @@ export function initialScenarioState(node) {
           },
         ],
         points: 0,
+        exitPoints: 0,
         barrier: 0,
         barrierTarget: 0,
         roadCars: [
@@ -271,13 +292,13 @@ function collisionFraction(a, b, old, shapeA, shapeB) {
       (old.get(vehicle) ?? vehicle.position) +
       (vehicle.position - (old.get(vehicle) ?? vehicle.position)) * fraction,
   });
-  if (overlaps(shapeA(at(a, 0)), shapeB(at(b, 0)))) return 0;
-  if (!overlaps(shapeA(a), shapeB(b))) return null;
+  if (bodiesOverlap(shapeA(at(a, 0)), shapeB(at(b, 0)))) return 0;
+  if (!bodiesOverlap(shapeA(a), shapeB(b))) return null;
   let low = 0,
     high = 1;
   for (let index = 0; index < 24; index++) {
     const middle = (low + high) / 2;
-    if (overlaps(shapeA(at(a, middle)), shapeB(at(b, middle)))) high = middle;
+    if (bodiesOverlap(shapeA(at(a, middle)), shapeB(at(b, middle)))) high = middle;
     else low = middle;
   }
   return high;
@@ -291,7 +312,7 @@ function stopAtContact(a, b, old, fraction, shapeA, shapeB) {
     vehicle.stopped = true;
     vehicle.speed = 0;
   }
-  return contactPoint(shapeA(a), shapeB(b));
+  return bodyContact(shapeA(a), shapeB(b));
 }
 
 function advanceTraffic(state, c, p, dt) {
@@ -335,7 +356,7 @@ function advanceTraffic(state, c, p, dt) {
     for (let b = a + 1; b < state.cars.length; b++) {
       const one = state.cars[a],
         two = state.cars[b];
-      const fraction = collisionFraction(one, two, old, carFootprint, carFootprint);
+      const fraction = collisionFraction(one, two, old, carCollisionBody, carCollisionBody);
       if (fraction !== null && (!first || fraction < first.fraction))
         first = { one, two, fraction };
     }
@@ -347,7 +368,7 @@ function advanceTraffic(state, c, p, dt) {
         car.position = old.get(car) + (car.position - old.get(car)) * first.fraction;
     first.one.crashed = true;
     first.two.crashed = true;
-    state.collisionPoint = contactPoint(carFootprint(first.one), carFootprint(first.two));
+    state.collisionPoint = bodyContact(carCollisionBody(first.one), carCollisionBody(first.two));
     state.collisionPair = [first.one.id, first.two.id];
     for (const car of state.cars) car.stopped = true;
   }
@@ -413,12 +434,15 @@ function advanceRailway(state, c, p, dt) {
     train.position = Math.min(old + (c.throttle / 3.6) * dt, stop);
     train.speed = train.position - old > 1e-10 ? c.throttle : 0;
     train.stopped = train.speed === 0;
-    if (c.points !== Number(train.track === 'b') && trainAtEntryTurnout(train)) {
+    const entryPoints = train.track === 'a' ? state.points : state.exitPoints;
+    if (entryPoints !== Number(train.track === 'b') && trainAtEntryTurnout(train)) {
       railFault(state, 'wrong_route');
       train.derailed = true;
       train.speed = 0;
       train.stopped = true;
     }
+    if (train.exitRoute === undefined && trainAtExitTurnout(train))
+      train.exitRoute = train.track === 'a' ? state.exitPoints : state.points;
     if (train.speed > speedLimit) {
       railFault(state, 'overspeed');
       if (trainInTurnout(train)) {
@@ -428,35 +452,37 @@ function advanceRailway(state, c, p, dt) {
       }
     }
   }
-  const roadShape = (car) => carFootprint(car, 'railway');
+  const roadShape = (car) => carCollisionBody(car, 'railway');
   const contacts = [];
   for (let a = 0; a < state.trains.length; a++) {
     for (let b = a + 1; b < state.trains.length; b++) {
+      if (state.trains[a].crashed && state.trains[b].crashed) continue;
       const fraction = collisionFraction(
         state.trains[a],
         state.trains[b],
         old,
-        trainFootprint,
-        trainFootprint,
+        trainCollisionBody,
+        trainCollisionBody,
       );
       if (fraction !== null)
         contacts.push({
           a: state.trains[a],
           b: state.trains[b],
           fraction,
-          shapeA: trainFootprint,
-          shapeB: trainFootprint,
+          shapeA: trainCollisionBody,
+          shapeB: trainCollisionBody,
           reason: 'collision',
         });
     }
     for (const car of state.roadCars) {
-      const fraction = collisionFraction(state.trains[a], car, old, trainFootprint, roadShape);
+      if (state.trains[a].crashed && car.crashed) continue;
+      const fraction = collisionFraction(state.trains[a], car, old, trainCollisionBody, roadShape);
       if (fraction !== null)
         contacts.push({
           a: state.trains[a],
           b: car,
           fraction,
-          shapeA: trainFootprint,
+          shapeA: trainCollisionBody,
           shapeB: roadShape,
           reason: 'open_barrier',
         });
@@ -483,6 +509,7 @@ function advanceRailway(state, c, p, dt) {
   for (const train of state.trains)
     if (!train.crashed && !train.derailed && train.position > 95) {
       train.position = -110 + (train.position - 95);
+      delete train.exitRoute;
       state.passed++;
     }
   for (const car of state.roadCars)
@@ -560,6 +587,7 @@ function advanceTank(state, c, p, dt) {
 
 /** Advance scene mechanics once per physics call, never during logic settling. */
 export function advanceScenario(node, state, inputs, dt) {
+  if (AUTOMATION_TYPES.includes(node.type)) return advanceAutomation(node, state, inputs, dt);
   if (!isScenarioType(node.type)) return state;
   if (node.enabled === false) return state;
   const c = controls(node.type, inputs),
@@ -582,15 +610,16 @@ export function advanceScenario(node, state, inputs, dt) {
       ['ns_green', 'ns_yellow', 'ew_green', 'ew_yellow'].map((key) => [key, c[key]]),
     );
   if (node.type === 'railway' && !next.uncertain) {
-    if (c.points !== next.points)
-      for (const train of next.trains)
-        if (trainInTurnout(train)) {
-          railFault(next, 'points_under_train');
-          train.derailed = true;
-          train.speed = 0;
-          train.stopped = true;
-        }
+    const changedEnds = [c.points !== next.points, c.exit_points !== next.exitPoints];
+    for (const train of next.trains)
+      if (changedEnds.some((changed, end) => changed && trainAtTurnout(train, end))) {
+        railFault(next, 'points_under_train');
+        train.derailed = true;
+        train.speed = 0;
+        train.stopped = true;
+      }
     next.points = c.points;
+    next.exitPoints = c.exit_points;
     next.barrierTarget = c.barrier;
     next.signals = { a: c.signal_a, b: c.signal_b };
   }
@@ -636,6 +665,7 @@ export function advanceScenario(node, state, inputs, dt) {
 }
 
 export function evaluateScenario(node, state, inputs) {
+  if (AUTOMATION_TYPES.includes(node.type)) return evaluateAutomation(node, state, inputs);
   if (!isScenarioType(node.type)) return undefined;
   const s = state || initialScenarioState(node),
     c = controls(node.type, inputs),
@@ -653,6 +683,8 @@ export function evaluateScenario(node, state, inputs) {
         'gate_closed',
         'crossing_clear',
         'cars_wait',
+        'points_state',
+        'exit_points_state',
       ],
       animal_feeder: ['hungry', 'full', 'empty', 'alarm', 'level', 'hopper', 'fed'],
       water_tank: ['low', 'high', 'overflow', 'level'],
@@ -698,6 +730,8 @@ export function evaluateScenario(node, state, inputs) {
         fault: flag(s.fault, c),
         speed: uncertain(c) ? 'X' : Math.max(...s.trains.map((train) => train.speed)),
         passed: s.passed & 255,
+        points_state: s.points,
+        exit_points_state: s.exitPoints,
         gate_closed: Number(s.barrier >= 1 - 1e-9),
         crossing_clear: Number(crossingClear(s.roadCars || [])),
         cars_wait: Number(

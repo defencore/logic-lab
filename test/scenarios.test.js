@@ -12,7 +12,11 @@ import {
   trainReservesSection,
   crossingClear,
   footprintCorners,
+  trainCollisionBody,
+  carCollisionBody,
+  railwayPose,
 } from '../src/transport-geometry.js';
+import { bodiesOverlap, bodySeparation } from '../src/transport-shapes.js';
 import {
   SCENARIO_TYPES,
   SCENARIO_DEFAULTS,
@@ -39,7 +43,7 @@ test('scenario definitions expose fixed pins, mechanical units and one shared se
   assert.ok(Object.isFrozen(SCENARIO_TYPES));
   for (const type of SCENARIO_TYPES) {
     const definition = getDefinition(type);
-    assert.equal(definition.category, 'scenes');
+    assert.ok(['scenes', 'automation'].includes(definition.category));
     assert.equal(definition.defaults, SCENARIO_DEFAULTS[type]);
     const n = node(type),
       state = initialScenarioState(n);
@@ -128,6 +132,8 @@ test('red railway signals stop approaching trains before the shared block', () =
     gate_closed: 0,
     crossing_clear: 1,
     cars_wait: 0,
+    points_state: 0,
+    exit_points_state: 0,
   });
 });
 
@@ -444,7 +450,8 @@ test('moving open-gate traffic collides at the actual train boundary and freezes
   assert.ok(train.crashed && car.crashed);
   assert.ok(overlaps(trainFootprint(train), carFootprint(car, 'railway')));
   assert.deepEqual(state.collisionPair, [train.id, car.id]);
-  near(state.collisionPoint.x, -0.25, 1e-6);
+  assert.ok(bodySeparation(trainCollisionBody(train), carCollisionBody(car, 'railway')) < 2e-6);
+  assert.ok(bodiesOverlap(trainCollisionBody(train), carCollisionBody(car, 'railway')));
   const trainStop = train.position,
     carStop = car.position;
   const other = state.roadCars.find(({ id }) => id === 'road-b').position;
@@ -482,10 +489,10 @@ test('same-path train collisions use rendered front-to-tail distances instead of
   assert.ok(state.faults.includes('collision'));
   const [lead, following] = state.trains;
   assert.ok(overlaps(trainFootprint(lead), trainFootprint(following)));
-  near(
-    following.position,
-    lead.position - (RAILWAY.trainFront + RAILWAY.trainRear) / RAILWAY.scale,
-    1e-5,
+  assert.ok(bodySeparation(trainCollisionBody(lead), trainCollisionBody(following)) < 2e-6);
+  assert.ok(
+    following.position > lead.position - (RAILWAY.trainFront + RAILWAY.trainRear) / RAILWAY.scale,
+    'The narrow visible nose reaches the actual wagon rather than the larger reservation box.',
   );
 });
 
@@ -512,4 +519,97 @@ test('swept contact coordinates agree across coarse and fine physics calls for r
     near(coarse.collisionPoint.x, fine.collisionPoint.x, 1e-6);
     near(coarse.collisionPoint.z, fine.collisionPoint.z, 1e-6);
   }
+});
+
+test('overlapping reservation envelopes cannot invent a collision between separated visible solids', () => {
+  const n = node('railway');
+  let state = initialScenarioState(n);
+  state.trains = [{ ...state.trains[0], position: 33 }];
+  state.roadCars = [{ id: 'clear-car', direction: 1, position: -3, crashed: false }];
+  assert.ok(overlaps(trainFootprint(state.trains[0]), carFootprint(state.roadCars[0], 'railway')));
+  assert.ok(
+    bodySeparation(
+      trainCollisionBody(state.trains[0]),
+      carCollisionBody(state.roadCars[0], 'railway'),
+    ) > 0.01,
+  );
+  state = advanceScenario(n, state, { throttle: 0 }, 0.01);
+  assert.equal(state.fault, false);
+  assert.equal(state.collisionPoint, null);
+  assert.ok(state.roadCars[0].position > -3);
+  const cross = node('traffic_junction', { initialCars: 0 });
+  let road = initialScenarioState(cross);
+  road.cars = [
+    { id: 'ns', axis: 'ns', position: -2.4 },
+    { id: 'ew', axis: 'ew', position: -9 },
+  ];
+  assert.ok(overlaps(...road.cars.map((car) => carFootprint(car))));
+  assert.equal(bodiesOverlap(...road.cars.map((car) => carCollisionBody(car))), false);
+  road = advanceScenario(cross, road, { ns_green: 1, ew_green: 1 }, 0.0001);
+  assert.equal(road.crash, false);
+});
+
+test('independent turnouts select genuinely different departure trajectories in both directions', () => {
+  for (const track of ['a', 'b']) {
+    const outcomes = [];
+    for (const diverted of [false, true]) {
+      const n = node('railway');
+      let state = initialScenarioState(n);
+      state.trains = state.trains.filter((train) => train.track === track);
+      state.roadCars = [];
+      const controls = {
+        signal_a: Number(track === 'a'),
+        signal_b: Number(track === 'b'),
+        points: track === 'a' ? 0 : Number(!diverted),
+        exit_points: track === 'b' ? 1 : Number(diverted),
+        barrier: 1,
+      };
+      state = advance(n, state, controls, track === 'a' ? 16 : 20, 0.05);
+      assert.equal(state.fault, false, state.faults.join(','));
+      const train = state.trains[0],
+        pose = railwayPose(train);
+      assert.ok(train.position > 60);
+      assert.equal(train.exitRoute, track === 'a' ? Number(diverted) : Number(!diverted));
+      assert.ok(diverted ? Math.abs(pose.x) > 2 : Math.abs(pose.x) < 1e-10);
+      const before = pose.x;
+      state = advanceScenario(
+        n,
+        state,
+        { ...controls, points: 1 - controls.points, exit_points: 1 - controls.exit_points },
+        0.01,
+      );
+      assert.equal(state.fault, false, 'Switching after the tail clears is safe.');
+      assert.ok(
+        Math.abs(railwayPose(state.trains[0]).x - before) < 0.02,
+        'A latched route cannot teleport after leaving the points.',
+      );
+      outcomes.push(pose.x);
+    }
+    assert.ok(Math.abs(outcomes[1] - outcomes[0]) > 2);
+  }
+});
+
+test('turnout controls gang only when unwired and derail only the physically occupied end', () => {
+  const n = node('railway');
+  const ganged = advanceScenario(n, initialScenarioState(n), { points: 1, run: 0 }, 0);
+  assert.equal(evaluateScenario(n, ganged, {}).points_state, 1);
+  assert.equal(evaluateScenario(n, ganged, {}).exit_points_state, 1);
+  const independent = advanceScenario(
+    n,
+    initialScenarioState(n),
+    { points: 0, exit_points: 1, run: 0 },
+    0,
+  );
+  assert.equal(independent.points, 0);
+  assert.equal(independent.exitPoints, 1);
+  let occupied = initialScenarioState(n);
+  occupied.trains = [{ ...occupied.trains[0], position: 33 }];
+  occupied.roadCars = [];
+  const clearEnd = advanceScenario(n, occupied, { points: 1, exit_points: 0, run: 0 }, 0);
+  assert.equal(clearEnd.fault, false);
+  const unsafe = advanceScenario(n, occupied, { points: 0, exit_points: 1, run: 0 }, 0);
+  assert.equal(unsafe.failure, 'points_under_train');
+  assert.equal(unsafe.trains[0].derailed, true);
+  assert.equal(unsafe.trains[0].crashed, false);
+  assert.equal(unsafe.collisionPoint, null);
 });

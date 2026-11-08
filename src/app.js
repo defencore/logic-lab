@@ -23,7 +23,14 @@ import {
 } from './navigation.js';
 import { drawMini, paintTraces } from './waveforms.js';
 import { truthTableMarkup } from './truth-tables.js';
-import { getSceneEntries, getSceneSnapshot, sceneHealth } from './scene-data.js';
+import {
+  getSceneEntries,
+  getSceneSnapshot,
+  sceneHealth,
+  sceneMessageKey,
+  sceneControlSwitch,
+  sceneActuatorValues,
+} from './scene-data.js';
 import { SCENARIO_TYPES } from './scenarios.js';
 
 let lang = 'en';
@@ -250,6 +257,9 @@ function nodeBody(node) {
     case 'railway':
     case 'animal_feeder':
     case 'water_tank':
+    case 'aquarium':
+    case 'greenhouse':
+    case 'smart_home':
       return `<div class="scene-node-widget"><span class="scene-node-icon">${icon(node.type === 'railway' ? 'wire' : node.type === 'traffic_junction' ? 'grid' : 'box', 32)}</span><strong class="node-readout"></strong><span class="scene-node-state"></span><button data-motion-open data-scene-node="${node.id}" class="text-btn">${t('view3d')}${icon('chevron', 11)}</button></div>`;
     case 'stepper':
       return `<div class="stepper-widget"><div class="stepper-body"><div class="stepper-rotor"></div></div><strong class="node-readout"></strong><button data-motion-open data-scene-node="${node.id}" class="text-btn">${t('view3d')}${icon('chevron', 11)}</button></div>`;
@@ -468,6 +478,15 @@ const PARAM_NAMES = {
   drainRate: ['Drain rate (L/s)', 'Витрата води (л/с)'],
   lowThreshold: ['Low level (%)', 'Низький рівень (%)'],
   highThreshold: ['High level (%)', 'Високий рівень (%)'],
+  initialTemperature: ['Initial temperature (°C)', 'Початкова температура (°C)'],
+  ambientTemperature: ['Ambient temperature (°C)', 'Температура довкілля (°C)'],
+  initialOxygen: ['Initial oxygen (%)', 'Початковий кисень (%)'],
+  initialFood: ['Initial food (%)', 'Початковий запас корму (%)'],
+  initialCleanliness: ['Initial cleanliness (%)', 'Початкова чистота (%)'],
+  fishCount: ['Fish count', 'Кількість рибок'],
+  dayLength: ['Day and night cycle (s)', 'Повний цикл дня і ночі (с)'],
+  initialMoisture: ['Initial soil moisture (%)', 'Початкова вологість ґрунту (%)'],
+  initialWater: ['Initial water reserve (%)', 'Початковий запас води (%)'],
   frequency: ['Frequency (Hz)', 'Частота (Гц)'],
   duty: ['Duty cycle (0–1)', 'Коефіцієнт заповнення (0–1)'],
   carrier: ['Carrier (Hz)', 'Несуча (Гц)'],
@@ -542,6 +561,15 @@ function parameterField(key, value, componentType) {
     drainRate: [0, 10000, 0.1],
     lowThreshold: [0, 100, 1],
     highThreshold: [0, 100, 1],
+    initialTemperature: [-20, 80, 0.5],
+    ambientTemperature: [-20, 50, 0.5],
+    initialOxygen: [0, 100, 1],
+    initialFood: [0, 100, 1],
+    initialCleanliness: [0, 100, 1],
+    fishCount: [1, 8, 1],
+    dayLength: [10, 3600, 1],
+    initialMoisture: [0, 100, 1],
+    initialWater: [0, 100, 1],
     duty: [0, 1, 0.01],
     depth: [0, 1, 0.01],
     minDuty: [0, 1, 0.01],
@@ -624,13 +652,19 @@ function updateSignals() {
       el.dataset.sceneHealth = health.status;
       const readout = $('.node-readout', el);
       readout.textContent =
-        n.type === 'water_tank'
-          ? `${format(outs.level)}%`
-          : n.type === 'animal_feeder'
-            ? `${format(outs.level)} g`
-            : n.type === 'traffic_light'
-              ? `${t('signalState')}: ${format(outs.valid)}`
-              : `${t('scenePassed')}: ${format(outs.passed)}`;
+        n.type === 'aquarium'
+          ? `${t('sceneAlive')}: ${format(outs.alive)} · ${format(outs.temperature)} °C`
+          : n.type === 'greenhouse'
+            ? `${t('sceneGrowth')}: ${format(outs.growth)}%`
+            : n.type === 'smart_home'
+              ? `${format(outs.temperature)} °C · ${format(outs.energy)} kWh`
+              : n.type === 'water_tank'
+                ? `${format(outs.level)}%`
+                : n.type === 'animal_feeder'
+                  ? `${format(outs.level)} g`
+                  : n.type === 'traffic_light'
+                    ? `${t('signalState')}: ${format(outs.valid)}`
+                    : `${t('scenePassed')}: ${format(outs.passed)}`;
       const status = $('.scene-node-state', el);
       if (status)
         status.textContent =
@@ -1319,6 +1353,20 @@ function sceneName(entry) {
   const node = project.nodes.find((item) => item.id === entry.nodeId);
   return node?.label || title(getDefinition(entry.type));
 }
+function scenePointsMarkup(entry) {
+  if (entry.type !== 'railway') return '';
+  return `<section class="railway-controls"><h3>${t('railwayPoints')}</h3><p>${t('railwayPointsHint')}</p>${[
+    'points',
+    'exit_points',
+  ]
+    .map((port) => {
+      const source = sceneControlSwitch(project, entry.nodeId, port);
+      return `<button type="button" class="soft-btn railway-point-control" data-point-control="${port}" ${source ? `data-point-source="${esc(source)}"` : 'disabled'}><span>${t(port === 'points' ? 'nearPoints' : 'farPoints')}<small>${t(source ? 'clickToSwitch' : 'circuitControlled')}</small></span><b data-point-state="${port}">0</b></button>`;
+    })
+    .join(
+      '',
+    )}<button type="button" id="manual-railway-lab" class="text-btn">${t('manualRailwayLab')}${icon('chevron', 12)}</button></section>`;
+}
 function sceneControlsMarkup() {
   const switches = project.nodes.filter((node) => node.type === 'switch');
   const clocks = project.nodes.filter((node) => node.type === 'clock');
@@ -1334,7 +1382,7 @@ async function showMotionView(requestedId = null) {
   const mechanics = entry.type === 'mechanics';
   showModal(
     `<span class="eyebrow">${t('motionView')}</span><h2>${esc(sceneName(entry))}</h2>${entries.length > 1 ? `<label class="scene-picker">${t('sceneObject')}<select id="scene-select">${entries.map((item) => `<option value="${esc(item.id)}" ${item.id === entry.id ? 'selected' : ''}>${esc(sceneName(item))}</option>`).join('')}</select></label>` : ''}<div class="motion-toolbar"><div class="camera-views">${['perspective', 'front', 'top'].map((view, index) => `<button class="soft-btn ${index === 0 ? 'active' : ''}" data-camera-view="${view}">${t(view)}</button>`).join('')}<button id="motion-camera-reset" class="icon-btn" aria-label="${t('resetCamera')}">${icon('fit', 16)}</button></div><div><button id="motion-reset" class="icon-btn" aria-label="${t('reset')}">${icon('reset', 16)}</button><button id="motion-run" class="primary-btn"></button></div></div>
-    <div class="motion-layout"><div><div id="motion-stage" class="motion-stage" role="img" aria-label="${t('motionScene')}"></div><p class="motion-orbit-help">${t('orbitHelp')}</p><p id="motion-status" class="motion-status">${t('loading3d')}</p>${mechanics ? '' : '<p id="scene-health" class="scene-health" aria-live="polite"></p>'}</div><aside class="motion-sidebar">${mechanics ? '' : sceneControlsMarkup()}${mechanics ? `<section><h3>${t('axisReadouts')}</h3><div id="motion-readouts"></div></section><section><h3>${t('sensorReadouts')}</h3><div id="motion-sensors"></div></section>` : `<section><p class="scene-purpose">${esc(lang === 'ua' ? getDefinition(entry.type).descriptionUa : getDefinition(entry.type).description)}</p><h3>${t('sceneOutputs')}</h3><div id="scene-readouts"></div></section>`}${mechanics ? sceneControlsMarkup() : ''}</aside></div>`,
+    <div class="motion-layout"><div><div id="motion-stage" class="motion-stage" role="img" aria-label="${mechanics ? t('motionScene') : esc(sceneName(entry))}"></div><p class="motion-orbit-help">${t('orbitHelp')}</p><div id="scene-summary" class="scene-summary"></div><p id="motion-status" class="motion-status">${t('loading3d')}</p>${mechanics ? '' : '<p id="scene-health" class="scene-health" aria-live="polite"></p>'}</div><aside class="motion-sidebar">${scenePointsMarkup(entry)}${mechanics ? '' : sceneControlsMarkup()}${mechanics ? `<section><h3>${t('axisReadouts')}</h3><div id="motion-readouts"></div></section><section><h3>${t('sensorReadouts')}</h3><div id="motion-sensors"></div></section>` : `<section><p class="scene-purpose">${esc(lang === 'ua' ? getDefinition(entry.type).descriptionUa : getDefinition(entry.type).description)}</p><details class="scene-actuators"><summary>${t('sceneActuators')}</summary><div id="scene-actuators"></div></details><h3>${t('sceneOutputs')}</h3><div id="scene-readouts"></div></section>`}${mechanics ? sceneControlsMarkup() : ''}</aside></div>`,
     true,
   );
   activeSceneEntry = entry;
@@ -1349,6 +1397,12 @@ async function showMotionView(requestedId = null) {
   $$('[data-motion-switch]').forEach(
     (button) => (button.onclick = () => toggleSource(button.dataset.motionSwitch)),
   );
+  $$('[data-point-source]').forEach((button) => {
+    button.onclick = () => toggleSource(button.dataset.pointSource);
+  });
+  if ($('#manual-railway-lab'))
+    $('#manual-railway-lab').onclick = () =>
+      confirmReplace(() => createExample('railway-dispatch'));
   $$('[data-motion-clock],[data-motion-value]').forEach((input) =>
     bindLiveText(input, (value) => {
       if (value === '') return;
@@ -1432,6 +1486,45 @@ function updateMotionView() {
       : `<p>${t('noSensors')}</p>`;
   } else {
     const definition = getDefinition(snapshot.node.type);
+    const primary =
+      {
+        aquarium: [
+          ['temperature', 'sceneTemperature'],
+          ['oxygen', 'sceneOxygen'],
+          ['alive', 'sceneAlive'],
+          ['health', 'sceneHealthLabel'],
+        ],
+        greenhouse: [
+          ['temperature', 'sceneTemperature'],
+          ['moisture', 'sceneMoisture'],
+          ['growth', 'sceneGrowth'],
+          ['health', 'sceneHealthLabel'],
+        ],
+        smart_home: [
+          ['temperature', 'sceneTemperature'],
+          ['water', 'sceneWater'],
+          ['energy', 'sceneEnergy'],
+        ],
+      }[snapshot.node.type] || [];
+    $('#scene-summary').innerHTML = primary
+      .map(([id, label]) => {
+        const port = definition.outputs.find((item) => item.id === id);
+        return `<div><span>${t(label)}</span><strong>${format(snapshot.outputs[id])}${port.unit ? ` <small>${esc(port.unit)}</small>` : ''}</strong></div>`;
+      })
+      .join('');
+    const actuators = sceneActuatorValues(snapshot);
+    $('#scene-actuators').innerHTML = definition.inputs
+      .filter((port) => !['run', 'reset'].includes(port.id))
+      .map((port) => {
+        const actual = actuators[port.id];
+        return `<div class="scene-signal-row"><span>${esc(port.label)}</span><b class="signal-value ${signalClass(actual)}">${format(actual)}</b></div>`;
+      })
+      .join('');
+    $$('[data-point-state]').forEach((readout) => {
+      const value = snapshot.outputs[`${readout.dataset.pointState}_state`];
+      readout.textContent = format(value);
+      readout.closest('button').setAttribute('aria-pressed', String(value === 1));
+    });
     $('#scene-readouts').innerHTML = definition.outputs
       .map(
         (port) =>
@@ -1439,18 +1532,7 @@ function updateMotionView() {
       )
       .join('');
     const health = sceneHealth(snapshot);
-    const reasonKey =
-      {
-        invalid_parameters: 'sceneParameters',
-        collision: 'sceneCollision',
-        overspeed: 'sceneOverspeed',
-        points_under_train: 'scenePoints',
-        wrong_route: 'sceneWrongRoute',
-        open_barrier: 'sceneBarrier',
-        spill: 'sceneSpill',
-        overfed: 'sceneOverfed',
-        overflow: 'sceneOverflow',
-      }[health.reason] || health.reason;
+    const reasonKey = sceneMessageKey(snapshot, health.reason);
     const status = $('#scene-health');
     const message = t(reasonKey);
     if (status.textContent !== message) status.textContent = message;

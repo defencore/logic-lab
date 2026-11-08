@@ -15,6 +15,7 @@ const categoryIcon = {
   physical: 'signal',
   motion: 'box',
   scenes: 'box',
+  automation: 'grid',
   annotation: 'note',
 };
 const name = (entry, language) => (language === 'ua' ? entry.ua : entry.label);

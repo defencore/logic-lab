@@ -1,3 +1,5 @@
+import { AUTOMATION_TYPES } from './automation-worlds.js';
+import { createAutomationModel, AUTOMATION_FRAMING } from './automation-view.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import {
@@ -9,12 +11,14 @@ import {
   railwayOffsetPoint,
   roadCarPose,
 } from './transport-geometry.js';
+import { CAR_PARTS, TRAIN_PARTS, CAR_SCALE, TRAIN_SCALE } from './transport-shapes.js';
 
 const finite = (value, fallback = 0) =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 const clamp = (value, minimum = 0, maximum = 1) => Math.max(minimum, Math.min(maximum, value));
 const active = (value) => value === true || value === 1;
 export const SCENARIO_VIEW_TYPES = [
+  ...AUTOMATION_TYPES,
   'traffic_light',
   'traffic_junction',
   'railway',
@@ -24,6 +28,7 @@ export const SCENARIO_VIEW_TYPES = [
 
 /** Build the same scene graph used by the WebGL view without allocating a renderer. */
 export function createScenarioModel(type, context) {
+  if (AUTOMATION_TYPES.includes(type)) return createAutomationModel(type, context);
   if (!SCENARIO_VIEW_TYPES.includes(type)) throw new Error(`Unsupported 3D scenario type: ${type}`);
   const constructors = {
     traffic_light: createTrafficLight,
@@ -171,6 +176,7 @@ export function createScenarioView(
   function setView(view = 'perspective') {
     if (disposed) return;
     const framing = {
+      ...AUTOMATION_FRAMING,
       traffic_light: {
         target: [0.4, 2.6, 0],
         perspective: [8, 7.2, 10],
@@ -378,51 +384,68 @@ function buildSignal(context, parent, x, z, rotation = 0, scale = 1) {
   };
 }
 
-function buildCar(context, color = 0x547ca3) {
-  const { mesh, box, cylinder, sphere, material, geometry } = context;
+function buildTransport(context, kind, color) {
+  const { mesh, box, cylinder, material, geometry } = context;
   const group = new THREE.Group();
-  group.scale.x = 0.96;
+  group.scale.fromArray(kind === 'car' ? CAR_SCALE : TRAIN_SCALE);
+  const paints = {
+    body: material(color, 0.25, 0.3),
+    glass: material(0x385367, 0.45, 0.2),
+    tire: material(0x202624),
+    dark: material(0x343c3c, 0.4),
+    metal: material(0xadb5b9, 0.8, 0.25),
+    lamp: material(0xffe8b3),
+    tail: material(0xc54438),
+    plow: material(0xa55c3f),
+  };
   const wheels = [];
-  const body = mesh(
-    group,
-    geometry('car-body', () => new THREE.CapsuleGeometry(0.19, 0.43, 5, 16).rotateX(Math.PI / 2)),
-    material(color, 0.25, 0.3),
-    0,
-    0.25,
-  );
-  body.scale.set(1.3, 0.65, 1);
-  mesh(group, box(0.36, 0.22, 0.38), material(color, 0.25, 0.3), 0, 0.43, -0.02);
-  const windshield = mesh(
-    group,
-    box(0.31, 0.15, 0.028),
-    material(0x385367, 0.45, 0.2),
-    0,
-    0.45,
-    0.19,
-  );
-  windshield.rotation.x = -0.25;
-  mesh(group, box(0.032, 0.14, 0.3), material(0x385367, 0.45, 0.2), -0.185, 0.45, -0.02);
-  mesh(group, box(0.032, 0.14, 0.3), material(0x385367, 0.45, 0.2), 0.185, 0.45, -0.02);
-  for (const x of [-0.22, 0.22])
-    for (const z of [-0.27, 0.27]) {
-      const wheel = new THREE.Group();
-      wheel.position.set(x, 0.13, z);
-      group.add(wheel);
-      const tire = mesh(wheel, cylinder(0.115, 0.115, 0.075, 18), material(0x202624));
-      tire.rotation.z = Math.PI / 2;
-      const hub = mesh(wheel, cylinder(0.055, 0.055, 0.079, 12), material(0xadb5b9, 0.8, 0.25));
-      hub.rotation.z = Math.PI / 2;
-      wheels.push(wheel);
+  for (const recipe of kind === 'car' ? CAR_PARTS : TRAIN_PARTS) {
+    const shape = geometry(`transport:${recipe.shape}:${recipe.size.join(':')}`, () => {
+      if (recipe.shape === 'box') return new THREE.BoxGeometry(...recipe.size);
+      if (recipe.shape === 'cylinder') return new THREE.CylinderGeometry(...recipe.size);
+      if (recipe.shape === 'sphere') return new THREE.SphereGeometry(...recipe.size);
+      if (recipe.shape === 'cone') return new THREE.ConeGeometry(...recipe.size);
+      if (recipe.shape === 'capsule') return new THREE.CapsuleGeometry(...recipe.size);
+      throw new Error(`Unsupported transport shape: ${recipe.shape}`);
+    });
+    const object = mesh(group, shape, paints[recipe.paint], ...recipe.position);
+    object.rotation.fromArray([...(recipe.rotation ?? [0, 0, 0]), 'XYZ']);
+    object.scale.fromArray(recipe.scale ?? [1, 1, 1]);
+    object.userData.collisionPart = recipe.id;
+    if (recipe.wheel) {
+      // The circular tire remains the same collision solid. Only its inset hub
+      // and spoke rotate, so polygon tessellation cannot invent a changing gap.
+      const hub = new THREE.Group();
+      hub.position.fromArray(recipe.position);
+      group.add(hub);
+      const disc = mesh(
+        hub,
+        cylinder(
+          kind === 'car' ? 0.055 : 0.1,
+          kind === 'car' ? 0.055 : 0.1,
+          kind === 'car' ? 0.079 : 0.075,
+          12,
+        ),
+        paints.metal,
+      );
+      disc.rotation.z = Math.PI / 2;
+      if (kind === 'train') mesh(hub, box(0.08, 0.025, 0.21), material(0xaf8b47, 0.6));
+      wheels.push(hub);
     }
-  for (const x of [-0.16, 0.16]) {
-    const light = mesh(group, sphere(0.05), material(0xffe8b3), x, 0.27, 0.39);
-    light.scale.z = 0.4;
-    const tail = mesh(group, sphere(0.039), material(0xc54438), x, 0.27, -0.4);
-    tail.scale.z = 0.4;
   }
-  const damage = mesh(group, box(0.32, 0.008, 0.28), material(0x3b3c35), 0, 0.545, -0.02);
+  const damage = new THREE.Group();
+  group.add(damage);
   damage.visible = false;
+  if (kind === 'car') mesh(damage, box(0.32, 0.008, 0.28), material(0x3b3c35), 0, 0.545, -0.02);
+  else
+    for (const angle of [-Math.PI / 4, Math.PI / 4]) {
+      const scar = mesh(damage, box(0.3, 0.03, 0.008), material(0x34362e), 0, 0.62, 0.516);
+      scar.rotation.z = angle;
+    }
   return { group, wheels, damage };
+}
+function buildCar(context, color = 0x547ca3) {
+  return buildTransport(context, 'car', color);
 }
 
 function buildAftermath(context, parent) {
@@ -541,64 +564,7 @@ function createTrafficJunction(context) {
 }
 
 function buildTrain(context, color) {
-  const { mesh, box, cylinder, sphere, material, geometry } = context;
-  const group = new THREE.Group(),
-    wheels = [];
-  const paint = material(color, 0.35, 0.35),
-    dark = material(0x293432),
-    metal = material(0xb9c4c3, 0.8, 0.3);
-  mesh(group, box(0.64, 0.13, 1.3), dark, 0, 0.25, -0.12);
-  const boiler = mesh(group, cylinder(0.24, 0.24, 0.85), paint, 0, 0.6, 0.04);
-  boiler.rotation.x = Math.PI / 2;
-  const nose = mesh(group, cylinder(0.23, 0.23, 0.045), dark, 0, 0.6, 0.49);
-  nose.rotation.x = Math.PI / 2;
-  mesh(group, box(0.59, 0.6, 0.4), paint, 0, 0.68, -0.5);
-  mesh(group, box(0.68, 0.07, 0.52), dark, 0, 1.02, -0.5);
-  mesh(group, box(0.035, 0.21, 0.27), material(0x8eb0c1, 0.35, 0.25), -0.3, 0.79, -0.5);
-  mesh(group, box(0.035, 0.21, 0.27), material(0x8eb0c1, 0.35, 0.25), 0.3, 0.79, -0.5);
-  mesh(group, cylinder(0.08, 0.11, 0.31), dark, 0, 0.96, 0.26);
-  mesh(group, cylinder(0.13, 0.13, 0.06), metal, 0, 1.13, 0.26);
-  mesh(group, sphere(0.075), material(0xffe9ac), 0, 0.64, 0.54);
-  const plow = mesh(
-    group,
-    geometry('train-plow', () => new THREE.ConeGeometry(0.36, 0.28, 4)),
-    material(0xa55c3f),
-    0,
-    0.22,
-    0.66,
-  );
-  plow.rotation.x = Math.PI / 2;
-  mesh(group, box(0.58, 0.38, 0.55), paint, 0, 0.49, -1.14);
-  for (let i = 0; i < 9; i++)
-    mesh(
-      group,
-      sphere(0.09),
-      dark,
-      Math.sin(i * 2.4) * 0.16,
-      0.7 + (i % 2) * 0.04,
-      -1.15 + Math.cos(i * 2.4) * 0.14,
-    );
-  for (const z of [-1.3, -0.98, -0.47, -0.06, 0.35])
-    for (const x of [-0.32, 0.32]) {
-      const wheel = new THREE.Group();
-      wheel.position.set(x, 0.17, z);
-      group.add(wheel);
-      const tire = mesh(wheel, cylinder(0.15, 0.15, 0.07, 18), dark);
-      tire.rotation.z = Math.PI / 2;
-      const hub = mesh(wheel, cylinder(0.1, 0.1, 0.075, 12), metal);
-      hub.rotation.z = Math.PI / 2;
-      mesh(wheel, box(0.08, 0.025, 0.21), material(0xaf8b47, 0.6), 0);
-      wheels.push(wheel);
-    }
-  group.scale.setScalar(0.68);
-  const damage = new THREE.Group();
-  group.add(damage);
-  damage.visible = false;
-  for (const angle of [-Math.PI / 4, Math.PI / 4]) {
-    const scar = mesh(damage, box(0.3, 0.03, 0.008), material(0x34362e), 0, 0.62, 0.516);
-    scar.rotation.z = angle;
-  }
-  return { group, wheels, damage };
+  return buildTransport(context, 'train', color);
 }
 
 function buildSpeedSign(context, parent, initial, x, y, z) {
@@ -656,7 +622,7 @@ function buildSpeedSign(context, parent, initial, x, y, z) {
 }
 
 function createRailway(context) {
-  const { root, mesh, box, cylinder, material, geometry, keep } = context;
+  const { root, mesh, box, cylinder, sphere, material, geometry, keep } = context;
   const steel = material(0xaeb7b7, 0.85, 0.25),
     timber = material(0x7c634a),
     ballast = material(0x9e9d90);
@@ -710,9 +676,38 @@ function createRailway(context) {
   mesh(root, box(12.8, 0.08, 1.6), material(0x4b555c), 0, 0.15, RAILWAY.roadZ);
   for (const x of [-5, -3, 3, 5])
     mesh(root, box(1.1, 0.015, 0.06), material(0xf3ead3), x, 0.2, RAILWAY.roadZ);
-  const bladeA = mesh(root, box(0.035, 0.055, 0.9), steel, -0.08, 0.32, -0.2);
-  const bladeB = mesh(root, box(0.035, 0.055, 0.9), steel, 0.08, 0.32, 2.12);
-  mesh(root, box(0.5, 0.18, 0.34), material(0x5e7767), 0.7, 0.25, -0.4);
+  const turnouts = [0, 1].map((end) => {
+    const group = new THREE.Group();
+    root.add(group);
+    group.position.z = end ? 2.12 : -0.2;
+    group.userData = { role: 'rail-turnout', end };
+    const blades = [-1, 1].map((side) => {
+      const blade = mesh(group, box(0.035, 0.055, 0.9), steel, side * 0.16, 0.32);
+      blade.userData.role = 'turnout-blade';
+      return blade;
+    });
+    const lever = new THREE.Group();
+    root.add(lever);
+    lever.position.set(end ? 0.8 : -0.8, 0.3, end ? 2.8 : -0.85);
+    lever.userData = { role: 'turnout-lever', end };
+    mesh(lever, box(0.45, 0.15, 0.35), material(0x627b6b));
+    const handle = mesh(lever, box(0.055, 0.5, 0.055), material(0x254c3d), 0, 0.28);
+    mesh(handle, sphere(0.09), material(0xffcf69), 0, 0.25);
+    const routes = [0, 1].map((route) => {
+      const line =
+        route === (end ? 1 : 0)
+          ? trackCurve((t) => railwayPoint(end ? 'b' : 'a', -55 + t * 55), 0.34)
+          : trackCurve((t) => ({ x: 0, z: end ? 2.1 + (1 - t) * 3.3 : -3.3 + t * 3.3 }), 0.34);
+      const rail = mesh(
+        root,
+        keep(new THREE.TubeGeometry(line, 80, 0.027, 6, false)),
+        material(0x2aaf80, 0.25),
+      );
+      rail.userData = { role: 'selected-rail-route', end, route };
+      return rail;
+    });
+    return { blades, handle, routes };
+  });
   const signalA = buildSignal(context, root, -1.05, -1.0, Math.PI, 0.72);
   const signalB = buildSignal(context, root, 1.05, 3.0, 0, 0.72);
   const arms = [-1, 1].map((side) => {
@@ -749,8 +744,14 @@ function createRailway(context) {
       for (const arm of arms)
         arm.rotation.x =
           (-arm.userData.direction * (1 - clamp(finite(state.barrier))) * Math.PI) / 2;
-      bladeA.rotation.y = state.points ? -0.22 : 0.05;
-      bladeB.rotation.y = state.points ? 0.05 : -0.22;
+      for (const [end, turnout] of turnouts.entries()) {
+        const selected = end ? (state.exitPoints ?? state.points ?? 0) : (state.points ?? 0);
+        for (const blade of turnout.blades) blade.rotation.y = selected ? -0.18 : 0.18;
+        turnout.handle.rotation.z = selected ? -0.48 : 0.48;
+        turnout.routes.forEach((route, index) => {
+          route.visible = selected === index;
+        });
+      }
       const live = new Set();
       for (const data of state.trains || []) {
         live.add(data.id);

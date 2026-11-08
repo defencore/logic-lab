@@ -1,0 +1,435 @@
+{
+  "version": 1,
+  "name": "Smart yard: access, rain and water",
+  "exampleId": "yard-security",
+  "nodes": [
+    {
+      "id": "run",
+      "type": "switch",
+      "label": "Scene run",
+      "x": 20,
+      "y": 20,
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "label": "Reset process",
+      "x": 20,
+      "y": 210,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "world",
+      "type": "smart_home",
+      "label": "Yard access and rain interlocks",
+      "x": 320,
+      "y": 60,
+      "enabled": true,
+      "params": {
+        "initialTemperature": 20,
+        "ambientTemperature": 12,
+        "initialWater": 70,
+        "dayLength": 60
+      }
+    },
+    {
+      "id": "authorized",
+      "type": "switch",
+      "label": "Visitor authorized",
+      "x": 20,
+      "y": 400,
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "water-permit",
+      "type": "switch",
+      "label": "Irrigation permitted",
+      "x": 20,
+      "y": 590,
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "force-pump",
+      "type": "switch",
+      "label": "Unsafe dry-pump bypass",
+      "x": 20,
+      "y": 780,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "gate",
+      "type": "and",
+      "label": "Motion AND authorized visitor",
+      "x": 650,
+      "y": 20,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "armed",
+      "type": "not",
+      "label": "Arm for unauthorized visitors",
+      "x": 650,
+      "y": 225,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "light",
+      "type": "and",
+      "label": "Dark AND motion",
+      "x": 650,
+      "y": 430,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "dry-weather",
+      "type": "not",
+      "label": "No rain",
+      "x": 650,
+      "y": 635,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "water-available",
+      "type": "not",
+      "label": "Tank not low",
+      "x": 940,
+      "y": 20,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "weather-safe",
+      "type": "and",
+      "label": "Dry weather AND water available",
+      "x": 940,
+      "y": 225,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "water",
+      "type": "and",
+      "label": "Weather-safe AND irrigation permitted",
+      "x": 940,
+      "y": 430,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "pump",
+      "type": "or",
+      "label": "Guarded irrigation OR unsafe bypass",
+      "x": 940,
+      "y": 635,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "alarm",
+      "type": "led",
+      "label": "Process alarm",
+      "x": 1800,
+      "y": 120,
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "run-out-world-run",
+      "from": {
+        "node": "run",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "run"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-world-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-cold-world-heater",
+      "from": {
+        "node": "world",
+        "port": "cold"
+      },
+      "to": {
+        "node": "world",
+        "port": "heater"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-hot-world-fan",
+      "from": {
+        "node": "world",
+        "port": "hot"
+      },
+      "to": {
+        "node": "world",
+        "port": "fan"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-dark-world-indoor_light",
+      "from": {
+        "node": "world",
+        "port": "dark"
+      },
+      "to": {
+        "node": "world",
+        "port": "indoor_light"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-motion-gate-a",
+      "from": {
+        "node": "world",
+        "port": "motion"
+      },
+      "to": {
+        "node": "gate",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "authorized-out-gate-b",
+      "from": {
+        "node": "authorized",
+        "port": "out"
+      },
+      "to": {
+        "node": "gate",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "gate-out-world-gate",
+      "from": {
+        "node": "gate",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "gate"
+      },
+      "width": 1
+    },
+    {
+      "id": "authorized-out-armed-a",
+      "from": {
+        "node": "authorized",
+        "port": "out"
+      },
+      "to": {
+        "node": "armed",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "armed-out-world-alarm_arm",
+      "from": {
+        "node": "armed",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "alarm_arm"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-dark-light-a",
+      "from": {
+        "node": "world",
+        "port": "dark"
+      },
+      "to": {
+        "node": "light",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-motion-light-b",
+      "from": {
+        "node": "world",
+        "port": "motion"
+      },
+      "to": {
+        "node": "light",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "light-out-world-outdoor_light",
+      "from": {
+        "node": "light",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "outdoor_light"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-rain-dry-weather-a",
+      "from": {
+        "node": "world",
+        "port": "rain"
+      },
+      "to": {
+        "node": "dry-weather",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-tank_low-water-available-a",
+      "from": {
+        "node": "world",
+        "port": "tank_low"
+      },
+      "to": {
+        "node": "water-available",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "dry-weather-out-weather-safe-a",
+      "from": {
+        "node": "dry-weather",
+        "port": "out"
+      },
+      "to": {
+        "node": "weather-safe",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "water-available-out-weather-safe-b",
+      "from": {
+        "node": "water-available",
+        "port": "out"
+      },
+      "to": {
+        "node": "weather-safe",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "weather-safe-out-water-a",
+      "from": {
+        "node": "weather-safe",
+        "port": "out"
+      },
+      "to": {
+        "node": "water",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "water-permit-out-water-b",
+      "from": {
+        "node": "water-permit",
+        "port": "out"
+      },
+      "to": {
+        "node": "water",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "water-out-pump-a",
+      "from": {
+        "node": "water",
+        "port": "out"
+      },
+      "to": {
+        "node": "pump",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "force-pump-out-pump-b",
+      "from": {
+        "node": "force-pump",
+        "port": "out"
+      },
+      "to": {
+        "node": "pump",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "pump-out-world-sprinkler",
+      "from": {
+        "node": "pump",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "sprinkler"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-alarm-alarm-in",
+      "from": {
+        "node": "world",
+        "port": "alarm"
+      },
+      "to": {
+        "node": "alarm",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ]
+}

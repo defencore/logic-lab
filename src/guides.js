@@ -2889,8 +2889,12 @@ add('railway', {
       'SIGNAL_B: 1 дозволяє поїзду B зайти з іншого боку тієї самої колії.',
     ],
     points: [
-      'POINTS: route selector, 0 for A and 1 for B. Changing it under an occupying train is a fault.',
-      'POINTS: маршрут 0 для A, 1 для B. Зміна під поїздом на ділянці є несправністю.',
+      'POINTS: near turnout; 0 connects siding A, 1 connects the straight main. Changing the physical blades beneath a train derails it.',
+      'POINTS: ближня стрілка; 0 з’єднує гілку A, 1 — пряму головну колію. Зміна фізичних рейок під потягом призводить до сходження.',
+    ],
+    exit_points: [
+      'EXIT POINTS: far turnout; 0 connects the straight main, 1 connects siding B. Unwired it follows POINTS; wire a separate switch for independent dispatch.',
+      'EXIT POINTS: дальня стрілка; 0 з’єднує пряму колію, 1 — гілку B. Без дроту повторює POINTS; окремий перемикач дає незалежне керування.',
     ],
     barrier: [
       'BARRIER: 1 requests the gates across the road to close, 0 requests opening. Actual closure is timed and reported by GATE_CLOSED; the gates do not block the rails.',
@@ -2942,12 +2946,20 @@ add('railway', {
       'CROSSING_CLEAR: no full road-vehicle body remains inside the protected crossing between the gates.',
       'CROSSING_CLEAR: жодне повне тіло дорожньої машини не лишається в захищеному переїзді між шлагбаумами.',
     ],
+    points_state: [
+      'POINTS: actual near turnout position, 0 for siding A and 1 for the main.',
+      'POINTS: фактична ближня стрілка, 0 для гілки A, 1 для головної колії.',
+    ],
+    exit_points_state: [
+      'EXIT POINTS: actual far turnout position, 0 for the main and 1 for siding B.',
+      'EXIT POINTS: фактична дальня стрілка, 0 для головної колії, 1 для гілки B.',
+    ],
     cars_wait: [
       'CARS_WAIT: road vehicles are queued before the closed/closing gate stop lines.',
       'CARS_WAIT: дорожні машини чекають перед стоп-лініями закритих чи закриваних шлагбаумів.',
     ],
   },
-  examples: ['railway-interlocking'],
+  examples: ['railway-interlocking', 'railway-dispatch'],
 });
 
 add('animal_feeder', {
@@ -3112,6 +3124,327 @@ add('water_tank', {
     ],
   },
   examples: ['water-tank'],
+});
+
+add('aquarium', {
+  purpose: [
+    'Build a complete fish life-support controller from logic gates. Temperature, oxygen, food and water quality change continuously; sustained unsafe conditions reduce health and can kill individual fish.',
+    'Побудуйте керування життям рибок із логічних елементів. Температура, кисень, корм і чистота змінюються безперервно; тривалі небезпечні умови погіршують здоров’я та можуть убити окремих рибок.',
+  ],
+  steps: [
+    [
+      'Start with initialTemperature=24 °C, ambientTemperature=18 °C, initialOxygen=70, initialFood=45, initialCleanliness=80, fishCount=4 and dayLength=60 seconds. Open 3D to watch fish, bubbles, feeding and the thermometer.',
+      'Почніть з initialTemperature=24 °C, ambientTemperature=18 °C, initialOxygen=70, initialFood=45, initialCleanliness=80, fishCount=4 і dayLength=60 секунд. Відкрийте 3D та спостерігайте рибок, бульбашки, корм і термометр.',
+    ],
+    [
+      'Connect COLD to HEATER, HOT to COOLER, LOW OXYGEN to AERATOR and DIRTY to FILTER. Qualify each request with a permission switch through AND; use NOT HOT to block unnecessary heating.',
+      'Підключіть COLD до HEATER, HOT до COOLER, LOW OXYGEN до AERATOR та DIRTY до FILTER. Через І додайте до запитів перемикачі дозволу; NOT HOT може блокувати зайве нагрівання.',
+    ],
+    [
+      'Use HUNGRY to permit bounded feeding and DAY to schedule LIGHT. RUN=1 advances the ecosystem; pulse RESET and return it to 0 to restore the configured fish and initial quantities.',
+      'За HUNGRY дозволяйте обмежену годівлю, за DAY плануйте LIGHT. RUN=1 запускає екосистему; імпульс RESET із поверненням у 0 відновлює заданих рибок і початкові показники.',
+    ],
+  ],
+  experiment: [
+    'Deny aerator permission or force the heater or feeder on. Record the changing measurement, declining HEALTH, alarm and ALIVE. Restore safe control before death, then compare with a full RESET after death.',
+    'Заблокуйте помпу або примусово ввімкніть нагрівач чи годівницю. Запишіть зміну вимірювання, падіння HEALTH, тривогу й ALIVE. Поверніть безпечне керування до загибелі, потім порівняйте зі скиданням RESET після загибелі.',
+  ],
+  expected: [
+    'Healthy fish swim. Low temperature, excess heat, low oxygen, excess food, starvation, dirt or uninterrupted light cause cumulative harm. Dead fish turn belly-up, show X eyes and float to the surface; surviving fish can recover.',
+    'Здорові рибки плавають. Холод, перегрів, брак кисню, надмір корму, голод, бруд чи постійне світло поступово шкодять. Загиблі рибки перевертаються черевом догори, мають очі X та спливають; живі можуть одужати.',
+  ],
+  pitfalls: [
+    [
+      'This is an accelerated educational ecosystem: one complete dayLength includes day and night. ALARM remembers damage after health drops below 60; correcting a signal does not revive dead fish or clear that history without RESET.',
+      'Це прискорена навчальна екосистема: dayLength охоплює день і ніч. ALARM запам’ятовує шкоду при здоров’ї нижче 60; виправлення сигналу не оживляє загиблих і не очищає історію без RESET.',
+    ],
+    [
+      'FEED is a level-driven actuator, not a one-portion button. Holding it high overfeeds fish; combine HUNGRY with a clock or one-shot. A sensor request and the actual actuator command can differ when permission is denied.',
+      'FEED працює весь час одиниці, а не видає одну порцію за натискання. Постійна 1 перегодовує; поєднайте HUNGRY з генератором або одновібратором. Запит датчика й команда механізму можуть відрізнятися через відсутність дозволу.',
+    ],
+  ],
+  inputs: {
+    heater: [
+      'HEATER: 1 heats water; use COLD and a permission interlock.',
+      'HEATER: 1 нагріває воду; використовуйте COLD та дозвіл.',
+    ],
+    cooler: [
+      'COOLER: 1 cools water; use HOT to stop excess heat.',
+      'COOLER: 1 охолоджує воду; HOT допомагає прибрати перегрів.',
+    ],
+    aerator: [
+      'AERATOR: 1 runs the oxygen pump and produces visible bubbles.',
+      'AERATOR: 1 вмикає кисневу помпу та видимі бульбашки.',
+    ],
+    feed: [
+      'FEED: 1 continuously adds food; pulse it or stop at HUNGRY=0.',
+      'FEED: 1 безперервно додає корм; подавайте імпульси або зупиняйте при HUNGRY=0.',
+    ],
+    light: [
+      'LIGHT: 1 lights the aquarium; fish need dark resting periods.',
+      'LIGHT: 1 освітлює акваріум; рибкам потрібні темні періоди відпочинку.',
+    ],
+    filter: [
+      'FILTER: 1 cleans the water and rotates the visible filter.',
+      'FILTER: 1 очищує воду та обертає видимий фільтр.',
+    ],
+    water_change: [
+      'WATER CHANGE: 1 replenishes oxygen and cleans the water.',
+      'WATER CHANGE: 1 поповнює кисень та очищує воду.',
+    ],
+    run: [
+      'RUN: 1 advances time and biology, 0 pauses; unwired defaults to 1.',
+      'RUN: 1 рухає час і біологію, 0 призупиняє; без дроту діє 1.',
+    ],
+    reset: [
+      'RESET: high restores configured levels, fish health, life and alarm history.',
+      'RESET: 1 відновлює задані рівні, здоров’я, життя рибок та історію тривог.',
+    ],
+  },
+  outputs: {
+    cold: ['COLD: 1 below 22 °C, a request for heating.', 'COLD: 1 нижче 22 °C, запит нагрівання.'],
+    hot: ['HOT: 1 above 28 °C, a request for cooling.', 'HOT: 1 вище 28 °C, запит охолодження.'],
+    low_oxygen: [
+      'LOW OXYGEN: 1 below 55% oxygen, a request for air.',
+      'LOW OXYGEN: 1 при кисні нижче 55%, запит повітря.',
+    ],
+    hungry: [
+      'HUNGRY: 1 when FOOD is below 35%, a feeding request.',
+      'HUNGRY: 1 при FOOD нижче 35%, запит годівлі.',
+    ],
+    dirty: [
+      'DIRTY: 1 below 45% cleanliness; request filtration or fresh water.',
+      'DIRTY: 1 при чистоті нижче 45%; потрібен фільтр або свіжа вода.',
+    ],
+    day: [
+      'DAY: 1 in the first half of the simulated dayLength cycle.',
+      'DAY: 1 у першій половині модельного циклу dayLength.',
+    ],
+    alarm: [
+      'ALARM: latched record of serious health loss or fish death.',
+      'ALARM: запам’ятований значний спад здоров’я або загибель рибок.',
+    ],
+    alive: [
+      'ALIVE: eight-bit count of living fish, from 0 to fishCount.',
+      'ALIVE: восьмибітна кількість живих рибок від 0 до fishCount.',
+    ],
+    temperature: [
+      'TEMP: measured water temperature in degrees Celsius.',
+      'TEMP: виміряна температура води у градусах Цельсія.',
+    ],
+    oxygen: [
+      'OXYGEN: current oxygen level from 0 to 100%.',
+      'OXYGEN: поточний рівень кисню від 0 до 100%.',
+    ],
+    food: [
+      'FOOD: current available food from 0 to 100%; excess is harmful.',
+      'FOOD: поточний доступний корм від 0 до 100%; надлишок шкодить.',
+    ],
+    cleanliness: [
+      'CLEANLINESS: water quality from 0 to 100%; higher is cleaner.',
+      'CLEANLINESS: якість води від 0 до 100%; більше означає чистіше.',
+    ],
+    health: [
+      'HEALTH: average fish health, including zero health of dead fish.',
+      'HEALTH: середнє здоров’я рибок із урахуванням нуля в загиблих.',
+    ],
+  },
+  examples: ['aquarium-life-support', 'aquarium-feeding', 'aquarium-lighting'],
+});
+
+add('greenhouse', {
+  purpose: [
+    'Control a greenhouse using temperature, soil moisture and daylight feedback. Plants grow under suitable conditions and lose health when exposed to cold, heat, drought, flooding or prolonged darkness.',
+    'Керуйте теплицею за температурою, вологістю ґрунту та денним світлом. Рослини ростуть за належних умов і втрачають здоров’я від холоду, спеки, посухи, затоплення чи тривалої темряви.',
+  ],
+  steps: [
+    [
+      'Set initialTemperature=20 °C, ambientTemperature=12 °C, initialMoisture=45% and dayLength=60 seconds. In 3D locate the heater, roof vent, irrigation and growing plants.',
+      'Задайте initialTemperature=20 °C, ambientTemperature=12 °C, initialMoisture=45% та dayLength=60 секунд. У 3D знайдіть нагрівач, кватирку, полив і рослини.',
+    ],
+    [
+      'Use COLD for HEATER and HOT for VENT. Add permission switches through AND and block heating during an excessive-heat request.',
+      'За COLD керуйте HEATER, за HOT — VENT. Через І додайте дозволи та блокуйте нагрів за запиту надлишкової температури.',
+    ],
+    [
+      'For irrigation, connect DRY to SR set and WET to reset; drive PUMP with Q and a permission. Use DARK for GROW LIGHT, then observe MOISTURE, GROWTH and HEALTH over several days.',
+      'Для поливу підключіть DRY до S, WET до R SR-защіпки; керуйте PUMP виходом Q із дозволом. За DARK вмикайте GROW LIGHT, спостерігайте MOISTURE, GROWTH і HEALTH протягом кількох діб.',
+    ],
+  ],
+  experiment: [
+    'Compare direct DRY control with SR hysteresis. Force the pump on or deny watering, and record when wet soil or drought starts harming plants. Restore control and reset for a fresh trial.',
+    'Порівняйте пряме керування DRY з гістерезисом SR. Примусово ввімкніть насос або забороніть полив та запишіть початок шкоди від перезволоження чи посухи. Відновіть керування та скиньте для нового досліду.',
+  ],
+  expected: [
+    'A working circuit keeps soil within its chosen band and temperature suitable for growth. The roof vent moves, water spray follows the pump, grow lights illuminate, and plant size and leaf condition follow GROWTH and HEALTH.',
+    'Правильна схема тримає вологість у заданому діапазоні та придатну для росту температуру. Кватирка рухається, полив відповідає насосу, лампи світять, а розмір рослин і стан листя відповідають GROWTH та HEALTH.',
+  ],
+  pitfalls: [
+    [
+      'DRY and WET are different thresholds, so both are normally 0 inside the middle band. Use a latch to remember whether irrigation is filling that band. Alarm history persists until RESET even when plant health recovers.',
+      'DRY та WET мають різні пороги, тому всередині діапазону обидва зазвичай 0. Защіпка запам’ятовує, чи триває наповнення. Історія тривоги лишається до RESET навіть після відновлення здоров’я.',
+    ],
+  ],
+  inputs: {
+    heater: ['HEATER: 1 warms the greenhouse air.', 'HEATER: 1 нагріває повітря теплиці.'],
+    vent: [
+      'VENT: 1 opens ventilation and cools air; it also increases drying.',
+      'VENT: 1 відкриває вентиляцію та охолоджує; також посилює висихання.',
+    ],
+    pump: ['PUMP: 1 continuously irrigates the soil.', 'PUMP: 1 безперервно поливає ґрунт.'],
+    grow_light: [
+      'GROW LIGHT: 1 supplies artificial light when daylight is absent.',
+      'GROW LIGHT: 1 додає штучне світло за відсутності денного.',
+    ],
+    run: [
+      'RUN: 1 advances climate and plant life, 0 pauses; defaults high.',
+      'RUN: 1 рухає клімат і життя рослин, 0 призупиняє; типово 1.',
+    ],
+    reset: [
+      'RESET: 1 restores initial temperature, moisture, growth and health.',
+      'RESET: 1 відновлює початкові температуру, вологість, ріст і здоров’я.',
+    ],
+  },
+  outputs: {
+    cold: ['COLD: 1 below 18 °C; request heating.', 'COLD: 1 нижче 18 °C; запит нагрівання.'],
+    hot: ['HOT: 1 above 28 °C; request ventilation.', 'HOT: 1 вище 28 °C; запит вентиляції.'],
+    dry: ['DRY: 1 below 35% soil moisture.', 'DRY: 1 при вологості ґрунту нижче 35%.'],
+    wet: ['WET: 1 above 75% soil moisture.', 'WET: 1 при вологості ґрунту вище 75%.'],
+    dark: ['DARK: 1 during the night half of dayLength.', 'DARK: 1 у нічній половині dayLength.'],
+    day: ['DAY: 1 during the daylight half of dayLength.', 'DAY: 1 у денній половині dayLength.'],
+    alarm: [
+      'ALARM: latched record of plant health falling below 60%.',
+      'ALARM: запам’ятоване падіння здоров’я рослин нижче 60%.',
+    ],
+    temperature: [
+      'TEMP: measured greenhouse air temperature in °C.',
+      'TEMP: виміряна температура повітря теплиці у °C.',
+    ],
+    moisture: [
+      'MOISTURE: soil moisture from 0 to 100%.',
+      'MOISTURE: вологість ґрунту від 0 до 100%.',
+    ],
+    growth: [
+      'GROWTH: accumulated plant growth from 0 to 100%.',
+      'GROWTH: накопичений ріст рослин від 0 до 100%.',
+    ],
+    health: [
+      'HEALTH: current plant health from 0 to 100%.',
+      'HEALTH: поточне здоров’я рослин від 0 до 100%.',
+    ],
+  },
+  examples: ['greenhouse-climate', 'greenhouse-irrigation'],
+});
+
+add('smart_home', {
+  purpose: [
+    'Automate a house and yard using logic for climate, occupancy lighting, authorized access and water-saving irrigation. The simulated environment supplies periodic daylight, visitors and rain.',
+    'Автоматизуйте будинок і подвір’я логікою клімату, світла за присутністю, дозволеного доступу та ощадного поливу. Модельне довкілля дає періодичні день, відвідувачів і дощ.',
+  ],
+  steps: [
+    [
+      'Start with initialTemperature=20 °C, ambientTemperature=12 °C, initialWater=70% and dayLength=60 seconds. Observe the house, sliding gate, water tank and visitor in 3D.',
+      'Почніть з initialTemperature=20 °C, ambientTemperature=12 °C, initialWater=70% та dayLength=60 секунд. У 3D спостерігайте будинок, відсувні ворота, бак і відвідувача.',
+    ],
+    [
+      'Gate HEATER with COLD and FAN with HOT. Combine DARK AND MOTION for OUTDOOR LIGHT; an occupancy permission can also control INDOOR LIGHT.',
+      'Дозволяйте HEATER за COLD, FAN за HOT. Поєднайте DARK І MOTION для OUTDOOR LIGHT; дозвіл присутності також може керувати INDOOR LIGHT.',
+    ],
+    [
+      'Use MOTION AND authorization for GATE, and NOT authorization for ALARM ARM. Permit SPRINKLER only when NOT RAIN AND NOT TANK LOW. Compare ENERGY and WATER for guarded and unconditional operation.',
+      'За MOTION І авторизацією керуйте GATE, за NOT авторизацією — ALARM ARM. Дозволяйте SPRINKLER лише за NOT RAIN І NOT TANK LOW. Порівняйте ENERGY та WATER за захищеної й постійної роботи.',
+    ],
+  ],
+  experiment: [
+    'Deny visitor authorization before a motion window and compare gate travel with the current alarm. Then start at initialWater=0 and deliberately bypass the irrigation guard to record a dry-pump fault; restore the level and reset.',
+    'Забороніть доступ перед вікном руху та порівняйте переміщення воріт із поточною тривогою. Потім задайте initialWater=0 та навмисно обійдіть захист поливу для несправності сухого насоса; відновіть запас і скиньте.',
+  ],
+  expected: [
+    'The sliding gate takes time to open; GATE OPEN confirms full travel. Rain replenishes the tank, guarded sprinklers stop during rain or low water, and ENERGY accumulates actual actuator use in kWh. Lighting and climate react to circuit outputs.',
+    'Відкриття відсувних воріт потребує часу; GATE OPEN підтверджує повний хід. Дощ поповнює бак, захищений полив зупиняється за дощу чи браку води, ENERGY накопичує роботу механізмів у кВт·год. Світло й клімат реагують на схему.',
+  ],
+  pitfalls: [
+    [
+      'MOTION, RAIN and DARK are deterministic simulated sensors, not real camera or weather services. A security alarm clears when its current condition ends; a dry-pump fault is remembered until RESET. A gate command does not instantly mean GATE OPEN=1.',
+      'MOTION, RAIN і DARK — визначені модельні датчики, не камера чи погодний сервіс. Охоронна тривога зникає з поточною умовою; сухий насос запам’ятовується до RESET. Команда воріт не означає миттєве GATE OPEN=1.',
+    ],
+  ],
+  inputs: {
+    heater: [
+      'HEATER: 1 heats the home and consumes energy.',
+      'HEATER: 1 гріє будинок та витрачає енергію.',
+    ],
+    fan: [
+      'FAN: 1 cools the home and consumes energy.',
+      'FAN: 1 охолоджує будинок та витрачає енергію.',
+    ],
+    indoor_light: [
+      'INDOOR LIGHT: 1 turns on the house lamps.',
+      'INDOOR LIGHT: 1 вмикає лампи в будинку.',
+    ],
+    outdoor_light: [
+      'OUTDOOR LIGHT: 1 turns on the yard lamps.',
+      'OUTDOOR LIGHT: 1 вмикає ліхтарі подвір’я.',
+    ],
+    gate: [
+      'GATE: 1 opens the sliding gate, 0 closes it over time.',
+      'GATE: 1 відкриває відсувні ворота, 0 поступово закриває.',
+    ],
+    sprinkler: [
+      'SPRINKLER: 1 requests irrigation and draws from the finite water tank.',
+      'SPRINKLER: 1 запитує полив та витрачає скінченний запас бака.',
+    ],
+    alarm_arm: [
+      'ALARM ARM: 1 arms motion detection while the gate is not fully open.',
+      'ALARM ARM: 1 вмикає виявлення руху, поки ворота не відкриті повністю.',
+    ],
+    run: [
+      'RUN: 1 advances climate, weather and actuators; 0 pauses.',
+      'RUN: 1 рухає клімат, погоду та механізми; 0 призупиняє.',
+    ],
+    reset: [
+      'RESET: 1 restores initial water and temperature and clears energy and alarms.',
+      'RESET: 1 відновлює початкові воду й температуру, очищає енергію та тривоги.',
+    ],
+  },
+  outputs: {
+    cold: ['COLD: 1 below 19 °C, requesting heating.', 'COLD: 1 нижче 19 °C, запит нагрівання.'],
+    hot: ['HOT: 1 above 25 °C, requesting the fan.', 'HOT: 1 вище 25 °C, запит вентилятора.'],
+    dark: ['DARK: 1 during the night half of dayLength.', 'DARK: 1 у нічній половині dayLength.'],
+    motion: [
+      'MOTION: periodic simulated visitor requests during day and night.',
+      'MOTION: періодичні модельні відвідувачі вдень і вночі.',
+    ],
+    rain: [
+      'RAIN: periodic rainfall that replenishes the water tank.',
+      'RAIN: періодичний дощ, що поповнює водяний бак.',
+    ],
+    tank_low: [
+      'TANK LOW: 1 when the tank contains less than 15% water.',
+      'TANK LOW: 1 при запасі води в баку нижче 15%.',
+    ],
+    gate_open: [
+      'GATE OPEN: 1 only after the gate has completed its opening travel.',
+      'GATE OPEN: 1 лише після завершення повного відкриття воріт.',
+    ],
+    alarm: [
+      'ALARM: current armed motion alert or a latched empty-tank fault.',
+      'ALARM: поточна охоронна тривога руху або запам’ятований порожній бак.',
+    ],
+    temperature: [
+      'TEMP: measured indoor temperature in °C.',
+      'TEMP: виміряна температура в будинку у °C.',
+    ],
+    water: [
+      'WATER: available irrigation water from 0 to 100%.',
+      'WATER: доступна для поливу вода від 0 до 100%.',
+    ],
+    energy: [
+      'ENERGY: cumulative actuator electricity in kWh since reset.',
+      'ENERGY: накопичена електроенергія механізмів у кВт·год від скидання.',
+    ],
+  },
+  examples: ['home-climate', 'yard-security'],
 });
 
 export function getGuide(type, language = 'en') {

@@ -17,7 +17,6 @@ import {
   footprint,
   footprintCorners,
   overlaps,
-  contactPoint,
   trainReservesSection,
   trainInTurnout,
   crossingClear,
@@ -127,7 +126,6 @@ test('oriented body collision catches approach and same-path contact without axi
     false,
     'Overlapping AABBs must not turn separated parallel oriented bodies into a crash.',
   );
-  assert.equal(contactPoint(one, two), null);
 });
 
 test('road lanes, gate stops and committed clearance match full car footprints', () => {
@@ -162,13 +160,7 @@ test('road lanes, gate stops and committed clearance match full car footprints',
     }
 });
 
-test('contact coordinates lie at actual intersecting vehicle boundaries', () => {
-  const train = trainFootprint({ track: 'a', position: 2.3125 });
-  const car = carFootprint({ direction: 1, position: -6.7 }, 'railway');
-  const contact = contactPoint(train, car);
-  assert.ok(contact);
-  near(contact.x, -0.25);
-  assert.ok(contact.z >= 0.49 && contact.z <= 0.7);
+test('junction lane pose preserves the stop-line progress and heading', () => {
   assert.deepEqual(junctionCarPose({ axis: 'ns', position: -26 }), {
     x: -0.43,
     z: -2.6,

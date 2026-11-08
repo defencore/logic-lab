@@ -1,0 +1,253 @@
+{
+  "version": 1,
+  "name": "Aquarium: day/night lighting",
+  "exampleId": "aquarium-lighting",
+  "nodes": [
+    {
+      "id": "run",
+      "type": "switch",
+      "label": "Scene run",
+      "x": 20,
+      "y": 20,
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "label": "Reset process",
+      "x": 20,
+      "y": 210,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "world",
+      "type": "aquarium",
+      "label": "Aquarium day and night",
+      "x": 320,
+      "y": 60,
+      "enabled": true,
+      "params": {
+        "initialTemperature": 24,
+        "ambientTemperature": 18,
+        "initialOxygen": 70,
+        "initialFood": 45,
+        "initialCleanliness": 80,
+        "fishCount": 4,
+        "dayLength": 60
+      }
+    },
+    {
+      "id": "invert",
+      "type": "switch",
+      "label": "Invert light schedule",
+      "x": 20,
+      "y": 400,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "force-light",
+      "type": "switch",
+      "label": "Unsafe light always on",
+      "x": 20,
+      "y": 590,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "schedule",
+      "type": "xor",
+      "label": "Day XOR inverted schedule",
+      "x": 650,
+      "y": 20,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "light",
+      "type": "or",
+      "label": "Scheduled OR forced light",
+      "x": 650,
+      "y": 225,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "alarm",
+      "type": "led",
+      "label": "Process alarm",
+      "x": 1800,
+      "y": 120,
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "run-out-world-run",
+      "from": {
+        "node": "run",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "run"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-world-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-cold-world-heater",
+      "from": {
+        "node": "world",
+        "port": "cold"
+      },
+      "to": {
+        "node": "world",
+        "port": "heater"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-hot-world-cooler",
+      "from": {
+        "node": "world",
+        "port": "hot"
+      },
+      "to": {
+        "node": "world",
+        "port": "cooler"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-low_oxygen-world-aerator",
+      "from": {
+        "node": "world",
+        "port": "low_oxygen"
+      },
+      "to": {
+        "node": "world",
+        "port": "aerator"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-hungry-world-feed",
+      "from": {
+        "node": "world",
+        "port": "hungry"
+      },
+      "to": {
+        "node": "world",
+        "port": "feed"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-dirty-world-filter",
+      "from": {
+        "node": "world",
+        "port": "dirty"
+      },
+      "to": {
+        "node": "world",
+        "port": "filter"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-day-schedule-a",
+      "from": {
+        "node": "world",
+        "port": "day"
+      },
+      "to": {
+        "node": "schedule",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "invert-out-schedule-b",
+      "from": {
+        "node": "invert",
+        "port": "out"
+      },
+      "to": {
+        "node": "schedule",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "schedule-out-light-a",
+      "from": {
+        "node": "schedule",
+        "port": "out"
+      },
+      "to": {
+        "node": "light",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "force-light-out-light-b",
+      "from": {
+        "node": "force-light",
+        "port": "out"
+      },
+      "to": {
+        "node": "light",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "light-out-world-light",
+      "from": {
+        "node": "light",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "light"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-alarm-alarm-in",
+      "from": {
+        "node": "world",
+        "port": "alarm"
+      },
+      "to": {
+        "node": "alarm",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ]
+}

@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getSceneEntries, getSceneSnapshot, sceneHealth } from '../src/scene-data.js';
+import {
+  getSceneEntries,
+  getSceneSnapshot,
+  sceneHealth,
+  sceneMessageKey,
+  sceneControlSwitch,
+  sceneActuatorValues,
+} from '../src/scene-data.js';
 
 test('3D is available only for actual mechanisms or scene objects', () => {
   const project = {
@@ -65,4 +72,99 @@ test('scene snapshots follow live circuit state and never invent safe outputs', 
   node.enabled = false;
   assert.equal(sceneHealth(snapshot).status, 'disabled');
   assert.equal(getSceneSnapshot(project, runtime, { nodeId: 'missing' }), null);
+});
+
+test('automation objects expose their actual runtime through the same scene selector and snapshots', () => {
+  const project = {
+    nodes: ['aquarium', 'greenhouse', 'smart_home'].map((type) => ({
+      id: type,
+      type,
+      params: {},
+      enabled: true,
+    })),
+    wires: [],
+  };
+  const entries = getSceneEntries(project);
+  assert.deepEqual(
+    entries.map(({ type }) => type),
+    ['aquarium', 'greenhouse', 'smart_home'],
+  );
+  for (const entry of entries) {
+    const state = { kind: entry.type, temperature: 24 };
+    const runtime = {
+      state: { [entry.nodeId]: { scenario: state } },
+      inputs: { [entry.nodeId]: {} },
+      outputs: { [entry.nodeId]: { temperature: 24 } },
+      time: 2,
+    };
+    const snapshot = getSceneSnapshot(project, runtime, entry);
+    assert.equal(snapshot.state, state);
+    assert.equal(snapshot.outputs.temperature, 24);
+    assert.equal(sceneHealth(snapshot).status, 'ready');
+  }
+});
+
+test('manual turnout controls operate only the actual switch that drives the circuit port', () => {
+  const project = {
+    nodes: [
+      { id: 'rail', type: 'railway' },
+      { id: 'near', type: 'switch', enabled: true },
+      { id: 'far', type: 'switch', enabled: true },
+      { id: 'logic', type: 'and' },
+    ],
+    wires: [{ from: { node: 'near', port: 'out' }, to: { node: 'rail', port: 'points' } }],
+  };
+  assert.equal(sceneControlSwitch(project, 'rail', 'points'), 'near');
+  assert.equal(sceneControlSwitch(project, 'rail', 'exit_points'), 'near');
+  project.wires.push({
+    from: { node: 'far', port: 'out' },
+    to: { node: 'rail', port: 'exit_points' },
+  });
+  assert.equal(sceneControlSwitch(project, 'rail', 'exit_points'), 'far');
+  project.wires[0].from.node = 'logic';
+  assert.equal(sceneControlSwitch(project, 'rail', 'points'), null);
+  project.nodes.find(({ id }) => id === 'far').enabled = false;
+  assert.equal(sceneControlSwitch(project, 'rail', 'exit_points'), null);
+});
+
+test('actuator readouts show default commands and actual turnout position rather than a sensor request', () => {
+  const aquarium = {
+    node: { type: 'aquarium', enabled: true },
+    inputs: { heater: 0, aerator: 1, filter: 'Z' },
+    outputs: { cold: 1 },
+  };
+  const values = sceneActuatorValues(aquarium);
+  assert.equal(values.heater, 0);
+  assert.equal(values.aerator, 1);
+  assert.equal(values.filter, 0);
+  assert.equal(values.run, 1);
+  aquarium.inputs.heater = 'X';
+  assert.equal(sceneActuatorValues(aquarium).heater, 'X');
+  aquarium.node.enabled = false;
+  assert.ok(Object.values(sceneActuatorValues(aquarium)).every((value) => value === 'Z'));
+  const railway = {
+    node: { type: 'railway' },
+    inputs: { points: 1, exit_points: 0 },
+    outputs: { points_state: 0, exit_points_state: 1 },
+  };
+  assert.equal(sceneActuatorValues(railway).points, 0);
+  assert.equal(sceneActuatorValues(railway).exit_points, 1);
+});
+
+test('process messages distinguish fish and plant damage from current security and latched pump faults', () => {
+  assert.equal(sceneMessageKey({ node: { type: 'aquarium' } }, 'cold'), 'fishCold');
+  assert.equal(sceneMessageKey({ node: { type: 'greenhouse' } }, 'cold'), 'plantCold');
+  assert.equal(sceneMessageKey({ node: { type: 'smart_home' } }, 'empty_tank'), 'homeEmptyTank');
+  assert.deepEqual(
+    sceneHealth({ node: { type: 'smart_home' }, state: {}, outputs: { alarm: 1 } }),
+    { status: 'warning', reason: 'homeSecurity' },
+  );
+  assert.deepEqual(
+    sceneHealth({
+      node: { type: 'smart_home' },
+      state: { failure: 'empty_tank' },
+      outputs: { alarm: 1 },
+    }),
+    { status: 'fault', reason: 'empty_tank' },
+  );
 });

@@ -1,3 +1,19 @@
+import automationCircuit0 from './aquarium-life-support/circuit.json' with { type: 'json' };
+import automationLesson0 from './aquarium-life-support/lesson.js';
+import automationCircuit1 from './aquarium-feeding/circuit.json' with { type: 'json' };
+import automationLesson1 from './aquarium-feeding/lesson.js';
+import automationCircuit2 from './aquarium-lighting/circuit.json' with { type: 'json' };
+import automationLesson2 from './aquarium-lighting/lesson.js';
+import automationCircuit3 from './greenhouse-climate/circuit.json' with { type: 'json' };
+import automationLesson3 from './greenhouse-climate/lesson.js';
+import automationCircuit4 from './greenhouse-irrigation/circuit.json' with { type: 'json' };
+import automationLesson4 from './greenhouse-irrigation/lesson.js';
+import automationCircuit5 from './home-climate/circuit.json' with { type: 'json' };
+import automationLesson5 from './home-climate/lesson.js';
+import automationCircuit6 from './yard-security/circuit.json' with { type: 'json' };
+import automationLesson6 from './yard-security/lesson.js';
+import automationCircuit7 from './railway-dispatch/circuit.json' with { type: 'json' };
+import automationLesson7 from './railway-dispatch/lesson.js';
 import scenarioCircuit0 from './traffic-light/circuit.json' with { type: 'json' };
 import scenarioLesson0 from './traffic-light/lesson.js';
 import scenarioCircuit1 from './traffic-junction/circuit.json' with { type: 'json' };
@@ -48,6 +64,15 @@ import circuit14 from './pwm-servos/circuit.json' with { type: 'json' };
 import lesson14 from './pwm-servos/lesson.js';
 
 export const EXAMPLES = [
+  { ...automationLesson0, create: () => structuredClone(automationCircuit0) },
+  { ...automationLesson1, create: () => structuredClone(automationCircuit1) },
+  { ...automationLesson2, create: () => structuredClone(automationCircuit2) },
+  { ...automationLesson3, create: () => structuredClone(automationCircuit3) },
+  { ...automationLesson4, create: () => structuredClone(automationCircuit4) },
+  { ...automationLesson5, create: () => structuredClone(automationCircuit5) },
+  { ...automationLesson6, create: () => structuredClone(automationCircuit6) },
+  { ...automationLesson7, create: () => structuredClone(automationCircuit7) },
+
   { ...lesson0, create: () => structuredClone(circuit0) },
   { ...lesson1, create: () => structuredClone(circuit1) },
   { ...lesson2, create: () => structuredClone(circuit2) },

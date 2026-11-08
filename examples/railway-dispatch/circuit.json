@@ -1,0 +1,608 @@
+{
+  "version": 1,
+  "name": "Railway: switch and dispatch",
+  "exampleId": "railway-dispatch",
+  "nodes": [
+    {
+      "id": "run",
+      "type": "switch",
+      "label": "Scene run",
+      "x": 20,
+      "y": 20,
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "label": "Reset process",
+      "x": 20,
+      "y": 210,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "world",
+      "type": "railway",
+      "label": "Railway manual dispatch",
+      "x": 320,
+      "y": 60,
+      "enabled": true,
+      "params": {
+        "initialA": -48,
+        "initialB": -85,
+        "speedLimit": 60
+      }
+    },
+    {
+      "id": "near-points",
+      "type": "switch",
+      "label": "Near turnout · 0 siding A / 1 main",
+      "x": 20,
+      "y": 400,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "far-points",
+      "type": "switch",
+      "label": "Far turnout · 0 main / 1 siding B",
+      "x": 20,
+      "y": 590,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "close-road",
+      "type": "switch",
+      "label": "Close road gates",
+      "x": 20,
+      "y": 780,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "request-a",
+      "type": "switch",
+      "label": "Request train A",
+      "x": 20,
+      "y": 970,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "request-b",
+      "type": "switch",
+      "label": "Request train B",
+      "x": 20,
+      "y": 1160,
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "throttle",
+      "type": "bus_input",
+      "label": "Throttle · 30 km/h",
+      "x": 20,
+      "y": 1350,
+      "enabled": true,
+      "params": {
+        "value": 30
+      }
+    },
+    {
+      "id": "barrier",
+      "type": "or",
+      "label": "Road close request OR occupied",
+      "x": 650,
+      "y": 20,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "gate-ready",
+      "type": "and",
+      "label": "Gate closed AND crossing clear",
+      "x": 650,
+      "y": 225,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "free",
+      "type": "not",
+      "label": "Route unreserved",
+      "x": 650,
+      "y": 430,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-a",
+      "type": "not",
+      "label": "No A request",
+      "x": 650,
+      "y": 635,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-b",
+      "type": "not",
+      "label": "No B request",
+      "x": 940,
+      "y": 20,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "near-a",
+      "type": "not",
+      "label": "Near turnout selects A",
+      "x": 940,
+      "y": 225,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "a-unique",
+      "type": "and",
+      "label": "A requested alone",
+      "x": 940,
+      "y": 430,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "a-route",
+      "type": "and",
+      "label": "A request AND near route",
+      "x": 940,
+      "y": 635,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "b-unique",
+      "type": "and",
+      "label": "B requested alone",
+      "x": 1230,
+      "y": 20,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "b-route",
+      "type": "and",
+      "label": "B request AND far route",
+      "x": 1230,
+      "y": 225,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "available",
+      "type": "and",
+      "label": "Gate ready AND free route",
+      "x": 1230,
+      "y": 430,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "signal-a",
+      "type": "and",
+      "label": "Safe signal A",
+      "x": 1230,
+      "y": 635,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "signal-b",
+      "type": "and",
+      "label": "Safe signal B",
+      "x": 1520,
+      "y": 20,
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "alarm",
+      "type": "led",
+      "label": "Railway fault latched",
+      "x": 2100,
+      "y": 120,
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "run-out-world-run",
+      "from": {
+        "node": "run",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "run"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-world-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "near-points-out-world-points",
+      "from": {
+        "node": "near-points",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "points"
+      },
+      "width": 1
+    },
+    {
+      "id": "far-points-out-world-exit_points",
+      "from": {
+        "node": "far-points",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "exit_points"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-world-throttle",
+      "from": {
+        "node": "throttle",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "throttle"
+      },
+      "width": 8
+    },
+    {
+      "id": "close-road-out-barrier-a",
+      "from": {
+        "node": "close-road",
+        "port": "out"
+      },
+      "to": {
+        "node": "barrier",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-occupied-barrier-b",
+      "from": {
+        "node": "world",
+        "port": "occupied"
+      },
+      "to": {
+        "node": "barrier",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "barrier-out-world-barrier",
+      "from": {
+        "node": "barrier",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "barrier"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-gate_closed-gate-ready-a",
+      "from": {
+        "node": "world",
+        "port": "gate_closed"
+      },
+      "to": {
+        "node": "gate-ready",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-crossing_clear-gate-ready-b",
+      "from": {
+        "node": "world",
+        "port": "crossing_clear"
+      },
+      "to": {
+        "node": "gate-ready",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-occupied-free-a",
+      "from": {
+        "node": "world",
+        "port": "occupied"
+      },
+      "to": {
+        "node": "free",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request-a-out-not-a-a",
+      "from": {
+        "node": "request-a",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-a",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request-b-out-not-b-a",
+      "from": {
+        "node": "request-b",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-b",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "near-points-out-near-a-a",
+      "from": {
+        "node": "near-points",
+        "port": "out"
+      },
+      "to": {
+        "node": "near-a",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request-a-out-a-unique-a",
+      "from": {
+        "node": "request-a",
+        "port": "out"
+      },
+      "to": {
+        "node": "a-unique",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-b-out-a-unique-b",
+      "from": {
+        "node": "not-b",
+        "port": "out"
+      },
+      "to": {
+        "node": "a-unique",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-unique-out-a-route-a",
+      "from": {
+        "node": "a-unique",
+        "port": "out"
+      },
+      "to": {
+        "node": "a-route",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "near-a-out-a-route-b",
+      "from": {
+        "node": "near-a",
+        "port": "out"
+      },
+      "to": {
+        "node": "a-route",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "request-b-out-b-unique-a",
+      "from": {
+        "node": "request-b",
+        "port": "out"
+      },
+      "to": {
+        "node": "b-unique",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-a-out-b-unique-b",
+      "from": {
+        "node": "not-a",
+        "port": "out"
+      },
+      "to": {
+        "node": "b-unique",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-unique-out-b-route-a",
+      "from": {
+        "node": "b-unique",
+        "port": "out"
+      },
+      "to": {
+        "node": "b-route",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "far-points-out-b-route-b",
+      "from": {
+        "node": "far-points",
+        "port": "out"
+      },
+      "to": {
+        "node": "b-route",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "gate-ready-out-available-a",
+      "from": {
+        "node": "gate-ready",
+        "port": "out"
+      },
+      "to": {
+        "node": "available",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "free-out-available-b",
+      "from": {
+        "node": "free",
+        "port": "out"
+      },
+      "to": {
+        "node": "available",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-route-out-signal-a-a",
+      "from": {
+        "node": "a-route",
+        "port": "out"
+      },
+      "to": {
+        "node": "signal-a",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "available-out-signal-a-b",
+      "from": {
+        "node": "available",
+        "port": "out"
+      },
+      "to": {
+        "node": "signal-a",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "signal-a-out-world-signal_a",
+      "from": {
+        "node": "signal-a",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "signal_a"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-route-out-signal-b-a",
+      "from": {
+        "node": "b-route",
+        "port": "out"
+      },
+      "to": {
+        "node": "signal-b",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "available-out-signal-b-b",
+      "from": {
+        "node": "available",
+        "port": "out"
+      },
+      "to": {
+        "node": "signal-b",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "signal-b-out-world-signal_b",
+      "from": {
+        "node": "signal-b",
+        "port": "out"
+      },
+      "to": {
+        "node": "world",
+        "port": "signal_b"
+      },
+      "width": 1
+    },
+    {
+      "id": "world-fault-alarm-in",
+      "from": {
+        "node": "world",
+        "port": "fault"
+      },
+      "to": {
+        "node": "alarm",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ]
+}

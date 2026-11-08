@@ -30,13 +30,20 @@ const output = (context, node, port = 'out') => context.runtime.outputs[node][po
 const input = (context, node, port = 'in') => context.runtime.inputs[node][port];
 
 test('all learning examples have valid fresh circuits and complete bilingual lessons', () => {
-  assert.equal(EXAMPLES.length, 24);
+  assert.equal(EXAMPLES.length, 32);
   assert.equal(new Set(EXAMPLES.map((example) => example.id)).size, EXAMPLES.length);
   for (const example of EXAMPLES) {
     assert.ok(
-      ['basics', 'sequential', 'mixed', 'architecture', 'physical', 'motion', 'scenes'].includes(
-        example.category,
-      ),
+      [
+        'basics',
+        'sequential',
+        'mixed',
+        'architecture',
+        'physical',
+        'motion',
+        'scenes',
+        'automation',
+      ].includes(example.category),
     );
     assert.ok(['beginner', 'intermediate'].includes(example.level));
     const project = createExample(example.id),
