@@ -1,4 +1,5 @@
 import { getDefinition } from '../components/catalog/index.js';
+import { elevatorStepBound } from './elevator-timing.js';
 
 const MAX_STEP = 0.0005;
 const MIN_REGULAR_STEP = 0.00005;
@@ -44,14 +45,15 @@ function sourceTiming(project, runtime) {
     );
     if (frequency > 0 && duty > 0 && duty < 1) periodic.push({ type: node.type, frequency, duty });
   }
-  return { periodic, analogFrequency };
+  return { periodic, analogFrequency, elevatorStep: elevatorStepBound(project) };
 }
 
-function resolution({ periodic, analogFrequency }) {
-  let interval = MAX_STEP;
+function resolution({ periodic, analogFrequency, elevatorStep }) {
+  let interval = elevatorStep ?? MAX_STEP;
   for (const { frequency, duty } of periodic)
     interval = Math.min(interval, Math.min(duty, 1 - duty) / frequency / 2);
   interval = Math.max(MIN_REGULAR_STEP, interval);
+  if (elevatorStep !== null) interval = Math.min(interval, elevatorStep);
   return analogFrequency > 0
     ? Math.min(interval, 1 / (analogFrequency * ANALOG_SAMPLES))
     : interval;

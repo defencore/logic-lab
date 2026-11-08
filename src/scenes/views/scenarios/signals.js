@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { active } from '../../common/numbers.js';
+import { tagSceneObject } from '../../common/inspection.js';
 
 export function createTrafficLight({ root, mesh, box, cylinder, sphere, material, keep }) {
   mesh(root, box(4.5, 0.08, 13.4), material(0x46505a), -1.5, 0.14).userData.frameIgnore = true;
@@ -18,6 +19,7 @@ export function createTrafficLight({ root, mesh, box, cylinder, sphere, material
       }),
     );
     const lens = mesh(root, sphere(0.28), paint, 2, 4.9 - index * 0.8, 0.36);
+    lens.userData.role = `signal-lamp-${index}`;
     lens.scale.z = 0.5;
     const hood = mesh(
       root,
@@ -28,6 +30,7 @@ export function createTrafficLight({ root, mesh, box, cylinder, sphere, material
       0.35,
     );
     hood.rotation.x = Math.PI / 2;
+    hood.userData.role = `signal-lamp-${index}`;
     lens.position.z = 0.59;
     return paint;
   });
@@ -45,7 +48,7 @@ export function createTrafficLight({ root, mesh, box, cylinder, sphere, material
   };
 }
 
-export function buildSignal(context, parent, x, z, rotation = 0, scale = 1) {
+export function buildSignal(context, parent, x, z, rotation = 0, scale = 1, ports = {}) {
   const { mesh, box, cylinder, sphere, material, keep } = context;
   const group = new THREE.Group();
   group.position.set(x, 0, z);
@@ -64,6 +67,8 @@ export function buildSignal(context, parent, x, z, rotation = 0, scale = 1) {
       }),
     );
     const lens = mesh(group, sphere(0.16), paint, 0, 2.86 - i * 0.41, 0.24);
+    const target = ports[['red', 'yellow', 'green'][i]];
+    tagSceneObject(lens, target ? { port: target, side: 'in' } : {});
     lens.scale.z = 0.6;
     const visor = mesh(
       group,
@@ -74,6 +79,7 @@ export function buildSignal(context, parent, x, z, rotation = 0, scale = 1) {
       0.18,
     );
     visor.rotation.x = Math.PI / 2;
+    tagSceneObject(visor, target ? { port: target, side: 'in' } : {});
     lens.position.z = 0.33;
     return paint;
   });

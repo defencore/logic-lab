@@ -50,11 +50,11 @@ Hover a pin to preview its connections without changing the circuit. Choose **Tr
 
 ## Learn with guides and experiments
 
-The library contains 65 components with guides in English and Ukrainian. Use the category disclosure above the results to filter the library. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
+The library contains 68 components with guides in English and Ukrainian. Use the category disclosure above the results to filter the library. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
 
 All seven logic gates and both binary adders include truth tables in their guides and properties. Tables distinguish inputs from outputs and explain 0 and 1. When inspecting a component on the circuit, the matching row follows its current binary signals in real time. Floating or unknown signals and disabled components show an explanation instead of highlighting a misleading row.
 
-The **Learning examples** catalog contains 41 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, parallel data lines, memory, audible alarms and melodies, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback, transport dispatch, aquarium life support, greenhouse control, smart-home energy and yard security.
+The **Learning examples** catalog contains 43 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, parallel data lines, memory, audible alarms and melodies, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback, transport dispatch, aquarium life support, greenhouse control, smart-home energy and yard security.
 
 On roomy screens, opening an example shows a lesson panel above the canvas. In compact workspaces, open the walkthrough from the toolbar when needed. Follow its steps with **Previous** and **Next**, watch the highlighted components and live pin values, and open the relevant component in the inspector. Change a switch, numeric value, or slider and compare the result with the lesson's expected behavior. Run the circuit to advance clocks and waveforms, or pause and use **Step** to examine changes in smaller increments.
 
@@ -75,6 +75,10 @@ The [laboratory collection](./examples/README.md) stores each exercise in its ow
 Five focused exercises extend the memory progression: [manual shift-register loading and replay](./examples/shift-register-sequence/README.md), [RAM address isolation and write protection](./examples/ram-addressing/README.md), [ROM address-to-display lookup](./examples/rom-lookup/README.md), [independent register-file read/write addresses](./examples/register-file-addressing/README.md), and [two-bank memory mapping with A4 chip selection](./examples/memory-bank-select/README.md). Their lesson metadata includes ready input-action presets and observed byte outputs. A preset provides a repeatable experiment; the worksheet also asks learners to choose other data and addresses, predict results, and explain their own observations.
 
 Three bilingual sound laboratories cover an [active-buzzer logic alarm](./examples/active-buzzer-alarm/README.md), a [recorded passive-buzzer melody](./examples/passive-buzzer-melody/README.md), and an [880 → 440 Hz T-flip-flop divider](./examples/buzzer-clock-divider/README.md). The **Sound** category contains active and passive buzzers, each with one digital input and no electrical outputs. Run the simulation and press **Enable sound**; pressing **Sound on** again mutes it, and reloading starts with audio disabled. Active buzzers default to an internal 880 Hz tone and volume 0.15: high enables the tone, low disables it. Passive buzzers reproduce binary edges at volume 0.15; a full period gives `f=1/(T1+T0)`, while constant 0 and 1 produce no sustained tone. At 440 Hz with duty 0.5, the full period is 2.272727 ms=2272.727 µs and each half is 1.136364 ms=1136.364 µs. Use **1×** for note comparisons: changing simulation speed changes passive pitch and duration, while the active buzzer's internal pitch stays fixed. Action recordings can reproduce clock frequency/duty and switch changes; choose buzzer parameters before recording. Recorded clock frequencies are bounded to 0–1000 Hz.
+
+The [matrix keypad code-lock laboratory](./examples/keypad-code-lock/README.md) scans four row inputs and three column outputs with visible counter/gate logic. An external KEY MAP ROM decodes keys; a separate editable SECRET ROM stores **2580** at addresses 0–3. Captured comparisons advance progress, **#** confirms four correct digits, and **\*** clears. Wrong, extra or early-confirm entries reset progress and latch Error. Its portable ten-action mask preset includes every press and release.
+
+The inspector includes **read-only memory maps** for 16×8 RAM/ROM and the 8×8 register file. Follow active read/write addresses and last-write/change markers while the circuit operates. Byte-state views show **Q7…Q0**, binary, hexadecimal and decimal values; shift-register before/after views make bit movement visible. These views observe the existing simulator state and do not supply another memory controller.
 
 The motion sequence progresses from [STEP/DIR fundamentals](./examples/stepper-basics/README.md), through [automatic printer-axis homing](./examples/printer-homing/README.md), to [closed-loop position control](./examples/position-control/README.md). Homing uses a minimum endstop and an enable interlock that permits reversing away from home. Position control shares one target between direction and arrival sensors, then stops inside a tolerance window.
 
@@ -193,21 +197,21 @@ Canvas navigation follows WirePad: wheel zoom stays anchored at the cursor, temp
 
 ## Component library
 
-| Family                 | Components                                                                                                       |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Logic gates            | AND, OR, NOT, NAND, NOR, XOR, XNOR                                                                               |
-| Sources and indicators | GND, VCC, toggle switch, Hotkey, numeric byte input, clock, LED, LED matrix, seven-segment display, oscilloscope |
-| Sound                  | Active buzzer with internal tone, passive buzzer driven by binary periods                                        |
-| Combinational          | Multiplexer, demultiplexer, half adder, full adder, comparator, encoder, decoder                                 |
-| Sequential             | SR latch, D / JK / T flip-flops, register, shift register, binary counter                                        |
-| Mixed signals          | ADC, DAC, AM / FM generators, PWM generator, servo bank                                                          |
-| Architecture           | ALU, tri-state buffer, priority encoder, bit splitter and merger                                                 |
-| Memory                 | RAM, ROM, register file                                                                                          |
-| Physical behavior      | Open-drain output, pull-up and pull-down, Schmitt trigger, monostable                                            |
-| Motion and sensing     | Stepper motor, limit switch, position sensor                                                                     |
-| Automation             | Aquarium ecosystem, greenhouse, smart home and yard                                                              |
-| Interactive scenes     | Traffic signal, road junction, railway interlocking, animal feeder, water tank and pump                          |
-| Annotation             | Text notes and colored groups                                                                                    |
+| Family                 | Components                                                                                                                                            |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Logic gates            | AND, OR, NOT, NAND, NOR, XOR, XNOR                                                                                                                    |
+| Sources and indicators | GND, VCC, toggle switch, momentary button, 3×4 matrix keypad, Hotkey, numeric byte input, clock, LED, LED matrix, seven-segment display, oscilloscope |
+| Sound                  | Active buzzer with internal tone, passive buzzer driven by binary periods                                                                             |
+| Combinational          | Multiplexer, demultiplexer, half adder, full adder, comparator, encoder, decoder                                                                      |
+| Sequential             | SR latch, D / JK / T flip-flops, register, shift register, binary counter                                                                             |
+| Mixed signals          | ADC, DAC, AM / FM generators, PWM generator, servo bank                                                                                               |
+| Architecture           | ALU, tri-state buffer, priority encoder, bit splitter and merger                                                                                      |
+| Memory                 | RAM, ROM, register file                                                                                                                               |
+| Physical behavior      | Open-drain output, pull-up and pull-down, Schmitt trigger, monostable                                                                                 |
+| Motion and sensing     | Stepper motor, limit switch, position sensor                                                                                                          |
+| Automation             | Aquarium ecosystem, greenhouse, smart home and yard                                                                                                   |
+| Interactive scenes     | Traffic signal, road junction, railway interlocking, animal feeder, water tank and pump, nine-floor elevator                                          |
+| Annotation             | Text notes and colored groups                                                                                                                         |
 
 Digital connections use separate one-bit lines. Eight-bit data exposes eight numbered pins, while addresses and operation codes expose their required number of lines. The numeric byte source provides D0…D7, BCD0…BCD3, and ADDR0…ADDR2; each contact can connect directly to a digital input. Analog values use a separate analog contact. Use the inspector and pin labels to follow each connection.
 
@@ -284,7 +288,7 @@ The build preserves `CNAME` and `.nojekyll`. Static assets use relative paths so
 
 The stepper component accepts rising STEP edges, DIR, enable, and reset. Its travel is derived from full steps per revolution, microsteps, and lead in millimeters per revolution. Mechanical limits constrain travel. Position sensors and normally open or normally closed limit switches feed the circuit so homing and target-position feedback remain logic operations.
 
-Open **3D mechanisms** in the header or **Open 3D view** on a motor. The first three motors control the printer's X carriage, Y bed, and Z gantry. The separate view shows shaft and screw rotation, carriage travel, sensor trip markers, and live readouts. Its switches and pulse-clock controls edit the same source components as the circuit canvas. Camera presets and orbit controls affect only the view. Three.js requires WebGL 2; if graphics are unavailable, the circuit simulation still works.
+Open **3D mechanisms** in the header or **Open 3D view** on a component. The linked 3D dock sits beside the circuit on roomy screens and shares its runtime. **Controls** contains related circuit sources, including momentary buttons; **Contacts** shows live physical pins. Select a mesh or contact to highlight its structural connection path and corresponding scene object. The first three motors drive the printer's X carriage, Y bed and Z gantry; other scenes expose their own actuators and sensors. Camera controls affect only the view. Three.js requires WebGL 2; if graphics are unavailable, circuit simulation still works.
 
 The mechanical model is idealized: it does not simulate inertia, torque, missed steps, collisions, acceleration planning, or real electrical motor-driver behavior. STEP pulses must be sampled by the simulator; use frequencies comfortably below its sampling limit. Reset sets the configured initial position, while physical homing requires movement and a limit signal.
 
@@ -305,7 +309,9 @@ These are deterministic educational simulations, not models for controlling real
 
 ## Aquarium, greenhouse and home automation
 
-The **Automation** topic adds seven laboratories using three circuit-controlled 3D components. Together with the other topics, including manual railway dispatch and three buzzer laboratories, the catalog contains 41 reusable exercises.
+The [nine-floor elevator laboratory](./examples/elevator-logic/README.md) uses floors **1–9**, nine momentary CALL buttons and a momentary RESET. Released buttons return Q to 0 while nine visible SR memories retain their requests. Shared priority gates choose the lowest pending floor; separate binary contacts encode it into a numeric DAC target, and an external one-shot opens/holds the doors before closing. The physical plant supplies independent F1…F9 contacts, door sensors, position and latched faults. Its bilingual worksheet includes a replayable **3 → 5 → 9 → 1** trip and an unsafe interlock bypass with common reset. The circuit has 140 components, within the 200-component recording cap. Floor sensors use a ±0.015-floor alignment zone; the controller uses priority rather than FIFO.
+
+The **Automation** topic adds seven laboratories using three circuit-controlled 3D components. Together with the other topics, including manual railway dispatch, the elevator and three buzzer laboratories, the catalog contains 43 reusable exercises.
 
 - **Aquarium life support:** build temperature, oxygen and water-quality interlocks with AND, OR and NOT. Individual fish swim, lose health under sustained harmful conditions, and float belly-up with X eyes after death. Cold, overheating, oxygen deprivation, overfeeding, starvation, dirty water and nonstop lighting have different measured causes. Corrected conditions can heal surviving fish; reset starts a fresh ecosystem.
 - **Aquarium feeding:** compare continuous feeding with a clock, one-shot and hunger permission. Observe food, cleanliness and health instead of treating a high control signal as a single portion.

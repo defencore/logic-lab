@@ -19,7 +19,14 @@ export function dimensions(node) {
     };
   if (node.type === 'note') return { w: 240, h: 130 };
   if (node.type === 'matrix') return { w: 260, h: 270 };
+  if (node.type === 'keypad') return { w: 210, h: 260 };
   if (['active_buzzer', 'passive_buzzer'].includes(node.type)) return { w: 204, h: 158 };
+  const byteWidgetHeight =
+    node.type === 'shift_register'
+      ? 190
+      : ['bus_input', 'register', 'counter'].includes(node.type)
+        ? 150
+        : 0;
   return {
     w: SCENARIO_TYPES.includes(node.type)
       ? 284
@@ -31,6 +38,7 @@ export function dimensions(node) {
           : 160,
     h: Math.max(
       100,
+      byteWidgetHeight,
       ...[d.inputs, d.outputs].map((pins) => pinOffset(pins, pins.length - 1) + 21),
       SCENARIO_TYPES.includes(node.type) ||
         ['scope', 'servo', 'sevenseg', 'am', 'fm', 'stepper'].includes(node.type)
@@ -44,6 +52,10 @@ export function pinPlacement(node, port, side) {
   const pins = side === 'out' ? definition.outputs : definition.inputs;
   const index = pins.findIndex((pin) => pin.id === port);
   const pin = pins[index];
+  if (node.type === 'keypad')
+    return side === 'in'
+      ? { x: 0, y: 60 + index * 41, edge: 'left' }
+      : { x: 55 + index * 50, y: dimensions(node).h, edge: 'bottom' };
   if (node.type === 'matrix' && pin?.group === 'rows')
     return { x: 0, y: 58 + pin.bit * 22, edge: 'left' };
   if (node.type === 'matrix' && pin?.group === 'cols')

@@ -11,12 +11,15 @@
 @import './src/styles/components/sources.css';
 @import './src/styles/components/inline-node-label.css';
 @import './src/styles/components/hotkey.css';
+@import './src/styles/components/momentary-button.css';
+@import './src/styles/components/keypad.css';
 @import './src/styles/components/audio.css';
 @import './src/styles/components/widgets.css';
 @import './src/styles/components/annotations.css';
 @import './src/styles/signals.css';
 @import './src/styles/inspector/panel.css';
 @import './src/styles/inspector/properties.css';
+@import './src/styles/inspector/state-inspection.css';
 @import './src/styles/inspector/hotkeys.css';
 @import './src/styles/inspector/help.css';
 @import './src/styles/dialogs.css';
@@ -37,3 +40,4 @@
 @import './src/styles/responsive/touch.css';
 @import './src/styles/responsive/constrained.css';
 @import './src/styles/responsive/learning-space.css';
+@import './src/styles/scenes/linked-panel.css';

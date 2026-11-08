@@ -47,7 +47,7 @@ export function home(context) {
   mesh(root, box(0.65, 1.3, 0.65), material(0x9c7967), -2.8, 4.15, -2.2);
   const windowMaterial = paint(context, 0x607d83, { emissive: 0xffcc7c, emissiveIntensity: 0 });
   for (const x of [-2.7, 0.7]) {
-    mesh(root, box(1.15, 1.1, 0.08), windowMaterial, x, 2.1, 0.94);
+    mesh(root, box(1.15, 1.1, 0.08), windowMaterial, x, 2.1, 0.94).userData.role = 'home-window';
     for (const dx of [-0.6, 0, 0.6]) mesh(root, box(0.05, 1.2, 0.08), wood, x + dx, 2.1, 1.01);
     for (const y of [1.5, 2.1, 2.7]) mesh(root, box(1.25, 0.06, 0.08), wood, x, y, 1.01);
   }
@@ -146,7 +146,7 @@ export function home(context) {
   const alarm = lamp(context, root, 1.2, 3.2, 1.02, 0xf15448);
   alarm.object.userData.role = 'home-alarm';
   const heater = paint(context, 0x89785e, { emissive: 0xf58b42, emissiveIntensity: 0 });
-  mesh(root, box(0.9, 0.6, 0.2), heater, -2.7, 1.0, 1.0);
+  mesh(root, box(0.9, 0.6, 0.2), heater, -2.7, 1.0, 1.0).userData.role = 'home-heater';
   const fan = new THREE.Group();
   root.add(fan);
   const fanMount = ring(context, root, 0.43, material(0xa6bbb1), 1.79, 2.3, -1);

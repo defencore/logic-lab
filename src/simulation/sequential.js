@@ -30,10 +30,10 @@ const chooseState = (edge, hold, capture) =>
 const chooseBits = (edge, hold, capture) =>
   edge.length === 1 ? (edge[0] ? capture : hold) : mergeBits(hold, capture);
 
-function capture(node, state, inputs, incoming, edges) {
+function capture(node, state, inputs, incoming, edges, time) {
   if (!edges.includes(1)) return state;
   if (node.type === 'ram' || node.type === 'register_file')
-    return writeMemory(node, state, inputs, incoming, edges);
+    return writeMemory(node, state, inputs, incoming, edges, time);
   let next = { ...state };
   if (node.type === 'd_ff') next.q = chooseState(edges, state.q, logic(inputs.d));
   else if (node.type === 'jk_ff') {
@@ -48,14 +48,28 @@ function capture(node, state, inputs, incoming, edges) {
     next.q = chooseState(edges, state.q, q);
   } else {
     const hold = state.qBits ?? byteBits(state.q);
+    const enable =
+      node.type === 'shift_register' ? 1 : control(node, 'enable', inputs, incoming, 1);
     let captured;
     if (node.type === 'shift_register') captured = [logic(inputs.d), ...hold.slice(0, 7)];
     else {
       const value = node.type === 'counter' ? incrementBits(hold) : bitInputs(inputs, 'd');
-      const enable = control(node, 'enable', inputs, incoming, 1);
       captured = enable === 1 ? value : enable === 0 ? hold : mergeBits(hold, value);
     }
     next = withBits(next, chooseBits(edges, hold, captured));
+    if (enable !== 0 && control(node, 'reset', inputs, incoming) === 0) {
+      const field = node.type === 'shift_register' ? 'lastShift' : 'lastByteChange';
+      next[field] = {
+        sequence: (state[field]?.sequence || 0) + 1,
+        at: time,
+        kind:
+          node.type === 'shift_register' ? 'shift' : node.type === 'counter' ? 'count' : 'capture',
+        definite: edges.length === 1 && enable === 1,
+        ...(node.type === 'shift_register' ? { ser: logic(inputs.d) } : {}),
+        before: [...hold],
+        after: [...next.qBits],
+      };
+    }
   }
   return RESET_TYPES.has(node.type) ? applyReset(node, next, inputs, incoming) : next;
 }
@@ -123,7 +137,10 @@ export function advanceSequential(nodes, runtime, incoming) {
     else if (clocked.has(node.type)) {
       const clock = logic(inputs.clk),
         edges = risingOptions(state.lastClock, clock);
-      next = node.enabled === false ? { ...state } : capture(node, state, inputs, incoming, edges);
+      next =
+        node.enabled === false
+          ? { ...state }
+          : capture(node, state, inputs, incoming, edges, runtime.time);
       next = { ...next, lastClock: clock };
     } else continue;
     if (Object.entries(next).some(([key, value]) => value !== state[key]))

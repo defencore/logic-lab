@@ -167,8 +167,14 @@ export function createRailway(context) {
     });
     return { blades, handle, routes };
   });
-  const signalA = buildSignal(context, root, -1.05, -1.0, Math.PI, 0.72);
-  const signalB = buildSignal(context, root, 1.05, 3.0, 0, 0.72);
+  const signalA = buildSignal(context, root, -1.05, -1.0, Math.PI, 0.72, {
+    red: 'signal_a',
+    green: 'signal_a',
+  });
+  const signalB = buildSignal(context, root, 1.05, 3.0, 0, 0.72, {
+    red: 'signal_b',
+    green: 'signal_b',
+  });
   const arms = [-1, 1].map((side) => {
     const gate = new THREE.Group();
     root.add(gate);

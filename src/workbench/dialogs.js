@@ -41,7 +41,7 @@ export function createDialogs({ t, beforeOpen, disposeContent }) {
     for (const element of $$('.app-header,.app-body')) element.inert = inert;
   }
   function close() {
-    disposeContent();
+    disposeContent?.();
     container()?.replaceChildren();
     setBackgroundInert(false);
     const destination =
@@ -52,7 +52,7 @@ export function createDialogs({ t, beforeOpen, disposeContent }) {
   function open(html, wide = false) {
     if (!isOpen()) opener = document.activeElement;
     beforeOpen();
-    disposeContent();
+    disposeContent?.();
     container().innerHTML = `<div class="modal-backdrop"><section class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1"><button id="close-modal" class="icon-btn modal-close" aria-label="${esc(t('cancel'))}">${icon('close')}</button>${html}</section></div>`;
     const dialog = container()?.querySelector('.modal');
     const heading = $('h2', dialog);

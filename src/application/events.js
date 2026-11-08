@@ -7,7 +7,7 @@ import { $ } from '../shared/ui.js';
 import { panBy, ZOOM_IN_FACTOR, ZOOM_OUT_FACTOR } from '../circuits/viewport.js';
 import { trapFocus } from '../workbench/dialogs.js';
 import { boundCoordinate } from './model.js';
-import { focusContact } from '../workbench/contact-interaction.js';
+import { focusContact, contactEndpoint } from '../workbench/contact-interaction.js';
 export function bindApplicationEvents(context) {
   const { state, services, actions, t } = context;
   document.addEventListener('copy', (event) => services.clipboard.copy(event));
@@ -17,6 +17,12 @@ export function bindApplicationEvents(context) {
   });
   document.addEventListener('keyup', (event) => services.hotkeys?.keyUp(event), { capture: true });
   document.addEventListener('focusin', (event) => services.hotkeys?.focusChanged(event.target));
+  const inspectSceneContact = (event) => {
+    const pin = event.target.closest?.('.pin');
+    if (pin) services.scenes?.inspectContact(contactEndpoint(pin));
+  };
+  document.addEventListener('focusin', inspectSceneContact);
+  document.addEventListener('pointerdown', inspectSceneContact, { capture: true });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) services.hotkeys?.suspend();
     if (document.hidden) services.audio?.suspend();
@@ -59,6 +65,14 @@ export function bindApplicationEvents(context) {
       return;
     }
     if (e.target.closest('input,textarea,select,[contenteditable]')) return;
+    if (
+      e.target.closest('#scene-panel') &&
+      (['Delete', 'Backspace', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) ||
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd'))
+    ) {
+      e.preventDefault();
+      return;
+    }
     if (e.ctrlKey || e.metaKey) {
       state.shiftHeld = false;
       actions.updateTool();

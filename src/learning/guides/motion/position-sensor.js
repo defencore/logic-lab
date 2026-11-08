@@ -36,8 +36,8 @@ export default {
       'Вікно цілі, вужче за досяжну сітку кроків двигуна, може спричинити нескінченну зміну напрямку. Задайте допуск щонайменше в половину кроку та ціль у межах Min/Max.',
     ],
     [
-      'These coordinates are millimeters, even when supplied by a DAC. This block has no optical, magnetic or quantization model of a physical position sensor.',
-      'Ці координати вимірюються в міліметрах, навіть якщо їх задає ЦАП. Блок не моделює оптичні, магнітні чи дискретизаційні властивості реального датчика.',
+      'Use the same coordinate unit for POS, TARGET and Tolerance. Unit (unit) can label elevator coordinates as floors; it changes the label without converting values. This block has no optical or magnetic sensor model.',
+      'Використовуйте одну одиницю для POS, TARGET і Tolerance. Unit (unit), одиниця позиції на екрані, може позначати координати ліфта поверхами; вона змінює підпис без перерахунку чисел. Блок не моделює оптичний чи магнітний датчик.',
     ],
   ],
   inputs: {

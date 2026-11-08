@@ -19,10 +19,11 @@ export function createAnimalFeeder(context) {
   );
   for (const x of [-3.2, -2.0])
     for (const z of [-0.65, 0.65]) mesh(root, cylinder(0.07, 0.07, 3.2), steel, x, 1.75, z);
-  mesh(root, cylinder(1.05, 1.05, 1.6, 36), clear, -2.6, 4.0);
+  mesh(root, cylinder(1.05, 1.05, 1.6, 36), clear, -2.6, 4.0).userData.role = 'feeder-hopper';
   mesh(root, cylinder(1.12, 1.12, 0.12, 36), green, -2.6, 4.84);
   mesh(root, cylinder(1.1, 0.16, 1.1, 36), steel, -2.6, 2.65);
   const hopperFill = mesh(root, cylinder(0.98, 0.98, 1), feed, -2.6, 3.4);
+  hopperFill.userData.role = 'feeder-hopper';
   const funnelFeed = mesh(root, cylinder(0.98, 0.13, 0.95, 32), feed, -2.6, 2.75);
   const motor = mesh(root, box(0.8, 0.6, 0.75), green, -3.7, 2.1);
   motor.userData.role = 'feeder-motor';
@@ -160,7 +161,7 @@ export function createAnimalFeeder(context) {
   const warning = keep(
     new THREE.MeshStandardMaterial({ color: 0x35885d, emissive: 0x35885d, emissiveIntensity: 0.2 }),
   );
-  mesh(root, sphere(0.1), warning, -3.7, 2.48, 0.26);
+  mesh(root, sphere(0.1), warning, -3.7, 2.48, 0.26).userData.role = 'feeder-warning';
   return {
     update({ state = {}, parameters = {} }) {
       const hopperRatio = clamp(

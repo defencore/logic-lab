@@ -1,0 +1,18 @@
+.momentary-control {
+  min-height: 40px;
+  min-width: 118px;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+}
+
+.momentary-control b {
+  min-width: 1.5em;
+  font-variant-numeric: tabular-nums;
+}
+
+.momentary-control.is-on {
+  color: #092b24;
+  background: #73e5aa;
+  border-color: #73e5aa;
+}

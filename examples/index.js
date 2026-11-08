@@ -52,6 +52,10 @@ import melodyCircuit from './passive-buzzer-melody/circuit.json' with { type: 'j
 import melodyLesson from './passive-buzzer-melody/lesson.js';
 import dividerCircuit from './buzzer-clock-divider/circuit.json' with { type: 'json' };
 import dividerLesson from './buzzer-clock-divider/lesson.js';
+import elevatorCircuit from './elevator-logic/circuit.json' with { type: 'json' };
+import elevatorLesson from './elevator-logic/lesson.js';
+import keypadLockCircuit from './keypad-code-lock/circuit.json' with { type: 'json' };
+import keypadLockLesson from './keypad-code-lock/lesson.js';
 import circuit1 from './logic-gates/circuit.json' with { type: 'json' };
 import lesson1 from './logic-gates/lesson.js';
 import circuit2 from './full-adder/circuit.json' with { type: 'json' };
@@ -101,6 +105,8 @@ export const EXAMPLES = [
   { ...alarmLesson, create: () => structuredClone(alarmCircuit) },
   { ...melodyLesson, create: () => structuredClone(melodyCircuit) },
   { ...dividerLesson, create: () => structuredClone(dividerCircuit) },
+  { ...elevatorLesson, create: () => structuredClone(elevatorCircuit) },
+  { ...keypadLockLesson, create: () => structuredClone(keypadLockCircuit) },
   { ...lesson0, create: () => structuredClone(circuit0) },
   { ...lesson1, create: () => structuredClone(circuit1) },
   { ...lesson2, create: () => structuredClone(circuit2) },

@@ -8,6 +8,9 @@ import { createTrafficJunction } from './junction.js';
 import { createRailway } from './railway.js';
 import { createAnimalFeeder } from './feeder.js';
 import { createWaterTank } from './tank.js';
+import { createElevator } from './elevator.js';
+import { bindScenarioInspection } from '../../common/inspection.js';
+import { createScenePicking } from '../../common/picking.js';
 
 export const SCENARIO_VIEW_TYPES = [
   ...AUTOMATION_TYPES,
@@ -16,11 +19,11 @@ export const SCENARIO_VIEW_TYPES = [
   'railway',
   'animal_feeder',
   'water_tank',
+  'elevator',
 ];
 
 /** Build the same scene graph used by the WebGL view without allocating a renderer. */
 export function createScenarioModel(type, context) {
-  if (AUTOMATION_TYPES.includes(type)) return createAutomationModel(type, context);
   if (!SCENARIO_VIEW_TYPES.includes(type)) throw new Error(`Unsupported 3D scenario type: ${type}`);
   const constructors = {
     traffic_light: createTrafficLight,
@@ -28,16 +31,27 @@ export function createScenarioModel(type, context) {
     railway: createRailway,
     animal_feeder: createAnimalFeeder,
     water_tank: createWaterTank,
+    elevator: createElevator,
   };
-  const construct = constructors[type];
+  const construct = AUTOMATION_TYPES.includes(type)
+    ? (value) => createAutomationModel(type, value)
+    : constructors[type];
   if (typeof construct !== 'function') throw new Error(`Unsupported 3D scenario type: ${type}`);
-  return construct(context);
+  const model = construct(context);
+  bindScenarioInspection(context.root, type);
+  return {
+    ...model,
+    update(snapshot) {
+      model.update(snapshot);
+      bindScenarioInspection(context.root, type);
+    },
+  };
 }
 
 /** All motion comes from simulator snapshots; this module only draws them. */
 export function createScenarioView(
   container,
-  { type = 'traffic_light', nodeId, language = 'en', onStatus } = {},
+  { type = 'traffic_light', nodeId, language = 'en', onStatus, onPick } = {},
 ) {
   if (!SCENARIO_VIEW_TYPES.includes(type)) throw new Error(`Unsupported 3D scenario type: ${type}`);
   if (!container?.appendChild)
@@ -82,6 +96,7 @@ export function createScenarioView(
       update() {},
       resize() {},
       setView() {},
+      select() {},
       resetCamera() {},
       dispose() {
         notice.remove();
@@ -168,6 +183,7 @@ export function createScenarioView(
     centre.z,
   );
   stage.userData.frameIgnore = true;
+  const picking = createScenePicking({ canvas, camera, root, overlay: scene, nodeId, onPick });
   let viewDirection;
   function resize() {
     if (disposed) return;
@@ -219,6 +235,12 @@ export function createScenarioView(
         perspective: [10, 8.5, 12],
         front: [0, 4.5, 17],
         top: [0, 23, 0.001],
+      },
+      elevator: {
+        target: [0, 14.8, 0.6],
+        perspective: [12, 18, 30],
+        front: [0, 14.8, 35],
+        top: [0, 60, 0.601],
       },
     }[type];
     viewDirection = new THREE.Vector3(
@@ -280,10 +302,14 @@ export function createScenarioView(
   onStatus?.('');
   return {
     update(snapshot = {}) {
-      if (!disposed) model.update({ ...snapshot, nodeId });
+      if (!disposed) {
+        model.update({ ...snapshot, nodeId });
+        picking.update();
+      }
     },
     resize,
     setView,
+    select: picking.select,
     resetCamera() {
       setView();
     },
@@ -296,6 +322,7 @@ export function createScenarioView(
       canvas.removeEventListener('webglcontextlost', lost);
       canvas.removeEventListener('webglcontextrestored', restored);
       controls.dispose();
+      picking.dispose();
       for (const resource of resources) resource.dispose();
       resources.clear();
       sun.shadow.dispose();

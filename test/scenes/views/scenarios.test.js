@@ -260,7 +260,7 @@ test('every actual scene constructor builds and updates normal and failed Three.
   }
 });
 
-test('all eight scenario kinds are explicit and invalid scenes fail before graphics allocation', () => {
+test('all scenario kinds are explicit and invalid scenes fail before graphics allocation', () => {
   assert.deepEqual(SCENARIO_VIEW_TYPES, [
     'aquarium',
     'greenhouse',
@@ -270,6 +270,7 @@ test('all eight scenario kinds are explicit and invalid scenes fail before graph
     'railway',
     'animal_feeder',
     'water_tank',
+    'elevator',
   ]);
   assert.throws(() => createScenarioView(null, { type: 'unknown' }), /Unsupported 3D scenario/);
   assert.throws(() => createScenarioView(null, { type: 'water_tank' }), /container element/);

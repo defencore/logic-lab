@@ -39,6 +39,18 @@ export const IO = [
     'Натисніть перемикач, щоб змінити логічний рівень.',
   ),
   component(
+    'button',
+    'Momentary button',
+    'Кнопка без фіксації',
+    'io',
+    'PUSH',
+    [],
+    [bit('out', 'Q')],
+    { value: 0 },
+    'Hold the button to output 1; release it to return to 0. Press and release can be recorded.',
+    'Утримуйте кнопку для виходу 1; відпустіть для повернення до 0. Натискання й відпускання можна записати.',
+  ),
+  component(
     'hotkey',
     'Hotkey · Keyboard input',
     'Hotkey · Клавіша клавіатури',

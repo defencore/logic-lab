@@ -48,11 +48,16 @@ function checkedFragment(value) {
     nodes: value.nodes,
     wires: value.wires,
   });
-  // Transient keyboard presses and copied toggle state never activate a pasted source.
+  // Transient presses and copied keyboard toggle state never activate a pasted source.
   nodes
-    .filter((node) => node.type === 'hotkey')
+    .filter((node) => ['hotkey', 'button'].includes(node.type))
     .forEach((node) => {
       node.params.value = 0;
+    });
+  nodes
+    .filter((node) => node.type === 'keypad')
+    .forEach((node) => {
+      node.params.keys = 0;
     });
   return { kind: KIND, version: 1, nodes, wires };
 }

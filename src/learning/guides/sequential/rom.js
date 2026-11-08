@@ -50,5 +50,5 @@ export default {
       'Q: обраний байт таблиці при CS=OE=1, інакше Z.',
     ],
   },
-  examples: ['ram', 'bcd-display'],
+  examples: ['keypad-code-lock', 'rom-lookup', 'ram', 'bcd-display'],
 };

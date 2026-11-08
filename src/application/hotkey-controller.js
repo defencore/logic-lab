@@ -7,8 +7,12 @@ import {
 const textTarget = (target) =>
   !!target?.closest?.('input,textarea,select,[contenteditable],[role="textbox"]');
 const nativeActivation = (event) =>
-  ['Space', 'Enter', 'NumpadEnter'].includes(event.code) &&
-  !!event.target?.closest?.('button,a,summary,[role="button"]');
+  (['Space', 'Enter', 'NumpadEnter'].includes(event.code) &&
+    !!event.target?.closest?.('button,a,summary,[role="button"]')) ||
+  (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.code) &&
+    !!event.target?.closest?.('[role="tab"]')) ||
+  (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.code) &&
+    !!event.target?.closest?.('[data-keypad-key]'));
 const consume = (event) => {
   event.preventDefault();
   event.stopImmediatePropagation();

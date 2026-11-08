@@ -114,6 +114,7 @@ export function aquarium(context) {
     blade.rotation.z = (-index * Math.PI * 2) / 3;
   }
   const coolerLamp = lamp(context, root, 4.8, 1.15, 0.98, 0x82d6f2);
+  coolerLamp.object.userData.role = 'aquarium-cooler-lamp';
   tube(
     context,
     root,
@@ -137,7 +138,7 @@ export function aquarium(context) {
     ],
     0.06,
     material(0x9bb5b4),
-  );
+  ).userData.role = 'aquarium-water-change';
   const freshWater = Array.from({ length: 10 }, () =>
     mesh(root, sphere(0.035), material(0x7bc9de)),
   );

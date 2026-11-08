@@ -143,7 +143,7 @@ export function greenhouse(context) {
       ],
       0.04,
       pipeMaterial,
-    );
+    ).userData.role = 'greenhouse-irrigation';
     for (const z of [-1.6, 1.6]) {
       mesh(root, cylinder(0.08, 0.05, 0.13), pipeMaterial, x, 3.17, z);
       sprays.push(spray(context, root, [x, 3.1, z], water, 12, 1.085, 1.1, 0.08));
@@ -167,7 +167,8 @@ export function greenhouse(context) {
     blade.rotation.z = (-index * Math.PI) / 2;
   }
   const heater = paint(context, 0x7b6956, { emissive: 0xe87d3c, emissiveIntensity: 0 });
-  mesh(root, box(0.8, 0.65, 0.65), heater, 0, floorY + 0.325, -3.1);
+  mesh(root, box(0.8, 0.65, 0.65), heater, 0, floorY + 0.325, -3.1).userData.role =
+    'greenhouse-heater';
   const light = lamp(context, root, 0, 4.02, 0, 0xd3c0ff);
   mesh(root, box(4.5, 0.12, 0.35), frame, 0, 4.2, 0);
   for (const x of [-2, 2]) mesh(root, cylinder(0.025, 0.025, 0.645), frame, x, 4.5825, 0);

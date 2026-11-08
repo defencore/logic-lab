@@ -1,4 +1,21 @@
 export const scenes = {
+  sceneAndCircuit: '3D beside the circuit',
+  scenePanelTabs: 'Scene controls and contacts',
+  sceneControlsTab: 'Controls',
+  sceneSignalsTab: 'Contacts',
+  elevatorPosition: 'Floor',
+  elevatorDoor: 'Door',
+  closeScenePanel: 'Close the 3D panel',
+  sceneLinkHint:
+    'Click an object or a signal below to find its contact and related circuit paths. Orbit by dragging.',
+  sceneChooseObject: 'Choose an object, circuit contact or signal.',
+  sceneClearLink: 'Clear linked highlight',
+  sceneLinkedSignals: 'Signals linked to the scene',
+  sceneSignalsHint:
+    'Arrows into the scene are commands; arrows out are sensors. Click to locate the matching contact.',
+  sceneRelatedControlsHint:
+    'Only source components connected to this scene are shown. Logic continues to control the mechanism.',
+  sceneNoSources: 'Connect switches, clocks or keyboard inputs to control this scene.',
   motion: 'Motion & control',
   motionView: '3D scenes',
   scenes: '3D scenes & automation',

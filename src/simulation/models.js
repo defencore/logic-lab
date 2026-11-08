@@ -8,6 +8,7 @@ import {
 import { readMemoryBits } from './memory.js';
 import { initialServoState } from './servo.js';
 import { periodicLevel } from './timing.js';
+import { evaluateKeypad } from './keypad.js';
 import { TAU, unknown, logic, clamp, number, complement, allKnown, packBits } from './signals.js';
 
 const decimalSegments = [0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f];
@@ -107,6 +108,10 @@ export function evaluate(node, runtime, incoming) {
     case 'vcc':
     case 'pullup':
       return out(1);
+    case 'button':
+      return out(p.value === 0 || p.value === 1 ? p.value : 'X');
+    case 'keypad':
+      return evaluateKeypad(p, i);
     case 'switch':
       return out(Number(number(p.value) !== 0));
     case 'hotkey':

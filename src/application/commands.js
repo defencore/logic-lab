@@ -52,6 +52,8 @@ export function createCommands(context) {
   }
   function deleteSelection() {
     if (services.classroom && !services.classroom.allowEdit()) return;
+    services.buttons?.suspend();
+    services.keypads?.suspend();
     actions.cancelInteraction();
     if (!state.selected.size && !state.selectedWire) return;
     actions.checkpoint();
@@ -71,6 +73,10 @@ export function createCommands(context) {
   }
   function enableSelected(value) {
     if (services.classroom && !services.classroom.allowEdit()) return;
+    if (!value) {
+      services.buttons?.suspend();
+      services.keypads?.suspend();
+    }
     actions.checkpoint();
     state.project.nodes.filter((n) => state.selected.has(n.id)).forEach((n) => (n.enabled = value));
     actions.changed();
@@ -86,6 +92,8 @@ export function createCommands(context) {
     return true;
   }
   function exportProject() {
+    services.buttons?.suspend();
+    services.keypads?.suspend();
     try {
       const blob = new Blob([serializeProject(state.project)], { type: 'application/json' }),
         url = URL.createObjectURL(blob),
@@ -101,6 +109,8 @@ export function createCommands(context) {
   }
   function replaceProject(next) {
     if (services.classroom && !services.classroom.allowEdit()) return;
+    services.buttons?.suspend();
+    services.keypads?.suspend();
     actions.setWorkspaceView('canvas');
     actions.cancelInteraction();
     actions.checkpoint();
@@ -130,6 +140,8 @@ export function createCommands(context) {
   }
   function resetSimulation() {
     if (services.classroom && !services.classroom.allowEdit()) return;
+    services.buttons?.suspend();
+    services.keypads?.suspend();
     state.runtime = actions.newRuntime();
     simulate(state.project, state.runtime, 0);
     actions.updateSignals();
@@ -155,5 +167,11 @@ export function createCommands(context) {
     confirmReplace,
     resetSimulation,
     toggleSource,
+    setMomentarySource: (id, value) =>
+      value === 1 ? !!services.buttons?.press(id) : value === 0 && !!services.buttons?.release(id),
+    setKeypadKey: (id, index, value) =>
+      value === 1
+        ? !!services.keypads?.press(id, index)
+        : value === 0 && !!services.keypads?.release(id, index),
   };
 }

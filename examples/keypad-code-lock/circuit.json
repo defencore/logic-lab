@@ -1,0 +1,2719 @@
+{
+  "version": 1,
+  "name": "Matrix keypad: ROM code lock",
+  "nodes": [
+    {
+      "id": "keypad",
+      "type": "keypad",
+      "x": 80,
+      "y": 80,
+      "label": "KEYPAD · press one key, then release",
+      "enabled": true,
+      "params": {
+        "mode": "hold",
+        "keys": 0
+      }
+    },
+    {
+      "id": "scan-clock",
+      "type": "clock",
+      "x": 80,
+      "y": 1300,
+      "label": "Row scan · 200 Hz",
+      "enabled": true,
+      "params": {
+        "frequency": 200,
+        "duty": 0.5
+      }
+    },
+    {
+      "id": "scan",
+      "type": "counter",
+      "x": 80,
+      "y": 900,
+      "label": "Scan row · low two bits",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "reset",
+      "type": "button",
+      "x": 80,
+      "y": 1540,
+      "label": "RESET · clear attempt",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "one",
+      "type": "vcc",
+      "x": 80,
+      "y": 1760,
+      "label": "Logic 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "zero",
+      "type": "gnd",
+      "x": 80,
+      "y": 1980,
+      "label": "Logic 0",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-row0",
+      "type": "not",
+      "x": 420,
+      "y": 850,
+      "label": "NOT scan bit 0",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-row1",
+      "type": "not",
+      "x": 420,
+      "y": 1070,
+      "label": "NOT scan bit 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "row0",
+      "type": "and",
+      "x": 740,
+      "y": 740,
+      "label": "Select keypad row 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "row-led0",
+      "type": "led",
+      "x": 1060,
+      "y": 740,
+      "label": "Row 1 active",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "row1",
+      "type": "and",
+      "x": 740,
+      "y": 960,
+      "label": "Select keypad row 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "row-led1",
+      "type": "led",
+      "x": 1060,
+      "y": 960,
+      "label": "Row 2 active",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "row2",
+      "type": "and",
+      "x": 740,
+      "y": 1180,
+      "label": "Select keypad row 3",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "row-led2",
+      "type": "led",
+      "x": 1060,
+      "y": 1180,
+      "label": "Row 3 active",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "row3",
+      "type": "and",
+      "x": 740,
+      "y": 1400,
+      "label": "Select keypad row 4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "row-led3",
+      "type": "led",
+      "x": 1060,
+      "y": 1400,
+      "label": "Row 4 active",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "present01",
+      "type": "or",
+      "x": 420,
+      "y": 80,
+      "label": "Any column 1 or 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "present",
+      "type": "or",
+      "x": 740,
+      "y": 80,
+      "label": "Key detected · hold scan row",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-present",
+      "type": "not",
+      "x": 1060,
+      "y": 80,
+      "label": "No key · continue scanning",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "pair01",
+      "type": "and",
+      "x": 420,
+      "y": 300,
+      "label": "Multiple columns conflict",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "pair02",
+      "type": "and",
+      "x": 420,
+      "y": 520,
+      "label": "Multiple columns conflict",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "pair12",
+      "type": "and",
+      "x": 420,
+      "y": 740,
+      "label": "Multiple columns conflict",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "multi01",
+      "type": "or",
+      "x": 740,
+      "y": 300,
+      "label": "Column conflict 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "multi",
+      "type": "or",
+      "x": 740,
+      "y": 520,
+      "label": "Any column conflict",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-multi",
+      "type": "not",
+      "x": 1060,
+      "y": 520,
+      "label": "One column only",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "valid",
+      "type": "and",
+      "x": 1380,
+      "y": 80,
+      "label": "Valid held key",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "key-map",
+      "type": "rom",
+      "x": 1380,
+      "y": 400,
+      "label": "KEY MAP · matrix address to code",
+      "enabled": true,
+      "params": {
+        "data": "1,2,3,255,4,5,6,255,7,8,9,255,10,0,11,255"
+      }
+    },
+    {
+      "id": "secret",
+      "type": "rom",
+      "x": 2340,
+      "y": 400,
+      "label": "SECRET · digits 2,5,8,0 at addresses 0…3",
+      "enabled": true,
+      "params": {
+        "data": "2,5,8,0,0,0,0,0,0,0,0,0,0,0,0,0"
+      }
+    },
+    {
+      "id": "digit-test",
+      "type": "comparator",
+      "x": 1700,
+      "y": 80,
+      "label": "Key code < 10 · digit",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "hash-test",
+      "type": "comparator",
+      "x": 1700,
+      "y": 720,
+      "label": "Key code = 11 · #",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "matches",
+      "type": "comparator",
+      "x": 2660,
+      "y": 400,
+      "label": "Entered digit = SECRET[index]",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "progress-test",
+      "type": "comparator",
+      "x": 2340,
+      "y": 1100,
+      "label": "Progress < 4 / complete = 4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "digit",
+      "type": "and",
+      "x": 2020,
+      "y": 80,
+      "label": "A decimal digit was detected",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "star",
+      "type": "and",
+      "x": 2020,
+      "y": 300,
+      "label": "Star * · clear",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "hash",
+      "type": "and",
+      "x": 2020,
+      "y": 740,
+      "label": "Hash # · confirm",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "clear",
+      "type": "or",
+      "x": 2340,
+      "y": 80,
+      "label": "Clear attempt / *",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "accepted-data",
+      "type": "and",
+      "x": 2980,
+      "y": 80,
+      "label": "Correct digit and room left",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "accepted",
+      "type": "d_ff",
+      "x": 2980,
+      "y": 400,
+      "label": "Snapshot match before progress changes",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "seen",
+      "type": "d_ff",
+      "x": 2020,
+      "y": 1880,
+      "label": "Key event settled · one event per hold",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "seen-reset",
+      "type": "or",
+      "x": 2020,
+      "y": 2100,
+      "label": "Release resets event stage",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "digit-event",
+      "type": "and",
+      "x": 2340,
+      "y": 1880,
+      "label": "Settled digit event",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "advance",
+      "type": "and",
+      "x": 2660,
+      "y": 1880,
+      "label": "Advance after accepted digit",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "wrong-digit",
+      "type": "and",
+      "x": 2980,
+      "y": 1880,
+      "label": "Wrong / extra digit",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-complete",
+      "type": "not",
+      "x": 2660,
+      "y": 1320,
+      "label": "Code not complete",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "wrong-hash",
+      "type": "and",
+      "x": 2340,
+      "y": 1640,
+      "label": "Early # is wrong",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "wrong01",
+      "type": "or",
+      "x": 3300,
+      "y": 1880,
+      "label": "Digit or confirmation error",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "wrong",
+      "type": "or",
+      "x": 3620,
+      "y": 1880,
+      "label": "Any invalid entry",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "attempt-reset",
+      "type": "or",
+      "x": 3940,
+      "y": 1880,
+      "label": "Reset progress and unlock",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "progress",
+      "type": "counter",
+      "x": 2020,
+      "y": 1100,
+      "label": "Progress · four accepted digits",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "last-key",
+      "type": "register",
+      "x": 1700,
+      "y": 1320,
+      "label": "Last accepted matrix code · 0…11",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "unlocked",
+      "type": "d_ff",
+      "x": 3940,
+      "y": 740,
+      "label": "Unlocked · confirm complete code",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "alarm-reset",
+      "type": "or",
+      "x": 4260,
+      "y": 740,
+      "label": "Clear alarm / successful unlock",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-alarm-reset",
+      "type": "not",
+      "x": 4260,
+      "y": 960,
+      "label": "No alarm reset",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "alarm-set",
+      "type": "and",
+      "x": 4260,
+      "y": 1180,
+      "label": "Latch error safely",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "alarm",
+      "type": "sr_latch",
+      "x": 4580,
+      "y": 960,
+      "label": "Error memory · clear with *",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "ready",
+      "type": "led",
+      "x": 2660,
+      "y": 1100,
+      "label": "READY · press #",
+      "enabled": true,
+      "params": {
+        "color": "#e8bd65"
+      }
+    },
+    {
+      "id": "open-led",
+      "type": "led",
+      "x": 4900,
+      "y": 740,
+      "label": "UNLOCK · digital command",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "error-led",
+      "type": "led",
+      "x": 4900,
+      "y": 960,
+      "label": "ERROR · clear with *",
+      "enabled": true,
+      "params": {
+        "color": "#f27d73"
+      }
+    },
+    {
+      "id": "detected",
+      "type": "led",
+      "x": 1380,
+      "y": 1100,
+      "label": "KEY DETECTED",
+      "enabled": true,
+      "params": {
+        "color": "#73b8ed"
+      }
+    },
+    {
+      "id": "note80",
+      "type": "note",
+      "x": 80,
+      "y": -180,
+      "label": "Controller guide",
+      "enabled": true,
+      "params": {
+        "text": "1 · Diode-isolated matrix, no hidden encoder. One row at a time; scanning pauses while a key is held."
+      }
+    },
+    {
+      "id": "note1700",
+      "type": "note",
+      "x": 1700,
+      "y": -180,
+      "label": "Controller guide",
+      "enabled": true,
+      "params": {
+        "text": "2 · KEY MAP converts matrix address to digit / *10 / #11. SECRET addresses0…3 contain the editable four-digit code2580."
+      }
+    },
+    {
+      "id": "note3300",
+      "type": "note",
+      "x": 3300,
+      "y": -180,
+      "label": "Controller guide",
+      "enabled": true,
+      "params": {
+        "text": "3 · Match is captured before progress changes. Wrong input clears progress; * clears the attempt; # opens only after four accepted digits."
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "scan-clock-out-scan-clk",
+      "from": {
+        "node": "scan-clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "scan",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-scan-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "scan",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-present-out-scan-enable",
+      "from": {
+        "node": "not-present",
+        "port": "out"
+      },
+      "to": {
+        "node": "scan",
+        "port": "enable"
+      },
+      "width": 1
+    },
+    {
+      "id": "scan-out0-not-row0-a",
+      "from": {
+        "node": "scan",
+        "port": "out0"
+      },
+      "to": {
+        "node": "not-row0",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "scan-out1-not-row1-a",
+      "from": {
+        "node": "scan",
+        "port": "out1"
+      },
+      "to": {
+        "node": "not-row1",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-row0-out-row0-a",
+      "from": {
+        "node": "not-row0",
+        "port": "out"
+      },
+      "to": {
+        "node": "row0",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-row1-out-row0-b",
+      "from": {
+        "node": "not-row1",
+        "port": "out"
+      },
+      "to": {
+        "node": "row0",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "row0-out-keypad-row0",
+      "from": {
+        "node": "row0",
+        "port": "out"
+      },
+      "to": {
+        "node": "keypad",
+        "port": "row0"
+      },
+      "width": 1
+    },
+    {
+      "id": "row0-out-row-led0-in",
+      "from": {
+        "node": "row0",
+        "port": "out"
+      },
+      "to": {
+        "node": "row-led0",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "scan-out0-row1-a",
+      "from": {
+        "node": "scan",
+        "port": "out0"
+      },
+      "to": {
+        "node": "row1",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-row1-out-row1-b",
+      "from": {
+        "node": "not-row1",
+        "port": "out"
+      },
+      "to": {
+        "node": "row1",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "row1-out-keypad-row1",
+      "from": {
+        "node": "row1",
+        "port": "out"
+      },
+      "to": {
+        "node": "keypad",
+        "port": "row1"
+      },
+      "width": 1
+    },
+    {
+      "id": "row1-out-row-led1-in",
+      "from": {
+        "node": "row1",
+        "port": "out"
+      },
+      "to": {
+        "node": "row-led1",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-row0-out-row2-a",
+      "from": {
+        "node": "not-row0",
+        "port": "out"
+      },
+      "to": {
+        "node": "row2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "scan-out1-row2-b",
+      "from": {
+        "node": "scan",
+        "port": "out1"
+      },
+      "to": {
+        "node": "row2",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "row2-out-keypad-row2",
+      "from": {
+        "node": "row2",
+        "port": "out"
+      },
+      "to": {
+        "node": "keypad",
+        "port": "row2"
+      },
+      "width": 1
+    },
+    {
+      "id": "row2-out-row-led2-in",
+      "from": {
+        "node": "row2",
+        "port": "out"
+      },
+      "to": {
+        "node": "row-led2",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "scan-out0-row3-a",
+      "from": {
+        "node": "scan",
+        "port": "out0"
+      },
+      "to": {
+        "node": "row3",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "scan-out1-row3-b",
+      "from": {
+        "node": "scan",
+        "port": "out1"
+      },
+      "to": {
+        "node": "row3",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "row3-out-keypad-row3",
+      "from": {
+        "node": "row3",
+        "port": "out"
+      },
+      "to": {
+        "node": "keypad",
+        "port": "row3"
+      },
+      "width": 1
+    },
+    {
+      "id": "row3-out-row-led3-in",
+      "from": {
+        "node": "row3",
+        "port": "out"
+      },
+      "to": {
+        "node": "row-led3",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "keypad-col0-present01-a",
+      "from": {
+        "node": "keypad",
+        "port": "col0"
+      },
+      "to": {
+        "node": "present01",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "keypad-col1-present01-b",
+      "from": {
+        "node": "keypad",
+        "port": "col1"
+      },
+      "to": {
+        "node": "present01",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "present01-out-present-a",
+      "from": {
+        "node": "present01",
+        "port": "out"
+      },
+      "to": {
+        "node": "present",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "keypad-col2-present-b",
+      "from": {
+        "node": "keypad",
+        "port": "col2"
+      },
+      "to": {
+        "node": "present",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "present-out-not-present-a",
+      "from": {
+        "node": "present",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-present",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "keypad-col0-pair01-a",
+      "from": {
+        "node": "keypad",
+        "port": "col0"
+      },
+      "to": {
+        "node": "pair01",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "keypad-col1-pair01-b",
+      "from": {
+        "node": "keypad",
+        "port": "col1"
+      },
+      "to": {
+        "node": "pair01",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "keypad-col0-pair02-a",
+      "from": {
+        "node": "keypad",
+        "port": "col0"
+      },
+      "to": {
+        "node": "pair02",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "keypad-col2-pair02-b",
+      "from": {
+        "node": "keypad",
+        "port": "col2"
+      },
+      "to": {
+        "node": "pair02",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "keypad-col1-pair12-a",
+      "from": {
+        "node": "keypad",
+        "port": "col1"
+      },
+      "to": {
+        "node": "pair12",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "keypad-col2-pair12-b",
+      "from": {
+        "node": "keypad",
+        "port": "col2"
+      },
+      "to": {
+        "node": "pair12",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "pair01-out-multi01-a",
+      "from": {
+        "node": "pair01",
+        "port": "out"
+      },
+      "to": {
+        "node": "multi01",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "pair02-out-multi01-b",
+      "from": {
+        "node": "pair02",
+        "port": "out"
+      },
+      "to": {
+        "node": "multi01",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "multi01-out-multi-a",
+      "from": {
+        "node": "multi01",
+        "port": "out"
+      },
+      "to": {
+        "node": "multi",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "pair12-out-multi-b",
+      "from": {
+        "node": "pair12",
+        "port": "out"
+      },
+      "to": {
+        "node": "multi",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "multi-out-not-multi-a",
+      "from": {
+        "node": "multi",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-multi",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "present-out-valid-a",
+      "from": {
+        "node": "present",
+        "port": "out"
+      },
+      "to": {
+        "node": "valid",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-multi-out-valid-b",
+      "from": {
+        "node": "not-multi",
+        "port": "out"
+      },
+      "to": {
+        "node": "valid",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "keypad-col1-key-map-address0",
+      "from": {
+        "node": "keypad",
+        "port": "col1"
+      },
+      "to": {
+        "node": "key-map",
+        "port": "address0"
+      },
+      "width": 1
+    },
+    {
+      "id": "keypad-col2-key-map-address1",
+      "from": {
+        "node": "keypad",
+        "port": "col2"
+      },
+      "to": {
+        "node": "key-map",
+        "port": "address1"
+      },
+      "width": 1
+    },
+    {
+      "id": "scan-out0-key-map-address2",
+      "from": {
+        "node": "scan",
+        "port": "out0"
+      },
+      "to": {
+        "node": "key-map",
+        "port": "address2"
+      },
+      "width": 1
+    },
+    {
+      "id": "scan-out1-key-map-address3",
+      "from": {
+        "node": "scan",
+        "port": "out1"
+      },
+      "to": {
+        "node": "key-map",
+        "port": "address3"
+      },
+      "width": 1
+    },
+    {
+      "id": "one-out-key-map-cs",
+      "from": {
+        "node": "one",
+        "port": "out"
+      },
+      "to": {
+        "node": "key-map",
+        "port": "cs"
+      },
+      "width": 1
+    },
+    {
+      "id": "one-out-key-map-oe",
+      "from": {
+        "node": "one",
+        "port": "out"
+      },
+      "to": {
+        "node": "key-map",
+        "port": "oe"
+      },
+      "width": 1
+    },
+    {
+      "id": "one-out-secret-cs",
+      "from": {
+        "node": "one",
+        "port": "out"
+      },
+      "to": {
+        "node": "secret",
+        "port": "cs"
+      },
+      "width": 1
+    },
+    {
+      "id": "one-out-secret-oe",
+      "from": {
+        "node": "one",
+        "port": "out"
+      },
+      "to": {
+        "node": "secret",
+        "port": "oe"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out0-digit-test-a0",
+      "from": {
+        "node": "key-map",
+        "port": "out0"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "a0"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out0-hash-test-a0",
+      "from": {
+        "node": "key-map",
+        "port": "out0"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "a0"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out0-matches-a0",
+      "from": {
+        "node": "key-map",
+        "port": "out0"
+      },
+      "to": {
+        "node": "matches",
+        "port": "a0"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-digit-test-b0",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "b0"
+      },
+      "width": 1
+    },
+    {
+      "id": "one-out-hash-test-b0",
+      "from": {
+        "node": "one",
+        "port": "out"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "b0"
+      },
+      "width": 1
+    },
+    {
+      "id": "secret-out0-matches-b0",
+      "from": {
+        "node": "secret",
+        "port": "out0"
+      },
+      "to": {
+        "node": "matches",
+        "port": "b0"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-out0-progress-test-a0",
+      "from": {
+        "node": "progress",
+        "port": "out0"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "a0"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-progress-test-b0",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "b0"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-out0-secret-address0",
+      "from": {
+        "node": "progress",
+        "port": "out0"
+      },
+      "to": {
+        "node": "secret",
+        "port": "address0"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out1-digit-test-a1",
+      "from": {
+        "node": "key-map",
+        "port": "out1"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "a1"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out1-hash-test-a1",
+      "from": {
+        "node": "key-map",
+        "port": "out1"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "a1"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out1-matches-a1",
+      "from": {
+        "node": "key-map",
+        "port": "out1"
+      },
+      "to": {
+        "node": "matches",
+        "port": "a1"
+      },
+      "width": 1
+    },
+    {
+      "id": "one-out-digit-test-b1",
+      "from": {
+        "node": "one",
+        "port": "out"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "b1"
+      },
+      "width": 1
+    },
+    {
+      "id": "one-out-hash-test-b1",
+      "from": {
+        "node": "one",
+        "port": "out"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "b1"
+      },
+      "width": 1
+    },
+    {
+      "id": "secret-out1-matches-b1",
+      "from": {
+        "node": "secret",
+        "port": "out1"
+      },
+      "to": {
+        "node": "matches",
+        "port": "b1"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-out1-progress-test-a1",
+      "from": {
+        "node": "progress",
+        "port": "out1"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "a1"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-progress-test-b1",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "b1"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-out1-secret-address1",
+      "from": {
+        "node": "progress",
+        "port": "out1"
+      },
+      "to": {
+        "node": "secret",
+        "port": "address1"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out2-digit-test-a2",
+      "from": {
+        "node": "key-map",
+        "port": "out2"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "a2"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out2-hash-test-a2",
+      "from": {
+        "node": "key-map",
+        "port": "out2"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "a2"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out2-matches-a2",
+      "from": {
+        "node": "key-map",
+        "port": "out2"
+      },
+      "to": {
+        "node": "matches",
+        "port": "a2"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-digit-test-b2",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "b2"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-hash-test-b2",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "b2"
+      },
+      "width": 1
+    },
+    {
+      "id": "secret-out2-matches-b2",
+      "from": {
+        "node": "secret",
+        "port": "out2"
+      },
+      "to": {
+        "node": "matches",
+        "port": "b2"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-out2-progress-test-a2",
+      "from": {
+        "node": "progress",
+        "port": "out2"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "a2"
+      },
+      "width": 1
+    },
+    {
+      "id": "one-out-progress-test-b2",
+      "from": {
+        "node": "one",
+        "port": "out"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "b2"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-out2-secret-address2",
+      "from": {
+        "node": "progress",
+        "port": "out2"
+      },
+      "to": {
+        "node": "secret",
+        "port": "address2"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out3-digit-test-a3",
+      "from": {
+        "node": "key-map",
+        "port": "out3"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "a3"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out3-hash-test-a3",
+      "from": {
+        "node": "key-map",
+        "port": "out3"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "a3"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out3-matches-a3",
+      "from": {
+        "node": "key-map",
+        "port": "out3"
+      },
+      "to": {
+        "node": "matches",
+        "port": "a3"
+      },
+      "width": 1
+    },
+    {
+      "id": "one-out-digit-test-b3",
+      "from": {
+        "node": "one",
+        "port": "out"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "b3"
+      },
+      "width": 1
+    },
+    {
+      "id": "one-out-hash-test-b3",
+      "from": {
+        "node": "one",
+        "port": "out"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "b3"
+      },
+      "width": 1
+    },
+    {
+      "id": "secret-out3-matches-b3",
+      "from": {
+        "node": "secret",
+        "port": "out3"
+      },
+      "to": {
+        "node": "matches",
+        "port": "b3"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-out3-progress-test-a3",
+      "from": {
+        "node": "progress",
+        "port": "out3"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "a3"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-progress-test-b3",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "b3"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-out3-secret-address3",
+      "from": {
+        "node": "progress",
+        "port": "out3"
+      },
+      "to": {
+        "node": "secret",
+        "port": "address3"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out4-digit-test-a4",
+      "from": {
+        "node": "key-map",
+        "port": "out4"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "a4"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out4-hash-test-a4",
+      "from": {
+        "node": "key-map",
+        "port": "out4"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "a4"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out4-matches-a4",
+      "from": {
+        "node": "key-map",
+        "port": "out4"
+      },
+      "to": {
+        "node": "matches",
+        "port": "a4"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-digit-test-b4",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "b4"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-hash-test-b4",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "b4"
+      },
+      "width": 1
+    },
+    {
+      "id": "secret-out4-matches-b4",
+      "from": {
+        "node": "secret",
+        "port": "out4"
+      },
+      "to": {
+        "node": "matches",
+        "port": "b4"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-out4-progress-test-a4",
+      "from": {
+        "node": "progress",
+        "port": "out4"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "a4"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-progress-test-b4",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "b4"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out5-digit-test-a5",
+      "from": {
+        "node": "key-map",
+        "port": "out5"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "a5"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out5-hash-test-a5",
+      "from": {
+        "node": "key-map",
+        "port": "out5"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "a5"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out5-matches-a5",
+      "from": {
+        "node": "key-map",
+        "port": "out5"
+      },
+      "to": {
+        "node": "matches",
+        "port": "a5"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-digit-test-b5",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "b5"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-hash-test-b5",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "b5"
+      },
+      "width": 1
+    },
+    {
+      "id": "secret-out5-matches-b5",
+      "from": {
+        "node": "secret",
+        "port": "out5"
+      },
+      "to": {
+        "node": "matches",
+        "port": "b5"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-out5-progress-test-a5",
+      "from": {
+        "node": "progress",
+        "port": "out5"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "a5"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-progress-test-b5",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "b5"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out6-digit-test-a6",
+      "from": {
+        "node": "key-map",
+        "port": "out6"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "a6"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out6-hash-test-a6",
+      "from": {
+        "node": "key-map",
+        "port": "out6"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "a6"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out6-matches-a6",
+      "from": {
+        "node": "key-map",
+        "port": "out6"
+      },
+      "to": {
+        "node": "matches",
+        "port": "a6"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-digit-test-b6",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "b6"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-hash-test-b6",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "b6"
+      },
+      "width": 1
+    },
+    {
+      "id": "secret-out6-matches-b6",
+      "from": {
+        "node": "secret",
+        "port": "out6"
+      },
+      "to": {
+        "node": "matches",
+        "port": "b6"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-out6-progress-test-a6",
+      "from": {
+        "node": "progress",
+        "port": "out6"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "a6"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-progress-test-b6",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "b6"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out7-digit-test-a7",
+      "from": {
+        "node": "key-map",
+        "port": "out7"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "a7"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out7-hash-test-a7",
+      "from": {
+        "node": "key-map",
+        "port": "out7"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "a7"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out7-matches-a7",
+      "from": {
+        "node": "key-map",
+        "port": "out7"
+      },
+      "to": {
+        "node": "matches",
+        "port": "a7"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-digit-test-b7",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "digit-test",
+        "port": "b7"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-hash-test-b7",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "hash-test",
+        "port": "b7"
+      },
+      "width": 1
+    },
+    {
+      "id": "secret-out7-matches-b7",
+      "from": {
+        "node": "secret",
+        "port": "out7"
+      },
+      "to": {
+        "node": "matches",
+        "port": "b7"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-out7-progress-test-a7",
+      "from": {
+        "node": "progress",
+        "port": "out7"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "a7"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-progress-test-b7",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "progress-test",
+        "port": "b7"
+      },
+      "width": 1
+    },
+    {
+      "id": "valid-out-digit-a",
+      "from": {
+        "node": "valid",
+        "port": "out"
+      },
+      "to": {
+        "node": "digit",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "digit-test-lt-digit-b",
+      "from": {
+        "node": "digit-test",
+        "port": "lt"
+      },
+      "to": {
+        "node": "digit",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "valid-out-star-a",
+      "from": {
+        "node": "valid",
+        "port": "out"
+      },
+      "to": {
+        "node": "star",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "digit-test-eq-star-b",
+      "from": {
+        "node": "digit-test",
+        "port": "eq"
+      },
+      "to": {
+        "node": "star",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "valid-out-hash-a",
+      "from": {
+        "node": "valid",
+        "port": "out"
+      },
+      "to": {
+        "node": "hash",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "hash-test-eq-hash-b",
+      "from": {
+        "node": "hash-test",
+        "port": "eq"
+      },
+      "to": {
+        "node": "hash",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-clear-a",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "star-out-clear-b",
+      "from": {
+        "node": "star",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "matches-eq-accepted-data-a",
+      "from": {
+        "node": "matches",
+        "port": "eq"
+      },
+      "to": {
+        "node": "accepted-data",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-test-lt-accepted-data-b",
+      "from": {
+        "node": "progress-test",
+        "port": "lt"
+      },
+      "to": {
+        "node": "accepted-data",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "accepted-data-out-accepted-d",
+      "from": {
+        "node": "accepted-data",
+        "port": "out"
+      },
+      "to": {
+        "node": "accepted",
+        "port": "d"
+      },
+      "width": 1
+    },
+    {
+      "id": "digit-out-accepted-clk",
+      "from": {
+        "node": "digit",
+        "port": "out"
+      },
+      "to": {
+        "node": "accepted",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear-out-accepted-reset",
+      "from": {
+        "node": "clear",
+        "port": "out"
+      },
+      "to": {
+        "node": "accepted",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "one-out-seen-d",
+      "from": {
+        "node": "one",
+        "port": "out"
+      },
+      "to": {
+        "node": "seen",
+        "port": "d"
+      },
+      "width": 1
+    },
+    {
+      "id": "valid-out-seen-clk",
+      "from": {
+        "node": "valid",
+        "port": "out"
+      },
+      "to": {
+        "node": "seen",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "seen-reset-out-seen-reset",
+      "from": {
+        "node": "seen-reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "seen",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-present-out-seen-reset-a",
+      "from": {
+        "node": "not-present",
+        "port": "out"
+      },
+      "to": {
+        "node": "seen-reset",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear-out-seen-reset-b",
+      "from": {
+        "node": "clear",
+        "port": "out"
+      },
+      "to": {
+        "node": "seen-reset",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "digit-out-digit-event-a",
+      "from": {
+        "node": "digit",
+        "port": "out"
+      },
+      "to": {
+        "node": "digit-event",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "seen-q-digit-event-b",
+      "from": {
+        "node": "seen",
+        "port": "q"
+      },
+      "to": {
+        "node": "digit-event",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "digit-event-out-advance-a",
+      "from": {
+        "node": "digit-event",
+        "port": "out"
+      },
+      "to": {
+        "node": "advance",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "accepted-q-advance-b",
+      "from": {
+        "node": "accepted",
+        "port": "q"
+      },
+      "to": {
+        "node": "advance",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "digit-event-out-wrong-digit-a",
+      "from": {
+        "node": "digit-event",
+        "port": "out"
+      },
+      "to": {
+        "node": "wrong-digit",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "accepted-nq-wrong-digit-b",
+      "from": {
+        "node": "accepted",
+        "port": "nq"
+      },
+      "to": {
+        "node": "wrong-digit",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-test-eq-not-complete-a",
+      "from": {
+        "node": "progress-test",
+        "port": "eq"
+      },
+      "to": {
+        "node": "not-complete",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "hash-out-wrong-hash-a",
+      "from": {
+        "node": "hash",
+        "port": "out"
+      },
+      "to": {
+        "node": "wrong-hash",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-complete-out-wrong-hash-b",
+      "from": {
+        "node": "not-complete",
+        "port": "out"
+      },
+      "to": {
+        "node": "wrong-hash",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "wrong-digit-out-wrong01-a",
+      "from": {
+        "node": "wrong-digit",
+        "port": "out"
+      },
+      "to": {
+        "node": "wrong01",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "wrong-hash-out-wrong01-b",
+      "from": {
+        "node": "wrong-hash",
+        "port": "out"
+      },
+      "to": {
+        "node": "wrong01",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "wrong01-out-wrong-a",
+      "from": {
+        "node": "wrong01",
+        "port": "out"
+      },
+      "to": {
+        "node": "wrong",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "multi-out-wrong-b",
+      "from": {
+        "node": "multi",
+        "port": "out"
+      },
+      "to": {
+        "node": "wrong",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear-out-attempt-reset-a",
+      "from": {
+        "node": "clear",
+        "port": "out"
+      },
+      "to": {
+        "node": "attempt-reset",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "wrong-out-attempt-reset-b",
+      "from": {
+        "node": "wrong",
+        "port": "out"
+      },
+      "to": {
+        "node": "attempt-reset",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "advance-out-progress-clk",
+      "from": {
+        "node": "advance",
+        "port": "out"
+      },
+      "to": {
+        "node": "progress",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "attempt-reset-out-progress-reset",
+      "from": {
+        "node": "attempt-reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "progress",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-test-lt-progress-enable",
+      "from": {
+        "node": "progress-test",
+        "port": "lt"
+      },
+      "to": {
+        "node": "progress",
+        "port": "enable"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out0-last-key-d0",
+      "from": {
+        "node": "key-map",
+        "port": "out0"
+      },
+      "to": {
+        "node": "last-key",
+        "port": "d0"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out1-last-key-d1",
+      "from": {
+        "node": "key-map",
+        "port": "out1"
+      },
+      "to": {
+        "node": "last-key",
+        "port": "d1"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out2-last-key-d2",
+      "from": {
+        "node": "key-map",
+        "port": "out2"
+      },
+      "to": {
+        "node": "last-key",
+        "port": "d2"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out3-last-key-d3",
+      "from": {
+        "node": "key-map",
+        "port": "out3"
+      },
+      "to": {
+        "node": "last-key",
+        "port": "d3"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out4-last-key-d4",
+      "from": {
+        "node": "key-map",
+        "port": "out4"
+      },
+      "to": {
+        "node": "last-key",
+        "port": "d4"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out5-last-key-d5",
+      "from": {
+        "node": "key-map",
+        "port": "out5"
+      },
+      "to": {
+        "node": "last-key",
+        "port": "d5"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out6-last-key-d6",
+      "from": {
+        "node": "key-map",
+        "port": "out6"
+      },
+      "to": {
+        "node": "last-key",
+        "port": "d6"
+      },
+      "width": 1
+    },
+    {
+      "id": "key-map-out7-last-key-d7",
+      "from": {
+        "node": "key-map",
+        "port": "out7"
+      },
+      "to": {
+        "node": "last-key",
+        "port": "d7"
+      },
+      "width": 1
+    },
+    {
+      "id": "valid-out-last-key-clk",
+      "from": {
+        "node": "valid",
+        "port": "out"
+      },
+      "to": {
+        "node": "last-key",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "one-out-last-key-enable",
+      "from": {
+        "node": "one",
+        "port": "out"
+      },
+      "to": {
+        "node": "last-key",
+        "port": "enable"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear-out-last-key-reset",
+      "from": {
+        "node": "clear",
+        "port": "out"
+      },
+      "to": {
+        "node": "last-key",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-test-eq-unlocked-d",
+      "from": {
+        "node": "progress-test",
+        "port": "eq"
+      },
+      "to": {
+        "node": "unlocked",
+        "port": "d"
+      },
+      "width": 1
+    },
+    {
+      "id": "hash-out-unlocked-clk",
+      "from": {
+        "node": "hash",
+        "port": "out"
+      },
+      "to": {
+        "node": "unlocked",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "attempt-reset-out-unlocked-reset",
+      "from": {
+        "node": "attempt-reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "unlocked",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear-out-alarm-reset-a",
+      "from": {
+        "node": "clear",
+        "port": "out"
+      },
+      "to": {
+        "node": "alarm-reset",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "unlocked-q-alarm-reset-b",
+      "from": {
+        "node": "unlocked",
+        "port": "q"
+      },
+      "to": {
+        "node": "alarm-reset",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "alarm-reset-out-not-alarm-reset-a",
+      "from": {
+        "node": "alarm-reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-alarm-reset",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "wrong-out-alarm-set-a",
+      "from": {
+        "node": "wrong",
+        "port": "out"
+      },
+      "to": {
+        "node": "alarm-set",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-alarm-reset-out-alarm-set-b",
+      "from": {
+        "node": "not-alarm-reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "alarm-set",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "alarm-set-out-alarm-s",
+      "from": {
+        "node": "alarm-set",
+        "port": "out"
+      },
+      "to": {
+        "node": "alarm",
+        "port": "s"
+      },
+      "width": 1
+    },
+    {
+      "id": "alarm-reset-out-alarm-r",
+      "from": {
+        "node": "alarm-reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "alarm",
+        "port": "r"
+      },
+      "width": 1
+    },
+    {
+      "id": "progress-test-eq-ready-in",
+      "from": {
+        "node": "progress-test",
+        "port": "eq"
+      },
+      "to": {
+        "node": "ready",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "unlocked-q-open-led-in",
+      "from": {
+        "node": "unlocked",
+        "port": "q"
+      },
+      "to": {
+        "node": "open-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "alarm-q-error-led-in",
+      "from": {
+        "node": "alarm",
+        "port": "q"
+      },
+      "to": {
+        "node": "error-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "valid-out-detected-in",
+      "from": {
+        "node": "valid",
+        "port": "out"
+      },
+      "to": {
+        "node": "detected",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "keypad-code-lock"
+}

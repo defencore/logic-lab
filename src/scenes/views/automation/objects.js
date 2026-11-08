@@ -92,14 +92,17 @@ export function plant(context, parent, x, z, height = 1, leafColor = 0x408c52) {
   return { group, leaf, leaves };
 }
 export function thermometer(context, parent, x, y, z) {
+  const group = new THREE.Group();
+  group.userData.role = 'temperature-sensor';
+  parent.add(group);
   const shell = paint(context, 0xece8db),
     mercury = paint(context, 0xd46846);
-  context.mesh(parent, context.box(0.26, 1.65, 0.12), shell, x, y, z);
-  const bar = context.mesh(parent, context.box(0.09, 1.2, 0.04), mercury, x, y - 0.12, z + 0.08);
-  context.mesh(parent, context.sphere(0.12), mercury, x, y - 0.65, z + 0.08);
+  context.mesh(group, context.box(0.26, 1.65, 0.12), shell, x, y, z);
+  const bar = context.mesh(group, context.box(0.09, 1.2, 0.04), mercury, x, y - 0.12, z + 0.08);
+  context.mesh(group, context.sphere(0.12), mercury, x, y - 0.65, z + 0.08);
   for (let index = 0; index < 8; index++)
     context.mesh(
-      parent,
+      group,
       context.box(0.07, 0.014, 0.035),
       context.material(0x56615b),
       x + 0.075,

@@ -2,6 +2,7 @@ import { getDefinition } from '../components/catalog/index.js';
 import { MIN_ZOOM, MAX_ZOOM } from './viewport.js';
 import { createProjectStorage } from './project-storage.js';
 import { validateHotkeyNodes } from './hotkey-config.js';
+import { keypadParameterError } from '../components/keypad.js';
 
 export { STORAGE_KEY, PROJECT_RECOVERY_KEY } from './project-storage.js';
 const MAX_NODES = 1000;
@@ -184,6 +185,11 @@ export function validateProject(value) {
     };
   });
   validateHotkeyNodes(nodes);
+  for (const node of nodes) {
+    if (node.type !== 'keypad') continue;
+    const error = keypadParameterError({ ...getDefinition(node.type).defaults, ...node.params });
+    if (error) fail(`Parameters of ${node.id}: ${error}`);
+  }
   const nodeMap = new Map(nodes.map((node) => [node.id, node]));
   const wireIds = new Set();
   const connections = new Set();

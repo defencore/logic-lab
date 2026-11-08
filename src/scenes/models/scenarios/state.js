@@ -2,8 +2,10 @@ import { AUTOMATION_TYPES, initialAutomationState } from '../automation/index.js
 import { parameters } from './config.js';
 import { finite as numeric, clamp, positive } from '../../common/numbers.js';
 import { RAILWAY } from '../../transport/geometry.js';
+import { initialElevatorState } from '../elevator/index.js';
 
 export function initialScenarioState(node) {
+  if (node.type === 'elevator') return initialElevatorState(node);
   if (AUTOMATION_TYPES.includes(node.type)) return initialAutomationState(node);
   const p = parameters(node);
   const base = { kind: node.type, time: 0, uncertain: false, failure: null };

@@ -1,6 +1,6 @@
 # Logic Lab laboratory collection
 
-These 41 reusable laboratories accompany the browser workbench. Each laboratory has a separate directory so its starting circuit, teaching material and assessment tasks can be reviewed or reused independently. The interface lessons and worksheet metadata support English and Ukrainian; the original Markdown lab sheets are in English, and the automation, dispatch, memory/addressing, keyboard and buzzer sheets include full English and Ukrainian procedures.
+These 43 reusable laboratories accompany the browser workbench. Each laboratory has a separate directory so its starting circuit, teaching material and assessment tasks can be reviewed or reused independently. The interface lessons and worksheet metadata support English and Ukrainian; the original Markdown lab sheets are in English, and the automation, dispatch, memory/addressing, keyboard, keypad lock, elevator and buzzer sheets include full English and Ukrainian procedures.
 
 ## Open a laboratory
 
@@ -54,6 +54,10 @@ These 41 reusable laboratories accompany the browser workbench. Each laboratory 
 | [Register file: independent read and write addresses](./register-file-addressing/README.md) | architecture | intermediate | 35 min | [JSON](./register-file-addressing/circuit.json) |
 | [Memory map: two RAM banks selected by A4](./memory-bank-select/README.md) | architecture | intermediate | 40 min | [JSON](./memory-bank-select/circuit.json) |
 
+| [Nine-floor elevator: memory and interlocks](./elevator-logic/README.md) | scenes | intermediate | 45 min | [JSON](./elevator-logic/circuit.json) |
+
+| [Matrix keypad: ROM code lock](./keypad-code-lock/README.md) | architecture | intermediate | 40 min | [JSON](./keypad-code-lock/circuit.json) |
+
 ## Directory contract
 
 Each laboratory contains:
@@ -68,6 +72,8 @@ The [registry](./index.js) imports these files and returns a fresh clone each ti
 
 The five focused memory laboratories cover manual SER/CLK/RST serial loading, independent RAM locations and write protection, ROM lookup tables, separate register-file read/write addresses, and a 32-byte map built from two RAM banks. Their bilingual lessons include replayable action presets. Each lab exposes every bit as a separate physical contact and includes a deterministic input sequence, predictions, and independent-work prompts.
 
+The [matrix keypad lock](./keypad-code-lock/README.md) combines a real four-row/three-column scan, external key-map ROM and editable SECRET ROM. Its 2580# experiment captures comparisons before advancing addresses, rejects wrong/extra digits and clears through \*. Every press/release is preserved in the supplied mask-action preset.
+
 ## Audible logic and timing
 
 The three buzzer laboratories progress from a Boolean alarm to a recorded melody and a clocked frequency divider. An active buzzer produces its internal 880 Hz tone from a steady enable; a passive buzzer needs repeating binary periods, with `f=1/(T1+T0)` in seconds. At 440 Hz, a complete period is 2.272727 ms, or 2272.727 µs. The divider uses real T-flip-flop clock edges to turn 880 Hz into 440 Hz. Each folder includes an editable circuit, bilingual sheet and legal recorded source actions. Run and press **Enable sound**; use **1×** for passive-note comparisons. Constant 0/1 inputs do not sustain a passive tone, and ideal gate feedback has no modeled propagation delay.
@@ -75,6 +81,10 @@ The three buzzer laboratories progress from a Boolean alarm to a recorded melody
 ## Circuit-driven scenes
 
 The scene laboratories connect ordinary gates, latches, counters and switches to a visible process. Traffic phases move actual vehicles; railway permissions and independently switched turnouts govern actual train routes; feeder and tank sensors close feedback loops. The Automation topic contains seven tasks for aquarium life support, timed feeding, XOR lighting, greenhouse climate and irrigation memory, home energy, and yard access with rain protection. Measured hazards can cause body contact, derailments, fish death, plant damage, empty-hopper alarms or overflow. Plant growth, gate travel, water reserves and energy evolve from circuit commands. Recover with the documented reset procedure before the next trial.
+
+## Visible elevator control
+
+The [elevator laboratory](./elevator-logic/README.md) uses a physical nine-floor cabin numbered **1–9** with explicit UP/DOWN/OPEN/CLOSE commands. Nine momentary CALL buttons feed visible SR memories; shared lowest-floor priority gates, binary target encoding, direction sensors and an external door timer control every trip. A ready nine-action recording serves **3 → 5 → 9 → 1**. The bilingual worksheet asks learners to explain another call order and recover an interlock-bypass fault. Its 140-component circuit remains within the 200-component recording cap. The plant does not dispatch or time doors automatically.
 
 ## Reuse in a course
 

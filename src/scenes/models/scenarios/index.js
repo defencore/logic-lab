@@ -19,6 +19,7 @@ import {
 import { railFault, advanceRailway } from './railway.js';
 import { advanceTraffic } from './traffic.js';
 import { advanceFeeder, advanceTank } from './resources.js';
+import { advanceElevator, evaluateElevator } from '../elevator/index.js';
 export {
   SCENARIO_TYPES,
   SCENARIO_DEFAULTS,
@@ -30,6 +31,7 @@ export { initialScenarioState } from './state.js';
 
 /** Advance scene mechanics once per physics call, never during logic settling. */
 export function advanceScenario(node, state, inputs, dt) {
+  if (node.type === 'elevator') return advanceElevator(node, state, inputs, dt);
   if (AUTOMATION_TYPES.includes(node.type)) return advanceAutomation(node, state, inputs, dt);
   if (!isScenarioType(node.type)) return state;
   if (node.enabled === false) return state;
@@ -108,6 +110,7 @@ export function advanceScenario(node, state, inputs, dt) {
 }
 
 export function evaluateScenario(node, state, inputs) {
+  if (node.type === 'elevator') return evaluateElevator(node, state, inputs);
   if (AUTOMATION_TYPES.includes(node.type)) return evaluateAutomation(node, state, inputs);
   if (!isScenarioType(node.type)) return undefined;
   const s = state || initialScenarioState(node),

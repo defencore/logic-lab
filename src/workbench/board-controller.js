@@ -8,8 +8,14 @@ import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
 import { drawMini } from '../signals/waveforms.js';
 import { componentHeaderMarkup, createComponentNavigation } from './component-keyboard.js';
 import { hotkeyNodeMarkup } from './hotkey-node.js';
+import { bindMomentaryButton } from './momentary-button.js';
+import { signalUnit } from './signal-unit.js';
+import { keypadNodeMarkup, bindKeypadControls, updateKeypadControls } from './keypad-node.js';
 import { createInlineNodeLabel } from './inline-node-label.js';
 import { isAudioNode, audioNodeMarkup, updateAudioNode } from './audio-node.js';
+import { BYTE_TYPES, MEMORY_TYPES } from './state-inspection/model.js';
+import { byteWidgetMarkup, memoryMapMarkup } from './state-inspection/markup.js';
+import { updateStateInspection } from './state-inspection/update.js';
 import {
   contactEndpoint,
   createContactNavigation,
@@ -26,6 +32,8 @@ export function createBoardController(
     nodePointerDown,
     pinPointerDown,
     toggleSource,
+    setMomentarySource,
+    setKeypadKey,
     openScene,
     primarySignal,
     selectNode,
@@ -34,6 +42,7 @@ export function createBoardController(
     cancelInteraction,
   },
 ) {
+  let momentaryBindings = [];
   const contacts = createContactNavigation(state, applyView);
   const components = createComponentNavigation(state, {
     applyView,
@@ -50,14 +59,20 @@ export function createBoardController(
   });
   function nodeBody(node) {
     const d = getDefinition(node.type);
+    if (BYTE_TYPES.has(node.type)) return byteWidgetMarkup(node, state.lang);
+    if (MEMORY_TYPES.has(node.type)) return memoryMapMarkup(node, state.lang, { compact: true });
     switch (node.type) {
       case 'active_buzzer':
       case 'passive_buzzer':
         return audioNodeMarkup();
       case 'hotkey':
         return hotkeyNodeMarkup(node, state.lang);
+      case 'keypad':
+        return keypadNodeMarkup(node, state.lang);
       case 'switch':
         return `<button class="switch-control ${node.params.value ? 'is-on' : ''}" data-switch="${node.id}" aria-label="${esc(node.label || title(d))}" aria-pressed="${!!node.params.value}"><span class="switch-track"><i></i></span><span class="switch-value">${node.params.value ? '1' : '0'}</span></button>`;
+      case 'button':
+        return `<button type="button" class="soft-btn momentary-control" data-momentary="${node.id}" aria-label="${esc(node.label || title(d))}" aria-pressed="${node.params.value === 1}"><span>${state.lang === 'ua' ? 'Утримувати' : 'Hold'}</span> <b>${node.params.value === 1 ? '1' : '0'}</b></button>`;
       case 'led':
         return '<div class="led-view"><i class="led-bulb"></i><span class="led-text">0</span></div>';
       case 'gnd':
@@ -78,6 +93,7 @@ export function createBoardController(
       case 'aquarium':
       case 'greenhouse':
       case 'smart_home':
+      case 'elevator':
         return `<div class="scene-node-widget"><span class="scene-node-icon">${icon(node.type === 'railway' ? 'wire' : node.type === 'traffic_junction' ? 'grid' : 'box', 32)}</span><strong class="node-readout"></strong><span class="scene-node-state"></span><button data-motion-open data-scene-node="${node.id}" class="text-btn">${t('view3d')}${icon('chevron', 11)}</button></div>`;
       case 'stepper':
         return `<div class="stepper-widget"><div class="stepper-body"><div class="stepper-rotor"></div></div><strong class="node-readout"></strong><button data-motion-open data-scene-node="${node.id}" class="text-btn">${t('view3d')}${icon('chevron', 11)}</button></div>`;
@@ -97,6 +113,8 @@ export function createBoardController(
     }
   }
   function renderBoard() {
+    for (const dispose of momentaryBindings) dispose();
+    momentaryBindings = [];
     const editingLabel = labels.beforeRender();
     const focused = document.activeElement?.closest?.('.pin');
     const focusedEndpoint = focused ? contactEndpoint(focused) : null;
@@ -132,6 +150,16 @@ export function createBoardController(
       }),
     );
     $$('[data-motion-open]').forEach((el) => (el.onclick = () => openScene(el.dataset.sceneNode)));
+    momentaryBindings = $$('[data-momentary]').map((el) =>
+      bindMomentaryButton(el, {
+        press: () => setMomentarySource(el.dataset.momentary, 1),
+        release: () => setMomentarySource(el.dataset.momentary, 0),
+      }),
+    );
+    for (const node of state.project.nodes.filter((node) => node.type === 'keypad'))
+      momentaryBindings.push(
+        bindKeypadControls($(`[data-node="${node.id}"].circuit-node`), node, setKeypadKey),
+      );
     applyView();
     updateContactTargets(state.project, state.pending);
     if (focusedEndpoint) focusContact(focusedEndpoint);
@@ -147,6 +175,13 @@ export function createBoardController(
         outs = state.runtime.outputs?.[n.id] || {};
       const signalOutputs = state.runtime.signals.outputs[n.id] || {};
       if (isAudioNode(n)) updateAudioNode(el, n, state.runtime, state.lang);
+      updateKeypadControls(
+        el,
+        n,
+        !!state.classroom?.isPlaying() ||
+          (!!state.classroom?.isLocked() && !state.classroom?.isRecording()),
+      );
+      updateStateInspection(el, n, state.project, state.runtime, state.lang);
       $$('.pin', el).forEach((pin) => {
         const v = (pin.dataset.side === 'in' ? ins : outs)[pin.dataset.pin];
         pin.classList.remove('high', 'low', 'unknown', 'floating');
@@ -156,6 +191,13 @@ export function createBoardController(
       if (n.type === 'hotkey') {
         $('.hotkey-widget', el).classList.toggle('is-pressed', n.params.value === 1);
         $('.hotkey-widget', el).classList.toggle('is-high', signalOutputs.out === 1);
+      }
+      if (n.type === 'button') {
+        const button = $('[data-momentary]', el);
+        button.disabled = n.enabled === false || !!state.classroom?.isPlaying();
+        button.setAttribute('aria-pressed', String(outs.out === 1));
+        button.classList.toggle('is-on', outs.out === 1);
+        $('b', button).textContent = format(outs.out);
       }
       if (readout) {
         const first = primarySignal(n);
@@ -190,15 +232,17 @@ export function createBoardController(
             ? `${t('sceneAlive')}: ${format(signalOutputs.alive)} · ${format(outs.temperature)} °C`
             : n.type === 'greenhouse'
               ? `${t('sceneGrowth')}: ${format(outs.growth)}%`
-              : n.type === 'smart_home'
-                ? `${format(outs.temperature)} °C · ${format(outs.energy)} kWh`
-                : n.type === 'water_tank'
-                  ? `${format(outs.level)}%`
-                  : n.type === 'animal_feeder'
-                    ? `${format(outs.level)} g`
-                    : n.type === 'traffic_light'
-                      ? `${t('signalState')}: ${format(outs.valid)}`
-                      : `${t('scenePassed')}: ${format(signalOutputs.passed)}`;
+              : n.type === 'elevator'
+                ? `${t('elevatorPosition')}: ${format(outs.position)} · ${t('elevatorDoor')}: ${typeof outs.door_position === 'number' ? Math.round(outs.door_position * 100) + '%' : format(outs.door_position)}`
+                : n.type === 'smart_home'
+                  ? `${format(outs.temperature)} °C · ${format(outs.energy)} kWh`
+                  : n.type === 'water_tank'
+                    ? `${format(outs.level)}%`
+                    : n.type === 'animal_feeder'
+                      ? `${format(outs.level)} g`
+                      : n.type === 'traffic_light'
+                        ? `${t('signalState')}: ${format(outs.valid)}`
+                        : `${t('scenePassed')}: ${format(signalOutputs.passed)}`;
         const status = $('.scene-node-state', el);
         if (status)
           status.textContent =
@@ -222,7 +266,14 @@ export function createBoardController(
         const value = outs.out;
         $('.sensor-light', el).className = `sensor-light ${signalClass(value)}`;
         $('.node-readout', el).textContent =
-          n.type === 'position_sensor' ? `${format(outs.position)} mm` : format(value);
+          n.type === 'position_sensor'
+            ? `${format(outs.position)} ${signalUnit(
+                n,
+                getDefinition(n.type).signals.outputs.find((port) => port.id === 'position'),
+                'out',
+                state.lang,
+              )}`
+            : format(value);
         $('.sensor-status', el).textContent =
           value === 1 ? t('sensorHigh') : value === 0 ? t('sensorLow') : t('unknown');
       }

@@ -45,6 +45,16 @@ export function createComponentNavigation(
   let suppressReveal = false;
   function focusControl(value, { reveal = true } = {}) {
     if (!value) return false;
+    if (value.kind === 'keypad') {
+      const keypad = [...root.querySelectorAll('[data-keypad]')].find(
+        (el) => el.dataset.keypad === value.node,
+      );
+      const key = [...(keypad?.querySelectorAll('[data-keypad-key]') || [])].find(
+        (el) => el.dataset.keypadKey === value.key,
+      );
+      key?.focus({ preventScroll: true });
+      return !!key;
+    }
     const header = value.kind === 'header';
     const control = [
       ...root.querySelectorAll(header ? '[data-node-header]' : '[data-switch]'),
@@ -61,6 +71,13 @@ export function createComponentNavigation(
   }
   function captureFocus() {
     const active = root.activeElement;
+    const keypadKey = active?.closest?.('[data-keypad-key]');
+    if (keypadKey)
+      return {
+        kind: 'keypad',
+        node: keypadKey.closest('[data-keypad]').dataset.keypad,
+        key: keypadKey.dataset.keypadKey,
+      };
     const header = active?.closest?.('[data-node-header]');
     if (header) return { kind: 'header', node: header.dataset.nodeHeader };
     const source = active?.closest?.('[data-switch]');

@@ -5,6 +5,11 @@ import {
   automationParameterError,
 } from '../automation/index.js';
 import { clamp } from '../../common/numbers.js';
+import {
+  ELEVATOR_DEFAULTS,
+  ELEVATOR_INPUT_DEFAULTS,
+  elevatorParameterError,
+} from '../elevator/index.js';
 
 export const SCENARIO_TYPES = Object.freeze([
   ...AUTOMATION_TYPES,
@@ -13,10 +18,12 @@ export const SCENARIO_TYPES = Object.freeze([
   'railway',
   'animal_feeder',
   'water_tank',
+  'elevator',
 ]);
 
 export const SCENARIO_DEFAULTS = Object.freeze({
   ...AUTOMATION_DEFAULTS,
+  elevator: ELEVATOR_DEFAULTS,
   traffic_light: Object.freeze({}),
   traffic_junction: Object.freeze({ carSpeed: 12, arrivalInterval: 4, initialCars: 2 }),
   railway: Object.freeze({ initialA: -48, initialB: -85, speedLimit: 60 }),
@@ -44,6 +51,7 @@ export const SCENARIO_DEFAULTS = Object.freeze({
 
 export const SCENARIO_INPUT_DEFAULTS = Object.freeze({
   ...AUTOMATION_INPUT_DEFAULTS,
+  elevator: ELEVATOR_INPUT_DEFAULTS,
   traffic_light: Object.freeze({ red: 0, yellow: 0, green: 0 }),
   traffic_junction: Object.freeze({
     ns_green: 0,
@@ -71,6 +79,7 @@ export const parameters = (node) => ({ ...SCENARIO_DEFAULTS[node.type], ...node.
 export const isScenarioType = (type) => SCENARIO_TYPES.includes(type);
 
 export function scenarioParameterError(node) {
+  if (node.type === 'elevator') return elevatorParameterError(node);
   if (AUTOMATION_TYPES.includes(node.type)) return automationParameterError(node);
   const p = parameters(node);
   const finite = (...keys) =>

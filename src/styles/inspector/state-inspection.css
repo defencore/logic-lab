@@ -1,0 +1,182 @@
+.state-inspection > summary {
+  color: #23485e;
+  font-weight: 650;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+.byte-widget {
+  width: 100%;
+  max-width: 320px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+.byte-bits {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 3px;
+}
+.inspection-bit {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  border: 1px solid #b9c9d0;
+  border-radius: 3px;
+  background: #f0f4f6;
+  color: #405566;
+}
+.inspection-bit small {
+  font-size: 9px;
+  line-height: 15px;
+}
+.inspection-bit b {
+  font-size: 13px;
+  line-height: 20px;
+}
+.inspection-bit.bit-high {
+  background: #d9efe2;
+  color: #185a34;
+  border-color: #84b79a;
+}
+.inspection-bit.bit-unknown {
+  background: #fff0cc;
+  color: #8d4f0c;
+  border-color: #c4983d;
+}
+.inspection-bit.bit-floating {
+  border-style: dashed;
+  color: #617786;
+}
+.inspection-bit.bit-changed {
+  outline: 2px solid #a86617;
+  outline-offset: -2px;
+}
+.byte-formats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 8px;
+  font-size: 11px;
+}
+.byte-formats > span:first-child {
+  width: 100%;
+}
+.byte-widget > p,
+.byte-change-inspection,
+.memory-inspection > p {
+  font-size: 10px;
+  line-height: 1.45;
+  margin: 7px 0;
+  overflow-wrap: anywhere;
+}
+.byte-change-inspection {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.byte-change-inspection > strong,
+.byte-change-inspection > small {
+  font-size: 9px;
+}
+.memory-map-scroll {
+  max-height: 380px;
+  overflow: auto;
+}
+.memory-map {
+  border-collapse: separate;
+  border-spacing: 0 2px;
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 10px;
+}
+.memory-map caption {
+  text-align: left;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.memory-map thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+}
+.memory-map th,
+.memory-map td {
+  padding: 4px 3px;
+  text-align: center;
+  white-space: nowrap;
+  border-block: 1px solid transparent;
+}
+.memory-binary {
+  white-space: nowrap;
+}
+.memory-binary .inspection-bit {
+  width: 14px;
+  margin-inline: 1px;
+}
+.memory-binary .inspection-bit b {
+  font-size: 10px;
+  line-height: 17px;
+}
+.memory-reading > * {
+  background: #e2eefb;
+  border-block-color: #76a2d1;
+}
+.memory-writing > * {
+  box-shadow: inset 0 -2px #ca8b2b;
+}
+.memory-last-written > th {
+  color: #8a4e0e;
+  font-weight: 800;
+}
+.memory-read-disabled > * {
+  background: #f0f2f3;
+  border-block-color: #c7cfd4;
+}
+.memory-possible > * {
+  border-block-style: dashed;
+}
+.inspection-legend {
+  color: #536878;
+}
+.compact-memory {
+  width: 100%;
+  max-width: 182px;
+}
+.compact-memory > p {
+  font-size: 8px;
+  line-height: 1.25;
+  margin: 3px 0;
+}
+.compact-memory .memory-map-scroll {
+  overflow: hidden;
+  max-height: none;
+}
+.compact-memory .memory-map {
+  border-spacing: 0 1px;
+  font-size: 8px;
+}
+.compact-memory .memory-map caption {
+  font-size: 9px;
+  margin-bottom: 2px;
+}
+.compact-memory .memory-map th,
+.compact-memory .memory-map td {
+  padding: 0 2px;
+}
+.compact-memory .inspection-bit {
+  width: 7px;
+  border-radius: 1px;
+}
+.compact-memory .inspection-bit b {
+  font-size: 7px;
+  line-height: 9px;
+}
+.node-content .byte-widget {
+  font-size: 10px;
+}
+.node-content .byte-widget > p {
+  font-size: 9px;
+}

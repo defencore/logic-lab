@@ -41,7 +41,7 @@ export const MOTION = [
       { ...analog('target', 'TARGET'), unit: 'mm' },
     ],
     [{ ...analog('position', 'POS'), unit: 'mm' }, bit('out', 'Q')],
-    { threshold: 100, tolerance: 0.5, mode: 'window' },
+    { threshold: 100, tolerance: 0.5, mode: 'window', unit: 'mm' },
     'Measures position and detects below, above or a tolerance window around a target. An unwired TARGET uses Threshold.',
     'Вимірює положення та визначає зону нижче, вище або в межах допуску цілі. Без TARGET діє Threshold.',
   ),

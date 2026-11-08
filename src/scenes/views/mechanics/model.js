@@ -3,6 +3,7 @@ import { finite } from '../../common/numbers.js';
 import { TAU, COLORS, travelRatio, shaftRadians } from './coordinates.js';
 import { MESSAGES } from './messages.js';
 import { buildAxis } from './axis.js';
+import { tagSceneObject } from '../../common/inspection.js';
 
 /** Build testable printer mechanics from snapshots without allocating WebGL. */
 export function createMotionModel(context, { language = 'en' } = {}) {
@@ -220,6 +221,24 @@ export function createMotionModel(context, { language = 'en' } = {}) {
     axes.forEach((axis, index) => {
       const data = motors[index];
       axis.data = data || null;
+      const position = data ? { nodeId: data.id, port: 'position', side: 'out' } : null;
+      const angle = data ? { nodeId: data.id, port: 'angle', side: 'out' } : null;
+      tagSceneObject(axis.group, ...(position ? [position] : []));
+      tagSceneObject(axis.carriage, ...(position ? [position] : []));
+      for (const object of [axis.motor, axis.shaft, axis.screw])
+        tagSceneObject(
+          object,
+          ...(angle
+            ? [
+                angle,
+                ...['step', 'dir', 'enable', 'reset'].map((port) => ({
+                  nodeId: data.id,
+                  port,
+                  side: 'in',
+                })),
+              ]
+            : []),
+        );
       axis.motor.visible = !!data;
       axis.name.set(
         `${'XYZ'[index]} · ${data?.label || (data ? `${'XYZ'[index]} ${text.axis}` : text.unassigned)}`,
@@ -249,6 +268,10 @@ export function createMotionModel(context, { language = 'en' } = {}) {
       axis.ledMaterial.emissiveIntensity = data?.moving && data.enabled !== false ? 0.75 : 0.1;
     });
     gantry.position.y = zAxis.data ? zAxis.group.position.y + zAxis.carriage.position.x : 5.35;
+    tagSceneObject(
+      gantry,
+      ...(zAxis.data ? [{ nodeId: zAxis.data.id, port: 'position', side: 'out' }] : []),
+    );
     const live = new Set();
     sensorData.slice(0, 24).forEach((data, index) => {
       const id = data.id ?? `sensor-${index}`;
@@ -258,6 +281,11 @@ export function createMotionModel(context, { language = 'en' } = {}) {
         sensor = createSensor();
         sensors.set(id, sensor);
       }
+      tagSceneObject(
+        sensor.group,
+        { nodeId: id, port: 'out', side: 'out' },
+        { nodeId: id, port: 'position', side: 'in' },
+      );
       const axis = axes.find((candidate) => candidate.data && candidate.data.id === data.motorId);
       if (axis) {
         if (sensor.group.parent !== axis.group) axis.group.add(sensor.group);

@@ -9,6 +9,10 @@ import { SOURCE_PARAMETERS } from '../simulation/input-sources.js';
 import { parameterField, memoryBytes } from './component-parameters.js';
 import { createHotkeyProperties, hotkeyPropertiesMarkup } from './hotkey-properties.js';
 import { audioParameterHelp } from './audio-node.js';
+import { inspectionMarkup } from './state-inspection/markup.js';
+import { updateStateInspection } from './state-inspection/update.js';
+import { signalUnit } from './signal-unit.js';
+import { keypadNodeMarkup, bindKeypadControls, updateKeypadControls } from './keypad-node.js';
 
 export function createInspectorController(state, actions) {
   let lastInspectorKey = '';
@@ -29,8 +33,11 @@ export function createInspectorController(state, actions) {
     enableSelected,
   } = actions;
   const hotkeys = createHotkeyProperties(state, actions);
+  let disposeKeypad = () => {};
   function renderInspector() {
     hotkeys.cancel();
+    disposeKeypad();
+    disposeKeypad = () => {};
     renderInspectorContent();
     state.wiring?.decorateInspector();
   }
@@ -81,17 +88,21 @@ export function createInspectorController(state, actions) {
     }
     const d = getDefinition(n.type);
     const params = { ...d.defaults, ...n.params };
-    const parameterEntries = n.type === 'hotkey' ? [] : Object.entries(params);
+    const parameterEntries = ['hotkey', 'button'].includes(n.type)
+      ? []
+      : Object.entries(params).filter(([key]) => n.type !== 'keypad' || key !== 'keys');
     const header = `<div class="inspector-selected"><span class="inspector-symbol">${['and', 'or', 'not', 'nand', 'nor', 'xor', 'xnor'].includes(n.type) ? gateIcon(n.type, 36) : icon('box', 28)}</span><span class="eyebrow">${esc(n.type.toUpperCase().replaceAll('_', ' '))}</span><h3>${esc(title(d))}</h3><p>${esc(state.lang === 'ua' ? d.descriptionUa || d.description : d.description)}</p></div>`;
     const tabs = `<div class="inspector-tabs" role="tablist"><button role="tab" aria-selected="${state.inspectorTab === 'properties'}" data-inspector-tab="properties">${t('properties')}</button><button role="tab" aria-selected="${state.inspectorTab === 'guide'}" data-inspector-tab="guide">${icon('help', 13)}${t('usageGuide')}</button></div>`;
     if (state.inspectorTab === 'guide') {
-      el.innerHTML = header + tabs + guideMarkup(n.type, state.lang, n.id);
+      el.innerHTML =
+        header + tabs + inspectionMarkup(n, state.lang) + guideMarkup(n.type, state.lang, n.id);
       bindInspectorTabs();
       bindLearningActions(el);
       updateGuideSignals();
+      updateInspectorSignals();
       return;
     }
-    el.innerHTML = `${header}${tabs}<div class="property-section"><h4>${t('properties')}</h4><label>${t('label')}<input id="node-label" value="${esc(n.label || '')}" placeholder="${esc(title(d))}" maxlength="100"></label><label class="toggle-row">${t('enabled')}<input type="checkbox" id="node-enabled" class="toggle-input" ${n.enabled !== false ? 'checked' : ''}></label></div>${
+    el.innerHTML = `${header}${tabs}${inspectionMarkup(n, state.lang)}${n.type === 'keypad' ? keypadNodeMarkup(n, state.lang) : ''}<div class="property-section"><h4>${t('properties')}</h4><label>${t('label')}<input id="node-label" value="${esc(n.label || '')}" placeholder="${esc(title(d))}" maxlength="100"></label><label class="toggle-row">${t('enabled')}<input type="checkbox" id="node-enabled" class="toggle-input" ${n.enabled !== false ? 'checked' : ''}></label></div>${
       parameterEntries.length
         ? `<div class="property-section"><h4>${t('parameters')}</h4>${audioParameterHelp(n.type, state.lang)}${SCENARIO_TYPES.includes(n.type) ? `<p class="parameter-help">${t('sceneParamReset')}</p>` : ''}${parameterEntries
             .map(([key, value]) => parameterField(key, value, n.type, state.lang, t))
@@ -100,6 +111,7 @@ export function createInspectorController(state, actions) {
     }${hotkeyPropertiesMarkup(n, state.lang)}<div class="property-section"><h4>${t('signalState')}</h4><div id="inspector-signals"></div></div><div class="inspector-node-actions"><button id="duplicate-node" class="soft-btn">${icon('layers', 15)}${t('duplicate')}</button><button id="delete-node" class="danger-btn" title="${t('delete')}">${icon('trash', 15)}</button></div>${truthTableMarkup(n.type, state.lang, n.id)}`;
     bindInspectorTabs();
     hotkeys.bind(n);
+    if (n.type === 'keypad') disposeKeypad = bindKeypadControls(el, n, actions.setKeypadKey);
     bindLiveText($('#node-label'), (value) => {
       if (state.classroom?.isPlaying()) {
         state.classroom.allowEdit();
@@ -233,6 +245,18 @@ export function createInspectorController(state, actions) {
     const playback = !!state.classroom?.isPlaying();
     const recording = !!state.classroom?.isRecording();
     const selectedNode = state.project.nodes.find((node) => state.selected.has(node.id));
+    updateKeypadControls(
+      $('#inspector-content'),
+      selectedNode,
+      playback || (!!state.classroom?.isLocked() && !recording),
+    );
+    updateStateInspection(
+      $('#inspector-content'),
+      selectedNode,
+      state.project,
+      state.runtime,
+      state.lang,
+    );
     if ($('#node-label')) $('#node-label').disabled = playback;
     if ($('#node-enabled')) $('#node-enabled').disabled = !!state.classroom?.isLocked();
     $$('[data-param],[data-slider]').forEach((input) => {
@@ -254,7 +278,8 @@ export function createInspectorController(state, actions) {
         ports
           .map((p) => {
             const v = state.runtime[side === 'in' ? 'inputs' : 'outputs']?.[n.id]?.[p.id];
-            return `<div class="signal-row"><span>${side === 'in' ? '↳' : '↗'} ${esc(p.label || p.id)}</span><b class="signal-value ${signalClass(v)}">${format(v)}${p.unit && typeof v === 'number' ? ' ' + esc(p.unit) : p.analog && typeof v === 'number' ? (n.type === 'servo' && side === 'out' ? '°' : n.type === 'servo' || n.type === 'pwm' ? '' : ' V') : ''}</b></div>`;
+            const unit = typeof v === 'number' ? signalUnit(n, p, side, state.lang) : '';
+            return `<div class="signal-row"><span>${side === 'in' ? '↳' : '↗'} ${esc(p.label || p.id)}</span><b class="signal-value ${signalClass(v)}">${format(v)}${unit ? ' ' + esc(unit) : ''}</b></div>`;
           })
           .join(''),
       )

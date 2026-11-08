@@ -10,6 +10,8 @@ import notGuide from './gates/not.js';
 import gndGuide from './io/gnd.js';
 import vccGuide from './io/vcc.js';
 import switchGuide from './io/switch.js';
+import buttonGuide from './io/button.js';
+import keypadGuide from './io/keypad.js';
 import hotkeyGuide from './io/hotkey.js';
 import busInputGuide from './io/bus-input.js';
 import clockGuide from './io/clock.js';
@@ -62,6 +64,7 @@ import trafficJunctionGuide from './scenes/traffic-junction.js';
 import railwayGuide from './scenes/railway.js';
 import animalFeederGuide from './scenes/animal-feeder.js';
 import waterTankGuide from './scenes/water-tank.js';
+import elevatorGuide from './scenes/elevator.js';
 import aquariumGuide from './automation/aquarium.js';
 import greenhouseGuide from './automation/greenhouse.js';
 import smartHomeGuide from './automation/smart-home.js';
@@ -78,6 +81,8 @@ const manuals = [
   ['gnd', gndGuide],
   ['vcc', vccGuide],
   ['switch', switchGuide],
+  ['button', buttonGuide],
+  ['keypad', keypadGuide],
   ['hotkey', hotkeyGuide],
   ['bus_input', busInputGuide],
   ['clock', clockGuide],
@@ -130,6 +135,7 @@ const manuals = [
   ['railway', railwayGuide],
   ['animal_feeder', animalFeederGuide],
   ['water_tank', waterTankGuide],
+  ['elevator', elevatorGuide],
   ['aquarium', aquariumGuide],
   ['greenhouse', greenhouseGuide],
   ['smart_home', smartHomeGuide],

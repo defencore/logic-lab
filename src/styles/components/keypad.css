@@ -1,0 +1,47 @@
+.keypad-widget {
+  width: 100%;
+  max-width: 210px;
+  padding: 4px 10px;
+  pointer-events: auto;
+}
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+.keypad-grid button {
+  height: 34px;
+  border: 1px solid #a8bacb;
+  border-radius: 7px;
+  background: #f6f8fb;
+  color: #203851;
+  font:
+    600 17px ui-monospace,
+    monospace;
+  box-shadow: 0 2px 0 #cad5e0;
+  touch-action: none;
+}
+.keypad-grid button[aria-pressed='true'] {
+  color: #fff;
+  background: #346ca8;
+  border-color: #1b518c;
+  box-shadow: none;
+  transform: translateY(1px);
+}
+.keypad-grid button:focus-visible {
+  outline: 3px solid #497fb7;
+  outline-offset: 2px;
+}
+.keypad-mode {
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--muted);
+  margin: 9px 0 0;
+  text-align: center;
+}
+.type-keypad .node-content {
+  inset: 37px 24px 27px;
+}
+.inspector .keypad-widget {
+  margin: 12px auto;
+}

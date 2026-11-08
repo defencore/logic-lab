@@ -57,6 +57,7 @@ export function createWaterTank(context) {
   for (const x of [-1.0, 1.0])
     for (const z of [-1.0, 1.0]) mesh(root, cylinder(0.08, 0.1, 0.55), dark, x, 0.48, z);
   const water = mesh(root, cylinder(1.57, 1.57, 1, 48), waterPaint, 0, 1);
+  water.userData.role = 'tank-water';
   water.renderOrder = 2;
   const surface = mesh(
     root,
@@ -94,7 +95,7 @@ export function createWaterTank(context) {
     [-2.7, 6.0, 0],
     [-0.4, 6.0, 0],
     [0, 5.8, 0],
-  ]);
+  ]).userData.role = 'tank-inlet';
   pipe([
     [1.5, 0.94, 0],
     [2.8, 0.94, 0],
@@ -102,13 +103,15 @@ export function createWaterTank(context) {
     [3.8, 0.65, 0],
     [4.0, 0.5, 0],
     [4.0, 0.36, 0],
-  ]);
+  ]).userData.role = 'tank-drain';
   mesh(root, box(1.25, 0.24, 1.2), dark, -3.0, 0.32);
   const pump = mesh(root, cylinder(0.48, 0.48, 0.9), pumpPaint, -3.0, 0.92, 0.25);
   pump.rotation.x = Math.PI / 2;
+  pump.userData.role = 'tank-pump';
   const propeller = new THREE.Group();
   propeller.position.set(-3.0, 0.92, 0.73);
   root.add(propeller);
+  propeller.userData.role = 'tank-propeller';
   mesh(propeller, cylinder(0.09, 0.09, 0.08), metal).rotation.x = Math.PI / 2;
   for (let i = 0; i < 5; i++) {
     const blade = mesh(
@@ -145,6 +148,7 @@ export function createWaterTank(context) {
     0.218,
   );
   flood.rotation.x = -Math.PI / 2;
+  flood.userData.role = 'tank-flood';
   const overflowStreams = [-1, 1].map((side) =>
     mesh(
       root,
@@ -167,7 +171,9 @@ export function createWaterTank(context) {
   );
   const ruler = mesh(root, box(0.32, 4.8, 0.08), material(0xe4ece7), 0, 3.2, 1.73);
   ruler.userData.role = 'tank-level-ruler';
-  for (const y of [1.0, 5.4]) mesh(root, box(0.12, 0.09, 0.18), metal, 0, y, 1.67);
+  for (const y of [1.0, 5.4])
+    mesh(root, box(0.12, 0.09, 0.18), metal, 0, y, 1.67).userData.role =
+      y < 2 ? 'tank-low-sensor' : 'tank-high-sensor';
   for (let i = 0; i <= 10; i++)
     mesh(root, box(i % 5 === 0 ? 0.27 : 0.17, 0.025, 0.015), dark, 0, 0.86 + i * 0.468, 1.78);
   const beaconPaint = keep(

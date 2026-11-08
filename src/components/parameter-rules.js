@@ -1,3 +1,5 @@
+import { KEYPAD_MAX_MASK } from './keypad.js';
+
 const bounds = {
   carSpeed: [1, 40, 0.5],
   arrivalInterval: [1, 60, 0.5],
@@ -48,6 +50,10 @@ const bounds = {
   tolerance: [0, 1000000, 0.1],
   frequency: [0, 1000, 0.1],
   volume: [0, 1, 0.01],
+  initialFloor: [1, 9, 1],
+  initialDoor: [0, 1, 0.01],
+  travelSpeed: [0.01, 4, 0.01],
+  doorSpeed: [0.01, 10, 0.01],
   carrier: [0, 1000, 0.1],
   duration: [0.0005, 1000, 0.01],
   width: [100, 3000, 20],
@@ -55,6 +61,7 @@ const bounds = {
   vcc: [0.01, 1000, 0.1],
 };
 const integerKeys = new Set([
+  'initialFloor',
   'initialCars',
   'fishCount',
   'stepsPerRevolution',
@@ -71,7 +78,11 @@ export function parameterRule(type, key) {
   let limits = bounds[key];
   let integer = integerKeys.has(key);
   if (key === 'frequency' && type === 'active_buzzer') limits = [20, 20000, 1];
-  if (key === 'value' && ['switch', 'hotkey', 'bus_input'].includes(type)) {
+  if (key === 'keys' && type === 'keypad') {
+    limits = [0, KEYPAD_MAX_MASK, 1];
+    integer = true;
+  }
+  if (key === 'value' && ['switch', 'button', 'hotkey', 'bus_input'].includes(type)) {
     limits = [0, type === 'bus_input' ? 255 : 1, 1];
     integer = true;
   }

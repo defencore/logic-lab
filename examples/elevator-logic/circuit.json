@@ -1,0 +1,4054 @@
+{
+  "version": 1,
+  "name": "Nine-floor elevator: visible memory and interlocks",
+  "nodes": [
+    {
+      "id": "call1",
+      "type": "button",
+      "x": 80,
+      "y": 80,
+      "label": "CALL 1 · press / release",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "served1",
+      "type": "and",
+      "x": 400,
+      "y": 80,
+      "label": "Served at floor 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "clear1",
+      "type": "or",
+      "x": 720,
+      "y": 80,
+      "label": "Clear request 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-clear1",
+      "type": "not",
+      "x": 1040,
+      "y": 80,
+      "label": "Allow request 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "set1",
+      "type": "and",
+      "x": 1360,
+      "y": 80,
+      "label": "Capture call 1 safely",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "request1",
+      "type": "sr_latch",
+      "x": 1680,
+      "y": 80,
+      "label": "Request 1 memory",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "pending1",
+      "type": "led",
+      "x": 2000,
+      "y": 80,
+      "label": "Pending request 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrive1",
+      "type": "and",
+      "x": 3280,
+      "y": 80,
+      "label": "Arrived at selected floor 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "call2",
+      "type": "button",
+      "x": 80,
+      "y": 320,
+      "label": "CALL 2 · press / release",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "served2",
+      "type": "and",
+      "x": 400,
+      "y": 320,
+      "label": "Served at floor 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "clear2",
+      "type": "or",
+      "x": 720,
+      "y": 320,
+      "label": "Clear request 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-clear2",
+      "type": "not",
+      "x": 1040,
+      "y": 320,
+      "label": "Allow request 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "set2",
+      "type": "and",
+      "x": 1360,
+      "y": 320,
+      "label": "Capture call 2 safely",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "request2",
+      "type": "sr_latch",
+      "x": 1680,
+      "y": 320,
+      "label": "Request 2 memory",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "pending2",
+      "type": "led",
+      "x": 2000,
+      "y": 320,
+      "label": "Pending request 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "lower2",
+      "type": "or",
+      "x": 2320,
+      "y": 320,
+      "label": "Any request 1…2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "no-lower2",
+      "type": "not",
+      "x": 2640,
+      "y": 320,
+      "label": "No pending floor below 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target2",
+      "type": "and",
+      "x": 2960,
+      "y": 320,
+      "label": "Select floor 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrive2",
+      "type": "and",
+      "x": 3280,
+      "y": 320,
+      "label": "Arrived at selected floor 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "call3",
+      "type": "button",
+      "x": 80,
+      "y": 560,
+      "label": "CALL 3 · press / release",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "served3",
+      "type": "and",
+      "x": 400,
+      "y": 560,
+      "label": "Served at floor 3",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "clear3",
+      "type": "or",
+      "x": 720,
+      "y": 560,
+      "label": "Clear request 3",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-clear3",
+      "type": "not",
+      "x": 1040,
+      "y": 560,
+      "label": "Allow request 3",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "set3",
+      "type": "and",
+      "x": 1360,
+      "y": 560,
+      "label": "Capture call 3 safely",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "request3",
+      "type": "sr_latch",
+      "x": 1680,
+      "y": 560,
+      "label": "Request 3 memory",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "pending3",
+      "type": "led",
+      "x": 2000,
+      "y": 560,
+      "label": "Pending request 3",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "lower3",
+      "type": "or",
+      "x": 2320,
+      "y": 560,
+      "label": "Any request 1…3",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "no-lower3",
+      "type": "not",
+      "x": 2640,
+      "y": 560,
+      "label": "No pending floor below 3",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target3",
+      "type": "and",
+      "x": 2960,
+      "y": 560,
+      "label": "Select floor 3",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrive3",
+      "type": "and",
+      "x": 3280,
+      "y": 560,
+      "label": "Arrived at selected floor 3",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "call4",
+      "type": "button",
+      "x": 80,
+      "y": 800,
+      "label": "CALL 4 · press / release",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "served4",
+      "type": "and",
+      "x": 400,
+      "y": 800,
+      "label": "Served at floor 4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "clear4",
+      "type": "or",
+      "x": 720,
+      "y": 800,
+      "label": "Clear request 4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-clear4",
+      "type": "not",
+      "x": 1040,
+      "y": 800,
+      "label": "Allow request 4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "set4",
+      "type": "and",
+      "x": 1360,
+      "y": 800,
+      "label": "Capture call 4 safely",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "request4",
+      "type": "sr_latch",
+      "x": 1680,
+      "y": 800,
+      "label": "Request 4 memory",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "pending4",
+      "type": "led",
+      "x": 2000,
+      "y": 800,
+      "label": "Pending request 4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "lower4",
+      "type": "or",
+      "x": 2320,
+      "y": 800,
+      "label": "Any request 1…4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "no-lower4",
+      "type": "not",
+      "x": 2640,
+      "y": 800,
+      "label": "No pending floor below 4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target4",
+      "type": "and",
+      "x": 2960,
+      "y": 800,
+      "label": "Select floor 4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrive4",
+      "type": "and",
+      "x": 3280,
+      "y": 800,
+      "label": "Arrived at selected floor 4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "call5",
+      "type": "button",
+      "x": 80,
+      "y": 1040,
+      "label": "CALL 5 · press / release",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "served5",
+      "type": "and",
+      "x": 400,
+      "y": 1040,
+      "label": "Served at floor 5",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "clear5",
+      "type": "or",
+      "x": 720,
+      "y": 1040,
+      "label": "Clear request 5",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-clear5",
+      "type": "not",
+      "x": 1040,
+      "y": 1040,
+      "label": "Allow request 5",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "set5",
+      "type": "and",
+      "x": 1360,
+      "y": 1040,
+      "label": "Capture call 5 safely",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "request5",
+      "type": "sr_latch",
+      "x": 1680,
+      "y": 1040,
+      "label": "Request 5 memory",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "pending5",
+      "type": "led",
+      "x": 2000,
+      "y": 1040,
+      "label": "Pending request 5",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "lower5",
+      "type": "or",
+      "x": 2320,
+      "y": 1040,
+      "label": "Any request 1…5",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "no-lower5",
+      "type": "not",
+      "x": 2640,
+      "y": 1040,
+      "label": "No pending floor below 5",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target5",
+      "type": "and",
+      "x": 2960,
+      "y": 1040,
+      "label": "Select floor 5",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrive5",
+      "type": "and",
+      "x": 3280,
+      "y": 1040,
+      "label": "Arrived at selected floor 5",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "call6",
+      "type": "button",
+      "x": 80,
+      "y": 1280,
+      "label": "CALL 6 · press / release",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "served6",
+      "type": "and",
+      "x": 400,
+      "y": 1280,
+      "label": "Served at floor 6",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "clear6",
+      "type": "or",
+      "x": 720,
+      "y": 1280,
+      "label": "Clear request 6",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-clear6",
+      "type": "not",
+      "x": 1040,
+      "y": 1280,
+      "label": "Allow request 6",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "set6",
+      "type": "and",
+      "x": 1360,
+      "y": 1280,
+      "label": "Capture call 6 safely",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "request6",
+      "type": "sr_latch",
+      "x": 1680,
+      "y": 1280,
+      "label": "Request 6 memory",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "pending6",
+      "type": "led",
+      "x": 2000,
+      "y": 1280,
+      "label": "Pending request 6",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "lower6",
+      "type": "or",
+      "x": 2320,
+      "y": 1280,
+      "label": "Any request 1…6",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "no-lower6",
+      "type": "not",
+      "x": 2640,
+      "y": 1280,
+      "label": "No pending floor below 6",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target6",
+      "type": "and",
+      "x": 2960,
+      "y": 1280,
+      "label": "Select floor 6",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrive6",
+      "type": "and",
+      "x": 3280,
+      "y": 1280,
+      "label": "Arrived at selected floor 6",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "call7",
+      "type": "button",
+      "x": 80,
+      "y": 1520,
+      "label": "CALL 7 · press / release",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "served7",
+      "type": "and",
+      "x": 400,
+      "y": 1520,
+      "label": "Served at floor 7",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "clear7",
+      "type": "or",
+      "x": 720,
+      "y": 1520,
+      "label": "Clear request 7",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-clear7",
+      "type": "not",
+      "x": 1040,
+      "y": 1520,
+      "label": "Allow request 7",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "set7",
+      "type": "and",
+      "x": 1360,
+      "y": 1520,
+      "label": "Capture call 7 safely",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "request7",
+      "type": "sr_latch",
+      "x": 1680,
+      "y": 1520,
+      "label": "Request 7 memory",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "pending7",
+      "type": "led",
+      "x": 2000,
+      "y": 1520,
+      "label": "Pending request 7",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "lower7",
+      "type": "or",
+      "x": 2320,
+      "y": 1520,
+      "label": "Any request 1…7",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "no-lower7",
+      "type": "not",
+      "x": 2640,
+      "y": 1520,
+      "label": "No pending floor below 7",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target7",
+      "type": "and",
+      "x": 2960,
+      "y": 1520,
+      "label": "Select floor 7",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrive7",
+      "type": "and",
+      "x": 3280,
+      "y": 1520,
+      "label": "Arrived at selected floor 7",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "call8",
+      "type": "button",
+      "x": 80,
+      "y": 1760,
+      "label": "CALL 8 · press / release",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "served8",
+      "type": "and",
+      "x": 400,
+      "y": 1760,
+      "label": "Served at floor 8",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "clear8",
+      "type": "or",
+      "x": 720,
+      "y": 1760,
+      "label": "Clear request 8",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-clear8",
+      "type": "not",
+      "x": 1040,
+      "y": 1760,
+      "label": "Allow request 8",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "set8",
+      "type": "and",
+      "x": 1360,
+      "y": 1760,
+      "label": "Capture call 8 safely",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "request8",
+      "type": "sr_latch",
+      "x": 1680,
+      "y": 1760,
+      "label": "Request 8 memory",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "pending8",
+      "type": "led",
+      "x": 2000,
+      "y": 1760,
+      "label": "Pending request 8",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "lower8",
+      "type": "or",
+      "x": 2320,
+      "y": 1760,
+      "label": "Any request 1…8",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "no-lower8",
+      "type": "not",
+      "x": 2640,
+      "y": 1760,
+      "label": "No pending floor below 8",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target8",
+      "type": "and",
+      "x": 2960,
+      "y": 1760,
+      "label": "Select floor 8",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrive8",
+      "type": "and",
+      "x": 3280,
+      "y": 1760,
+      "label": "Arrived at selected floor 8",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "call9",
+      "type": "button",
+      "x": 80,
+      "y": 2000,
+      "label": "CALL 9 · press / release",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "served9",
+      "type": "and",
+      "x": 400,
+      "y": 2000,
+      "label": "Served at floor 9",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "clear9",
+      "type": "or",
+      "x": 720,
+      "y": 2000,
+      "label": "Clear request 9",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-clear9",
+      "type": "not",
+      "x": 1040,
+      "y": 2000,
+      "label": "Allow request 9",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "set9",
+      "type": "and",
+      "x": 1360,
+      "y": 2000,
+      "label": "Capture call 9 safely",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "request9",
+      "type": "sr_latch",
+      "x": 1680,
+      "y": 2000,
+      "label": "Request 9 memory",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "pending9",
+      "type": "led",
+      "x": 2000,
+      "y": 2000,
+      "label": "Pending request 9",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "lower9",
+      "type": "or",
+      "x": 2320,
+      "y": 2000,
+      "label": "Any request 1…9",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "no-lower9",
+      "type": "not",
+      "x": 2640,
+      "y": 2000,
+      "label": "No pending floor below 9",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target9",
+      "type": "and",
+      "x": 2960,
+      "y": 2000,
+      "label": "Select floor 9",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrive9",
+      "type": "and",
+      "x": 3280,
+      "y": 2000,
+      "label": "Arrived at selected floor 9",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrived2",
+      "type": "or",
+      "x": 2320,
+      "y": 2480,
+      "label": "Selected arrival 1…2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrived3",
+      "type": "or",
+      "x": 2640,
+      "y": 2480,
+      "label": "Selected arrival 1…3",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrived4",
+      "type": "or",
+      "x": 2960,
+      "y": 2480,
+      "label": "Selected arrival 1…4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrived5",
+      "type": "or",
+      "x": 3280,
+      "y": 2480,
+      "label": "Selected arrival 1…5",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrived6",
+      "type": "or",
+      "x": 3600,
+      "y": 2480,
+      "label": "Selected arrival 1…6",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrived7",
+      "type": "or",
+      "x": 3920,
+      "y": 2480,
+      "label": "Selected arrival 1…7",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrived8",
+      "type": "or",
+      "x": 4240,
+      "y": 2480,
+      "label": "Selected arrival 1…8",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "arrived9",
+      "type": "or",
+      "x": 4560,
+      "y": 2480,
+      "label": "Selected arrival 1…9",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target-bit0-0",
+      "type": "or",
+      "x": 3600,
+      "y": 80,
+      "label": "Target binary bit 0",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target-bit0-1",
+      "type": "or",
+      "x": 3920,
+      "y": 80,
+      "label": "Target binary bit 0",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target-bit0-2",
+      "type": "or",
+      "x": 4240,
+      "y": 80,
+      "label": "Target binary bit 0",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target-bit0-3",
+      "type": "or",
+      "x": 4560,
+      "y": 80,
+      "label": "Target binary bit 0",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target-bit1-0",
+      "type": "or",
+      "x": 3600,
+      "y": 400,
+      "label": "Target binary bit 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target-bit1-1",
+      "type": "or",
+      "x": 3920,
+      "y": 400,
+      "label": "Target binary bit 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target-bit1-2",
+      "type": "or",
+      "x": 4240,
+      "y": 400,
+      "label": "Target binary bit 1",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target-bit2-0",
+      "type": "or",
+      "x": 3600,
+      "y": 720,
+      "label": "Target binary bit 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target-bit2-1",
+      "type": "or",
+      "x": 3920,
+      "y": 720,
+      "label": "Target binary bit 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target-bit2-2",
+      "type": "or",
+      "x": 4240,
+      "y": 720,
+      "label": "Target binary bit 2",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target-bit3-0",
+      "type": "or",
+      "x": 3600,
+      "y": 1040,
+      "label": "Target binary bit 3",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "target",
+      "type": "dac",
+      "x": 4880,
+      "y": 720,
+      "label": "Selected floor · 0 = idle",
+      "enabled": true,
+      "params": {
+        "vcc": 255
+      }
+    },
+    {
+      "id": "zero",
+      "type": "gnd",
+      "x": 4560,
+      "y": 1120,
+      "label": "Unused target upper bits",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "below-target",
+      "type": "position_sensor",
+      "x": 5200,
+      "y": 720,
+      "label": "Cabin below target floor",
+      "enabled": true,
+      "params": {
+        "threshold": 1,
+        "tolerance": 0.015,
+        "mode": "below",
+        "unit": "floor"
+      }
+    },
+    {
+      "id": "above-target",
+      "type": "position_sensor",
+      "x": 5200,
+      "y": 1040,
+      "label": "Cabin above target floor",
+      "enabled": true,
+      "params": {
+        "threshold": 1,
+        "tolerance": 0.015,
+        "mode": "above",
+        "unit": "floor"
+      }
+    },
+    {
+      "id": "trigger",
+      "type": "and",
+      "x": 4880,
+      "y": 2480,
+      "label": "Start door cycle",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "dwell",
+      "type": "monostable",
+      "x": 5200,
+      "y": 2480,
+      "label": "OPEN + dwell · 0.6 s",
+      "enabled": true,
+      "params": {
+        "duration": 0.6
+      }
+    },
+    {
+      "id": "not-dwell",
+      "type": "not",
+      "x": 4880,
+      "y": 1400,
+      "label": "Close after dwell",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "not-fault",
+      "type": "not",
+      "x": 4880,
+      "y": 1640,
+      "label": "No plant fault",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "door-ready",
+      "type": "and",
+      "x": 5200,
+      "y": 1400,
+      "label": "Doors closed and no dwell",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "healthy",
+      "type": "and",
+      "x": 5200,
+      "y": 1640,
+      "label": "Physical interlock",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "run-permit",
+      "type": "and",
+      "x": 5200,
+      "y": 1880,
+      "label": "RUN permits motion",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "permitted",
+      "type": "and",
+      "x": 5200,
+      "y": 2120,
+      "label": "Pending request permits motion",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "safe-up",
+      "type": "and",
+      "x": 5520,
+      "y": 1640,
+      "label": "Safe UP",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "safe-down",
+      "type": "and",
+      "x": 5520,
+      "y": 1880,
+      "label": "Safe DOWN",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "up-command",
+      "type": "or",
+      "x": 5840,
+      "y": 1640,
+      "label": "UP with unsafe bypass",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "plant",
+      "type": "elevator",
+      "x": 5840,
+      "y": 80,
+      "label": "Nine-floor physical elevator",
+      "enabled": true,
+      "params": {
+        "initialFloor": 1,
+        "initialDoor": 0,
+        "travelSpeed": 2,
+        "doorSpeed": 4
+      }
+    },
+    {
+      "id": "alarm",
+      "type": "led",
+      "x": 6160,
+      "y": 80,
+      "label": "Latched plant fault",
+      "enabled": true,
+      "params": {
+        "color": "#f27d73"
+      }
+    },
+    {
+      "id": "position",
+      "type": "scope",
+      "x": 6160,
+      "y": 320,
+      "label": "Cabin position · floors 1…9",
+      "enabled": true,
+      "params": {
+        "range": 9
+      }
+    },
+    {
+      "id": "run",
+      "type": "switch",
+      "x": 80,
+      "y": 2480,
+      "label": "RUN · plant permission",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "reset",
+      "type": "button",
+      "x": 400,
+      "y": 2480,
+      "label": "RESET · plant and nine memories",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "unsafe",
+      "type": "switch",
+      "x": 720,
+      "y": 2480,
+      "label": "UNSAFE UP · bypass doors",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "note80",
+      "type": "note",
+      "x": 80,
+      "y": -180,
+      "label": "Controller guide",
+      "enabled": true,
+      "params": {
+        "text": "1 · Pulse CALL1…9 then release. Each row stores one independent request; RESET clears all nine."
+      }
+    },
+    {
+      "id": "note2320",
+      "type": "note",
+      "x": 2320,
+      "y": -180,
+      "label": "Controller guide",
+      "enabled": true,
+      "params": {
+        "text": "2 · Lowest pending floor wins through shared prefix OR gates. This is priority, not FIFO."
+      }
+    },
+    {
+      "id": "note3600",
+      "type": "note",
+      "x": 3600,
+      "y": -180,
+      "label": "Controller guide",
+      "enabled": true,
+      "params": {
+        "text": "3 · Selected floor becomes binary bits0…3. DACvcc255 preserves the integer as a numeric floor target;0 means idle."
+      }
+    },
+    {
+      "id": "note4880",
+      "type": "note",
+      "x": 4880,
+      "y": -180,
+      "label": "Controller guide",
+      "enabled": true,
+      "params": {
+        "text": "4 · External pulse opens/holds/clears service. Motion needs a pending request, closed doors, no pulse/fault and RUN."
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "plant-floor1-served1-a",
+      "from": {
+        "node": "plant",
+        "port": "floor1"
+      },
+      "to": {
+        "node": "served1",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "dwell-out-served1-b",
+      "from": {
+        "node": "dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "served1",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "served1-out-clear1-a",
+      "from": {
+        "node": "served1",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear1",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-clear1-b",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear1",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear1-out-not-clear1-a",
+      "from": {
+        "node": "clear1",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-clear1",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "call1-out-set1-a",
+      "from": {
+        "node": "call1",
+        "port": "out"
+      },
+      "to": {
+        "node": "set1",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-clear1-out-set1-b",
+      "from": {
+        "node": "not-clear1",
+        "port": "out"
+      },
+      "to": {
+        "node": "set1",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "set1-out-request1-s",
+      "from": {
+        "node": "set1",
+        "port": "out"
+      },
+      "to": {
+        "node": "request1",
+        "port": "s"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear1-out-request1-r",
+      "from": {
+        "node": "clear1",
+        "port": "out"
+      },
+      "to": {
+        "node": "request1",
+        "port": "r"
+      },
+      "width": 1
+    },
+    {
+      "id": "request1-q-pending1-in",
+      "from": {
+        "node": "request1",
+        "port": "q"
+      },
+      "to": {
+        "node": "pending1",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "request1-q-arrive1-a",
+      "from": {
+        "node": "request1",
+        "port": "q"
+      },
+      "to": {
+        "node": "arrive1",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor1-arrive1-b",
+      "from": {
+        "node": "plant",
+        "port": "floor1"
+      },
+      "to": {
+        "node": "arrive1",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor2-served2-a",
+      "from": {
+        "node": "plant",
+        "port": "floor2"
+      },
+      "to": {
+        "node": "served2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "dwell-out-served2-b",
+      "from": {
+        "node": "dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "served2",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "served2-out-clear2-a",
+      "from": {
+        "node": "served2",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-clear2-b",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear2",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear2-out-not-clear2-a",
+      "from": {
+        "node": "clear2",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-clear2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "call2-out-set2-a",
+      "from": {
+        "node": "call2",
+        "port": "out"
+      },
+      "to": {
+        "node": "set2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-clear2-out-set2-b",
+      "from": {
+        "node": "not-clear2",
+        "port": "out"
+      },
+      "to": {
+        "node": "set2",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "set2-out-request2-s",
+      "from": {
+        "node": "set2",
+        "port": "out"
+      },
+      "to": {
+        "node": "request2",
+        "port": "s"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear2-out-request2-r",
+      "from": {
+        "node": "clear2",
+        "port": "out"
+      },
+      "to": {
+        "node": "request2",
+        "port": "r"
+      },
+      "width": 1
+    },
+    {
+      "id": "request2-q-pending2-in",
+      "from": {
+        "node": "request2",
+        "port": "q"
+      },
+      "to": {
+        "node": "pending2",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "request1-q-lower2-a",
+      "from": {
+        "node": "request1",
+        "port": "q"
+      },
+      "to": {
+        "node": "lower2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request2-q-lower2-b",
+      "from": {
+        "node": "request2",
+        "port": "q"
+      },
+      "to": {
+        "node": "lower2",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "request1-q-no-lower2-a",
+      "from": {
+        "node": "request1",
+        "port": "q"
+      },
+      "to": {
+        "node": "no-lower2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request2-q-target2-a",
+      "from": {
+        "node": "request2",
+        "port": "q"
+      },
+      "to": {
+        "node": "target2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "no-lower2-out-target2-b",
+      "from": {
+        "node": "no-lower2",
+        "port": "out"
+      },
+      "to": {
+        "node": "target2",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target2-out-arrive2-a",
+      "from": {
+        "node": "target2",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrive2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor2-arrive2-b",
+      "from": {
+        "node": "plant",
+        "port": "floor2"
+      },
+      "to": {
+        "node": "arrive2",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor3-served3-a",
+      "from": {
+        "node": "plant",
+        "port": "floor3"
+      },
+      "to": {
+        "node": "served3",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "dwell-out-served3-b",
+      "from": {
+        "node": "dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "served3",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "served3-out-clear3-a",
+      "from": {
+        "node": "served3",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear3",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-clear3-b",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear3",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear3-out-not-clear3-a",
+      "from": {
+        "node": "clear3",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-clear3",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "call3-out-set3-a",
+      "from": {
+        "node": "call3",
+        "port": "out"
+      },
+      "to": {
+        "node": "set3",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-clear3-out-set3-b",
+      "from": {
+        "node": "not-clear3",
+        "port": "out"
+      },
+      "to": {
+        "node": "set3",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "set3-out-request3-s",
+      "from": {
+        "node": "set3",
+        "port": "out"
+      },
+      "to": {
+        "node": "request3",
+        "port": "s"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear3-out-request3-r",
+      "from": {
+        "node": "clear3",
+        "port": "out"
+      },
+      "to": {
+        "node": "request3",
+        "port": "r"
+      },
+      "width": 1
+    },
+    {
+      "id": "request3-q-pending3-in",
+      "from": {
+        "node": "request3",
+        "port": "q"
+      },
+      "to": {
+        "node": "pending3",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower2-out-lower3-a",
+      "from": {
+        "node": "lower2",
+        "port": "out"
+      },
+      "to": {
+        "node": "lower3",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request3-q-lower3-b",
+      "from": {
+        "node": "request3",
+        "port": "q"
+      },
+      "to": {
+        "node": "lower3",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower2-out-no-lower3-a",
+      "from": {
+        "node": "lower2",
+        "port": "out"
+      },
+      "to": {
+        "node": "no-lower3",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request3-q-target3-a",
+      "from": {
+        "node": "request3",
+        "port": "q"
+      },
+      "to": {
+        "node": "target3",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "no-lower3-out-target3-b",
+      "from": {
+        "node": "no-lower3",
+        "port": "out"
+      },
+      "to": {
+        "node": "target3",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target3-out-arrive3-a",
+      "from": {
+        "node": "target3",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrive3",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor3-arrive3-b",
+      "from": {
+        "node": "plant",
+        "port": "floor3"
+      },
+      "to": {
+        "node": "arrive3",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor4-served4-a",
+      "from": {
+        "node": "plant",
+        "port": "floor4"
+      },
+      "to": {
+        "node": "served4",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "dwell-out-served4-b",
+      "from": {
+        "node": "dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "served4",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "served4-out-clear4-a",
+      "from": {
+        "node": "served4",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear4",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-clear4-b",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear4",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear4-out-not-clear4-a",
+      "from": {
+        "node": "clear4",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-clear4",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "call4-out-set4-a",
+      "from": {
+        "node": "call4",
+        "port": "out"
+      },
+      "to": {
+        "node": "set4",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-clear4-out-set4-b",
+      "from": {
+        "node": "not-clear4",
+        "port": "out"
+      },
+      "to": {
+        "node": "set4",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "set4-out-request4-s",
+      "from": {
+        "node": "set4",
+        "port": "out"
+      },
+      "to": {
+        "node": "request4",
+        "port": "s"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear4-out-request4-r",
+      "from": {
+        "node": "clear4",
+        "port": "out"
+      },
+      "to": {
+        "node": "request4",
+        "port": "r"
+      },
+      "width": 1
+    },
+    {
+      "id": "request4-q-pending4-in",
+      "from": {
+        "node": "request4",
+        "port": "q"
+      },
+      "to": {
+        "node": "pending4",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower3-out-lower4-a",
+      "from": {
+        "node": "lower3",
+        "port": "out"
+      },
+      "to": {
+        "node": "lower4",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request4-q-lower4-b",
+      "from": {
+        "node": "request4",
+        "port": "q"
+      },
+      "to": {
+        "node": "lower4",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower3-out-no-lower4-a",
+      "from": {
+        "node": "lower3",
+        "port": "out"
+      },
+      "to": {
+        "node": "no-lower4",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request4-q-target4-a",
+      "from": {
+        "node": "request4",
+        "port": "q"
+      },
+      "to": {
+        "node": "target4",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "no-lower4-out-target4-b",
+      "from": {
+        "node": "no-lower4",
+        "port": "out"
+      },
+      "to": {
+        "node": "target4",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target4-out-arrive4-a",
+      "from": {
+        "node": "target4",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrive4",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor4-arrive4-b",
+      "from": {
+        "node": "plant",
+        "port": "floor4"
+      },
+      "to": {
+        "node": "arrive4",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor5-served5-a",
+      "from": {
+        "node": "plant",
+        "port": "floor5"
+      },
+      "to": {
+        "node": "served5",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "dwell-out-served5-b",
+      "from": {
+        "node": "dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "served5",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "served5-out-clear5-a",
+      "from": {
+        "node": "served5",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear5",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-clear5-b",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear5",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear5-out-not-clear5-a",
+      "from": {
+        "node": "clear5",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-clear5",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "call5-out-set5-a",
+      "from": {
+        "node": "call5",
+        "port": "out"
+      },
+      "to": {
+        "node": "set5",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-clear5-out-set5-b",
+      "from": {
+        "node": "not-clear5",
+        "port": "out"
+      },
+      "to": {
+        "node": "set5",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "set5-out-request5-s",
+      "from": {
+        "node": "set5",
+        "port": "out"
+      },
+      "to": {
+        "node": "request5",
+        "port": "s"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear5-out-request5-r",
+      "from": {
+        "node": "clear5",
+        "port": "out"
+      },
+      "to": {
+        "node": "request5",
+        "port": "r"
+      },
+      "width": 1
+    },
+    {
+      "id": "request5-q-pending5-in",
+      "from": {
+        "node": "request5",
+        "port": "q"
+      },
+      "to": {
+        "node": "pending5",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower4-out-lower5-a",
+      "from": {
+        "node": "lower4",
+        "port": "out"
+      },
+      "to": {
+        "node": "lower5",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request5-q-lower5-b",
+      "from": {
+        "node": "request5",
+        "port": "q"
+      },
+      "to": {
+        "node": "lower5",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower4-out-no-lower5-a",
+      "from": {
+        "node": "lower4",
+        "port": "out"
+      },
+      "to": {
+        "node": "no-lower5",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request5-q-target5-a",
+      "from": {
+        "node": "request5",
+        "port": "q"
+      },
+      "to": {
+        "node": "target5",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "no-lower5-out-target5-b",
+      "from": {
+        "node": "no-lower5",
+        "port": "out"
+      },
+      "to": {
+        "node": "target5",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target5-out-arrive5-a",
+      "from": {
+        "node": "target5",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrive5",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor5-arrive5-b",
+      "from": {
+        "node": "plant",
+        "port": "floor5"
+      },
+      "to": {
+        "node": "arrive5",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor6-served6-a",
+      "from": {
+        "node": "plant",
+        "port": "floor6"
+      },
+      "to": {
+        "node": "served6",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "dwell-out-served6-b",
+      "from": {
+        "node": "dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "served6",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "served6-out-clear6-a",
+      "from": {
+        "node": "served6",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear6",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-clear6-b",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear6",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear6-out-not-clear6-a",
+      "from": {
+        "node": "clear6",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-clear6",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "call6-out-set6-a",
+      "from": {
+        "node": "call6",
+        "port": "out"
+      },
+      "to": {
+        "node": "set6",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-clear6-out-set6-b",
+      "from": {
+        "node": "not-clear6",
+        "port": "out"
+      },
+      "to": {
+        "node": "set6",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "set6-out-request6-s",
+      "from": {
+        "node": "set6",
+        "port": "out"
+      },
+      "to": {
+        "node": "request6",
+        "port": "s"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear6-out-request6-r",
+      "from": {
+        "node": "clear6",
+        "port": "out"
+      },
+      "to": {
+        "node": "request6",
+        "port": "r"
+      },
+      "width": 1
+    },
+    {
+      "id": "request6-q-pending6-in",
+      "from": {
+        "node": "request6",
+        "port": "q"
+      },
+      "to": {
+        "node": "pending6",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower5-out-lower6-a",
+      "from": {
+        "node": "lower5",
+        "port": "out"
+      },
+      "to": {
+        "node": "lower6",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request6-q-lower6-b",
+      "from": {
+        "node": "request6",
+        "port": "q"
+      },
+      "to": {
+        "node": "lower6",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower5-out-no-lower6-a",
+      "from": {
+        "node": "lower5",
+        "port": "out"
+      },
+      "to": {
+        "node": "no-lower6",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request6-q-target6-a",
+      "from": {
+        "node": "request6",
+        "port": "q"
+      },
+      "to": {
+        "node": "target6",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "no-lower6-out-target6-b",
+      "from": {
+        "node": "no-lower6",
+        "port": "out"
+      },
+      "to": {
+        "node": "target6",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target6-out-arrive6-a",
+      "from": {
+        "node": "target6",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrive6",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor6-arrive6-b",
+      "from": {
+        "node": "plant",
+        "port": "floor6"
+      },
+      "to": {
+        "node": "arrive6",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor7-served7-a",
+      "from": {
+        "node": "plant",
+        "port": "floor7"
+      },
+      "to": {
+        "node": "served7",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "dwell-out-served7-b",
+      "from": {
+        "node": "dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "served7",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "served7-out-clear7-a",
+      "from": {
+        "node": "served7",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear7",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-clear7-b",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear7",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear7-out-not-clear7-a",
+      "from": {
+        "node": "clear7",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-clear7",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "call7-out-set7-a",
+      "from": {
+        "node": "call7",
+        "port": "out"
+      },
+      "to": {
+        "node": "set7",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-clear7-out-set7-b",
+      "from": {
+        "node": "not-clear7",
+        "port": "out"
+      },
+      "to": {
+        "node": "set7",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "set7-out-request7-s",
+      "from": {
+        "node": "set7",
+        "port": "out"
+      },
+      "to": {
+        "node": "request7",
+        "port": "s"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear7-out-request7-r",
+      "from": {
+        "node": "clear7",
+        "port": "out"
+      },
+      "to": {
+        "node": "request7",
+        "port": "r"
+      },
+      "width": 1
+    },
+    {
+      "id": "request7-q-pending7-in",
+      "from": {
+        "node": "request7",
+        "port": "q"
+      },
+      "to": {
+        "node": "pending7",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower6-out-lower7-a",
+      "from": {
+        "node": "lower6",
+        "port": "out"
+      },
+      "to": {
+        "node": "lower7",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request7-q-lower7-b",
+      "from": {
+        "node": "request7",
+        "port": "q"
+      },
+      "to": {
+        "node": "lower7",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower6-out-no-lower7-a",
+      "from": {
+        "node": "lower6",
+        "port": "out"
+      },
+      "to": {
+        "node": "no-lower7",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request7-q-target7-a",
+      "from": {
+        "node": "request7",
+        "port": "q"
+      },
+      "to": {
+        "node": "target7",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "no-lower7-out-target7-b",
+      "from": {
+        "node": "no-lower7",
+        "port": "out"
+      },
+      "to": {
+        "node": "target7",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target7-out-arrive7-a",
+      "from": {
+        "node": "target7",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrive7",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor7-arrive7-b",
+      "from": {
+        "node": "plant",
+        "port": "floor7"
+      },
+      "to": {
+        "node": "arrive7",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor8-served8-a",
+      "from": {
+        "node": "plant",
+        "port": "floor8"
+      },
+      "to": {
+        "node": "served8",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "dwell-out-served8-b",
+      "from": {
+        "node": "dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "served8",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "served8-out-clear8-a",
+      "from": {
+        "node": "served8",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear8",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-clear8-b",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear8",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear8-out-not-clear8-a",
+      "from": {
+        "node": "clear8",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-clear8",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "call8-out-set8-a",
+      "from": {
+        "node": "call8",
+        "port": "out"
+      },
+      "to": {
+        "node": "set8",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-clear8-out-set8-b",
+      "from": {
+        "node": "not-clear8",
+        "port": "out"
+      },
+      "to": {
+        "node": "set8",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "set8-out-request8-s",
+      "from": {
+        "node": "set8",
+        "port": "out"
+      },
+      "to": {
+        "node": "request8",
+        "port": "s"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear8-out-request8-r",
+      "from": {
+        "node": "clear8",
+        "port": "out"
+      },
+      "to": {
+        "node": "request8",
+        "port": "r"
+      },
+      "width": 1
+    },
+    {
+      "id": "request8-q-pending8-in",
+      "from": {
+        "node": "request8",
+        "port": "q"
+      },
+      "to": {
+        "node": "pending8",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower7-out-lower8-a",
+      "from": {
+        "node": "lower7",
+        "port": "out"
+      },
+      "to": {
+        "node": "lower8",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request8-q-lower8-b",
+      "from": {
+        "node": "request8",
+        "port": "q"
+      },
+      "to": {
+        "node": "lower8",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower7-out-no-lower8-a",
+      "from": {
+        "node": "lower7",
+        "port": "out"
+      },
+      "to": {
+        "node": "no-lower8",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request8-q-target8-a",
+      "from": {
+        "node": "request8",
+        "port": "q"
+      },
+      "to": {
+        "node": "target8",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "no-lower8-out-target8-b",
+      "from": {
+        "node": "no-lower8",
+        "port": "out"
+      },
+      "to": {
+        "node": "target8",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target8-out-arrive8-a",
+      "from": {
+        "node": "target8",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrive8",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor8-arrive8-b",
+      "from": {
+        "node": "plant",
+        "port": "floor8"
+      },
+      "to": {
+        "node": "arrive8",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor9-served9-a",
+      "from": {
+        "node": "plant",
+        "port": "floor9"
+      },
+      "to": {
+        "node": "served9",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "dwell-out-served9-b",
+      "from": {
+        "node": "dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "served9",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "served9-out-clear9-a",
+      "from": {
+        "node": "served9",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear9",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-clear9-b",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "clear9",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear9-out-not-clear9-a",
+      "from": {
+        "node": "clear9",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-clear9",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "call9-out-set9-a",
+      "from": {
+        "node": "call9",
+        "port": "out"
+      },
+      "to": {
+        "node": "set9",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-clear9-out-set9-b",
+      "from": {
+        "node": "not-clear9",
+        "port": "out"
+      },
+      "to": {
+        "node": "set9",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "set9-out-request9-s",
+      "from": {
+        "node": "set9",
+        "port": "out"
+      },
+      "to": {
+        "node": "request9",
+        "port": "s"
+      },
+      "width": 1
+    },
+    {
+      "id": "clear9-out-request9-r",
+      "from": {
+        "node": "clear9",
+        "port": "out"
+      },
+      "to": {
+        "node": "request9",
+        "port": "r"
+      },
+      "width": 1
+    },
+    {
+      "id": "request9-q-pending9-in",
+      "from": {
+        "node": "request9",
+        "port": "q"
+      },
+      "to": {
+        "node": "pending9",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower8-out-lower9-a",
+      "from": {
+        "node": "lower8",
+        "port": "out"
+      },
+      "to": {
+        "node": "lower9",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request9-q-lower9-b",
+      "from": {
+        "node": "request9",
+        "port": "q"
+      },
+      "to": {
+        "node": "lower9",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower8-out-no-lower9-a",
+      "from": {
+        "node": "lower8",
+        "port": "out"
+      },
+      "to": {
+        "node": "no-lower9",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "request9-q-target9-a",
+      "from": {
+        "node": "request9",
+        "port": "q"
+      },
+      "to": {
+        "node": "target9",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "no-lower9-out-target9-b",
+      "from": {
+        "node": "no-lower9",
+        "port": "out"
+      },
+      "to": {
+        "node": "target9",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target9-out-arrive9-a",
+      "from": {
+        "node": "target9",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrive9",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-floor9-arrive9-b",
+      "from": {
+        "node": "plant",
+        "port": "floor9"
+      },
+      "to": {
+        "node": "arrive9",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrive1-out-arrived2-a",
+      "from": {
+        "node": "arrive1",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrive2-out-arrived2-b",
+      "from": {
+        "node": "arrive2",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived2",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrived2-out-arrived3-a",
+      "from": {
+        "node": "arrived2",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived3",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrive3-out-arrived3-b",
+      "from": {
+        "node": "arrive3",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived3",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrived3-out-arrived4-a",
+      "from": {
+        "node": "arrived3",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived4",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrive4-out-arrived4-b",
+      "from": {
+        "node": "arrive4",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived4",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrived4-out-arrived5-a",
+      "from": {
+        "node": "arrived4",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived5",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrive5-out-arrived5-b",
+      "from": {
+        "node": "arrive5",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived5",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrived5-out-arrived6-a",
+      "from": {
+        "node": "arrived5",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived6",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrive6-out-arrived6-b",
+      "from": {
+        "node": "arrive6",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived6",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrived6-out-arrived7-a",
+      "from": {
+        "node": "arrived6",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived7",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrive7-out-arrived7-b",
+      "from": {
+        "node": "arrive7",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived7",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrived7-out-arrived8-a",
+      "from": {
+        "node": "arrived7",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived8",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrive8-out-arrived8-b",
+      "from": {
+        "node": "arrive8",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived8",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrived8-out-arrived9-a",
+      "from": {
+        "node": "arrived8",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived9",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrive9-out-arrived9-b",
+      "from": {
+        "node": "arrive9",
+        "port": "out"
+      },
+      "to": {
+        "node": "arrived9",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "request1-q-target-bit0-0-a",
+      "from": {
+        "node": "request1",
+        "port": "q"
+      },
+      "to": {
+        "node": "target-bit0-0",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "target3-out-target-bit0-0-b",
+      "from": {
+        "node": "target3",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit0-0",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-bit0-0-out-target-bit0-1-a",
+      "from": {
+        "node": "target-bit0-0",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit0-1",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "target5-out-target-bit0-1-b",
+      "from": {
+        "node": "target5",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit0-1",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-bit0-1-out-target-bit0-2-a",
+      "from": {
+        "node": "target-bit0-1",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit0-2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "target7-out-target-bit0-2-b",
+      "from": {
+        "node": "target7",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit0-2",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-bit0-2-out-target-bit0-3-a",
+      "from": {
+        "node": "target-bit0-2",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit0-3",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "target9-out-target-bit0-3-b",
+      "from": {
+        "node": "target9",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit0-3",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target2-out-target-bit1-0-a",
+      "from": {
+        "node": "target2",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit1-0",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "target3-out-target-bit1-0-b",
+      "from": {
+        "node": "target3",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit1-0",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-bit1-0-out-target-bit1-1-a",
+      "from": {
+        "node": "target-bit1-0",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit1-1",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "target6-out-target-bit1-1-b",
+      "from": {
+        "node": "target6",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit1-1",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-bit1-1-out-target-bit1-2-a",
+      "from": {
+        "node": "target-bit1-1",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit1-2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "target7-out-target-bit1-2-b",
+      "from": {
+        "node": "target7",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit1-2",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target4-out-target-bit2-0-a",
+      "from": {
+        "node": "target4",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit2-0",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "target5-out-target-bit2-0-b",
+      "from": {
+        "node": "target5",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit2-0",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-bit2-0-out-target-bit2-1-a",
+      "from": {
+        "node": "target-bit2-0",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit2-1",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "target6-out-target-bit2-1-b",
+      "from": {
+        "node": "target6",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit2-1",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-bit2-1-out-target-bit2-2-a",
+      "from": {
+        "node": "target-bit2-1",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit2-2",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "target7-out-target-bit2-2-b",
+      "from": {
+        "node": "target7",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit2-2",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target8-out-target-bit3-0-a",
+      "from": {
+        "node": "target8",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit3-0",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "target9-out-target-bit3-0-b",
+      "from": {
+        "node": "target9",
+        "port": "out"
+      },
+      "to": {
+        "node": "target-bit3-0",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-bit0-3-out-target-in0",
+      "from": {
+        "node": "target-bit0-3",
+        "port": "out"
+      },
+      "to": {
+        "node": "target",
+        "port": "in0"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-bit1-2-out-target-in1",
+      "from": {
+        "node": "target-bit1-2",
+        "port": "out"
+      },
+      "to": {
+        "node": "target",
+        "port": "in1"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-bit2-2-out-target-in2",
+      "from": {
+        "node": "target-bit2-2",
+        "port": "out"
+      },
+      "to": {
+        "node": "target",
+        "port": "in2"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-bit3-0-out-target-in3",
+      "from": {
+        "node": "target-bit3-0",
+        "port": "out"
+      },
+      "to": {
+        "node": "target",
+        "port": "in3"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-target-in4",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "target",
+        "port": "in4"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-target-in5",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "target",
+        "port": "in5"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-target-in6",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "target",
+        "port": "in6"
+      },
+      "width": 1
+    },
+    {
+      "id": "zero-out-target-in7",
+      "from": {
+        "node": "zero",
+        "port": "out"
+      },
+      "to": {
+        "node": "target",
+        "port": "in7"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-position-below-target-position",
+      "from": {
+        "node": "plant",
+        "port": "position"
+      },
+      "to": {
+        "node": "below-target",
+        "port": "position"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-out-below-target-target",
+      "from": {
+        "node": "target",
+        "port": "out"
+      },
+      "to": {
+        "node": "below-target",
+        "port": "target"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-position-above-target-position",
+      "from": {
+        "node": "plant",
+        "port": "position"
+      },
+      "to": {
+        "node": "above-target",
+        "port": "position"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-out-above-target-target",
+      "from": {
+        "node": "target",
+        "port": "out"
+      },
+      "to": {
+        "node": "above-target",
+        "port": "target"
+      },
+      "width": 1
+    },
+    {
+      "id": "arrived9-out-trigger-a",
+      "from": {
+        "node": "arrived9",
+        "port": "out"
+      },
+      "to": {
+        "node": "trigger",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-door_closed-trigger-b",
+      "from": {
+        "node": "plant",
+        "port": "door_closed"
+      },
+      "to": {
+        "node": "trigger",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "trigger-out-dwell-trigger",
+      "from": {
+        "node": "trigger",
+        "port": "out"
+      },
+      "to": {
+        "node": "dwell",
+        "port": "trigger"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-dwell-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "dwell",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "dwell-out-not-dwell-a",
+      "from": {
+        "node": "dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "not-dwell",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-fault-not-fault-a",
+      "from": {
+        "node": "plant",
+        "port": "fault"
+      },
+      "to": {
+        "node": "not-fault",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-door_closed-door-ready-a",
+      "from": {
+        "node": "plant",
+        "port": "door_closed"
+      },
+      "to": {
+        "node": "door-ready",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-dwell-out-door-ready-b",
+      "from": {
+        "node": "not-dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "door-ready",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "door-ready-out-healthy-a",
+      "from": {
+        "node": "door-ready",
+        "port": "out"
+      },
+      "to": {
+        "node": "healthy",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-fault-out-healthy-b",
+      "from": {
+        "node": "not-fault",
+        "port": "out"
+      },
+      "to": {
+        "node": "healthy",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "healthy-out-run-permit-a",
+      "from": {
+        "node": "healthy",
+        "port": "out"
+      },
+      "to": {
+        "node": "run-permit",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "run-out-run-permit-b",
+      "from": {
+        "node": "run",
+        "port": "out"
+      },
+      "to": {
+        "node": "run-permit",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "run-permit-out-permitted-a",
+      "from": {
+        "node": "run-permit",
+        "port": "out"
+      },
+      "to": {
+        "node": "permitted",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "lower9-out-permitted-b",
+      "from": {
+        "node": "lower9",
+        "port": "out"
+      },
+      "to": {
+        "node": "permitted",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "below-target-out-safe-up-a",
+      "from": {
+        "node": "below-target",
+        "port": "out"
+      },
+      "to": {
+        "node": "safe-up",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "permitted-out-safe-up-b",
+      "from": {
+        "node": "permitted",
+        "port": "out"
+      },
+      "to": {
+        "node": "safe-up",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "above-target-out-safe-down-a",
+      "from": {
+        "node": "above-target",
+        "port": "out"
+      },
+      "to": {
+        "node": "safe-down",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "permitted-out-safe-down-b",
+      "from": {
+        "node": "permitted",
+        "port": "out"
+      },
+      "to": {
+        "node": "safe-down",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "safe-up-out-up-command-a",
+      "from": {
+        "node": "safe-up",
+        "port": "out"
+      },
+      "to": {
+        "node": "up-command",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "unsafe-out-up-command-b",
+      "from": {
+        "node": "unsafe",
+        "port": "out"
+      },
+      "to": {
+        "node": "up-command",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "up-command-out-plant-up",
+      "from": {
+        "node": "up-command",
+        "port": "out"
+      },
+      "to": {
+        "node": "plant",
+        "port": "up"
+      },
+      "width": 1
+    },
+    {
+      "id": "safe-down-out-plant-down",
+      "from": {
+        "node": "safe-down",
+        "port": "out"
+      },
+      "to": {
+        "node": "plant",
+        "port": "down"
+      },
+      "width": 1
+    },
+    {
+      "id": "dwell-out-plant-open",
+      "from": {
+        "node": "dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "plant",
+        "port": "open"
+      },
+      "width": 1
+    },
+    {
+      "id": "not-dwell-out-plant-close",
+      "from": {
+        "node": "not-dwell",
+        "port": "out"
+      },
+      "to": {
+        "node": "plant",
+        "port": "close"
+      },
+      "width": 1
+    },
+    {
+      "id": "run-out-plant-run",
+      "from": {
+        "node": "run",
+        "port": "out"
+      },
+      "to": {
+        "node": "plant",
+        "port": "run"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-plant-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "plant",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-fault-alarm-in",
+      "from": {
+        "node": "plant",
+        "port": "fault"
+      },
+      "to": {
+        "node": "alarm",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "plant-position-position-in",
+      "from": {
+        "node": "plant",
+        "port": "position"
+      },
+      "to": {
+        "node": "position",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "elevator-logic"
+}

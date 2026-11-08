@@ -7,6 +7,7 @@ import { workbench } from './workbench.js';
 import { onboarding } from './onboarding.js';
 import { inspector } from './inspector.js';
 import { catalog } from './catalog.js';
+import { elevator } from './elevator.js';
 
 export const en = {
   ...automation,
@@ -18,4 +19,5 @@ export const en = {
   ...onboarding,
   ...inspector,
   ...catalog,
+  ...elevator,
 };

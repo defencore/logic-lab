@@ -26,8 +26,14 @@ export function createTrafficJunction(context) {
   const nsStop = mesh(root, box(1.2, 0.015, 0.06), paint, -0.65, 0.208, JUNCTION.stopLine);
   const ewStop = mesh(root, box(0.06, 0.015, 1.2), paint, JUNCTION.stopLine, 0.208, 0.65);
   nsStop.userData.role = ewStop.userData.role = 'junction-stop-line';
-  const ns = buildSignal(context, root, 1.7, -2.0, Math.PI);
-  const ew = buildSignal(context, root, -2.0, -1.7, -Math.PI / 2);
+  const ns = buildSignal(context, root, 1.7, -2.0, Math.PI, 1, {
+    yellow: 'ns_yellow',
+    green: 'ns_green',
+  });
+  const ew = buildSignal(context, root, -2.0, -1.7, -Math.PI / 2, 1, {
+    yellow: 'ew_yellow',
+    green: 'ew_green',
+  });
   for (const x of [-4.2, 4.2])
     for (const z of [-4.2, 4.2]) {
       mesh(root, cylinder(0.12, 0.15, 1.25), material(0x6d5940), x, 0.75, z);
@@ -60,6 +66,7 @@ export function createTrafficJunction(context) {
           car.group.name = `junction-car:${data.id}`;
           car.group.userData.transportId = data.id;
           car.group.userData.transportKind = 'junction_car';
+          car.group.userData.axis = data.axis;
           cars.set(data.id, car);
           root.add(car.group);
         }

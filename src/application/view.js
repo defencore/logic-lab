@@ -7,6 +7,7 @@ export function createView(context) {
   function changed({ reset = false } = {}) {
     if (reset) state.runtime = actions.newRuntime();
     services.hotkeys?.reconcile();
+    services.keypads?.reconcile();
     simulate(state.project, state.runtime, 0);
     services.board.render();
     services.inspector.render();
@@ -18,6 +19,7 @@ export function createView(context) {
   }
   function shell() {
     if (services.dialogs?.isOpen()) services.dialogs.close();
+    services.scenes?.dispose();
     services.wiring?.cancelGesture();
     document.documentElement.lang = state.lang === 'ua' ? 'uk' : 'en';
     document.title = t('pageTitle');
@@ -93,6 +95,7 @@ export function createView(context) {
     services.inspector.render();
     actions.updateSignals();
     services.wiring?.refresh();
+    services.scenes?.selectionChanged();
   }
   function updateSignals() {
     services.board.updateSignals();

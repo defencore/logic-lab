@@ -49,6 +49,11 @@ const PARAM_NAMES = {
   initialWater: ['Initial water reserve (%)', 'Початковий запас води (%)'],
   frequency: ['Frequency (Hz)', 'Частота (Гц)'],
   volume: ['Volume (0–1)', 'Гучність (0–1)'],
+  initialFloor: ['Initial floor (1–9)', 'Початковий поверх (1–9)'],
+  unit: ['Displayed position unit', 'Одиниця позиції на екрані'],
+  initialDoor: ['Initial door opening (0–1)', 'Початкове відкриття дверей (0–1)'],
+  travelSpeed: ['Cabin speed (floors/s)', 'Швидкість кабіни (поверхів/с)'],
+  doorSpeed: ['Door opening speed (1/s)', 'Швидкість відкриття дверей (1/с)'],
   duty: ['Duty cycle (0–1)', 'Коефіцієнт заповнення (0–1)'],
   carrier: ['Carrier (Hz)', 'Несуча (Гц)'],
   depth: ['Modulation depth', 'Глибина модуляції'],
@@ -87,10 +92,14 @@ export function parameterField(key, value, componentType, lang, t) {
     key === 'initialLevel'
       ? `${baseLabel} (${componentType === 'water_tank' ? '%' : 'g'})`
       : baseLabel;
+  if (key === 'mode' && componentType === 'keypad')
+    return `<label>${lang === 'ua' ? 'Режим кнопок' : 'Button mode'}<select data-param="mode"><option value="hold" ${value === 'hold' ? 'selected' : ''}>${lang === 'ua' ? 'Утримання · відпускання повертає 0' : 'Hold · release returns to 0'}</option><option value="toggle" ${value === 'toggle' ? 'selected' : ''}>${lang === 'ua' ? 'Фіксація · натисніть ще раз для 0' : 'Latch · press again for 0'}</option></select></label>`;
   if (key === 'text')
     return `<label>${label}<textarea data-param="${key}" rows="3" maxlength="16384">${esc(value)}</textarea></label>`;
   if (key === 'data')
     return `<label>${esc(label)}<textarea data-param="data" data-memory-bytes="true" rows="3" maxlength="16384" placeholder="0, 1, 2, 255">${esc(Array.isArray(value) ? value.join(', ') : value)}</textarea></label>`;
+  if (key === 'unit' && componentType === 'position_sensor')
+    return `<label>${esc(label)}<select data-param="unit"><option value="mm" ${value === 'mm' ? 'selected' : ''}>mm</option><option value="floor" ${value === 'floor' ? 'selected' : ''}>${lang === 'ua' ? 'Поверхи' : 'Floors'}</option></select></label>`;
   const type =
     typeof value === 'boolean'
       ? 'checkbox'

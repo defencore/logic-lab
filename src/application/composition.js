@@ -14,12 +14,16 @@ import { createDialogs } from '../workbench/dialogs.js';
 import { createHotkeyController } from './hotkey-controller.js';
 import { createAudioController } from './audio-controller.js';
 import { createClipboardController } from './clipboard-controller.js';
+import { createMomentaryController } from './momentary-controller.js';
+import { createKeypadController } from './keypad-controller.js';
 export function composeWorkbench(context) {
   const { state, services, actions, t, title } = context;
   services.dialogs = createDialogs({
     t,
     beforeOpen: () => {
       services.hotkeys?.suspend();
+      services.buttons?.suspend();
+      services.keypads?.suspend();
       state.spaceHeld = false;
       state.shiftHeld = false;
       actions.cancelInteraction();
@@ -28,7 +32,6 @@ export function composeWorkbench(context) {
       actions.setToolsOpen(false);
       $('.project-files').open = false;
     },
-    disposeContent: () => services.scenes?.dispose(),
   });
   services.board = createBoardController(state, {
     t,
@@ -37,6 +40,8 @@ export function composeWorkbench(context) {
     nodePointerDown: actions.nodePointerDown,
     pinPointerDown: actions.pinPointerDown,
     toggleSource: actions.toggleSource,
+    setMomentarySource: actions.setMomentarySource,
+    setKeypadKey: actions.setKeypadKey,
     canRenameNode: () => !services.classroom || services.classroom.allowEdit(),
     renameNode: actions.renameNode,
     cancelInteraction: actions.cancelInteraction,
@@ -53,9 +58,12 @@ export function composeWorkbench(context) {
         requestAnimationFrame(() => {
           const label = $('#node-label');
           const target =
-            label && !label.disabled
+            document.querySelector(
+              '#inspector-content [data-keypad-key], #inspector-content .state-inspection > summary',
+            ) ||
+            (label && !label.disabled
               ? label
-              : document.querySelector('[data-inspector-tab="properties"]');
+              : document.querySelector('[data-inspector-tab="properties"]'));
           target?.focus();
         });
       }
@@ -100,16 +108,20 @@ export function composeWorkbench(context) {
     duplicateSelection: actions.duplicateSelection,
     enableSelected: actions.enableSelected,
     beginHotkeyCapture: (request) => services.hotkeys.beginCapture(request),
+    setKeypadKey: actions.setKeypadKey,
   });
   services.scenes = createSceneController(state, {
     t,
     title,
-    showModal: services.dialogs.open,
-    closeModal: services.dialogs.close,
+    setWorkspaceView: actions.setWorkspaceView,
+    selectionChanged: actions.selectionChanged,
+    applyView: actions.applyView,
+    cancelInteraction: actions.cancelInteraction,
     setRunning: actions.setRunning,
     resetSimulation: actions.resetSimulation,
     toggleSource: actions.toggleSource,
-    confirmReplace: actions.confirmReplace,
+    setMomentarySource: actions.setMomentarySource,
+    setKeypadKey: actions.setKeypadKey,
     bindLiveText: actions.bindLiveText,
     renderBoard: services.board.render,
     updateSignals: actions.updateSignals,
@@ -189,12 +201,16 @@ export function composeWorkbench(context) {
       actions.setRunning(next);
     },
     resetForSequence: () => {
+      services.buttons?.suspend();
+      services.keypads?.suspend();
       actions.cancelInteraction();
       state.runtime = actions.newRuntime();
       simulate(state.project, state.runtime, 0);
       actions.updateSignals();
     },
     adoptPlayback: (nextProject, nextRuntime) => {
+      services.buttons?.suspend();
+      services.keypads?.suspend();
       actions.cancelInteraction();
       state.project = nextProject;
       state.runtime = nextRuntime;
@@ -208,6 +224,10 @@ export function composeWorkbench(context) {
       actions.updateSignals();
     },
     refreshPlayback: (nextProject, nextRuntime, redraw = true) => {
+      if (nextProject && nextProject !== state.project) {
+        services.buttons?.suspend();
+        services.keypads?.suspend();
+      }
       if (nextProject) state.project = nextProject;
       if (nextRuntime) state.runtime = nextRuntime;
       if (redraw) services.board.render();
@@ -217,6 +237,32 @@ export function composeWorkbench(context) {
     loadProject: actions.replaceProject,
   });
   const canWriteHotkey = () => !services.classroom.isLocked() || services.classroom.isRecording();
+  services.buttons = createMomentaryController({
+    getProject: () => state.project,
+    canPress: () => !services.dialogs.isOpen() && services.classroom.allowInput(),
+    canWrite: canWriteHotkey,
+    writeValue: (node, value) => {
+      if ((node.params.value ?? 0) === value) return;
+      node.params.value = value;
+      simulate(state.project, state.runtime, 0);
+      actions.updateSignals();
+      if (canWriteHotkey()) services.classroom.inputChanged(node.id, 'value', value);
+      actions.persist();
+    },
+  });
+  services.keypads = createKeypadController({
+    getProject: () => state.project,
+    canPress: () => !services.dialogs.isOpen() && services.classroom.allowInput(),
+    canWrite: canWriteHotkey,
+    writeKeys: (node, keys) => {
+      if ((node.params.keys ?? 0) === keys) return;
+      node.params.keys = keys;
+      simulate(state.project, state.runtime, 0);
+      actions.updateSignals();
+      if (canWriteHotkey()) services.classroom.inputChanged(node.id, 'keys', keys);
+      actions.persist();
+    },
+  });
   services.hotkeys = createHotkeyController({
     getProject: () => state.project,
     canWrite: canWriteHotkey,

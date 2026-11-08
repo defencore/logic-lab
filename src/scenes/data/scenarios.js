@@ -24,6 +24,7 @@ export function getSceneSnapshot(project, runtime, entry) {
     node,
     parameters: { ...getDefinition(node.type).defaults, ...node.params },
     inputs: runtime.signals.inputs[node.id] || {},
+    physicalInputs: runtime.inputs?.[node.id] || {},
     outputs: runtime.signals.outputs[node.id] || {},
     state: runtime.state[node.id]?.scenario,
     time: runtime.time,
@@ -70,6 +71,12 @@ export function sceneMessageKey(snapshot, reason) {
       dark: 'plantDark',
     },
     smart_home: { empty_tank: 'homeEmptyTank' },
+    elevator: {
+      drive_conflict: 'elevatorDriveConflict',
+      door_conflict: 'elevatorDoorConflict',
+      motion_with_open_door: 'elevatorDoorMotion',
+      open_between_floors: 'elevatorBetweenFloors',
+    },
   };
   return (
     processReasons[snapshot.node.type]?.[reason] ||

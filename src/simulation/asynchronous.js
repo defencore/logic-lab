@@ -19,11 +19,13 @@ export function applyReset(node, state, inputs, incoming) {
     return reset === 1
       ? { ...state, pulseUntil: -1, pulseMaybe: false }
       : { ...state, pulseMaybe: state.pulseUntil >= 0 || state.pulseMaybe };
-  if (state.qBits)
+  if (state.qBits) {
+    const field = node.type === 'shift_register' ? 'lastShift' : 'lastByteChange';
     return withBits(
-      state,
+      state[field] ? { ...state, [field]: null } : state,
       reset === 1 ? Array(8).fill(0) : mergeBits(state.qBits, Array(8).fill(0)),
     );
+  }
   return { ...state, q: reset === 1 ? 0 : consensus([state.q, 0]) };
 }
 
@@ -54,6 +56,8 @@ export function advanceAsynchronous(nodes, runtime, incoming) {
       next.q !== state.q ||
       next.pulseUntil !== state.pulseUntil ||
       next.pulseMaybe !== state.pulseMaybe ||
+      next.lastShift !== state.lastShift ||
+      next.lastByteChange !== state.lastByteChange ||
       (next.qBits && !equalBits(next.qBits, state.qBits));
     if (differs) {
       updates.set(node.id, next);

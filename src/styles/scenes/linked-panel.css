@@ -1,0 +1,204 @@
+.has-scene-panel {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+}
+.has-scene-panel > .inspector {
+  display: none;
+}
+.scene-panel {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  min-height: 420px;
+  max-height: calc(100dvh - 150px);
+  overflow: auto;
+  background: #fff;
+  border-left: 1px solid var(--border);
+  scrollbar-width: thin;
+}
+.scene-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.scene-panel-header h2 {
+  margin: 4px 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.scene-panel .motion-stage {
+  height: 300px;
+  min-height: 260px;
+  flex-shrink: 0;
+}
+.scene-panel[data-scene-type='elevator'] {
+  --elevator-stage-height: 420px;
+}
+.scene-panel[data-scene-type='elevator'] .motion-stage {
+  height: var(--elevator-stage-height);
+}
+.scene-panel .motion-toolbar {
+  flex-wrap: wrap;
+  margin: 0;
+  gap: 6px;
+}
+.scene-panel .motion-toolbar > div {
+  flex-wrap: wrap;
+}
+.scene-panel .camera-views .soft-btn {
+  padding: 5px 7px;
+  font-size: 11px;
+}
+.scene-panel .scene-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+}
+.scene-panel .scene-summary {
+  display: block;
+  margin: 2px 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.scene-link-help,
+.scene-panel-inspection p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.scene-linked-contact {
+  padding: 6px 8px;
+  margin: 0;
+  background: #eaf3ff;
+  border: 1px solid #9bbce4;
+  border-radius: 5px;
+  color: #204e83;
+  font-size: 12px;
+}
+.scene-panel-inspection > details {
+  border-top: 1px solid var(--border);
+  padding: 10px 0;
+}
+.scene-panel-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+  margin: 8px 0;
+}
+.scene-panel-tabs button {
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  font-size: 12px;
+  padding: 8px;
+}
+.scene-panel-tabs button[aria-selected='true'] {
+  border-bottom-color: #4987cb;
+  background: #eaf3ff;
+  color: #204e83;
+}
+.scene-panel-inspection summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.scene-contact-group h4 {
+  font-size: 11px;
+  margin: 12px 0 5px;
+}
+.scene-contact-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  margin-bottom: 3px;
+  font-size: 11px;
+  text-align: left;
+  background: #f5f7fa;
+  border: 1px solid #d6dfe8;
+}
+.scene-contact-row[aria-pressed='true'] {
+  border-color: #4786c5;
+  background: #e4f0ff;
+}
+.scene-contact-row span {
+  overflow-wrap: anywhere;
+}
+.scene-contact-row b {
+  white-space: nowrap;
+}
+.scene-panel .motion-sidebar {
+  max-height: none;
+  overflow: visible;
+}
+.scene-hotkey-source {
+  padding: 8px;
+}
+.scene-keypad-controls {
+  grid-column: 1 / -1;
+}
+.scene-panel[data-scene-type='elevator'] .motion-switches {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.momentary-source {
+  border-radius: 16px;
+  box-shadow: 0 2px 0 #c5d2e1;
+  touch-action: none;
+}
+.momentary-source[aria-pressed='true'] {
+  background: #d6e9ff;
+  border-color: #4786c5;
+  box-shadow: none;
+  transform: translateY(1px);
+}
+.circuit-node.scene-linked-node {
+  outline: 2px solid #4987cb;
+  outline-offset: 3px;
+}
+.pin.scene-linked-pin {
+  outline: 3px solid #1d5b9e;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.scene-linked-wire .wire-net-halo {
+  stroke: #4987cb;
+  stroke-width: 9px;
+  opacity: 0.3;
+}
+.main.scene-open[data-workspace-view='inspector'] .scene-panel {
+  display: none;
+}
+.main.scene-open[data-workspace-view='inspector'] .inspector {
+  display: flex;
+  width: auto;
+}
+@media (min-width: 1201px) and (min-height: 721px) {
+  .inspector:has([data-memory-view]) {
+    --inspector-width: 340px;
+  }
+}
+@media (max-width: 900px) {
+  .main.scene-open[data-workspace-view='canvas'] {
+    overflow: auto;
+  }
+  .main.scene-open[data-workspace-view='canvas'] .editor-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(320px, 50dvh) auto;
+    flex: 1 0 auto;
+  }
+  .scene-panel {
+    grid-column: 1;
+    grid-row: 5;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    max-height: 680px;
+  }
+}

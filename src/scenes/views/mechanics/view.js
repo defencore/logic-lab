@@ -4,12 +4,13 @@ import { fitCameraToBounds, updateSceneDepth } from '../../common/camera.js';
 import { COLORS } from './coordinates.js';
 import { MESSAGES } from './messages.js';
 import { createMotionModel } from './model.js';
+import { createScenePicking } from '../../common/picking.js';
 
 /**
  * Build a mechanical view of simulation outputs. Positions and angles are never
  * integrated here; the caller remains the only owner of motor and sensor state.
  */
-export function createMotionView(container, { onStatus, language = 'en' } = {}) {
+export function createMotionView(container, { onStatus, onPick, language = 'en' } = {}) {
   if (!container?.appendChild)
     throw new TypeError('A container element is required for the motion view.');
   const text = MESSAGES[language] || MESSAGES.en;
@@ -57,6 +58,7 @@ export function createMotionView(container, { onStatus, language = 'en' } = {}) 
       update() {},
       resize() {},
       setView() {},
+      select() {},
       resetCamera() {},
       dispose() {
         if (disposed) return;
@@ -243,9 +245,11 @@ export function createMotionView(container, { onStatus, language = 'en' } = {}) 
     },
     { language },
   );
+  const picking = createScenePicking({ canvas, camera, root: model.root, overlay: scene, onPick });
   function update(snapshot) {
     if (disposed) return;
     const message = model.update(snapshot);
+    picking.update();
     if (!contextLost) report(message);
   }
 
@@ -307,6 +311,7 @@ export function createMotionView(container, { onStatus, language = 'en' } = {}) 
     update,
     resize,
     setView,
+    select: picking.select,
     resetCamera() {
       setView('perspective');
     },
@@ -319,6 +324,7 @@ export function createMotionView(container, { onStatus, language = 'en' } = {}) 
       canvas.removeEventListener('webglcontextlost', lost);
       canvas.removeEventListener('webglcontextrestored', restored);
       controls.dispose();
+      picking.dispose();
       model.dispose();
       for (const resource of resources) resource.dispose();
       resources.clear();

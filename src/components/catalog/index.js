@@ -1,5 +1,6 @@
 import { GATES } from './categories/gates.js';
 import { IO } from './categories/io.js';
+import { KEYPAD } from './categories/keypad.js';
 import { AUDIO } from './categories/audio.js';
 import { COMBINATIONAL } from './categories/combinational.js';
 import { SEQUENTIAL } from './categories/sequential.js';
@@ -8,13 +9,19 @@ import { ARCHITECTURE } from './categories/architecture.js';
 import { PHYSICAL } from './categories/physical.js';
 import { MOTION } from './categories/motion.js';
 import { SCENES } from './categories/scenes.js';
+import { ELEVATOR } from './categories/elevator.js';
 import { AUTOMATION } from './categories/automation.js';
 import { ANNOTATION } from './categories/annotation.js';
 
 // Register each category once; its definitions supply the component library.
 const categories = [
   { id: 'gates', label: 'Logic gates', ua: 'Логічні елементи', definitions: GATES },
-  { id: 'io', label: 'Inputs & outputs', ua: 'Джерела та індикатори', definitions: IO },
+  {
+    id: 'io',
+    label: 'Inputs & outputs',
+    ua: 'Джерела та індикатори',
+    definitions: [...IO, ...KEYPAD],
+  },
   { id: 'audio', label: 'Sound', ua: 'Звук', definitions: AUDIO },
   {
     id: 'combinational',
@@ -37,7 +44,7 @@ const categories = [
   },
   { id: 'physical', label: 'TTL / CMOS', ua: 'TTL / CMOS', definitions: PHYSICAL },
   { id: 'motion', label: 'Motion & sensors', ua: 'Рух та датчики', definitions: MOTION },
-  { id: 'scenes', label: '3D scenes', ua: '3D-сцени', definitions: SCENES },
+  { id: 'scenes', label: '3D scenes', ua: '3D-сцени', definitions: [...SCENES, ...ELEVATOR] },
   { id: 'automation', label: 'Automation', ua: 'Автоматизація', definitions: AUTOMATION },
   { id: 'annotation', label: 'Annotations', ua: 'Анотації', definitions: ANNOTATION },
 ];
