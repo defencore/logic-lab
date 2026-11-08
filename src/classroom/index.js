@@ -1,3 +1,5 @@
+import { createKeyReference } from './key-reference.js';
+import { syncPlaybackControls } from './playback-controls.js';
 import '../styles/classroom.css';
 import { $, $$ } from '../shared/ui.js';
 import { createActionSession } from './action-session.js';
@@ -98,8 +100,25 @@ export function createClassroom(adapter) {
     refreshVisible,
     controls,
   });
+  const reference = createKeyReference({
+    adapter,
+    state,
+    session,
+    teacher,
+    L,
+    safe,
+    operations,
+    guardEditableSession,
+    updateDock,
+    persistDraft,
+  });
   const { bindTeacher } = createTeacherController({
-    adapter: { ...adapter, getProject: session.projectToSave, openReviewedWork },
+    adapter: {
+      ...adapter,
+      getProject: session.projectToSave,
+      openReviewedWork,
+      openKeyReference: reference.openKeyReference,
+    },
     state,
     teacher,
     L,
@@ -122,6 +141,7 @@ export function createClassroom(adapter) {
     dock.updateDock(force);
     if ($('#project-name')) $('#project-name').disabled = controls.isLocked();
     student.updateProgress();
+    syncPlaybackControls(state, adapter.getLanguage());
   }
   function persistDraft() {
     store.saveDraft({ ...state, sequence: session.sequenceToSave() });
@@ -224,15 +244,42 @@ export function createClassroom(adapter) {
       dock.mount();
       student.updateProgress();
     },
+    refreshTransport: () => syncPlaybackControls(state, adapter.getLanguage()),
+    shouldWarnBeforeUnload: () => teacher.hasUnsavedKeys(),
+    togglePlaybackRunning: () => {
+      if (state.player && !state.player.done) session.pausePlayback();
+      else
+        adapter.notify(
+          L(
+            'Завершіть перегляд, щоб повернутися до симуляції.',
+            'End preview to return to simulation.',
+          ),
+        );
+    },
+    addObservation: (text) => {
+      guardEditableSession();
+      const next = [state.notes.trim(), text].filter(Boolean).join('\n\n');
+      if (next.length > 20_000)
+        throw new Error(
+          L(
+            'Пояснення перевищує 20 000 символів. Скоротіть його перед додаванням спостереження.',
+            'The explanation exceeds 20,000 characters. Shorten it before adding the observation.',
+          ),
+        );
+      state.notes = next;
+      state.studentDirty = true;
+      persistDraft();
+      updateDock();
+    },
     recovery: store.recovery,
     acknowledgeRecovery: store.acknowledgeRecovery,
     open,
     tick: controls.tick,
     inputChanged: controls.inputChanged,
-    allowEdit: () => student.isInstalling() || controls.allowEdit(),
+    allowEdit: () => student.isInstalling() || reference.isInstalling() || controls.allowEdit(),
     allowInput: controls.allowInput,
     observeEdit: () => {
-      student.observeEdit();
+      if (!reference.isInstalling()) student.observeEdit();
       student.updateProgress();
     },
     isLocked: controls.isLocked,

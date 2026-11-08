@@ -52,10 +52,10 @@ export function createActionSession(
     state.dockOpen = true;
     changed(true);
   }
-  function startRecording() {
+  function startRecording({ probes } = {}) {
     if (state.reviewMode) throw new Error('Return to your circuit before recording.');
     if (state.recording) throw new Error('An action recording is already in progress.');
-    const sequence = createSequence(editable?.project || adapter.getProject());
+    const sequence = createSequence(editable?.project || adapter.getProject(), { probes });
     if (state.player) stopPlayback();
     adapter.resetForSequence();
     state.sequence = sequence;
@@ -145,7 +145,7 @@ export function createActionSession(
     adapter.refreshPlayback();
     changed();
   }
-  function reviewWork(project, sequence = null) {
+  function reviewWork(project, sequence = null, { label = '', kind = '' } = {}) {
     if (state.recording || state.player || state.preview)
       throw new Error('Finish the current action session first.');
     // Validate and initialize completely before taking over the editor.
@@ -161,8 +161,8 @@ export function createActionSession(
     };
     adapter.setRunning(false);
     state.dockOpen = true;
-    state.reviewMode = next ? 'replay' : 'circuit';
-    state.preview = next ? null : { name: reviewed.name };
+    state.reviewMode = kind || (next ? 'replay' : 'circuit');
+    state.preview = next ? null : { name: reviewed.name, label };
     state.player = next;
     if (next) {
       state.sequence = validateSequence(sequence);

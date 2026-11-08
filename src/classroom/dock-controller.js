@@ -1,4 +1,5 @@
 import { $ } from '../shared/ui.js';
+import { studentPlaybackActive } from './student-playback.js';
 
 export function createDockController({ adapter, state, session, L, views, safe, open, controls }) {
   let lastDockState = '';
@@ -14,8 +15,7 @@ export function createDockController({ adapter, state, session, L, views, safe, 
   function updateDock(force = false) {
     const root = $('#classroom-dock');
     if (!root) return;
-    const studentWorkflowActive =
-      state.mode === 'student' && !!state.assignment && !state.reviewMode;
+    const studentWorkflowActive = studentPlaybackActive(state);
     root.hidden =
       studentWorkflowActive ||
       (!state.dockOpen && !state.recording && !state.player && !state.preview);

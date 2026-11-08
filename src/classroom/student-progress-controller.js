@@ -1,6 +1,8 @@
 import { $, $$ } from '../shared/ui.js';
 import { sequenceIsStale, studentProgress, progressMessage } from './student-progress.js';
 import { studentWorkflow } from './student-view.js';
+import { updateStudentSteps } from './student-steps.js';
+import { createStudentPlayback } from './student-playback.js';
 
 export function createStudentProgressController({
   adapter,
@@ -18,6 +20,7 @@ export function createStudentProgressController({
   let lastSequence = editableSequence();
   let stale = sequenceIsStale(lastSequence, session.projectToSave());
   let lastMarkup = '';
+  const playback = createStudentPlayback({ state, adapter, session, controls, safe });
   function refreshStaleness() {
     stale = sequenceIsStale(editableSequence(), session.projectToSave());
   }
@@ -28,9 +31,6 @@ export function createStudentProgressController({
   }
   function record() {
     if (!state.attempt) return open('student');
-    state.studentBuildReady = true;
-    state.studentDirty = true;
-    persistDraft();
     controls.startRecording();
   }
   function showStudent(focusNotes = false) {
@@ -91,9 +91,13 @@ export function createStudentProgressController({
           if (details) details.open = expanded;
           lastMarkup = markup;
           bindProgress();
+          playback.bind(root);
         }
       }
     }
+    if (root && !root.hidden) playback.update(root);
+    const form = $('.student-panel');
+    if (form) updateStudentSteps(form, progress, adapter.getLanguage());
     const reason = progressMessage(progress, adapter.getLanguage());
     for (const id of ['student-next-message', 'student-export-reason'])
       if ($('#' + id)) $('#' + id).textContent = reason;

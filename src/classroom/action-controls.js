@@ -1,7 +1,8 @@
+import { createRecordingSetup } from './recording-setup.js';
 export function createActionControls({ adapter, state, session, L, guardIdle }) {
-  function startRecording() {
+  function beginRecording(probes) {
     guardIdle();
-    session.startRecording();
+    session.startRecording({ probes });
     adapter.closeModal();
     adapter.notify(
       L(
@@ -10,6 +11,14 @@ export function createActionControls({ adapter, state, session, L, guardIdle }) 
       ),
     );
   }
+  const startRecording = createRecordingSetup({
+    adapter,
+    state,
+    session,
+    L,
+    begin: beginRecording,
+    guardIdle,
+  });
   function stopRecording() {
     session.stopRecording();
   }

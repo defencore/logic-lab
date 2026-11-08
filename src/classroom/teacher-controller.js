@@ -150,6 +150,16 @@ export function createTeacherController({
         readTeacherForm,
       );
     $('#teacher-edit-circuit').onclick = () => adapter.closeModal();
+    if ($('#teacher-view-reference'))
+      $('#teacher-view-reference').onclick = protect(() => {
+        guardEditableSession();
+        return adapter.openKeyReference(state.teacherKey, { edit: false });
+      });
+    if ($('#teacher-edit-reference'))
+      $('#teacher-edit-reference').onclick = protect(() => {
+        guardEditableSession();
+        return adapter.openKeyReference(state.teacherKey, { edit: true });
+      });
     $('#teacher-record-sequence').onclick = () => $('#class-tab-sequence').click();
     $('#teacher-apply').onclick = protect(() => {
       guardEditableSession();
@@ -218,7 +228,8 @@ export function createTeacherController({
             serializeAssignmentKey(entry.key),
             `${cleanName(entry.key.title)}-${entry.key.id.slice(0, 8)}.teacher-key.json`,
           );
-          entry.downloaded = true;
+          teacher.markArchiveDownloaded(Number(button.dataset.archiveKey));
+          refreshVisible();
         })),
     );
     $$('[data-archive-tasks]').forEach(

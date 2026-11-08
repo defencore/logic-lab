@@ -39,12 +39,19 @@ export function focusContact(endpoint, root = document) {
 }
 
 /** Button keyboard activation enters the same validated transaction as pointer activation. */
-export function activateContactKey(event, activate) {
-  if (!['Enter', ' '].includes(event.key) || event.ctrlKey || event.metaKey || event.altKey)
+export function activateContactKey(event, activate, beforeActivate = () => {}) {
+  if (
+    event.isComposing ||
+    !['Enter', ' '].includes(event.key) ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.altKey
+  )
     return false;
   event.preventDefault();
   event.stopPropagation();
   if (event.repeat) return true;
+  beforeActivate();
   const pin = event.currentTarget;
   const rect = (pin.querySelector('i') || pin).getBoundingClientRect();
   activate({
@@ -60,9 +67,45 @@ export function activateContactKey(event, activate) {
   return true;
 }
 
-/** Dense pins cannot all have overlapping screen-size targets; focus brings them into readable view. */
-export function revealContact(pin, state, applyView) {
-  const viewport = document.querySelector('#viewport');
+/** Only keyboard navigation reveals contacts; pointer focus preserves the chosen canvas view. */
+export function createContactNavigation(state, applyView, root = document) {
+  let keyboard = false;
+  root.addEventListener(
+    'pointerdown',
+    () => {
+      keyboard = false;
+    },
+    { capture: true },
+  );
+  root.addEventListener(
+    'keydown',
+    (event) => {
+      if (!event.isComposing && !['Alt', 'Control', 'Meta'].includes(event.key)) keyboard = true;
+    },
+    { capture: true },
+  );
+  return {
+    bind(pin, activate) {
+      pin.addEventListener('pointerdown', (event) => {
+        keyboard = false;
+        activate(event);
+      });
+      pin.addEventListener('keydown', (event) =>
+        activateContactKey(event, activate, () => {
+          keyboard = true;
+          revealContact(pin, state, applyView, root);
+        }),
+      );
+      pin.addEventListener('focus', () => {
+        if (keyboard) revealContact(pin, state, applyView, root);
+      });
+    },
+  };
+}
+
+/** Dense contacts become readable when reached from the keyboard. */
+export function revealContact(pin, state, applyView, root = document) {
+  const viewport = root.querySelector('#viewport');
   const bounds = viewport.getBoundingClientRect();
   const center = () => {
     const rect = (pin.querySelector('i') || pin).getBoundingClientRect();

@@ -170,6 +170,31 @@ export function createTeacherWorkspace(state, { onSave = () => {}, onProgress = 
     }
     return { cancelled: state.reviewCancelled };
   }
+  function markReferenceCopyOpened(project, sequence) {
+    if (
+      !state.teacherKey ||
+      sameCircuitStructure(project, state.teacherKey.referenceProject) !== true ||
+      sequenceSignature(sequence) !== sequenceSignature(state.teacherKey.sequence)
+    )
+      return false;
+    state.teacherEditorBaseline = structuredClone(project);
+    state.teacherSequenceBaseline = sequenceSignature(sequence);
+    state.teacherUseSavedReference = null;
+    onSave();
+    return true;
+  }
+  function hasUnsavedKeys() {
+    return (
+      !!(state.teacherKey && keySignature(state.teacherKey) !== state.teacherSavedKeySignature) ||
+      (state.teacherArchives || []).some((entry) => entry.downloaded !== true)
+    );
+  }
+  function markArchiveDownloaded(index) {
+    if (!Number.isInteger(index) || index < 0 || !state.teacherArchives?.[index]) return false;
+    state.teacherArchives[index].downloaded = true;
+    onSave();
+    return true;
+  }
   function report() {
     return {
       kind: 'logic-lab-review',
@@ -197,6 +222,9 @@ export function createTeacherWorkspace(state, { onSave = () => {}, onProgress = 
     status: (project) => teacherStatus(state, project),
     preview: (variantId) =>
       state.teacherKey ? publicStarterPreview(state.teacherKey, variantId) : null,
+    markReferenceCopyOpened,
+    hasUnsavedKeys,
+    markArchiveDownloaded,
     markKeyDownloaded: () => {
       state.teacherSavedKeySignature = keySignature(state.teacherKey);
       onSave();

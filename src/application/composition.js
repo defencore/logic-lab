@@ -46,6 +46,7 @@ export function composeWorkbench(context) {
     selectionChanged: actions.selectionChanged,
     setWorkspaceView: actions.setWorkspaceView,
     primarySignal: (node) => services.monitor.primarySignal(node),
+    addObservation: (text) => services.classroom.addObservation(text),
   });
   services.monitor = createSignalMonitor(state, {
     t,

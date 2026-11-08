@@ -1,3 +1,4 @@
+import { availableProbes } from './probes.js';
 import { getDefinition } from '../components/catalog/index.js';
 import { validateProject } from '../circuits/project.js';
 import { createRuntime, simulate } from '../simulation/index.js';
@@ -54,15 +55,7 @@ function time(value, label) {
   return value;
 }
 export function defaultProbes(project) {
-  return project.nodes
-    .filter((node) => !['note', 'group'].includes(node.type))
-    .map((node) => {
-      const def = getDefinition(node.type);
-      const side = def.signals.outputs.length ? 'outputs' : 'inputs';
-      return def.signals[side][0] ? { node: node.id, port: def.signals[side][0].id, side } : null;
-    })
-    .filter(Boolean)
-    .slice(0, SEQUENCE_LIMITS.probes);
+  return availableProbes(project).slice(0, SEQUENCE_LIMITS.probes);
 }
 export function validateProbes(probes, project) {
   if (!Array.isArray(probes) || !probes.length || probes.length > SEQUENCE_LIMITS.probes)

@@ -25,7 +25,7 @@ export function createClassroomView({ state, language, project, example }) {
   }
   function dockMarkup() {
     if (state.reviewMode)
-      return `<div class="action-session-title"><strong>${L('Перегляд роботи студента · лише читання', 'Student work preview · read only')}</strong><span id="action-status" role="status"></span></div><div class="action-session-buttons">${button('classroom-open', L('Повернутися до перевірки', 'Return to review'))}${button('action-record', L('Запис недоступний під час перегляду', 'Recording unavailable during preview'), true)}${button('action-replay', L('Відтворити', 'Replay'), true)}${button('action-next', L('Наступна записана дія', 'Next recorded action'), !player || playbackRunning || busy)}${button('action-pause', playbackRunning ? L('Пауза сценарію', 'Pause replay') : L('Продовжити', 'Resume replay'), !player || player.done || busy)}${button('action-stop', L('Завершити перегляд і повернути свою схему', 'End preview and restore my circuit'))}<button id="action-hide" hidden disabled></button></div>`;
+      return `<div class="action-session-title"><strong>${state.reviewMode === 'reference' ? `${L('Еталон ключа', 'Key reference')}: ${esc(state.preview.label)} · ${L('лише читання', 'read only')}` : L('Перегляд роботи студента · лише читання', 'Student work preview · read only')}</strong><span id="action-status" role="status"></span></div><div class="action-session-buttons">${button('classroom-open', L('Повернутися до перевірки', 'Return to review'))}${button('action-record', L('Запис недоступний під час перегляду', 'Recording unavailable during preview'), true)}${button('action-replay', L('Відтворити', 'Replay'), true)}${button('action-next', L('Наступна записана дія', 'Next recorded action'), !player || playbackRunning || busy)}${button('action-pause', playbackRunning ? L('Пауза сценарію', 'Pause replay') : L('Продовжити', 'Resume replay'), !player || player.done || busy)}${button('action-stop', L('Завершити перегляд і повернути свою схему', 'End preview and restore my circuit'))}<button id="action-hide" hidden disabled></button></div>`;
     return `<div class="action-session-title"><button id="classroom-open" class="text-btn">${L('Сценарій дій', 'Action sequence')}</button><span id="action-status" role="status" aria-live="off"></span></div><div class="action-session-buttons">${button('action-record', recording ? L('Завершити запис', 'Finish recording') : L('Записати дії', 'Record actions'), !!player || !!state.preview || busy, recording)}${button('action-replay', L('Відтворити', 'Replay'), !sequence || recording || !!player || busy)}${button('action-next', L('Наступна записана дія', 'Next recorded action'), !sequence || recording || playbackRunning || busy)}${button('action-pause', playbackRunning ? L('Пауза сценарію', 'Pause replay') : L('Продовжити', 'Resume replay'), !player || player.done || busy)}${button('action-stop', L('Зупинити', 'Stop'), !player)}<button id="action-hide" class="soft-btn" aria-label="${L('Сховати панель сценарію', 'Hide action panel')}" title="${L('Сховати панель сценарію', 'Hide action panel')}" ${recording || player || busy ? 'disabled' : ''}>×</button></div>`;
   }
 
@@ -47,10 +47,7 @@ export function createClassroomView({ state, language, project, example }) {
   function observationTable() {
     if (!observations.length) return '';
     const nodes = new Map(sequence.initialProject.nodes.map((node) => [node.id, node]));
-    const probes = sequence.probes
-      .map((probe, index) => ({ ...probe, index }))
-      .filter((probe) => !sourceTypes.has(nodes.get(probe.node)?.type))
-      .slice(0, 8);
+    const probes = sequence.probes.map((probe, index) => ({ ...probe, index }));
     if (!probes.length) return '';
     return `<h4>${L('Результати після кожної дії', 'Results after each action')}</h4><div class="classroom-table-scroll"><table class="classroom-table"><thead><tr><th>${L('Дія', 'Action')}</th>${probes.map((probe) => `<th>${esc(nodes.get(probe.node)?.label || probe.node)} · ${esc(probe.port)}</th>`).join('')}</tr></thead><tbody>${observations
       .slice(0, 300)

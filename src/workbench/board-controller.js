@@ -7,10 +7,9 @@ import { getSceneEntries, getSceneSnapshot, sceneHealth } from '../scenes/data/s
 import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
 import { drawMini } from '../signals/waveforms.js';
 import {
-  activateContactKey,
   contactEndpoint,
+  createContactNavigation,
   focusContact,
-  revealContact,
   updateContactTargets,
 } from './contact-interaction.js';
 
@@ -18,6 +17,7 @@ export function createBoardController(
   state,
   { t, title, applyView, nodePointerDown, pinPointerDown, toggleSource, openScene, primarySignal },
 ) {
+  const contacts = createContactNavigation(state, applyView);
   function nodeBody(node) {
     const d = getDefinition(node.type);
     switch (node.type) {
@@ -84,9 +84,7 @@ export function createBoardController(
     $$('.circuit-node').forEach((el) => el.addEventListener('pointerdown', nodePointerDown));
     $$('.pin').forEach((el) => {
       el.style.setProperty('--contact-gap', `${el.dataset.contactGap}px`);
-      el.addEventListener('pointerdown', pinPointerDown);
-      el.addEventListener('keydown', (event) => activateContactKey(event, pinPointerDown));
-      el.addEventListener('focus', () => revealContact(el, state, applyView));
+      contacts.bind(el, pinPointerDown);
     });
     $$('[data-switch]').forEach((el) =>
       el.addEventListener('click', (e) => {

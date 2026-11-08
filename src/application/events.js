@@ -1,3 +1,4 @@
+import { protectUnsavedKeys } from './unload-guard.js';
 import { parseProject, saveProject } from '../circuits/project.js';
 import { $ } from '../shared/ui.js';
 import { panBy, ZOOM_IN_FACTOR, ZOOM_OUT_FACTOR } from '../circuits/viewport.js';
@@ -76,7 +77,7 @@ export function bindApplicationEvents(context) {
       e.preventDefault();
       actions.deleteSelection();
     }
-    if (e.key.toLowerCase() === 'r' && !e.repeat) actions.setRunning(!state.running);
+    if (e.key.toLowerCase() === 'r' && !e.repeat) actions.toggleRunning();
     if (e.key === 'Shift') {
       state.shiftHeld = !e.ctrlKey && !e.metaKey;
       actions.updateTool();
@@ -167,7 +168,8 @@ export function bindApplicationEvents(context) {
     actions.applyView();
     services.monitor.draw();
   });
-  window.addEventListener('beforeunload', () => {
+  window.addEventListener('beforeunload', (event) => {
+    protectUnsavedKeys(event, services.classroom);
     const editable = services.classroom?.projectToSave() || state.project;
     editable.viewport = { ...(services.classroom?.viewportToSave?.() || state.view) };
     saveProject(editable);

@@ -44,3 +44,21 @@
   color: var(--muted);
   font-size: 11px;
 }
+
+.reflection-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.reflection-history {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 10px;
+  background: #f5faf7;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font:
+    12px ui-monospace,
+    monospace;
+}

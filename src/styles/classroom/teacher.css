@@ -102,3 +102,37 @@
     height: 160px;
   }
 }
+.teacher-reference-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-block: 10px;
+}
+.teacher-reference-comparison > article {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #f6f9fb;
+}
+.teacher-reference-comparison h5 {
+  margin: 0 0 10px;
+  color: var(--deep);
+  font-size: var(--text-base);
+}
+.teacher-reference-comparison p {
+  overflow-wrap: anywhere;
+}
+.teacher-reference-match[data-matches='false'],
+.teacher-archive-status[data-unsaved='true'] {
+  color: #785315;
+  font-weight: 600;
+}
+.teacher-archive-status {
+  font-size: var(--text-xs);
+}
+@media (max-width: 650px) {
+  .teacher-reference-comparison {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -79,7 +79,8 @@ export function createSceneController(state, actions) {
     if ($('#scene-select'))
       $('#scene-select').onchange = (event) => showMotionView(event.target.value);
     $('#motion-run').onclick = () => {
-      setRunning(!state.running);
+      if (state.classroom?.isPlaying()) state.classroom.togglePlaybackRunning();
+      else setRunning(!state.running);
       updateMotionView();
     };
     $('#motion-reset').onclick = resetSimulation;

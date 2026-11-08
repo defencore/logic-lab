@@ -21,9 +21,17 @@ export function createSimulation(context) {
     $('#run').classList.toggle('running', next);
     $('#simulation-badge').innerHTML = `<i></i>${t(next ? 'live' : 'paused')}`;
     $('#simulation-badge').classList.toggle('live', next);
+    services.classroom?.refreshTransport?.();
     services.monitor.updateUi();
     services.classroom?.onSimulationStateChanged?.(next);
     services.inspector?.updateSignals();
+  }
+  function toggleRunning() {
+    if (services.classroom?.isPlaying()) {
+      services.classroom.togglePlaybackRunning();
+      return;
+    }
+    setRunning(!state.running);
   }
   function advance(dt) {
     const pending = services.simulationRunner.pendingSeconds();
@@ -59,5 +67,5 @@ export function createSimulation(context) {
     state.lastFrame = now;
     requestAnimationFrame(tick);
   }
-  return { newRuntime, setRunning, advance, drainSimulation, tick };
+  return { newRuntime, setRunning, toggleRunning, advance, drainSimulation, tick };
 }

@@ -79,3 +79,68 @@ test('simulation failure stops both recordings and reports the error after disca
     ['notify', 'Invalid simulation'],
   ]);
 });
+
+test('ordinary run/pause toggles the simulation and reports its state, without invoking the replay transport', (t) => {
+  withDocument(t);
+  const app = context();
+  app.state.running = false;
+  app.services.classroom = {
+    isPlaying: () => false,
+    togglePlaybackRunning: () => app.events.push('toggle replay'),
+    onSimulationStateChanged: (running) => app.events.push(['running', running]),
+  };
+  const simulation = createSimulation(app);
+  simulation.toggleRunning();
+  assert.equal(app.state.running, true);
+  simulation.toggleRunning();
+  assert.equal(app.state.running, false);
+  assert.deepEqual(app.events, [['running', true], 'discard', ['running', false]]);
+});
+
+test('run/pause routes to an active replay while direct live simulation starts remain blocked', (t) => {
+  const elements = withDocument(t);
+  const app = context();
+  app.state.running = false;
+  let replayRunning = true;
+  app.services.classroom = {
+    isPlaying: () => true,
+    togglePlaybackRunning: () => {
+      replayRunning = !replayRunning;
+      app.events.push(['replay', replayRunning]);
+    },
+    onSimulationStateChanged: () => app.events.push('simulation changed'),
+  };
+  const simulation = createSimulation(app);
+  simulation.toggleRunning();
+  assert.equal(replayRunning, false);
+  simulation.toggleRunning();
+  assert.equal(replayRunning, true);
+  simulation.setRunning(true);
+  assert.equal(app.state.running, false);
+  assert.deepEqual(app.events, [
+    ['replay', false],
+    ['replay', true],
+  ]);
+  assert.equal(elements.has('#run'), false);
+});
+
+test('animation frames advance an active replay without also advancing live simulation', (t) => {
+  withDocument(t);
+  const previous = globalThis.requestAnimationFrame;
+  globalThis.requestAnimationFrame = () => {};
+  t.after(() => {
+    if (previous) globalThis.requestAnimationFrame = previous;
+    else delete globalThis.requestAnimationFrame;
+  });
+  const app = context();
+  app.state.lastFrame = 1000;
+  app.services.classroom = {
+    isPlaying: () => true,
+    tick: (elapsed) => app.events.push(['replay frame', elapsed]),
+  };
+  app.actions.advance = () => app.events.push('live frame');
+  app.actions.updateSignals = () => app.events.push('live signals');
+  createSimulation(app).tick(1010);
+  assert.deepEqual(app.events, ['discard', ['replay frame', 0.01]]);
+  assert.equal(app.state.lastFrame, 1010);
+});

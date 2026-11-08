@@ -40,7 +40,7 @@ export function createShellBindings(context) {
       actions.setRunning(state.running);
     };
     $('#diagnostics').onclick = services.learning.openDiagnostics;
-    $('#run').onclick = () => actions.setRunning(!state.running);
+    $('#run').onclick = actions.toggleRunning;
     $('#step').onclick = () => {
       if (services.classroom?.isPlaying()) return;
       if (state.running) actions.setRunning(false);
