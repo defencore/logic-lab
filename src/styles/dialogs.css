@@ -1,0 +1,145 @@
+/* Dialog surfaces, notifications and the introductory guide. */
+
+#toast {
+  position: fixed;
+  bottom: 45px;
+  left: 50%;
+  transform: translate(-50%, 15px);
+  z-index: 100;
+  background: #243d2df5;
+  color: #f8fafc;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+  max-width: 80vw;
+  overflow-wrap: anywhere;
+  box-shadow: 0 6px 25px #1d392326;
+}
+
+#toast.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: #10213199;
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  width: 530px;
+  max-width: 100%;
+  padding: 35px;
+  box-shadow: 0 15px 80px #24331c30;
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.modal.wide {
+  width: 780px;
+  padding: 40px;
+}
+
+.modal-close {
+  position: sticky;
+  top: 0;
+  float: right;
+  z-index: 6;
+  margin: 0 0 0 12px;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  box-shadow: 0 2px 8px #182a3a12;
+}
+
+.modal > h2 {
+  font-size: 26px;
+  letter-spacing: -0.5px;
+  color: var(--text-color);
+  font-weight: 650;
+  line-height: 1.25;
+  padding-right: 10px;
+  margin: 10px 0 12px;
+}
+
+.modal > p {
+  font-size: var(--text-base);
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0 0 22px;
+}
+
+.modal-icon {
+  color: var(--muted);
+  margin-bottom: 15px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.guide-rows {
+  margin: 22px 0;
+}
+
+.guide-row {
+  display: flex;
+  gap: 17px;
+  margin-bottom: 21px;
+}
+
+.guide-row > span {
+  height: 36px;
+  width: 36px;
+  min-width: 36px;
+  border: 1px solid var(--border);
+  background: #f5f8ee;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.guide-row h3 {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 550;
+  margin: 1px 0 6px;
+}
+
+.guide-row p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.diagnostic-messages p {
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  background: #fcf9f1;
+  border-radius: 5px;
+  color: var(--muted);
+}

@@ -7,11 +7,3 @@ export function frameSimulationDelta(now, previous, rate) {
   const milliseconds = previous === null ? 16 : Math.max(0, now - previous);
   return (Math.min(50, milliseconds) / 1000) * rate;
 }
-
-// A narrow scope window needs physics steps fine enough to resolve its samples.
-export function simulationStepCount(duration, sampleInterval) {
-  if (!Number.isFinite(duration) || duration < 0) throw new Error('Invalid simulation duration.');
-  if (!Number.isFinite(sampleInterval) || sampleInterval <= 0)
-    throw new Error('Invalid sample interval.');
-  return Math.ceil(duration / Math.min(0.0005, sampleInterval));
-}

@@ -70,6 +70,88 @@ test('all seven gate truth tables are correct', () => {
     );
 });
 
+test('live edits update source values, reused node IDs, wire endpoints and fan-out without stale connectivity', () => {
+  const project = circuit(
+    [source('a', 0), source('b', 1), node('gate', 'not')],
+    [wire('a', 'out', 'gate', 'a')],
+  );
+  const runtime = evaluate(project);
+  assert.equal(output(runtime, 'gate'), 1);
+  project.nodes[0].params.value = 1;
+  simulate(project, runtime, 0);
+  assert.equal(output(runtime, 'gate'), 0);
+  project.nodes[0] = source('a', 0);
+  simulate(project, runtime, 0);
+  assert.equal(output(runtime, 'gate'), 1);
+  project.wires[0].from.node = 'b';
+  simulate(project, runtime, 0);
+  assert.equal(output(runtime, 'gate'), 0);
+  project.wires.push(wire('a', 'out', 'gate', 'a'));
+  simulate(project, runtime, 0);
+  assert.equal(output(runtime, 'gate'), 'X');
+  project.wires.pop();
+  simulate(project, runtime, 0);
+  assert.equal(output(runtime, 'gate'), 0);
+});
+
+test('editing a detached old wire cannot alter the current circuit after a same-endpoint replacement', () => {
+  const project = circuit(
+    [source('a', 0), source('b', 1), node('gate', 'not')],
+    [wire('a', 'out', 'gate', 'a')],
+  );
+  const runtime = evaluate(project);
+  const old = project.wires[0];
+  project.wires = structuredClone(project.wires);
+  simulate(project, runtime, 0);
+  old.from.node = 'b';
+  simulate(project, runtime, 0);
+  assert.equal(output(runtime, 'gate'), 1);
+  assert.equal(runtime.inputs.gate.a, 0);
+});
+
+test('changing a component type under a reused ID initializes its own state and drops old output contacts', () => {
+  const project = circuit(
+    [source('clock', 0), node('device', 'not')],
+    [wire('clock', 'out', 'device', 'a')],
+  );
+  const runtime = evaluate(project);
+  assert.equal(output(runtime, 'device'), 1);
+  project.nodes[1] = node('device', 'counter', { initial: 7 });
+  project.wires[0].to.port = 'clk';
+  simulate(project, runtime, 0);
+  assert.equal(output(runtime, 'device'), 7);
+  assert.equal(runtime.outputs.device.out, undefined);
+  assert.equal(runtime.outputs.device.out0, 1);
+  project.nodes[0].params.value = 1;
+  simulate(project, runtime, 0);
+  assert.equal(output(runtime, 'device'), 8);
+});
+
+test('reactivating sequential components does not capture clock or trigger edges ignored while disabled', () => {
+  for (const type of ['d_ff', 'counter', 'shift_register', 'monostable']) {
+    const sequential = node('memory', type);
+    const project = circuit(
+      [source('data', 1), source('clock', 0), sequential],
+      [
+        wire('clock', 'out', 'memory', type === 'monostable' ? 'trigger' : 'clk'),
+        ...(['d_ff', 'shift_register'].includes(type) ? [wire('data', 'out', 'memory', 'd')] : []),
+      ],
+    );
+    const runtime = evaluate(project);
+    sequential.enabled = false;
+    project.nodes.find((node) => node.id === 'clock').params.value = 1;
+    simulate(project, runtime, 0);
+    sequential.enabled = true;
+    simulate(project, runtime, 0);
+    assert.equal(output(runtime, 'memory', type === 'd_ff' ? 'q' : 'out'), 0, type);
+    project.nodes.find((node) => node.id === 'clock').params.value = 0;
+    simulate(project, runtime, 0);
+    project.nodes.find((node) => node.id === 'clock').params.value = 1;
+    simulate(project, runtime, 0);
+    assert.equal(output(runtime, 'memory', type === 'd_ff' ? 'q' : 'out'), 1, type);
+  }
+});
+
 test('controlling inputs resolve gates while floating inputs remain visible', () => {
   const project = circuit(
     [source('zero', 0), source('one', 1), node('a', 'and'), node('o', 'or'), node('x', 'xor')],

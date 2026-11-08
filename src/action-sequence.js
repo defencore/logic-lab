@@ -2,6 +2,10 @@ import { getDefinition } from './catalog.js';
 import { validateProject } from './project.js';
 import { createRuntime, simulate } from './simulator.js';
 import { SCENARIO_TYPES } from './scenarios.js';
+import { SOURCE_PARAMETERS } from './simulation/input-sources.js';
+import { nextSimulationInterval } from './simulation/timing.js';
+export { SOURCE_PARAMETERS } from './simulation/input-sources.js';
+export { nextSimulationInterval, simulationResolution } from './simulation/timing.js';
 
 export const SEQUENCE_LIMITS = Object.freeze({
   actions: 2000,
@@ -10,17 +14,7 @@ export const SEQUENCE_LIMITS = Object.freeze({
   nodes: 200,
   bytes: 10_000_000,
 });
-export const SOURCE_PARAMETERS = Object.freeze({
-  switch: { value: [0, 1, true] },
-  bus_input: { value: [0, 255, true] },
-  clock: { frequency: [0, 1000], duty: [0, 1] },
-  pwm: { frequency: [0, 1000], duty: [0, 1] },
-  am: { frequency: [0, 1000], carrier: [0, 1000], depth: [0, 1], amplitude: [0, 1000] },
-  fm: { frequency: [0, 1000], carrier: [0, 1000], depth: [0, 1000], amplitude: [0, 1000] },
-});
 const EPSILON = Number.EPSILON * 4;
-const MAX_STEP = 0.0005;
-const MIN_REGULAR_STEP = 0.00005;
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 const fail = (message) => {
   throw new Error(message);
@@ -202,47 +196,6 @@ export function applySequenceAction(project, runtime, action) {
   project.nodes.find((node) => node.id === checked.node).params[checked.key] = checked.value;
   simulate(project, runtime, 0);
   return runtime;
-}
-function periodicSources(project, runtime) {
-  return project.nodes
-    .filter((node) => node.enabled !== false && ['clock', 'pwm'].includes(node.type))
-    .map((node) => {
-      const params = { ...getDefinition(node.type).defaults, ...node.params };
-      const frequency = Math.max(0, Number(params.frequency) || 0);
-      const controlled = node.type === 'pwm' && runtime?.signals.inputs[node.id]?.control;
-      const duty = Math.max(
-        0,
-        Math.min(1, typeof controlled === 'number' ? controlled : Number(params.duty)),
-      );
-      return { type: node.type, frequency, duty };
-    })
-    .filter((source) => source.frequency > 0 && source.duty > 0 && source.duty < 1);
-}
-// Regular physics sampling is bounded; explicit periodic checkpoints below also visit
-// phases narrower than this floor instead of demanding millions of uniform microsteps.
-export function simulationResolution(project, runtime) {
-  let interval = MAX_STEP;
-  for (const { frequency, duty } of periodicSources(project, runtime))
-    interval = Math.min(interval, Math.min(duty, 1 - duty) / frequency / 2);
-  return Math.max(MIN_REGULAR_STEP, interval);
-}
-export function nextSimulationInterval(project, runtime, remaining) {
-  if (!Number.isFinite(remaining) || remaining < 0) fail('Simulation interval is invalid.');
-  let interval = Math.min(remaining, simulationResolution(project, runtime));
-  const now = runtime.time;
-  for (const { type, frequency, duty } of periodicSources(project, runtime)) {
-    const cycle = Math.floor(now * frequency);
-    // One point strictly inside each high and low phase avoids numerical edge
-    // ambiguity while ensuring that even a very narrow phase cannot be skipped.
-    const phases = type === 'clock' ? [(1 - duty) / 2, 1 - duty / 2] : [duty / 2, (1 + duty) / 2];
-    for (const phase of phases) {
-      let checkpoint = (cycle + phase) / frequency;
-      if (checkpoint <= now + EPSILON) checkpoint = (cycle + 1 + phase) / frequency;
-      const distance = checkpoint - now;
-      if (distance > 0 && distance < interval) interval = distance;
-    }
-  }
-  return interval;
 }
 export function createPlayback(source, { project: candidate } = {}) {
   const sequence = validateSequence(source);

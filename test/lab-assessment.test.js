@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getDefinition } from '../src/catalog.js';
+import ramExample from '../examples/ram-addressing/circuit.json' with { type: 'json' };
 import { createSequence, appendAction, finishSequence } from '../src/action-sequence.js';
 import {
   createAssignment,
   issueAssignment,
+  assignmentForVariant,
   validateAssignmentKey,
   validateAssignment,
   parseAssignmentKey,
@@ -17,6 +19,7 @@ import {
   createSubmission,
   gradeSubmission,
   compareSubmissions,
+  compareSubmissionsAsync,
   graphFingerprint,
   parseSubmission,
   serializeSubmission,
@@ -138,6 +141,15 @@ test('student variants change byte input values reproducibly while keeping teach
   );
   assert.equal(a.referenceProject, undefined);
 });
+
+test('an imported teacher key recreates each issued public assignment without issuing another variant', () => {
+  const { key, assignment } = fixture();
+  const restored = parseAssignmentKey(serializeAssignmentKey(key));
+  assert.deepEqual(assignmentForVariant(restored, assignment.id), assignment);
+  assert.equal(restored.issued.length, 1);
+  assert.throws(() => assignmentForVariant(restored, 'unissued'), /not issued/);
+  assert.equal(assignmentForVariant(restored, assignment.id).referenceProject, undefined);
+});
 test('construction journal ignores layout, naming, annotation and live source changes but records circuit changes', () => {
   const { assignment, project } = fixture();
   const attempt = createAttempt(assignment, student),
@@ -180,6 +192,12 @@ test('tampering results still fails even when a student recalculates the unkeyed
   assert.equal(result.integrity, true, 'digest is not an authenticity signature');
   assert.equal(result.observationsMatch, false);
   assert.equal(result.passed, false);
+  assert.equal(
+    result.functionalPassed,
+    true,
+    'reference circuit checks remain distinct from file evidence',
+  );
+  assert.equal(result.reviewRequired, true);
 });
 test('hidden teacher replay catches a wrong intermediate state although final output and honest recorded result match', async () => {
   const { project, sequence, key, assignment } = fixture();
@@ -234,6 +252,17 @@ test('grading rejects unissued or modified variants and submissions must be reco
   assert.throws(
     () => validateAssignmentKey({ ...key, issued: [...key.issued, ...key.issued] }),
     /Duplicate/,
+  );
+  await assert.rejects(
+    () =>
+      createSubmission({
+        assignment,
+        student: { ...student, id: 'another-student' },
+        attempt: createAttempt(assignment, student),
+        project,
+        sequence,
+      }),
+    /different student/,
   );
 });
 function renamed(project) {
@@ -312,6 +341,106 @@ test('shared empty starters alone are not evidence of copying', async () => {
   assert.throws(() => compareSubmissions(Array(41).fill(a)), /40/);
 });
 
+test('asynchronous comparison matches the synchronous report, yields to the UI and supports cancellation', async () => {
+  const { submission, key } = await submissionFixture();
+  const files = [submission, structuredClone(submission)];
+  let yielded = false;
+  setTimeout(() => {
+    yielded = true;
+  }, 0);
+  const report = await compareSubmissionsAsync(files, { assignmentKey: key });
+  assert.equal(yielded, true);
+  assert.deepEqual(report, compareSubmissions(files, { assignmentKey: key }));
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), 0);
+  await assert.rejects(
+    () => compareSubmissionsAsync(files, { assignmentKey: key, signal: controller.signal }),
+    { name: 'AbortError' },
+  );
+});
+
+test('cancelling a running teacher check aborts its bounded replay instead of returning a stale grade', async () => {
+  const project = {
+    version: 1,
+    name: 'Timed check',
+    nodes: [node('clock', 'clock', { frequency: 1000, duty: 0.2 }), node('counter', 'counter')],
+    wires: [wire('tick', 'clock', 'out', 'counter', 'clk')],
+  };
+  const sequence = createSequence(project, { probes: [{ node: 'counter', port: 'out' }] });
+  appendAction(sequence, { at: 0, node: 'clock', key: 'frequency', value: 1000 });
+  finishSequence(sequence, 0.1);
+  const key = createAssignment({ title: 'Timed', referenceProject: project, sequence });
+  const assignment = issueAssignment(key, { studentId: student.id, seed: 'timed' });
+  const submission = await createSubmission({
+    assignment,
+    student,
+    attempt: createAttempt(assignment, student),
+    project,
+    sequence,
+  });
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), 0);
+  await assert.rejects(() => gradeSubmission(submission, key, { signal: controller.signal }), {
+    name: 'AbortError',
+  });
+});
+
+test('action comparison distinguishes serial data from a clock even when both sources are switches', async () => {
+  const { submission, project, key, sequence } = await submissionFixture();
+  const who = { name: 'Learner Two', id: 's02' };
+  const assignment = issueAssignment(key, { studentId: who.id, seed: 'second' });
+  const swapped = structuredClone(sequence);
+  swapped.actions = swapped.actions.map((action) => ({
+    ...action,
+    node: action.node === 'data' ? 'clk' : action.node === 'clk' ? 'data' : action.node,
+  }));
+  const second = await createSubmission({
+    assignment,
+    student: who,
+    attempt: createAttempt(assignment, who),
+    project,
+    sequence: swapped,
+  });
+  assert.equal(compareSubmissions([submission, second])[0].actionsExact, false);
+});
+
+test('near-match scores exclude the same starter components even after all component IDs are renamed', async () => {
+  const { submission, project, key, sequence } = await submissionFixture();
+  const bypass = structuredClone(project);
+  bypass.wires.find((wire) => wire.id === 'q').from = { node: 'data', port: 'out' };
+  const make = async (circuit, seq, index) => {
+    const who = { name: 'Learner ' + index, id: 's' + index };
+    const assignment = issueAssignment(key, { studentId: who.id, seed: 'score' + index });
+    return createSubmission({
+      assignment,
+      student: who,
+      attempt: createAttempt(assignment, who),
+      project: circuit,
+      sequence: seq,
+    });
+  };
+  const ownSequence = { ...sequence, initialProject: bypass };
+  const second = await make(bypass, ownSequence, 2);
+  const changed = renamed(bypass);
+  const third = await make(
+    changed.project,
+    {
+      ...sequence,
+      initialProject: changed.project,
+      probes: sequence.probes.map((probe) => ({ ...probe, node: changed.ids.get(probe.node) })),
+      actions: sequence.actions.map((action) => ({
+        ...action,
+        node: changed.ids.get(action.node),
+      })),
+    },
+    3,
+  );
+  const a = compareSubmissions([submission, second])[0];
+  const b = compareSubmissions([submission, third])[0];
+  assert.equal(a.topologyExact, false);
+  assert.equal(a.topologySimilarity, b.topologySimilarity);
+});
+
 test('attempt drafts resume only with matching task and a well-formed construction journal', () => {
   const { assignment, project, key } = fixture();
   const attempt = createAttempt(assignment, student);
@@ -374,6 +503,25 @@ test('switch-only variants alter serial data while preserving reset and clock so
   );
 });
 
+test('memory variants personalize address and data without inverting clock, chip-select, write or read controls', () => {
+  const sequence = createSequence(ramExample, { probes: [{ node: 'memory', port: 'out' }] });
+  const key = createAssignment({
+    title: 'Addressed memory',
+    referenceProject: ramExample,
+    sequence,
+  });
+  const assignment = issueAssignment(key, { seed: 'memory-controls' });
+  assert.deepEqual(
+    assignment.variant.sourceValues.map((source) => source.node),
+    ['address', 'data'],
+  );
+  for (const id of ['clock', 'write', 'chip', 'read'])
+    assert.deepEqual(
+      assignment.starterProject.nodes.find((node) => node.id === id).params,
+      key.referenceProject.nodes.find((node) => node.id === id).params,
+    );
+});
+
 test('canonical tiny solutions with coincident outputs alone request review without a copying allegation', async () => {
   const { key, submission } = await submissionFixture();
   const second = structuredClone(submission);
@@ -417,6 +565,18 @@ test('refined graph hashes are only a filter; exact port graph matching distingu
     graphFingerprint(project),
     graphFingerprint(second),
     'regular graphs can share refinement colors',
+  );
+  const changedAssignment = issueAssignment(key, { studentId: student.id, seed: 'changed-graph' });
+  await assert.rejects(
+    () =>
+      createSubmission({
+        assignment: changedAssignment,
+        student,
+        attempt: createAttempt(changedAssignment, student),
+        project: second,
+        sequence,
+      }),
+    /changed/,
   );
   const make = async (p, i) => {
     const who = { name: `Person ${i}`, id: `s${i}` },

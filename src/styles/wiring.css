@@ -1,0 +1,225 @@
+/* Wire editing handles, reconnection and continuity inspection. */
+
+.wire-edit-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.wire-handle {
+  cursor: move;
+  pointer-events: all;
+  touch-action: none;
+  outline: none;
+}
+
+.wire-handle-hit {
+  fill: transparent;
+  stroke: none;
+}
+
+.wire-handle-marker {
+  fill: #eef4ff;
+  stroke: #2864a4;
+  stroke-width: 1.6;
+  pointer-events: none;
+}
+
+.wire-handle[data-wire-handle='endpoint'] .wire-handle-marker {
+  fill: #2864a4;
+  stroke: #fff;
+}
+
+.wire-handle.active .wire-handle-marker,
+.wire-handle:focus-visible .wire-handle-marker {
+  fill: #174b85;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.wire-edit-preview,
+.wire-edit-plan {
+  fill: none;
+  stroke: #2864a4;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.wire-edit-plan {
+  stroke-dasharray: 4 4;
+  opacity: 0.65;
+}
+
+.wire-net-halo,
+.wire-net-trace {
+  display: none;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.wire-group.net-traced .wire-net-halo {
+  display: block;
+  stroke: #fff;
+  stroke-width: 7;
+}
+
+.wire-group.net-traced .wire-net-trace {
+  display: block;
+  stroke: #8251ad;
+  stroke-width: 3;
+}
+
+.net-tracing .wire-group:not(.net-traced) .wire-line {
+  opacity: 0.2;
+}
+
+.circuit-node.net-connected {
+  border-color: #9462b8;
+  box-shadow: 0 0 0 2px #9462b82b;
+}
+
+.net-connected .node-header {
+  background: #eee8f5;
+}
+
+.pin.net-contact i {
+  border-color: #8251ad;
+  box-shadow: 0 0 0 4px #9462b840;
+}
+
+.viewport[data-tool='trace'],
+.viewport[data-tool='trace'] .wire-hit,
+.viewport[data-wire-action='add'],
+.viewport[data-wire-action='reconnect'] {
+  cursor: crosshair;
+}
+
+.wire-context {
+  position: absolute;
+  z-index: 9;
+  bottom: 12px;
+  left: 12px;
+  right: calc(var(--inspector-width) + 12px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  width: max-content;
+  max-width: calc(100% - var(--inspector-width) - 24px);
+  max-height: 35dvh;
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fffffff5;
+  box-shadow: 0 3px 12px #182a3a17;
+}
+
+.wire-context:empty {
+  display: none;
+}
+
+.editor-workspace:has(.wire-context:not(:empty)) .canvas-bottom {
+  display: none;
+}
+
+.wire-context .soft-btn {
+  padding: 5px 8px;
+}
+
+.wire-context [aria-pressed='true'] {
+  border-color: #84a992;
+  background: #e5f0e9;
+}
+
+.wire-action-hint {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.net-inspector {
+  padding: 12px 16px;
+  border-bottom: 1px solid #d9cce5;
+  background: #faf7fc;
+}
+
+.net-inspector-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.net-inspector h3 {
+  margin: 0;
+  color: #674286;
+  font-size: var(--text-sm);
+}
+
+.net-inspector p {
+  margin: 2px 0 8px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.net-contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.net-contact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid #dfd5e8;
+  border-radius: 5px;
+  background: #fff;
+  text-align: left;
+  font-size: var(--text-xs);
+}
+
+.net-contact-row:hover {
+  border-color: #9462b8;
+  background: #f2edf8;
+}
+
+.net-contact-row span {
+  flex: 1;
+  min-width: 0;
+}
+
+.net-contact-row code {
+  flex-shrink: 0;
+  color: #674286;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.wire-inspector-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.wire-route-actions p {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+}

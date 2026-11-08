@@ -23,9 +23,11 @@ npm test
 npm run build
 ```
 
-The application is written as JavaScript modules. The build bundles Three.js and all application code into local static assets; there are no runtime CDN requests or application servers. The Node preview server serves the same `dist/` layout as GitHub Pages and watches source imports. Open the preview URL over HTTP rather than opening `index.html` as a local file.
+The application is written as JavaScript modules. The build bundles Three.js and all application code into local static assets; there are no runtime CDN requests or application servers. The Node preview server watches source imports and writes its own `.cache/preview-<port>/` directory (for example, `.cache/preview-4173/`). `npm run build` writes the production distribution to `dist/`. Both outputs use the same static layout, but previews, tests, and release builds do not replace each other’s files. Open the preview URL over HTTP rather than opening `index.html` as a local file.
 
 ## Build circuits
+
+A new browser starts with the **Half adder** experiment, its two input switches, and visible sum/carry outputs. Open **Examples** to explore another laboratory, or choose **New empty circuit** there to begin without a template. A valid saved local circuit takes precedence over this first-run example.
 
 - Search or filter the component library and add a component to the canvas.
 - Drag components to reposition them. The grid helps align the circuit.
@@ -106,11 +108,13 @@ Individual variants bind work to the issued student identifier and vary supporte
 3. Record an input sequence that tests your completed circuit, replay it, and explain why the observed result follows from the logic. If you change the circuit after recording, record the final version again. Include meaningful intermediate states rather than only the final output.
 4. Use **Export work for instructor** to save a `.submission.json` file. It includes the issued assignment, student details, circuit, sequence, recomputed observations, explanation, and construction journal. Send that file to the instructor through the course's usual submission channel.
 
-Browser storage restores the local classroom draft, student context, and completed action sequence after a reload when storage is available. It does not preserve an instantaneous RAM/register runtime or an in-progress simulation: replay the saved sequence to reconstruct the experiment. Download important work and the instructor key as portable backups; clearing site data or changing the browser profile can remove local drafts.
+Browser storage restores the local classroom draft, student context, completed action sequence, and assignment form fields after a reload when storage is available. Instructor title/instructions, starter choice, and observed-signal choices also remain available when switching tabs. Importing an updated instructor key restores its issued student files for download and clears results from a previous key. It does not preserve an instantaneous RAM/register runtime or an in-progress simulation: replay the saved sequence to reconstruct the experiment. Download important work and the instructor key as portable backups; clearing site data or changing the browser profile can remove local drafts.
 
 ### Review a batch of work
 
 In **Instructor** mode, open the matching updated instructor key and load up to **40 `.submission.json` files** at once. Each student's circuit is replayed with its submitted actions and with the instructor's reference checks. The review compares initial, intermediate, and final observed values instead of trusting values written into the file. It also checks the issued variant and assigned identifier. Save the batch outcome as `.review.json`.
+
+Choose **Cancel checking** to stop a long batch. Work already checked remains visible and can still be exported, while unfinished similarity comparison is identified explicitly. A cancelled `.review.json` has `complete: false` and `comparisonComplete: false`; an unfinished comparison must not be interpreted as finding no matches. Keyboard navigation and closing the dialog remain available while a batch runs.
 
 Functional correctness and work evidence are different review questions. A circuit can satisfy the reference checks while its construction journal, recorded experiment, or explanation still needs discussion. Look at both, and ensure that the reference checks actually exercise the intended behavior. Replaying a sequence and obtaining the expected final byte alone does not establish that the student understands the design.
 
@@ -184,9 +188,9 @@ RAM, ROM, and register-file sizes are intentionally bounded for interactive exam
 
 ## Architecture
 
-- `index.html` and `style.css`: static editor shell and presentation.
+- `index.html`, `style.css`, and `src/styles/`: the HTML entry and ordered presentation modules; `style.css` defines the stylesheet import order.
 - `src/catalog.js`: component definitions, pins, defaults, and bilingual descriptions.
-- `src/simulator.js`: browser-independent signal evaluation and sequential state.
+- `src/simulator.js` and `src/simulation/`: browser-independent simulation orchestration, contact mapping, signal resolution, component models, sequential advancement, and shared periodic-source timing.
 - `src/project.js`: validated project import/export and local persistence.
 - `examples/index.js` and `examples/<id>/`: laboratory registry, canonical JSON circuits, bilingual lessons and lab sheets (the automation, dispatch, and focused memory/addressing sheets include both languages).
 - `src/guides.js`: bilingual component manuals, pin descriptions, experiments, and related examples.
@@ -197,17 +201,18 @@ RAM, ROM, and register-file sizes are intentionally bounded for interactive exam
 - `src/ui-utils.js`: shared escaping, color validation, and signal formatting.
 - `src/learning-ui.js`: component guide and example catalog rendering.
 - `src/waveforms.js`: sampled signal plotting with gaps for unknown values.
-- `src/simulation-time.js`: playback rates and sample-aware physics stepping.
+- `src/simulation-time.js`: supported playback rates, monitor windows, and bounded animation-frame time.
 - `src/recording.js`: bounded waveform sessions and timestamped CSV export.
 - `src/action-sequence.js`: validated source-action recording and deterministic circuit replay.
-- `src/lab-assessment.js`: issued assignments, student submissions, reference replay, and similarity evidence.
-- `src/classroom-ui.js`: student/instructor workspaces, action controls, and batch review.
+- `src/lab-assessment.js` and `src/assessment/`: the classroom domain API, assignment/variant schemas, canonical data, bounded cancellable replay, submission grading, and topology/similarity evidence.
+- `src/classroom-ui.js` and six `src/classroom/` modules: the student/instructor integration controller; a browser-independent action-session state machine; validated draft/profile storage; file operations and concurrency control; classroom and review views; and the teacher assignment/batch workflow.
 - `src/waveform-export.js`: labeled PNG plots using actual sample timestamps.
-- `src/app.js`: editor interactions, lesson navigation, and interface state.
+- `src/app.js`: application composition, shared editor state, and top-level input/navigation handlers.
+- Nine `src/workbench/` modules: shell rendering, board rendering, component parameters, inspector behavior, lessons/catalogs, 3D scenes, waveform monitoring, dialogs, and simulation-frame scheduling. Dialogs manage focus, Escape/Tab behavior, and an inert background. The simulation runner advances physics within a bounded per-frame work budget and retains pending simulation time for later frames.
 - `test/`: Node.js built-in test runner checks for logic and project integrity.
 - `scripts/`: esbuild configuration, local preview server, static distribution preparation, and syntax checks.
 
-The canvas uses separate grid, wire, and component layers. The interaction model takes inspiration from [WirePad](https://github.com/defencore/WirePad): a searchable library, direct component manipulation, pin-to-pin wiring, and routed connections. Logic Lab owns its simulation models and project format.
+The UI controllers depend on small state/adapter contracts and share the same circuit/runtime; rendering, action-session transitions, and grading do not maintain duplicate circuit models. The canvas uses separate grid, wire, and component layers. The interaction model takes inspiration from [WirePad](https://github.com/defencore/WirePad): a searchable library, direct component manipulation, pin-to-pin wiring, and routed connections. Logic Lab owns its simulation models and project format.
 
 Project files use `version: 1`, a name, component records, wire records, and optional viewport/routing metadata. The optional `exampleId` preserves the association with a bundled lesson; a custom circuit does not need one. Imports validate known types and pins, unique identifiers, finite positions, connection widths, parameter types, and bounded data sizes. Multiple sources on one input are permitted so contention and open-drain behavior can be explored. Projects allow up to 1,000 components, 5,000 wires, and 100 route points per wire. Invalid imports are rejected without replacing the current circuit, and a failed save preserves the last successfully saved project.
 

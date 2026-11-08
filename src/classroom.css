@@ -198,6 +198,10 @@
   padding: 9px 10px;
   vertical-align: top;
 }
+.classroom-variant {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
 .classroom-table td {
   overflow-wrap: anywhere;
   max-width: 290px;
@@ -251,6 +255,16 @@
   padding: 12px;
   border-radius: 5px;
 }
+.classroom-processing {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.classroom-processing p {
+  margin: 0;
+}
 @media (max-width: 1200px) {
   .classroom-dock {
     flex-wrap: wrap;
@@ -281,5 +295,51 @@
   }
   .issued-assignments li {
     flex-wrap: wrap;
+  }
+}
+@media (max-width: 450px) {
+  .classroom-dock {
+    padding: 5px 8px;
+  }
+  .action-session-title {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .action-session-buttons {
+    width: 100%;
+  }
+  .action-session-buttons > button {
+    flex: 1 1 auto;
+  }
+  .action-session-buttons #action-replay,
+  .action-session-buttons #action-next {
+    display: none;
+  }
+  .action-session-buttons #action-pause:disabled,
+  .action-session-buttons #action-stop:disabled,
+  .action-session-buttons #action-hide:disabled {
+    display: none;
+  }
+  .action-session-buttons #action-hide {
+    flex: 0 0 30px;
+  }
+  .classroom-tabs {
+    position: sticky;
+    top: -1px;
+    z-index: 2;
+    background: #fff;
+    padding-top: 8px;
+  }
+  .classroom-table {
+    min-width: 550px;
+  }
+}
+@media (pointer: coarse) {
+  .classroom-tabs > button,
+  .classroom-actions > button,
+  .classroom-dock .soft-btn,
+  .classroom-dock .primary-btn,
+  .issued-assignments button {
+    min-height: 40px;
   }
 }

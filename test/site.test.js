@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { build } from 'esbuild';
-import { buildOptions, renderBuiltHtml } from '../scripts/site.mjs';
+import { buildOptions, renderBuiltHtml, cleanOutput } from '../scripts/site.mjs';
 
 const source =
   '<link rel="stylesheet" href="./style.css"><script type="module" src="./src/app.js"></script>';
@@ -76,4 +76,39 @@ test('HTML generation rejects incomplete entry metadata instead of emitting brok
     () => renderBuiltHtml('<script src="other.js"></script>', { outputs: {} }),
     /HTML application/,
   );
+});
+
+test('preview builds emit complete asset URLs in their own directory without changing release paths', async (t) => {
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'logic-lab-preview-')));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  await mkdir(join(directory, 'src'));
+  await writeFile(join(directory, 'src/app.js'), 'import "../style.css"; export const value=1;');
+  await writeFile(join(directory, 'style.css'), 'body { color: green }');
+  const preview = buildOptions({ outputDirectory: '.cache/preview' });
+  const result = await build({
+    ...preview,
+    absWorkingDir: directory,
+    plugins: [],
+    write: false,
+    logLevel: 'silent',
+  });
+  const html = renderBuiltHtml(source, result.metafile, {
+    workingDirectory: directory,
+    outputDirectory: join(directory, '.cache/preview'),
+  });
+  for (const match of html.matchAll(/(?:href|src)="([^\"]+)"/g))
+    assert.ok(
+      result.outputFiles.some(
+        (file) => file.path === resolve(directory, '.cache/preview', match[1]),
+      ),
+    );
+  assert.ok(
+    result.outputFiles.every((file) => file.path.startsWith(join(directory, '.cache/preview'))),
+  );
+  assert.equal(buildOptions().outdir, 'dist/assets');
+});
+
+test('build cleanup rejects source, repository and unrelated directories before touching files', async () => {
+  for (const directory of ['.', '..', 'src', '.git', '/private/tmp'])
+    await assert.rejects(cleanOutput(directory), /build directories/);
 });
