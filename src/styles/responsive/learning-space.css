@@ -89,7 +89,9 @@
     scroll-margin: 6px;
   }
   .classroom-dock[data-review-mode='check'] #action-record,
-  .classroom-dock[data-review-mode='check'] #action-replay {
+  .classroom-dock[data-review-mode='check'] #action-replay:disabled,
+  .classroom-dock[data-review-mode='check'] #action-next:disabled,
+  .classroom-dock[data-review-mode='check'] #action-pause:disabled {
     display: none;
   }
   .classroom-dock[data-review-mode='check'] #classroom-open {
@@ -98,7 +100,12 @@
   .classroom-dock[data-review-mode='check'] #action-pause {
     order: 1;
   }
+  .classroom-dock[data-review-mode='check'] #action-replay:not(:disabled) {
+    display: block;
+    order: 1;
+  }
   .classroom-dock[data-review-mode='check'] #action-next {
+    display: block;
     order: 2;
     grid-column: 1 / -1;
   }

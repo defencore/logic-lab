@@ -23,9 +23,25 @@ export function createClassroomView({ state, language, project, example }) {
   const previousWarning = previous
     ? `<p class="previous-recording-warning" role="note">${esc(previousVersionMessage(state.sequenceVersion, language))}</p>`
     : '';
+  const completed = !!player?.done;
   const replayLabel = previous
-    ? L('Переглянути попередній запис', 'View previous recording')
-    : L('Відтворити', 'Replay');
+    ? completed
+      ? L('Почати попередній запис спочатку', 'Restart previous recording')
+      : L('Переглянути попередній запис', 'View previous recording')
+    : completed
+      ? L('Почати запис спочатку', 'Restart recording')
+      : L('Відтворити', 'Replay');
+  const replayDisabled =
+    !sequence || recording || !!state.preview || (!!player && !completed) || busy;
+  const nextDisabled =
+    !sequence || recording || !!state.preview || playbackRunning || completed || busy;
+  const reviewedRecording = ['check', 'replay'].includes(state.reviewMode);
+  const reviewRestartLabel =
+    completed && reviewedRecording
+      ? state.reviewMode === 'check'
+        ? L('Почати перевірку спочатку', 'Restart reference check')
+        : L('Почати запис спочатку', 'Restart student recording')
+      : null;
   const isLocked = () => recording || !!player || !!state.preview || busy;
   const { reviewMarkup, cardsMarkup } = createReviewView({ state, language });
   const teacherView = createTeacherView({ state, language, project, possibleProbes, reviewMarkup });
@@ -40,9 +56,10 @@ export function createClassroomView({ state, language, project, example }) {
     return L('Перегляд роботи студента · лише читання', 'Student work preview · read only');
   }
   function dockMarkup() {
-    if (state.reviewMode)
-      return `<div class="action-session-title"><strong title="${esc(reviewTitle())}">${esc(reviewTitle())}</strong><span id="action-status" role="status"></span></div><div class="action-session-buttons">${button('classroom-open', L('Повернутися до перевірки', 'Return to review'))}${button('action-record', L('Запис недоступний під час перегляду', 'Recording unavailable during preview'), true)}${button('action-replay', L('Відтворити', 'Replay'), true)}${button('action-next', L('Наступна записана дія', 'Next recorded action'), !player || playbackRunning || busy)}${button('action-pause', playbackRunning ? L('Пауза сценарію', 'Pause replay') : L('Продовжити', 'Resume replay'), !player || player.done || busy)}${button('action-stop', L('Завершити перегляд і повернути свою схему', 'End preview and restore my circuit'))}<button id="action-hide" hidden disabled></button></div>`;
-    return `<div class="action-session-title"><button id="classroom-open" class="text-btn">${L('Сценарій дій', 'Action sequence')}</button><span id="action-status" role="status" aria-live="off"></span></div><div class="action-session-buttons">${button('action-record', recording ? L('Завершити запис', 'Finish recording') : L('Записати дії', 'Record actions'), !!player || !!state.preview || busy, recording)}${button('action-replay', replayLabel, !sequence || recording || !!player || busy)}${button('action-next', L('Наступна записана дія', 'Next recorded action'), !sequence || recording || playbackRunning || busy)}${button('action-pause', playbackRunning ? L('Пауза сценарію', 'Pause replay') : L('Продовжити', 'Resume replay'), !player || player.done || busy)}${button('action-stop', L('Зупинити', 'Stop'), !player)}<button id="action-hide" class="soft-btn" aria-label="${L('Сховати панель сценарію', 'Hide action panel')}" title="${L('Сховати панель сценарію', 'Hide action panel')}" ${recording || player || busy ? 'disabled' : ''}>×</button></div>`;
+    if (state.reviewMode) {
+      return `<div class="action-session-title"><strong title="${esc(reviewTitle())}">${esc(reviewTitle())}</strong><span id="action-status" role="status"></span></div><div class="action-session-buttons">${button('classroom-open', L('Повернутися до перевірки', 'Return to review'))}${button('action-record', L('Запис недоступний під час перегляду', 'Recording unavailable during preview'), true)}${button('action-replay', reviewRestartLabel || L('Відтворити', 'Replay'), !reviewedRecording || !completed || recording || playbackRunning || busy)}${button('action-next', L('Наступна записана дія', 'Next recorded action'), !player || completed || playbackRunning || busy)}${button('action-pause', playbackRunning ? L('Пауза сценарію', 'Pause replay') : L('Продовжити', 'Resume replay'), !player || player.done || busy)}${button('action-stop', L('Завершити перегляд і повернути свою схему', 'End preview and restore my circuit'))}<button id="action-hide" hidden disabled></button></div>`;
+    }
+    return `<div class="action-session-title"><button id="classroom-open" class="text-btn">${L('Сценарій дій', 'Action sequence')}</button><span id="action-status" role="status" aria-live="off"></span></div><div class="action-session-buttons">${button('action-record', recording ? L('Завершити запис', 'Finish recording') : L('Записати дії', 'Record actions'), !!player || !!state.preview || busy, recording)}${button('action-replay', replayLabel, replayDisabled)}${button('action-next', L('Наступна записана дія', 'Next recorded action'), nextDisabled)}${button('action-pause', playbackRunning ? L('Пауза сценарію', 'Pause replay') : L('Продовжити', 'Resume replay'), !player || player.done || busy)}${button('action-stop', L('Зупинити', 'Stop'), !player)}<button id="action-hide" class="soft-btn" aria-label="${L('Сховати панель сценарію', 'Hide action panel')}" title="${L('Сховати панель сценарію', 'Hide action panel')}" ${recording || player || busy ? 'disabled' : ''}>×</button></div>`;
   }
 
   function actionTable() {
@@ -76,7 +93,7 @@ export function createClassroomView({ state, language, project, example }) {
 
   function sequencePanel() {
     const preset = adapter.getExample()?.actionPreset;
-    return `<section class="classroom-section"><h3>${L('Запис і відтворення входів', 'Record and replay inputs')}</h3>${previousWarning}<p>${L('Запис зберігає початкову схему, порядок дій та час симуляції. SER, CLK і RST перемикайте на схемі. Навіть дії в одну мить відтворюються в записаному порядку.', 'A sequence stores the initial circuit, action order and simulation times. Toggle SER, CLK and RST on the canvas. Actions at the same time retain their order.')}</p><div class="classroom-actions">${button('class-record', recording ? L('Завершити запис', 'Finish recording') : L('Записати дії', 'Record actions'), !!player || !!state.preview || busy, true)}${button('class-replay', previous ? replayLabel : L('Відтворити на схемі', 'Replay on canvas'), !sequence || recording || !!state.preview || busy)}${button('class-next', L('Наступна записана дія', 'Next recorded action'), !sequence || recording || !!state.preview || busy)}${button('class-sequence-import', L('Відкрити сценарій', 'Open sequence'), isLocked())}${button('class-sequence-export', L('Зберегти сценарій', 'Save sequence'), !sequence || recording || !!state.preview || busy)}${preset ? button('class-preset', L('Навчальний сценарій прикладу', 'Example action sequence'), isLocked()) : ''}</div>${actionTable()}</section>`;
+    return `<section class="classroom-section"><h3>${L('Запис і відтворення входів', 'Record and replay inputs')}</h3>${previousWarning}<p>${L('Запис зберігає початкову схему, порядок дій та час симуляції. SER, CLK і RST перемикайте на схемі. Навіть дії в одну мить відтворюються в записаному порядку.', 'A sequence stores the initial circuit, action order and simulation times. Toggle SER, CLK and RST on the canvas. Actions at the same time retain their order.')}</p><div class="classroom-actions">${button('class-record', recording ? L('Завершити запис', 'Finish recording') : L('Записати дії', 'Record actions'), !!player || !!state.preview || busy, true)}${button('class-replay', reviewRestartLabel || (previous || completed ? replayLabel : L('Відтворити на схемі', 'Replay on canvas')), replayDisabled)}${button('class-next', L('Наступна записана дія', 'Next recorded action'), nextDisabled)}${button('class-sequence-import', L('Відкрити сценарій', 'Open sequence'), isLocked())}${button('class-sequence-export', L('Зберегти сценарій', 'Save sequence'), !sequence || recording || !!state.preview || busy)}${preset ? button('class-preset', L('Навчальний сценарій прикладу', 'Example action sequence'), isLocked()) : ''}</div>${actionTable()}</section>`;
   }
 
   function possibleProbes() {

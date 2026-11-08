@@ -115,6 +115,58 @@ test('checkpoint seeking separates same-time actions, the initial state and the 
   }
 });
 
+test('finished reference and student reviews ignore Next until explicit replay and keep the teacher restore point', async () => {
+  const check = await checkedWork();
+  for (const kind of ['check', 'replay']) {
+    const f = fixture(),
+      original = f.project,
+      runtime = f.runtime;
+    const ownSequence = sequenceFor(original);
+    let saved = 0;
+    const session = createActionSession(f.adapter, {
+      sequence: ownSequence,
+      onSave: () => saved++,
+    });
+    if (kind === 'check') {
+      await session.reviewCheck(check.submission.project, check.sequence, {
+        after: 97,
+        at: check.sequence.actions[97].at,
+      });
+      session.pausePlayback();
+    } else session.reviewWork(check.submission.project, check.submission.sequence);
+    session.tick(1);
+    const finished = session.state.player;
+    assert.equal(finished.done, true);
+    const reviewedProject = f.project,
+      reviewedRuntime = f.runtime,
+      refreshes = f.refreshes;
+    const observations = structuredClone(session.state.observations);
+    for (let repeat = 0; repeat < 2; repeat++) {
+      assert.equal(session.nextAction().done, true);
+      assert.equal(session.state.player, finished);
+      assert.equal(f.project, reviewedProject);
+      assert.equal(f.runtime, reviewedRuntime);
+      assert.equal(f.runtime.time, 0.1);
+      assert.deepEqual(session.state.observations, observations);
+      assert.equal(f.refreshes, refreshes);
+    }
+    session.replay();
+    assert.equal(session.state.player.cursor, 0);
+    assert.equal(f.runtime.time, 0);
+    assert.equal(session.state.playbackRunning, true);
+    assert.equal(session.state.reviewMode, kind);
+    assert.equal(session.state.sequence.actions.length, kind === 'check' ? 100 : 70);
+    assert.equal(f.project.wires.length, check.submission.project.wires.length);
+    assert.equal(session.projectToSave(), original);
+    assert.equal(session.sequenceToSave(), ownSequence);
+    session.stopPlayback();
+    assert.equal(f.project, original);
+    assert.equal(f.runtime, runtime);
+    assert.equal(session.state.sequence, ownSequence);
+    assert.equal(saved, 0);
+  }
+});
+
 test('invalid checkpoint, cancellation and missing student input cannot take over the editor', async () => {
   const check = await checkedWork(),
     f = fixture(),

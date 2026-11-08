@@ -111,7 +111,9 @@ export function createActionSession(
     changed();
   }
   function nextAction() {
-    if (!state.player || state.player.done) beginPlayback();
+    if (state.player?.done)
+      return { actionApplied: false, atTarget: true, doneAtTarget: true, done: true, steps: 0 };
+    if (!state.player) beginPlayback();
     state.playbackRunning = false;
     const result = stepPlayback(state.player, { maxSteps: 1000 });
     state.observations = state.player.observations;

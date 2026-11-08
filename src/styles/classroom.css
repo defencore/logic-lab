@@ -311,9 +311,12 @@
   .action-session-buttons > button {
     flex: 1 1 auto;
   }
-  .action-session-buttons #action-replay,
+  .action-session-buttons #action-replay:disabled,
   .action-session-buttons #action-next {
     display: none;
+  }
+  .action-session-buttons #action-replay:not(:disabled) {
+    display: inline-flex;
   }
   .action-session-buttons #action-pause:disabled,
   .action-session-buttons #action-stop:disabled,

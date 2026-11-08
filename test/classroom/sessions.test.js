@@ -66,7 +66,7 @@ test('replaying an older circuit restores the exact editable project and runtime
   assert.equal(session.projectToSave(), originalProject);
 });
 
-test('single action stepping restarts completed playback without replacing its original restore point', () => {
+test('single action stepping stops at completion and only explicit replay restarts the recording', () => {
   const f = fixture();
   const original = f.project;
   const session = createActionSession(f.adapter, { sequence: sequenceFor(original) });
@@ -76,6 +76,29 @@ test('single action stepping restarts completed playback without replacing its o
   assert.equal(session.state.player.cursor, 2);
   session.nextAction();
   assert.equal(session.state.player.done, true);
+  const completed = session.state.player,
+    runtime = f.runtime,
+    refreshes = f.refreshes;
+  const observations = structuredClone(session.state.observations);
+  for (let repeat = 0; repeat < 2; repeat++) {
+    assert.deepEqual(session.nextAction(), {
+      actionApplied: false,
+      atTarget: true,
+      doneAtTarget: true,
+      done: true,
+      steps: 0,
+    });
+    assert.equal(session.state.player, completed);
+    assert.equal(session.state.player.cursor, 2);
+    assert.equal(f.runtime, runtime);
+    assert.equal(f.runtime.time, 0.1);
+    assert.deepEqual(session.state.observations, observations);
+    assert.equal(f.refreshes, refreshes);
+  }
+  session.replay();
+  assert.equal(session.state.player.cursor, 0);
+  assert.equal(f.runtime.time, 0);
+  assert.equal(session.state.playbackRunning, true);
   session.nextAction();
   assert.equal(session.state.player.cursor, 1);
   session.stopPlayback();
