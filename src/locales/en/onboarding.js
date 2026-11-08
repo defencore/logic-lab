@@ -14,7 +14,7 @@ export const onboarding = {
     'Click a switch to change its value. Run or R starts and pauses clocks and waveforms; Simulation step advances by 10 ms at 1×, multiplied by the chosen speed; the button shows its current duration. Green is high, gray is low, amber is unknown, and a dashed wire is high impedance.',
   guideKeys: 'Keyboard shortcuts',
   guideKeysText:
-    'R · Run / pause    F / Home · Fit view    0 · 100% zoom\n+ / − · Zoom    Ctrl/Cmd-click · Select multiple\nCtrl/Cmd Z · Undo    Shift+Ctrl/Cmd Z · Redo    Ctrl/Cmd S · Export\nEsc · Cancel wire    Space / Shift + drag · Pan\nMiddle / right drag · Pan    Scroll · Zoom at pointer\nShift / Alt + scroll · Pan',
+    'R · Run / pause    F / Home · Fit view    0 · 100% zoom\n+ / − · Zoom    Ctrl/Cmd-click · Select multiple\nCtrl/Cmd Z · Undo    Shift+Ctrl/Cmd Z · Redo    Ctrl/Cmd S · Export\nCtrl/Cmd C · Copy selection    Ctrl/Cmd V · Paste selection\nEsc · Cancel wire    Space / Shift + drag · Pan\nMiddle / right drag · Pan    Scroll · Zoom at pointer\nShift / Alt + scroll · Pan',
   gotIt: 'Got it',
   examplesTitle: 'Start with a working idea',
   examplesDesc: 'Open a circuit, change a signal, and see what happens.',

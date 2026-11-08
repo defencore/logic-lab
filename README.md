@@ -167,6 +167,8 @@ The **Hotkey** component supplies one digital output. In **Hold** mode it is 1 w
 | Undo                        | Ctrl / Cmd + Z                                            |
 | Redo                        | Ctrl / Cmd + Shift + Z                                    |
 | Save project                | Ctrl / Cmd + S                                            |
+| Copy selected components    | Ctrl / Cmd + C                                            |
+| Paste components            | Ctrl / Cmd + V                                            |
 | Fit circuit                 | F / Home                                                  |
 | Cancel a pending connection | Escape                                                    |
 | Zoom at the cursor          | Mouse wheel / trackpad pinch                              |
@@ -182,6 +184,8 @@ The **Hotkey** component supplies one digital output. In **Hold** mode it is 1 w
 Shortcuts are ignored while editing text or values. On compact screens, select a component and open **Inspector** to edit it; selecting or dragging a component keeps the circuit visible. The walkthrough opens only when requested. Editing tools and zoom controls sit outside the scaled circuit, with secondary tools in the **More tools** menu on phones.
 
 Each existing component has a focusable heading. Use **Tab** to reach it, **Arrow keys** to move between headings, **Home/End** to reach the first/last component, and **Enter/Space** to open its properties. Closing the compact inspector returns focus to that component. These keys select components without moving them; native switches and value fields keep their own controls.
+
+Copy/Paste carries the selected components and only the connections between them, including wire bends. Paste works across circuits and browser tabs, selects the new components, and creates one Undo step. Text fields keep ordinary text copy/paste. Pasted Hotkey components start released; conflicting keyboard bindings are cleared and reported.
 
 While a contact has focus, **Delete/Backspace**, arrow keys, and **Ctrl/Cmd+D** cannot delete, move, or duplicate another selected component. **Enter/Space** connects contacts, **Tab** changes focus, and **Escape** cancels the pending connection.
 

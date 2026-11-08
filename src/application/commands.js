@@ -6,6 +6,7 @@ import { $ } from '../shared/ui.js';
 import { snap } from '../circuits/geometry/index.js';
 import { findNodePlacement, revealNodePlacement } from '../circuits/placement.js';
 import { boundCoordinate, uid } from './model.js';
+import { createSelectionCommands } from './selection-commands.js';
 export function createCommands(context) {
   const { state, services, actions, t } = context;
   function newProject() {
@@ -67,52 +68,6 @@ export function createCommands(context) {
     actions.changed();
     services.learning.renderLesson();
     actions.notify(t('removed'));
-  }
-  function duplicateSelection() {
-    if (services.classroom && !services.classroom.allowEdit()) return;
-    if (!state.selected.size) return;
-    const internal = state.project.wires.filter(
-      (w) => state.selected.has(w.from.node) && state.selected.has(w.to.node),
-    ).length;
-    if (
-      state.project.nodes.length + state.selected.size > 1000 ||
-      state.project.wires.length + internal > 5000
-    ) {
-      actions.notify(t('limitReached'));
-      return;
-    }
-    actions.checkpoint();
-    const map = new Map();
-    const nodes = state.project.nodes
-      .filter((n) => state.selected.has(n.id))
-      .map((n) => {
-        const copy = structuredClone(n);
-        copy.id = uid('n');
-        if (copy.type === 'hotkey') {
-          copy.params.binding = '';
-          copy.params.value = 0;
-        }
-        copy.x = boundCoordinate(copy.x + 40);
-        copy.y = boundCoordinate(copy.y + 40);
-        map.set(n.id, copy.id);
-        return copy;
-      });
-    const wires = state.project.wires
-      .filter((w) => map.has(w.from.node) && map.has(w.to.node))
-      .map((w) => ({
-        ...structuredClone(w),
-        id: uid('w'),
-        from: { ...w.from, node: map.get(w.from.node) },
-        to: { ...w.to, node: map.get(w.to.node) },
-        points: (w.points || []).map((p) => ({
-          x: boundCoordinate(p.x + 40),
-          y: boundCoordinate(p.y + 40),
-        })),
-      }));
-    state.project.nodes.push(...nodes);
-    state.project.wires.push(...wires);
-    state.selected = new Set(nodes.map((n) => n.id));
-    actions.changed();
   }
   function enableSelected(value) {
     if (services.classroom && !services.classroom.allowEdit()) return;
@@ -192,7 +147,7 @@ export function createCommands(context) {
     newProject,
     addNode,
     deleteSelection,
-    duplicateSelection,
+    ...createSelectionCommands(context),
     enableSelected,
     renameNode,
     exportProject,

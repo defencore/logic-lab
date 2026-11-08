@@ -10,6 +10,8 @@ import { boundCoordinate } from './model.js';
 import { focusContact } from '../workbench/contact-interaction.js';
 export function bindApplicationEvents(context) {
   const { state, services, actions, t } = context;
+  document.addEventListener('copy', (event) => services.clipboard.copy(event));
+  document.addEventListener('paste', (event) => services.clipboard.paste(event));
   document.addEventListener('keydown', (event) => services.hotkeys?.keyDown(event), {
     capture: true,
   });

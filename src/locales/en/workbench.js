@@ -34,6 +34,12 @@ export const workbench = {
   outputs: 'Outputs',
   delete: 'Delete selection',
   duplicate: 'Duplicate',
+  selectionCopied: 'Copied {count} components. Paste with Ctrl/Cmd+V.',
+  selectionPasted: 'Pasted {count} components.',
+  pastedHotkeysCleared:
+    'Keyboard bindings cleared on {count} pasted components; assign new keys in Properties.',
+  invalidFragment: 'Cannot paste these circuit elements. Copy components from the canvas first.',
+  clipboardUnavailable: 'The browser could not copy the components. Try Ctrl/Cmd+C again.',
   trace: 'Signal monitor',
   live: 'Live',
   paused: 'Paused',

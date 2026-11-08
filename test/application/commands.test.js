@@ -23,7 +23,8 @@ const wire = (id, from, to) => ({
 test('duplicating a selection copies only internal wires with fresh IDs and independent parameters', () => {
   const context = editingContext();
   const { state } = context;
-  state.project.nodes = [node('a', 20), node('b', 300, 'and'), node('outside', 500)];
+  state.project.version = 1;
+  state.project.nodes = [node('a', 20), node('b', 300, 'and'), node('outside', 500, 'and')];
   state.project.wires = [wire('inside', 'a', 'b'), wire('external', 'a', 'outside')];
   state.selected = new Set(['a', 'b']);
   createCommands(context).duplicateSelection();

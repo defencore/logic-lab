@@ -35,6 +35,12 @@ export const workbench = {
   outputs: 'Виходи',
   delete: 'Видалити вибране',
   duplicate: 'Дублювати',
+  selectionCopied: 'Скопійовано елементів: {count}. Вставте через Ctrl/Cmd+V.',
+  selectionPasted: 'Вставлено елементів: {count}.',
+  pastedHotkeysCleared:
+    'Конфліктні клавіші скинуто для елементів: {count}. Задайте нові у властивостях.',
+  invalidFragment: 'Не вдалося вставити елементи. Спочатку скопіюйте компоненти з полотна.',
+  clipboardUnavailable: 'Браузер не зміг скопіювати елементи. Спробуйте Ctrl/Cmd+C ще раз.',
   trace: 'Монітор сигналів',
   live: 'Працює',
   paused: 'Пауза',
