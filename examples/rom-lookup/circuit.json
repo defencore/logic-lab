@@ -1,0 +1,230 @@
+{
+  "version": 1,
+  "name": "ROM: address-to-display lookup table",
+  "nodes": [
+    {
+      "id": "address",
+      "type": "bus_input",
+      "x": 40,
+      "y": 40,
+      "label": "Address · hexadecimal digit 0–15",
+      "enabled": true,
+      "params": {
+        "value": 10
+      }
+    },
+    {
+      "id": "rom",
+      "type": "rom",
+      "x": 440,
+      "y": 60,
+      "label": "ROM · hexadecimal glyph table",
+      "enabled": true,
+      "params": {
+        "data": "63,6,91,79,102,109,125,7,127,111,119,124,57,94,121,113"
+      }
+    },
+    {
+      "id": "display",
+      "type": "sevenseg",
+      "x": 840,
+      "y": 60,
+      "label": "ROM-driven hexadecimal display",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "chip",
+      "type": "switch",
+      "x": 440,
+      "y": 420,
+      "label": "CS · select lookup table",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "read",
+      "type": "switch",
+      "x": 440,
+      "y": 600,
+      "label": "OE · enable segment outputs",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "address-nibble0-rom-address0",
+      "from": {
+        "node": "address",
+        "port": "nibble0"
+      },
+      "to": {
+        "node": "rom",
+        "port": "address0"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble1-rom-address1",
+      "from": {
+        "node": "address",
+        "port": "nibble1"
+      },
+      "to": {
+        "node": "rom",
+        "port": "address1"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble2-rom-address2",
+      "from": {
+        "node": "address",
+        "port": "nibble2"
+      },
+      "to": {
+        "node": "rom",
+        "port": "address2"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble3-rom-address3",
+      "from": {
+        "node": "address",
+        "port": "nibble3"
+      },
+      "to": {
+        "node": "rom",
+        "port": "address3"
+      },
+      "width": 1
+    },
+    {
+      "id": "rom-out0-display-in0",
+      "from": {
+        "node": "rom",
+        "port": "out0"
+      },
+      "to": {
+        "node": "display",
+        "port": "in0"
+      },
+      "width": 1
+    },
+    {
+      "id": "rom-out1-display-in1",
+      "from": {
+        "node": "rom",
+        "port": "out1"
+      },
+      "to": {
+        "node": "display",
+        "port": "in1"
+      },
+      "width": 1
+    },
+    {
+      "id": "rom-out2-display-in2",
+      "from": {
+        "node": "rom",
+        "port": "out2"
+      },
+      "to": {
+        "node": "display",
+        "port": "in2"
+      },
+      "width": 1
+    },
+    {
+      "id": "rom-out3-display-in3",
+      "from": {
+        "node": "rom",
+        "port": "out3"
+      },
+      "to": {
+        "node": "display",
+        "port": "in3"
+      },
+      "width": 1
+    },
+    {
+      "id": "rom-out4-display-in4",
+      "from": {
+        "node": "rom",
+        "port": "out4"
+      },
+      "to": {
+        "node": "display",
+        "port": "in4"
+      },
+      "width": 1
+    },
+    {
+      "id": "rom-out5-display-in5",
+      "from": {
+        "node": "rom",
+        "port": "out5"
+      },
+      "to": {
+        "node": "display",
+        "port": "in5"
+      },
+      "width": 1
+    },
+    {
+      "id": "rom-out6-display-in6",
+      "from": {
+        "node": "rom",
+        "port": "out6"
+      },
+      "to": {
+        "node": "display",
+        "port": "in6"
+      },
+      "width": 1
+    },
+    {
+      "id": "rom-out7-display-in7",
+      "from": {
+        "node": "rom",
+        "port": "out7"
+      },
+      "to": {
+        "node": "display",
+        "port": "in7"
+      },
+      "width": 1
+    },
+    {
+      "id": "chip-out-rom-cs",
+      "from": {
+        "node": "chip",
+        "port": "out"
+      },
+      "to": {
+        "node": "rom",
+        "port": "cs"
+      },
+      "width": 1
+    },
+    {
+      "id": "read-out-rom-oe",
+      "from": {
+        "node": "read",
+        "port": "out"
+      },
+      "to": {
+        "node": "rom",
+        "port": "oe"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "rom-lookup"
+}

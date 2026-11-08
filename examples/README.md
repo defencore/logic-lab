@@ -1,6 +1,6 @@
 # Logic Lab laboratory collection
 
-These 32 reusable laboratories accompany the browser workbench. Each laboratory has a separate directory so its starting circuit, teaching material and assessment tasks can be reviewed or reused independently. The interface lessons and worksheet metadata support English and Ukrainian; the original Markdown lab sheets are in English, and the eight new automation/dispatch sheets include full English and Ukrainian procedures.
+These 37 reusable laboratories accompany the browser workbench. Each laboratory has a separate directory so its starting circuit, teaching material and assessment tasks can be reviewed or reused independently. The interface lessons and worksheet metadata support English and Ukrainian; the original Markdown lab sheets are in English, and the automation, dispatch, and five memory/addressing sheets include full English and Ukrainian procedures.
 
 ## Open a laboratory
 
@@ -44,6 +44,12 @@ These 32 reusable laboratories accompany the browser workbench. Each laboratory 
 | [Smart yard: access, rain and water](./yard-security/README.md)         | automation   | intermediate | 40 min | [JSON](./yard-security/circuit.json)         |
 | [Railway: switch and dispatch](./railway-dispatch/README.md)            | scenes       | intermediate | 40 min | [JSON](./railway-dispatch/circuit.json)      |
 
+| [Shift register: serial loading and replay](./shift-register-sequence/README.md) | sequential | beginner | 25 min | [JSON](./shift-register-sequence/circuit.json) |
+| [RAM: address isolation and write protection](./ram-addressing/README.md) | architecture | intermediate | 35 min | [JSON](./ram-addressing/circuit.json) |
+| [ROM: address-to-display lookup table](./rom-lookup/README.md) | architecture | intermediate | 30 min | [JSON](./rom-lookup/circuit.json) |
+| [Register file: independent read and write addresses](./register-file-addressing/README.md) | architecture | intermediate | 35 min | [JSON](./register-file-addressing/circuit.json) |
+| [Memory map: two RAM banks selected by A4](./memory-bank-select/README.md) | architecture | intermediate | 40 min | [JSON](./memory-bank-select/circuit.json) |
+
 ## Directory contract
 
 Each laboratory contains:
@@ -53,6 +59,10 @@ Each laboratory contains:
 - `README.md`: a lab sheet with objectives, procedure, expected results, review questions and deliverables; the new automation and manual-dispatch sheets include both English and Ukrainian.
 
 The [registry](./index.js) imports these files and returns a fresh clone each time a laboratory opens. Editing a canvas does not change the original exercise. Every asset is included in the static distribution; opening laboratories requires no server API or account.
+
+## Addressing and memory experiments
+
+The five focused memory laboratories cover manual SER/CLK/RST serial loading, independent RAM locations and write protection, ROM lookup tables, separate register-file read/write addresses, and a 32-byte map built from two RAM banks. Their bilingual lessons include replayable action presets. Each lab exposes every bit as a separate physical contact and includes a deterministic input sequence, predictions, and independent-work prompts.
 
 ## Circuit-driven scenes
 

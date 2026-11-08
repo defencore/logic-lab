@@ -1,0 +1,319 @@
+{
+  "version": 1,
+  "name": "Serial loading: SER, CLK and RST",
+  "nodes": [
+    {
+      "id": "ser",
+      "type": "switch",
+      "x": 40,
+      "y": 80,
+      "label": "SER · serial data",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "clock",
+      "type": "switch",
+      "x": 40,
+      "y": 260,
+      "label": "CLK · manual clock",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "reset",
+      "type": "switch",
+      "x": 40,
+      "y": 440,
+      "label": "RST · asynchronous reset",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "shift",
+      "type": "shift_register",
+      "x": 440,
+      "y": 100,
+      "label": "Shift register · Q7…Q0",
+      "enabled": true,
+      "params": {
+        "initial": 0
+      }
+    },
+    {
+      "id": "bit0",
+      "type": "led",
+      "x": 840,
+      "y": 100,
+      "label": "Q0 · weight 1",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit1",
+      "type": "led",
+      "x": 1040,
+      "y": 100,
+      "label": "Q1 · weight 2",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit2",
+      "type": "led",
+      "x": 1240,
+      "y": 100,
+      "label": "Q2 · weight 4",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit3",
+      "type": "led",
+      "x": 1440,
+      "y": 100,
+      "label": "Q3 · weight 8",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit4",
+      "type": "led",
+      "x": 840,
+      "y": 280,
+      "label": "Q4 · weight 16",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit5",
+      "type": "led",
+      "x": 1040,
+      "y": 280,
+      "label": "Q5 · weight 32",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit6",
+      "type": "led",
+      "x": 1240,
+      "y": 280,
+      "label": "Q6 · weight 64",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit7",
+      "type": "led",
+      "x": 1440,
+      "y": 280,
+      "label": "Q7 · weight 128",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "serial",
+      "type": "led",
+      "x": 840,
+      "y": 480,
+      "label": "SOUT · current Q7",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "trace",
+      "type": "scope",
+      "x": 1080,
+      "y": 480,
+      "label": "Serial output · Q7",
+      "enabled": true,
+      "params": {
+        "range": 1
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "ser-out-shift-d",
+      "from": {
+        "node": "ser",
+        "port": "out"
+      },
+      "to": {
+        "node": "shift",
+        "port": "d"
+      },
+      "width": 1
+    },
+    {
+      "id": "clock-out-shift-clk",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "shift",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "reset-out-shift-reset",
+      "from": {
+        "node": "reset",
+        "port": "out"
+      },
+      "to": {
+        "node": "shift",
+        "port": "reset"
+      },
+      "width": 1
+    },
+    {
+      "id": "shift-out0-bit0-in",
+      "from": {
+        "node": "shift",
+        "port": "out0"
+      },
+      "to": {
+        "node": "bit0",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "shift-out1-bit1-in",
+      "from": {
+        "node": "shift",
+        "port": "out1"
+      },
+      "to": {
+        "node": "bit1",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "shift-out2-bit2-in",
+      "from": {
+        "node": "shift",
+        "port": "out2"
+      },
+      "to": {
+        "node": "bit2",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "shift-out3-bit3-in",
+      "from": {
+        "node": "shift",
+        "port": "out3"
+      },
+      "to": {
+        "node": "bit3",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "shift-out4-bit4-in",
+      "from": {
+        "node": "shift",
+        "port": "out4"
+      },
+      "to": {
+        "node": "bit4",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "shift-out5-bit5-in",
+      "from": {
+        "node": "shift",
+        "port": "out5"
+      },
+      "to": {
+        "node": "bit5",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "shift-out6-bit6-in",
+      "from": {
+        "node": "shift",
+        "port": "out6"
+      },
+      "to": {
+        "node": "bit6",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "shift-out7-bit7-in",
+      "from": {
+        "node": "shift",
+        "port": "out7"
+      },
+      "to": {
+        "node": "bit7",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "shift-serial-serial-in",
+      "from": {
+        "node": "shift",
+        "port": "serial"
+      },
+      "to": {
+        "node": "serial",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "shift-serial-trace-in",
+      "from": {
+        "node": "shift",
+        "port": "serial"
+      },
+      "to": {
+        "node": "trace",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "shift-register-sequence"
+}

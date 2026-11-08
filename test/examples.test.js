@@ -31,7 +31,7 @@ const output = (context, node, port = 'out') => context.runtime.signals.outputs[
 const input = (context, node, port = 'in') => context.runtime.signals.inputs[node][port];
 
 test('all learning examples have valid fresh circuits and complete bilingual lessons', () => {
-  assert.equal(EXAMPLES.length, 32);
+  assert.equal(EXAMPLES.length, 37);
   assert.equal(new Set(EXAMPLES.map((example) => example.id)).size, EXAMPLES.length);
   for (const example of EXAMPLES) {
     assert.ok(

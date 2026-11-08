@@ -1,0 +1,472 @@
+{
+  "version": 1,
+  "name": "Register file: separate read and write addresses",
+  "nodes": [
+    {
+      "id": "read-address",
+      "type": "bus_input",
+      "x": 40,
+      "y": 40,
+      "label": "RA · read address 0–7",
+      "enabled": true,
+      "params": {
+        "value": 2
+      }
+    },
+    {
+      "id": "write-address",
+      "type": "bus_input",
+      "x": 40,
+      "y": 580,
+      "label": "WA · write address 0–7",
+      "enabled": true,
+      "params": {
+        "value": 5
+      }
+    },
+    {
+      "id": "registers",
+      "type": "register_file",
+      "x": 440,
+      "y": 40,
+      "label": "Register file · independent RA and WA",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "data",
+      "type": "bus_input",
+      "x": 440,
+      "y": 620,
+      "label": "Write data · byte",
+      "enabled": true,
+      "params": {
+        "value": 85
+      }
+    },
+    {
+      "id": "clock",
+      "type": "switch",
+      "x": 840,
+      "y": 500,
+      "label": "CLK · write clock",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "write",
+      "type": "switch",
+      "x": 840,
+      "y": 680,
+      "label": "WE · write enable",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "trace",
+      "type": "scope",
+      "x": 840,
+      "y": 40,
+      "label": "Read data · bit 0",
+      "enabled": true,
+      "params": {
+        "range": 1
+      }
+    },
+    {
+      "id": "bit0",
+      "type": "led",
+      "x": 1200,
+      "y": 40,
+      "label": "Q0 · weight 1",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit1",
+      "type": "led",
+      "x": 1400,
+      "y": 40,
+      "label": "Q1 · weight 2",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit2",
+      "type": "led",
+      "x": 1600,
+      "y": 40,
+      "label": "Q2 · weight 4",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit3",
+      "type": "led",
+      "x": 1800,
+      "y": 40,
+      "label": "Q3 · weight 8",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit4",
+      "type": "led",
+      "x": 1200,
+      "y": 220,
+      "label": "Q4 · weight 16",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit5",
+      "type": "led",
+      "x": 1400,
+      "y": 220,
+      "label": "Q5 · weight 32",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit6",
+      "type": "led",
+      "x": 1600,
+      "y": 220,
+      "label": "Q6 · weight 64",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit7",
+      "type": "led",
+      "x": 1800,
+      "y": 220,
+      "label": "Q7 · weight 128",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "read-address-address0-registers-read0",
+      "from": {
+        "node": "read-address",
+        "port": "address0"
+      },
+      "to": {
+        "node": "registers",
+        "port": "read0"
+      },
+      "width": 1
+    },
+    {
+      "id": "read-address-address1-registers-read1",
+      "from": {
+        "node": "read-address",
+        "port": "address1"
+      },
+      "to": {
+        "node": "registers",
+        "port": "read1"
+      },
+      "width": 1
+    },
+    {
+      "id": "read-address-address2-registers-read2",
+      "from": {
+        "node": "read-address",
+        "port": "address2"
+      },
+      "to": {
+        "node": "registers",
+        "port": "read2"
+      },
+      "width": 1
+    },
+    {
+      "id": "write-address-address0-registers-write0",
+      "from": {
+        "node": "write-address",
+        "port": "address0"
+      },
+      "to": {
+        "node": "registers",
+        "port": "write0"
+      },
+      "width": 1
+    },
+    {
+      "id": "write-address-address1-registers-write1",
+      "from": {
+        "node": "write-address",
+        "port": "address1"
+      },
+      "to": {
+        "node": "registers",
+        "port": "write1"
+      },
+      "width": 1
+    },
+    {
+      "id": "write-address-address2-registers-write2",
+      "from": {
+        "node": "write-address",
+        "port": "address2"
+      },
+      "to": {
+        "node": "registers",
+        "port": "write2"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out0-registers-data0",
+      "from": {
+        "node": "data",
+        "port": "out0"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data0"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out1-registers-data1",
+      "from": {
+        "node": "data",
+        "port": "out1"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data1"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out2-registers-data2",
+      "from": {
+        "node": "data",
+        "port": "out2"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data2"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out3-registers-data3",
+      "from": {
+        "node": "data",
+        "port": "out3"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data3"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out4-registers-data4",
+      "from": {
+        "node": "data",
+        "port": "out4"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data4"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out5-registers-data5",
+      "from": {
+        "node": "data",
+        "port": "out5"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data5"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out6-registers-data6",
+      "from": {
+        "node": "data",
+        "port": "out6"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data6"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out7-registers-data7",
+      "from": {
+        "node": "data",
+        "port": "out7"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data7"
+      },
+      "width": 1
+    },
+    {
+      "id": "clock-out-registers-clk",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "registers",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "write-out-registers-we",
+      "from": {
+        "node": "write",
+        "port": "out"
+      },
+      "to": {
+        "node": "registers",
+        "port": "we"
+      },
+      "width": 1
+    },
+    {
+      "id": "registers-out0-trace-in",
+      "from": {
+        "node": "registers",
+        "port": "out0"
+      },
+      "to": {
+        "node": "trace",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "registers-out0-bit0-in",
+      "from": {
+        "node": "registers",
+        "port": "out0"
+      },
+      "to": {
+        "node": "bit0",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "registers-out1-bit1-in",
+      "from": {
+        "node": "registers",
+        "port": "out1"
+      },
+      "to": {
+        "node": "bit1",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "registers-out2-bit2-in",
+      "from": {
+        "node": "registers",
+        "port": "out2"
+      },
+      "to": {
+        "node": "bit2",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "registers-out3-bit3-in",
+      "from": {
+        "node": "registers",
+        "port": "out3"
+      },
+      "to": {
+        "node": "bit3",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "registers-out4-bit4-in",
+      "from": {
+        "node": "registers",
+        "port": "out4"
+      },
+      "to": {
+        "node": "bit4",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "registers-out5-bit5-in",
+      "from": {
+        "node": "registers",
+        "port": "out5"
+      },
+      "to": {
+        "node": "bit5",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "registers-out6-bit6-in",
+      "from": {
+        "node": "registers",
+        "port": "out6"
+      },
+      "to": {
+        "node": "bit6",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "registers-out7-bit7-in",
+      "from": {
+        "node": "registers",
+        "port": "out7"
+      },
+      "to": {
+        "node": "bit7",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "register-file-addressing"
+}

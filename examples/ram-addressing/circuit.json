@@ -1,0 +1,483 @@
+{
+  "version": 1,
+  "name": "RAM: address isolation and write protection",
+  "nodes": [
+    {
+      "id": "address",
+      "type": "bus_input",
+      "x": 40,
+      "y": 40,
+      "label": "Address · value 0–15",
+      "enabled": true,
+      "params": {
+        "value": 2
+      }
+    },
+    {
+      "id": "data",
+      "type": "bus_input",
+      "x": 40,
+      "y": 580,
+      "label": "Write data · byte",
+      "enabled": true,
+      "params": {
+        "value": 42
+      }
+    },
+    {
+      "id": "memory",
+      "type": "ram",
+      "x": 440,
+      "y": 40,
+      "label": "RAM · 16 independent bytes",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "clock",
+      "type": "switch",
+      "x": 440,
+      "y": 660,
+      "label": "CLK · write clock",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "write",
+      "type": "switch",
+      "x": 440,
+      "y": 840,
+      "label": "WE · write enable",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "chip",
+      "type": "switch",
+      "x": 40,
+      "y": 1120,
+      "label": "CS · chip select",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "read",
+      "type": "switch",
+      "x": 440,
+      "y": 1020,
+      "label": "OE · output enable",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "trace",
+      "type": "scope",
+      "x": 840,
+      "y": 40,
+      "label": "Read data · bit 0",
+      "enabled": true,
+      "params": {
+        "range": 1
+      }
+    },
+    {
+      "id": "bit0",
+      "type": "led",
+      "x": 840,
+      "y": 300,
+      "label": "Q0 · weight 1",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit1",
+      "type": "led",
+      "x": 1040,
+      "y": 300,
+      "label": "Q1 · weight 2",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit2",
+      "type": "led",
+      "x": 1240,
+      "y": 300,
+      "label": "Q2 · weight 4",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit3",
+      "type": "led",
+      "x": 1440,
+      "y": 300,
+      "label": "Q3 · weight 8",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit4",
+      "type": "led",
+      "x": 840,
+      "y": 480,
+      "label": "Q4 · weight 16",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit5",
+      "type": "led",
+      "x": 1040,
+      "y": 480,
+      "label": "Q5 · weight 32",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit6",
+      "type": "led",
+      "x": 1240,
+      "y": 480,
+      "label": "Q6 · weight 64",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bit7",
+      "type": "led",
+      "x": 1440,
+      "y": 480,
+      "label": "Q7 · weight 128",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "address-nibble0-memory-address0",
+      "from": {
+        "node": "address",
+        "port": "nibble0"
+      },
+      "to": {
+        "node": "memory",
+        "port": "address0"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble1-memory-address1",
+      "from": {
+        "node": "address",
+        "port": "nibble1"
+      },
+      "to": {
+        "node": "memory",
+        "port": "address1"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble2-memory-address2",
+      "from": {
+        "node": "address",
+        "port": "nibble2"
+      },
+      "to": {
+        "node": "memory",
+        "port": "address2"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble3-memory-address3",
+      "from": {
+        "node": "address",
+        "port": "nibble3"
+      },
+      "to": {
+        "node": "memory",
+        "port": "address3"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out0-memory-data0",
+      "from": {
+        "node": "data",
+        "port": "out0"
+      },
+      "to": {
+        "node": "memory",
+        "port": "data0"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out1-memory-data1",
+      "from": {
+        "node": "data",
+        "port": "out1"
+      },
+      "to": {
+        "node": "memory",
+        "port": "data1"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out2-memory-data2",
+      "from": {
+        "node": "data",
+        "port": "out2"
+      },
+      "to": {
+        "node": "memory",
+        "port": "data2"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out3-memory-data3",
+      "from": {
+        "node": "data",
+        "port": "out3"
+      },
+      "to": {
+        "node": "memory",
+        "port": "data3"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out4-memory-data4",
+      "from": {
+        "node": "data",
+        "port": "out4"
+      },
+      "to": {
+        "node": "memory",
+        "port": "data4"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out5-memory-data5",
+      "from": {
+        "node": "data",
+        "port": "out5"
+      },
+      "to": {
+        "node": "memory",
+        "port": "data5"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out6-memory-data6",
+      "from": {
+        "node": "data",
+        "port": "out6"
+      },
+      "to": {
+        "node": "memory",
+        "port": "data6"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out7-memory-data7",
+      "from": {
+        "node": "data",
+        "port": "out7"
+      },
+      "to": {
+        "node": "memory",
+        "port": "data7"
+      },
+      "width": 1
+    },
+    {
+      "id": "clock-out-memory-clk",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "memory",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "write-out-memory-we",
+      "from": {
+        "node": "write",
+        "port": "out"
+      },
+      "to": {
+        "node": "memory",
+        "port": "we"
+      },
+      "width": 1
+    },
+    {
+      "id": "chip-out-memory-cs",
+      "from": {
+        "node": "chip",
+        "port": "out"
+      },
+      "to": {
+        "node": "memory",
+        "port": "cs"
+      },
+      "width": 1
+    },
+    {
+      "id": "read-out-memory-oe",
+      "from": {
+        "node": "read",
+        "port": "out"
+      },
+      "to": {
+        "node": "memory",
+        "port": "oe"
+      },
+      "width": 1
+    },
+    {
+      "id": "memory-out0-trace-in",
+      "from": {
+        "node": "memory",
+        "port": "out0"
+      },
+      "to": {
+        "node": "trace",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "memory-out0-bit0-in",
+      "from": {
+        "node": "memory",
+        "port": "out0"
+      },
+      "to": {
+        "node": "bit0",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "memory-out1-bit1-in",
+      "from": {
+        "node": "memory",
+        "port": "out1"
+      },
+      "to": {
+        "node": "bit1",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "memory-out2-bit2-in",
+      "from": {
+        "node": "memory",
+        "port": "out2"
+      },
+      "to": {
+        "node": "bit2",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "memory-out3-bit3-in",
+      "from": {
+        "node": "memory",
+        "port": "out3"
+      },
+      "to": {
+        "node": "bit3",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "memory-out4-bit4-in",
+      "from": {
+        "node": "memory",
+        "port": "out4"
+      },
+      "to": {
+        "node": "bit4",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "memory-out5-bit5-in",
+      "from": {
+        "node": "memory",
+        "port": "out5"
+      },
+      "to": {
+        "node": "bit5",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "memory-out6-bit6-in",
+      "from": {
+        "node": "memory",
+        "port": "out6"
+      },
+      "to": {
+        "node": "bit6",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "memory-out7-bit7-in",
+      "from": {
+        "node": "memory",
+        "port": "out7"
+      },
+      "to": {
+        "node": "bit7",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "ram-addressing"
+}

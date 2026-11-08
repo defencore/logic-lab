@@ -5,6 +5,8 @@ import { componentPins } from '../src/component-pins.js';
 import {
   dimensions,
   portPoint,
+  pinPlacement,
+  portDirection,
   route,
   snap,
   wirePath,
@@ -29,20 +31,28 @@ test('each individual contact stays inside its component and aligns with its wir
       ['in', definition.inputs],
       ['out', definition.outputs],
     ]) {
-      let previous = 0;
+      const contacts = new Set();
       for (const pin of pins) {
         const endpoint = portPoint(node, pin.id, side);
+        const placement = pinPlacement(node, pin.id, side);
         const top = endpoint.y - node.y;
-        assert.ok(top >= 58 && top + 9 < h, `${definition.type}.${pin.id} fits vertically`);
-        assert.ok(top - previous >= 25, `${definition.type}.${pin.id} has its own row`);
-        assert.equal(endpoint.x, node.x + (side === 'out' ? w : 0));
+        if (placement.edge === 'bottom') {
+          assert.equal(top, h, `${definition.type}.${pin.id} lies on the bottom edge`);
+          assert.ok(endpoint.x > node.x && endpoint.x < node.x + w);
+        } else {
+          assert.ok(top >= 58 && top + 9 < h, `${definition.type}.${pin.id} fits vertically`);
+          assert.equal(endpoint.x, node.x + (side === 'out' ? w : 0));
+        }
+        const coordinate = `${endpoint.x}:${endpoint.y}`;
+        assert.ok(!contacts.has(coordinate), `${definition.type}.${pin.id} has its own contact`);
+        contacts.add(coordinate);
+        const style = `top:${top}px${placement.edge === 'bottom' ? `;left:${placement.x}px` : ''}`;
         assert.ok(
           markup.includes(
-            `data-pin="${pin.id}" data-side="${side}" data-node="device" style="top:${top}px"`,
+            `data-pin="${pin.id}" data-side="${side}" data-node="device" style="${style}"`,
           ),
           `${definition.type}.${pin.id} renders at its connection point`,
         );
-        previous = top;
       }
     }
   }

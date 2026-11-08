@@ -1,5 +1,5 @@
 import { getDefinition } from './catalog.js';
-import { pinOffset } from './geometry.js';
+import { pinPlacement } from './geometry.js';
 import { esc } from './ui-utils.js';
 
 export function componentPins(node, { label, inputLabel, outputLabel }) {
@@ -10,10 +10,14 @@ export function componentPins(node, { label, inputLabel, outputLabel }) {
   ]
     .map(([side, pins, direction]) =>
       pins
-        .map(
-          (pin, index) =>
-            `<button class="pin pin-${side} ${pin.analog ? 'analog-pin' : ''}" data-pin="${esc(pin.id)}" data-side="${side}" data-node="${esc(node.id)}" style="top:${pinOffset(pins, index)}px" title="${esc(pin.label || pin.id)} · ${esc(direction)}${pin.analog ? ' · analog' : ' · 1 bit'}" aria-label="${esc(label)} · ${esc(direction)} · ${esc(pin.label || pin.id)}"><i aria-hidden="true"></i><span>${esc(pin.label || pin.id)}</span></button>`,
-        )
+        .map((pin) => {
+          const placement = pinPlacement(node, pin.id, side);
+          const style = `top:${placement.y}px${placement.edge === 'bottom' ? `;left:${placement.x}px` : ''}`;
+          const pinLabel = pin.label || pin.id;
+          const displayLabel =
+            node.type === 'matrix' ? `${pin.group === 'rows' ? 'R' : 'C'}${pin.bit}` : pinLabel;
+          return `<button class="pin pin-${side} pin-edge-${placement.edge} ${pin.analog ? 'analog-pin' : ''}" data-pin="${esc(pin.id)}" data-side="${side}" data-node="${esc(node.id)}" style="${style}" title="${esc(pinLabel)} · ${esc(direction)}${pin.analog ? ' · analog' : ' · 1 bit'}" aria-label="${esc(label)} · ${esc(direction)} · ${esc(pinLabel)}"><i aria-hidden="true"></i><span>${esc(displayLabel)}</span></button>`;
+        })
         .join(''),
     )
     .join('');

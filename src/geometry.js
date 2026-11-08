@@ -18,10 +18,11 @@ export function dimensions(node) {
       h: Math.max(100, Math.min(3000, Number(node.params.height) || 260)),
     };
   if (node.type === 'note') return { w: 240, h: 130 };
+  if (node.type === 'matrix') return { w: 260, h: 270 };
   return {
     w: SCENARIO_TYPES.includes(node.type)
       ? 284
-      : ['scope', 'servo', 'matrix', 'am', 'fm', 'stepper'].includes(node.type) ||
+      : ['scope', 'servo', 'am', 'fm', 'stepper'].includes(node.type) ||
           [...d.inputs, ...d.outputs].some((pin) => pin.group)
         ? 228
         : node.type === 'sevenseg'
@@ -31,18 +32,36 @@ export function dimensions(node) {
       100,
       ...[d.inputs, d.outputs].map((pins) => pinOffset(pins, pins.length - 1) + 21),
       SCENARIO_TYPES.includes(node.type) ||
-        ['scope', 'servo', 'matrix', 'sevenseg', 'am', 'fm', 'stepper'].includes(node.type)
+        ['scope', 'servo', 'sevenseg', 'am', 'fm', 'stepper'].includes(node.type)
         ? 190
         : 0,
     ),
   };
 }
+export function pinPlacement(node, port, side) {
+  const definition = getDefinition(node.type);
+  const pins = side === 'out' ? definition.outputs : definition.inputs;
+  const index = pins.findIndex((pin) => pin.id === port);
+  const pin = pins[index];
+  if (node.type === 'matrix' && pin?.group === 'rows')
+    return { x: 0, y: 58 + pin.bit * 22, edge: 'left' };
+  if (node.type === 'matrix' && pin?.group === 'cols')
+    return { x: 70 + pin.bit * 22, y: dimensions(node).h, edge: 'bottom' };
+  return {
+    x: side === 'out' ? dimensions(node).w : 0,
+    y: pinOffset(pins, index),
+    edge: side === 'out' ? 'right' : 'left',
+  };
+}
+
+export function portDirection(node, port, side) {
+  const edge = pinPlacement(node, port, side).edge;
+  return edge === 'bottom' ? { x: 0, y: 1 } : { x: edge === 'right' ? 1 : -1, y: 0 };
+}
+
 export function portPoint(node, port, side) {
-  const d = getDefinition(node.type),
-    pins = side === 'out' ? d.outputs : d.inputs;
-  const i = pins.findIndex((p) => p.id === port),
-    { w } = dimensions(node);
-  return { x: node.x + (side === 'out' ? w : 0), y: node.y + pinOffset(pins, i) };
+  const point = pinPlacement(node, port, side);
+  return { x: node.x + point.x, y: node.y + point.y };
 }
 const LEAD = 24;
 const MAX_POINTS = 100;
@@ -70,7 +89,8 @@ function compact(vertices, keepInline = false) {
           : before.y === current.y && current.y === point.y
             ? 'x'
             : null;
-      if (!axis || keepInline) break;
+      const forward = axis && (current[axis] - before[axis]) * (point[axis] - current[axis]) >= 0;
+      if (!forward || keepInline) break;
       result.pop();
     }
     result.push({ x: point.x, y: point.y });
@@ -85,55 +105,99 @@ function connect(vertices, point, horizontalFirst = true) {
   if (!equal(previous, point)) vertices.push({ ...point });
 }
 
-function orthogonalVertices(a, b, points = [], lane = null) {
+const DEFAULT_DIRECTIONS = { start: { x: 1, y: 0 }, end: { x: -1, y: 0 } };
+const offsetPoint = (point, direction, distance) => ({
+  x: point.x + direction.x * distance,
+  y: point.y + direction.y * distance,
+});
+
+function terminalPath(origin, target, direction, a, b) {
+  const vertices = [{ ...origin }];
+  const along = direction.x ? 'x' : 'y';
+  const across = crossAxis(along);
+  const sign = direction[along];
+  const forward = (target[along] - origin[along]) * sign;
+  if (target[across] === origin[across] && forward > 0) {
+    vertices.push({ ...target });
+    return vertices;
+  }
+  const lead = offsetPoint(origin, direction, LEAD);
+  vertices.push(lead);
+  if (target[across] === origin[across] && forward <= 0) {
+    const detour = Math.min(a[across], b[across]) - 40;
+    connect(vertices, { ...lead, [across]: detour });
+    connect(vertices, { ...target, [across]: detour });
+  }
+  connect(vertices, target, along === 'y');
+  return vertices;
+}
+
+function orthogonalVertices(a, b, points = [], lane = null, directions = DEFAULT_DIRECTIONS) {
+  const { start, end } = directions;
   if (!points.length) {
     if (equal(a, b)) return [{ ...a }];
     const offset = lane ? (lane.bit - (lane.groupWidth - 1) / 2) * 8 : 0;
-    if (b.x >= a.x + LEAD * 2) {
-      const middle = Math.max(a.x + LEAD, Math.min(b.x - LEAD, snap((a.x + b.x) / 2) + offset));
-      return compact([a, { x: middle, y: a.y }, { x: middle, y: b.y }, b]);
+    // Opposing horizontal contacts share a routing corridor; perpendicular
+    // contacts reserve an outward lead at each end before joining that corridor.
+    if (start.x === 1 && end.x === -1) {
+      if (b.x >= a.x + LEAD * 2) {
+        const middle = Math.max(a.x + LEAD, Math.min(b.x - LEAD, snap((a.x + b.x) / 2) + offset));
+        return compact([a, { x: middle, y: a.y }, { x: middle, y: b.y }, b]);
+      }
+      const lead = LEAD + (lane?.bit || 0) * 8;
+      const top = Math.min(a.y, b.y) - 40 - (lane?.bit || 0) * 8;
+      return compact([
+        a,
+        { x: a.x + lead, y: a.y },
+        { x: a.x + lead, y: top },
+        { x: b.x - lead, y: top },
+        { x: b.x - lead, y: b.y },
+        b,
+      ]);
     }
     const lead = LEAD + (lane?.bit || 0) * 8;
-    const top = Math.min(a.y, b.y) - 40 - (lane?.bit || 0) * 8;
-    return compact([
-      a,
-      { x: a.x + lead, y: a.y },
-      { x: a.x + lead, y: top },
-      { x: b.x - lead, y: top },
-      { x: b.x - lead, y: b.y },
-      b,
-    ]);
-  }
-  const vertices = [{ ...a }];
-  const first = points[0],
-    last = points.at(-1);
-  if (first.y !== a.y || first.x < a.x) {
-    const lead = { x: a.x + LEAD, y: a.y };
-    vertices.push(lead);
-    if (first.y === a.y && first.x < a.x) {
-      const lane = Math.min(a.y, b.y) - 40;
-      connect(vertices, { x: lead.x, y: lane });
-      connect(vertices, { x: first.x, y: lane });
+    const exit = offsetPoint(a, start, lead);
+    const entry = offsetPoint(b, end, lead);
+    const vertices = [a, exit];
+    const firstAxis = start.x ? 'x' : 'y';
+    const endAxis = end.x ? 'x' : 'y';
+    if (firstAxis !== endAxis) {
+      const across = crossAxis(firstAxis);
+      if (exit[across] === entry[across] || exit[firstAxis] === entry[firstAxis]) {
+        const corridor = Math.min(exit[across], entry[across]) - 40 - (lane?.bit || 0) * 8;
+        connect(vertices, { ...exit, [across]: corridor });
+        connect(vertices, { ...entry, [across]: corridor });
+      }
+      connect(vertices, entry, firstAxis === 'y');
+    } else {
+      const across = crossAxis(firstAxis);
+      const corridor = Math.min(exit[across], entry[across]) - 40 - (lane?.bit || 0) * 8;
+      connect(vertices, { ...exit, [across]: corridor });
+      connect(vertices, { ...entry, [across]: corridor });
+      connect(vertices, entry);
     }
-    connect(vertices, first, false);
-  } else connect(vertices, first);
+    connect(vertices, b);
+    return compact(vertices);
+  }
+  const vertices = terminalPath(a, points[0], start, a, b);
   for (const point of points.slice(1)) connect(vertices, point);
-  if (last.y !== b.y || last.x > b.x) {
-    if (last.y === b.y && last.x > b.x) {
-      const lane = Math.min(a.y, b.y) - 40;
-      connect(vertices, { x: last.x, y: lane });
-      connect(vertices, { x: b.x - LEAD, y: lane });
-    }
-    connect(vertices, { x: b.x - LEAD, y: b.y });
-  }
-  connect(vertices, b);
+  const trailing = terminalPath(b, points.at(-1), end, a, b).reverse();
+  for (const point of trailing.slice(1)) connect(vertices, point);
   return compact(vertices, true);
 }
 
 function wireEndpoints(wire, project) {
   const a = project.nodes.find((node) => node.id === wire.from.node);
   const b = project.nodes.find((node) => node.id === wire.to.node);
-  return a && b ? [portPoint(a, wire.from.port, 'out'), portPoint(b, wire.to.port, 'in')] : null;
+  return a && b
+    ? {
+        points: [portPoint(a, wire.from.port, 'out'), portPoint(b, wire.to.port, 'in')],
+        directions: {
+          start: portDirection(a, wire.from.port, 'out'),
+          end: portDirection(b, wire.to.port, 'in'),
+        },
+      }
+    : null;
 }
 
 function wireLane(wire, project) {
@@ -150,20 +214,44 @@ function wireLane(wire, project) {
 
 export function wireVertices(wire, project) {
   const ends = wireEndpoints(wire, project);
-  return ends ? orthogonalVertices(...ends, wire.points || [], wireLane(wire, project)) : [];
+  return ends
+    ? orthogonalVertices(
+        ...ends.points,
+        wire.points || [],
+        wireLane(wire, project),
+        ends.directions,
+      )
+    : [];
 }
 
 export function wirePath(wire, project) {
   const ends = wireEndpoints(wire, project);
-  return ends ? route(...ends, wire.points, project.wireStyle, wireLane(wire, project)) : '';
+  return ends
+    ? route(
+        ...ends.points,
+        wire.points,
+        project.wireStyle,
+        wireLane(wire, project),
+        ends.directions,
+      )
+    : '';
 }
 
-export function route(a, b, points = [], style = 'orthogonal', lane = null) {
+export function route(
+  a,
+  b,
+  points = [],
+  style = 'orthogonal',
+  lane = null,
+  directions = DEFAULT_DIRECTIONS,
+) {
   if (style === 'bezier' && !points.length) {
-    const dx = Math.max(55, Math.abs(b.x - a.x) * 0.5);
-    return `M${a.x},${a.y}C${a.x + dx},${a.y} ${b.x - dx},${b.y} ${b.x},${b.y}`;
+    const distance = Math.max(55, Math.abs(b.x - a.x) * 0.5);
+    const first = offsetPoint(a, directions.start, distance);
+    const last = offsetPoint(b, directions.end, distance);
+    return `M${a.x},${a.y}C${first.x},${first.y} ${last.x},${last.y} ${b.x},${b.y}`;
   }
-  return orthogonalVertices(a, b, points, lane)
+  return orthogonalVertices(a, b, points, lane, directions)
     .map((point, index) => `${index ? 'L' : 'M'}${point.x},${point.y}`)
     .join(' ');
 }
@@ -185,12 +273,21 @@ export function nearestWireSegment(vertices, target) {
   return nearest;
 }
 
+function terminalDirection(pin, neighbor) {
+  return { x: Math.sign(neighbor.x - pin.x), y: Math.sign(neighbor.y - pin.y) };
+}
+
 function editPoints(original, updated) {
   if (updated.some((point) => !finitePoint(point))) return null;
   const canonical = orthogonalVertices(
     original[0],
     original.at(-1),
     compact(updated, true).slice(1, -1),
+    null,
+    {
+      start: terminalDirection(original[0], original[1]),
+      end: terminalDirection(original.at(-1), original.at(-2)),
+    },
   );
   const points = canonical.slice(1, -1);
   if (

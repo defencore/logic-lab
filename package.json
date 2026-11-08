@@ -9,8 +9,8 @@
     "test": "node --test test/*.test.js",
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
-    "format": "prettier --write \"src/**/*.js\" \"test/**/*.js\" \"examples/**/*.{js,json,md}\" \"scripts/*.mjs\" style.css index.html README.md package.json .github/workflows/pages.yml .prettierrc.json",
-    "format:check": "prettier --check \"src/**/*.js\" \"test/**/*.js\" \"examples/**/*.{js,json,md}\" \"scripts/*.mjs\" style.css index.html README.md package.json .github/workflows/pages.yml .prettierrc.json"
+    "format": "prettier --write \"src/**/*.{js,css}\" \"test/**/*.js\" \"examples/**/*.{js,json,md}\" \"scripts/*.mjs\" style.css index.html README.md package.json .github/workflows/pages.yml .prettierrc.json",
+    "format:check": "prettier --check \"src/**/*.{js,css}\" \"test/**/*.js\" \"examples/**/*.{js,json,md}\" \"scripts/*.mjs\" style.css index.html README.md package.json .github/workflows/pages.yml .prettierrc.json"
   },
   "engines": {
     "node": ">=22"

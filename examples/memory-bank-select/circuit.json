@@ -1,0 +1,757 @@
+{
+  "version": 1,
+  "name": "Memory map: decode A4 to select two RAM banks",
+  "nodes": [
+    {
+      "id": "address",
+      "type": "bus_input",
+      "x": 40,
+      "y": 40,
+      "label": "Global address · 0–31",
+      "enabled": true,
+      "params": {
+        "value": 3
+      }
+    },
+    {
+      "id": "data",
+      "type": "bus_input",
+      "x": 40,
+      "y": 580,
+      "label": "Shared write data",
+      "enabled": true,
+      "params": {
+        "value": 42
+      }
+    },
+    {
+      "id": "bank-not",
+      "type": "not",
+      "x": 440,
+      "y": 40,
+      "label": "Bank 0 select · NOT A4",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "bank0-led",
+      "type": "led",
+      "x": 440,
+      "y": 220,
+      "label": "Bank 0 selected",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "bank1-led",
+      "type": "led",
+      "x": 440,
+      "y": 400,
+      "label": "Bank 1 selected",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "clock",
+      "type": "switch",
+      "x": 440,
+      "y": 660,
+      "label": "CLK · shared write clock",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "write",
+      "type": "switch",
+      "x": 440,
+      "y": 840,
+      "label": "WE · shared write enable",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "read",
+      "type": "switch",
+      "x": 440,
+      "y": 1020,
+      "label": "OE · shared read enable",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "bank0",
+      "type": "ram",
+      "x": 840,
+      "y": 40,
+      "label": "Bank 0 · global addresses 0–15",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "bank1",
+      "type": "ram",
+      "x": 1240,
+      "y": 40,
+      "label": "Bank 1 · global addresses 16–31",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "read-byte",
+      "type": "merger",
+      "x": 1660,
+      "y": 40,
+      "label": "Shared read byte · single-bit lines",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "trace",
+      "type": "scope",
+      "x": 1660,
+      "y": 400,
+      "label": "Shared read data · bit 0",
+      "enabled": true,
+      "params": {
+        "range": 1
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "address-out4-bank-not-a",
+      "from": {
+        "node": "address",
+        "port": "out4"
+      },
+      "to": {
+        "node": "bank-not",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank-not-out-bank0-cs",
+      "from": {
+        "node": "bank-not",
+        "port": "out"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "cs"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-out4-bank1-cs",
+      "from": {
+        "node": "address",
+        "port": "out4"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "cs"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank-not-out-bank0-led-in",
+      "from": {
+        "node": "bank-not",
+        "port": "out"
+      },
+      "to": {
+        "node": "bank0-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-out4-bank1-led-in",
+      "from": {
+        "node": "address",
+        "port": "out4"
+      },
+      "to": {
+        "node": "bank1-led",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "read-byte-out0-trace-in",
+      "from": {
+        "node": "read-byte",
+        "port": "out0"
+      },
+      "to": {
+        "node": "trace",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble0-bank0-address0",
+      "from": {
+        "node": "address",
+        "port": "nibble0"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "address0"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble1-bank0-address1",
+      "from": {
+        "node": "address",
+        "port": "nibble1"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "address1"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble2-bank0-address2",
+      "from": {
+        "node": "address",
+        "port": "nibble2"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "address2"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble3-bank0-address3",
+      "from": {
+        "node": "address",
+        "port": "nibble3"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "address3"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out0-bank0-data0",
+      "from": {
+        "node": "data",
+        "port": "out0"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "data0"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out1-bank0-data1",
+      "from": {
+        "node": "data",
+        "port": "out1"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "data1"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out2-bank0-data2",
+      "from": {
+        "node": "data",
+        "port": "out2"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "data2"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out3-bank0-data3",
+      "from": {
+        "node": "data",
+        "port": "out3"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "data3"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out4-bank0-data4",
+      "from": {
+        "node": "data",
+        "port": "out4"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "data4"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out5-bank0-data5",
+      "from": {
+        "node": "data",
+        "port": "out5"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "data5"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out6-bank0-data6",
+      "from": {
+        "node": "data",
+        "port": "out6"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "data6"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out7-bank0-data7",
+      "from": {
+        "node": "data",
+        "port": "out7"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "data7"
+      },
+      "width": 1
+    },
+    {
+      "id": "clock-out-bank0-clk",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "write-out-bank0-we",
+      "from": {
+        "node": "write",
+        "port": "out"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "we"
+      },
+      "width": 1
+    },
+    {
+      "id": "read-out-bank0-oe",
+      "from": {
+        "node": "read",
+        "port": "out"
+      },
+      "to": {
+        "node": "bank0",
+        "port": "oe"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank0-out0-read-byte-b0",
+      "from": {
+        "node": "bank0",
+        "port": "out0"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b0"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank0-out1-read-byte-b1",
+      "from": {
+        "node": "bank0",
+        "port": "out1"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b1"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank0-out2-read-byte-b2",
+      "from": {
+        "node": "bank0",
+        "port": "out2"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b2"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank0-out3-read-byte-b3",
+      "from": {
+        "node": "bank0",
+        "port": "out3"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b3"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank0-out4-read-byte-b4",
+      "from": {
+        "node": "bank0",
+        "port": "out4"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b4"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank0-out5-read-byte-b5",
+      "from": {
+        "node": "bank0",
+        "port": "out5"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b5"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank0-out6-read-byte-b6",
+      "from": {
+        "node": "bank0",
+        "port": "out6"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b6"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank0-out7-read-byte-b7",
+      "from": {
+        "node": "bank0",
+        "port": "out7"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b7"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble0-bank1-address0",
+      "from": {
+        "node": "address",
+        "port": "nibble0"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "address0"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble1-bank1-address1",
+      "from": {
+        "node": "address",
+        "port": "nibble1"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "address1"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble2-bank1-address2",
+      "from": {
+        "node": "address",
+        "port": "nibble2"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "address2"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble3-bank1-address3",
+      "from": {
+        "node": "address",
+        "port": "nibble3"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "address3"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out0-bank1-data0",
+      "from": {
+        "node": "data",
+        "port": "out0"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "data0"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out1-bank1-data1",
+      "from": {
+        "node": "data",
+        "port": "out1"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "data1"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out2-bank1-data2",
+      "from": {
+        "node": "data",
+        "port": "out2"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "data2"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out3-bank1-data3",
+      "from": {
+        "node": "data",
+        "port": "out3"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "data3"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out4-bank1-data4",
+      "from": {
+        "node": "data",
+        "port": "out4"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "data4"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out5-bank1-data5",
+      "from": {
+        "node": "data",
+        "port": "out5"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "data5"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out6-bank1-data6",
+      "from": {
+        "node": "data",
+        "port": "out6"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "data6"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out7-bank1-data7",
+      "from": {
+        "node": "data",
+        "port": "out7"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "data7"
+      },
+      "width": 1
+    },
+    {
+      "id": "clock-out-bank1-clk",
+      "from": {
+        "node": "clock",
+        "port": "out"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "clk"
+      },
+      "width": 1
+    },
+    {
+      "id": "write-out-bank1-we",
+      "from": {
+        "node": "write",
+        "port": "out"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "we"
+      },
+      "width": 1
+    },
+    {
+      "id": "read-out-bank1-oe",
+      "from": {
+        "node": "read",
+        "port": "out"
+      },
+      "to": {
+        "node": "bank1",
+        "port": "oe"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank1-out0-read-byte-b0",
+      "from": {
+        "node": "bank1",
+        "port": "out0"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b0"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank1-out1-read-byte-b1",
+      "from": {
+        "node": "bank1",
+        "port": "out1"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b1"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank1-out2-read-byte-b2",
+      "from": {
+        "node": "bank1",
+        "port": "out2"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b2"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank1-out3-read-byte-b3",
+      "from": {
+        "node": "bank1",
+        "port": "out3"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b3"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank1-out4-read-byte-b4",
+      "from": {
+        "node": "bank1",
+        "port": "out4"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b4"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank1-out5-read-byte-b5",
+      "from": {
+        "node": "bank1",
+        "port": "out5"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b5"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank1-out6-read-byte-b6",
+      "from": {
+        "node": "bank1",
+        "port": "out6"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b6"
+      },
+      "width": 1
+    },
+    {
+      "id": "bank1-out7-read-byte-b7",
+      "from": {
+        "node": "bank1",
+        "port": "out7"
+      },
+      "to": {
+        "node": "read-byte",
+        "port": "b7"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "memory-bank-select"
+}

@@ -12,6 +12,7 @@ import {
   insertWirePoint,
   removeWireVertex,
   portPoint,
+  portDirection,
   route,
   snap,
 } from './geometry.js';
@@ -138,7 +139,20 @@ export function createWiringEditor(options) {
     if (drag?.kind === 'endpoint' && drag.point) {
       const a = drag.side === 'out' ? drag.point : endpoint(item, 'out');
       const b = drag.side === 'in' ? drag.point : endpoint(item, 'in');
-      markup += `<path class="wire-edit-preview" d="${route(a, b, item.points, project().wireStyle)}"/>`;
+      const sourceNode = project().nodes.find((node) => node.id === item.from.node);
+      const targetNode = project().nodes.find((node) => node.id === item.to.node);
+      markup += `<path class="wire-edit-preview" d="${route(
+        a,
+        b,
+        item.points,
+        project().wireStyle,
+        null,
+        {
+          start:
+            drag.side === 'out' ? { x: 1, y: 0 } : portDirection(sourceNode, item.from.port, 'out'),
+          end: drag.side === 'in' ? { x: -1, y: 0 } : portDirection(targetNode, item.to.port, 'in'),
+        },
+      )}"/>`;
     }
     layer.innerHTML = markup;
   }
@@ -159,6 +173,7 @@ export function createWiringEditor(options) {
     renderContext();
   }
   function commitPoints(points, target = null, kind = 'bend') {
+    if (options.canEdit && !options.canEdit()) return false;
     const item = wire();
     if (!item || !points || equalPoints(item.points, points)) return false;
     if (points.length > 100) {
@@ -192,6 +207,7 @@ export function createWiringEditor(options) {
     return true;
   }
   function startDrag(event, kind, index) {
+    if (options.canEdit && !options.canEdit()) return;
     const item = wire();
     if (!item) return;
     event.preventDefault();
@@ -252,6 +268,7 @@ export function createWiringEditor(options) {
     refresh();
   }
   function reconnect(pin) {
+    if (options.canEdit && !options.canEdit()) return false;
     const item = wire();
     if (!item || pin.side !== action?.side) {
       options.notify(t('incompatible'));

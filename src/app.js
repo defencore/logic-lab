@@ -6,7 +6,8 @@ import { parseProject, serializeProject, loadProject, saveProject } from './proj
 import { TEXT } from './i18n.js';
 import { icon, gateIcon } from './icons.js';
 import { $, $$, esc, format, safeColor, signalClass } from './ui-utils.js';
-import { dimensions, portPoint, route, wirePath, snap } from './geometry.js';
+import { dimensions, portPoint, portDirection, route, wirePath, snap } from './geometry.js';
+import './matrix-layout.css';
 import { guideMarkup, exampleCards, filterExamples, exampleCatalogShell } from './learning-ui.js';
 import { renderLibraryCategories, renderLibraryItems } from './catalog-ui.js';
 import {
@@ -34,15 +35,12 @@ import {
 import { SCENARIO_TYPES } from './scenarios.js';
 import { waveformPng } from './waveform-export.js';
 import { createRecording, appendRecording, stopRecording, recordingCsv } from './recording.js';
-import {
-  SIMULATION_RATES,
-  TIME_WINDOWS,
-  frameSimulationDelta,
-  simulationStepCount,
-} from './simulation-time.js';
+import { SIMULATION_RATES, TIME_WINDOWS, frameSimulationDelta } from './simulation-time.js';
 import { createWiringEditor } from './wiring-ui.js';
 import { checkConnection } from './connections.js';
 import { componentPins } from './component-pins.js';
+import { createClassroom } from './classroom-ui.js';
+import { SOURCE_PARAMETERS, nextSimulationInterval } from './action-sequence.js';
 
 let lang = 'en';
 try {
@@ -88,6 +86,7 @@ let query = '';
 let selected = new Set();
 let selectedWire = null;
 let wiring;
+let classroom;
 let pending = null;
 let gesture = null;
 let view = project.viewport || { x: 0, y: 0, zoom: 1 };
@@ -117,8 +116,9 @@ function checkpoint() {
 function persist() {
   clearTimeout(storageTimer);
   storageTimer = setTimeout(() => {
-    project.viewport = { ...view };
-    const ok = saveProject(project);
+    const editable = classroom?.projectToSave() || project;
+    editable.viewport = { ...view };
+    const ok = saveProject(editable);
     $('#save-state').innerHTML =
       icon(ok ? 'check' : 'help', 13) + esc(ok ? t('saved') : t('storageFailed'));
   }, 400);
@@ -130,6 +130,7 @@ function changed({ reset = false } = {}) {
   renderInspector();
   updateSignals();
   updateCounts();
+  classroom?.observeEdit();
   persist();
 }
 function notify(message) {
@@ -140,6 +141,7 @@ function notify(message) {
   toastTimer = setTimeout(() => el.classList.remove('visible'), 3200);
 }
 function undo(redo = false) {
+  if (classroom && !classroom.allowEdit()) return;
   cancelInteraction();
   const from = redo ? redoStack : undoStack,
     to = redo ? undoStack : redoStack;
@@ -226,9 +228,10 @@ function shell() {
   $('#app').innerHTML = `
     <header class="app-header"><a class="brand" href="./" aria-label="Logic Lab"><img src="./favicon.svg?v=logic-lab-1" alt=""><span>logic<span class="brand-light">lab</span><small>${esc(t('workbench'))}</small></span></a>
     <div class="header-divider"></div><div class="project-heading">${icon('folder', 16)}<input id="project-name" aria-label="${t('namePlaceholder')}" value="${esc(project.name)}" maxlength="100"><span class="project-tag">.logic</span></div>
-    <div class="header-actions"><span id="save-state" class="save-state">${icon('check', 13)}${t('saved')}</span><details class="project-files"><summary class="icon-btn" aria-label="${t('projectFiles')}" title="${t('projectFiles')}">${icon('folder', 17)}</summary><div class="file-menu-panel"><button type="button" id="import" class="file-menu-item">${icon('upload', 16)}<span>${t('open')}</span></button><button type="button" id="export" class="file-menu-item">${icon('download', 16)}<span>${t('save')}</span></button></div></details><span class="divider"></span><button id="motion" class="soft-btn context-3d-btn" ${getSceneEntries(project).length ? '' : 'hidden'} aria-label="${t('motionView')}" title="${t('motionView')}">${icon('box', 15)}<span>3D</span></button><button id="examples" class="soft-btn" aria-label="${t('examples')}">${icon('grid', 15)}<span>${t('examples')}</span></button><button id="language" class="language-btn" aria-label="Language">${lang === 'en' ? 'EN' : 'UA'}${icon('down', 12)}</button>${button('help', 'help', t('help'))}</div></header>
+    <div class="header-actions"><span id="save-state" class="save-state">${icon('check', 13)}${t('saved')}</span><details class="project-files"><summary class="icon-btn" aria-label="${t('projectFiles')}" title="${t('projectFiles')}">${icon('folder', 17)}</summary><div class="file-menu-panel"><button type="button" id="import" class="file-menu-item">${icon('upload', 16)}<span>${t('open')}</span></button><button type="button" id="export" class="file-menu-item">${icon('download', 16)}<span>${t('save')}</span></button></div></details><span class="divider"></span><button id="motion" class="soft-btn context-3d-btn" ${getSceneEntries(project).length ? '' : 'hidden'} aria-label="${t('motionView')}" title="${t('motionView')}">${icon('box', 15)}<span>3D</span></button><button id="classroom" class="soft-btn" aria-label="${lang === 'ua' ? 'Лабораторні роботи' : 'Classroom'}"></button><button id="examples" class="soft-btn" aria-label="${t('examples')}">${icon('grid', 15)}<span>${t('examples')}</span></button><button id="language" class="language-btn" aria-label="Language">${lang === 'en' ? 'EN' : 'UA'}${icon('down', 12)}</button>${button('help', 'help', t('help'))}</div></header>
     <div class="app-body"><aside id="component-library" class="library" aria-label="${t('componentLibrary')}"><div class="panel-title"><h2>${t('componentLibrary')}</h2><span class="count-badge">${COMPONENTS.length}</span>${button('close-library', 'close', t('cancel'))}</div><div class="search-wrap">${icon('search', 16)}<input id="search" type="search" aria-label="${t('searchAllComponents')}" placeholder="${t('searchAllComponents')}" value="${esc(query)}" autocomplete="off"><kbd>/</kbd></div><div id="library-categories"></div><div class="library-results-heading"><span>${t('catalogResults')}</span><span id="library-result-count"></span></div><div id="library-list" class="library-list"></div><div class="library-footer"><span class="dot green"></span>${t('browserOnly')}<small>${t('dragHint')}</small></div></aside><button id="library-backdrop" class="library-backdrop" aria-label="${t('cancel')}" tabindex="-1" hidden></button>
     <main class="main" data-workspace-view="${workspaceView}"><div class="workspace-toolbar"><button id="library-toggle" class="icon-btn" aria-label="${t('componentLibrary')}" title="${t('componentLibrary')}" aria-controls="component-library" aria-expanded="false">${icon('grid', 18)}</button><div class="workspace-title"><span class="breadcrumb">${t('workspace')}</span><span class="slash">/</span><span id="canvas-name">${esc(project.name)}</span></div><div class="simulation-controls"><label class="simulation-rate global-speed" title="${t('simulationRateHint')}">${icon('clock', 14)}<span>${t('simulationRate')}</span><select id="simulation-rate" aria-label="${t('simulationRate')}">${SIMULATION_RATES.map((value) => `<option value="${value}" ${simulationRate === value ? 'selected' : ''}>${formatRate(value)}</option>`).join('')}</select></label>${button('lesson-toggle', 'note', t('showLesson'))}${button('reset', 'reset', t('reset'))}${button('step', 'step', t('step'))}<button id="run" class="run-btn" title="${t('runKeyboard')}">${icon('play', 14)}<span>${t('run')}</span><kbd>R</kbd></button></div></div>
+    <section id="classroom-dock" class="classroom-dock" aria-label="${lang === 'ua' ? 'Сценарій дій' : 'Action sequence'}" hidden></section>
     <nav class="workspace-tabs" aria-label="${t('workspace')}">${['canvas', 'inspector', 'signals'].map((view) => `<button type="button" data-workspace-view="${view}" aria-pressed="${workspaceView === view}">${t(view === 'canvas' ? 'circuitView' : view === 'inspector' ? 'inspector' : 'signalsView')}</button>`).join('')}</nav>
     <div class="editor-workspace"><div class="editor-toolstrip"><div class="canvas-tools"><div class="tool-group">${['select', 'pan', 'wire'].map((x, i) => `<button data-tool="${x}" class="icon-btn ${tool === x ? 'active' : ''}" title="${x === 'pan' ? t('panHint') : t(x)}" aria-label="${t(x)}">${icon(['mouse', 'hand', 'wire'][i])}</button>`).join('')}</div><button id="more-tools" class="icon-btn" aria-label="${t('moreTools')}" title="${t('moreTools')}" aria-expanded="false" aria-controls="secondary-tools">${icon('more', 18)}</button><div id="secondary-tools" class="tool-group secondary-tools">${button('add-note', 'note', t('note'))}${button('add-group', 'layers', t('group'))}${button('undo', 'undo', t('undo'))}${button('redo', 'redo', t('redo'))}<button type="button" class="icon-btn" data-tool="trace" title="${t('netTraceTool')}" aria-label="${t('netTraceTool')}">${icon('probe', 18)}</button></div></div><div class="zoom-tools">${button('zoom-out', 'minus', t('zoom'))}<button id="zoom-value" class="zoom-value" title="${t('resetZoom')}" aria-label="${t('resetZoom')}">100%</button><button id="zoom-in" class="icon-btn" aria-label="${t('zoom')}">${icon('plus', 16)}</button><span class="divider"></span>${button('fit', 'fit', t('fit'))}</div><div id="wire-context" class="wire-context"></div></div>
     <section id="lesson-panel" class="lesson-panel" hidden></section>
@@ -241,6 +244,7 @@ function shell() {
     </div><div id="modal-root"></div>`;
   $('#zoom-out').innerHTML = '<span style="font-size:20px">−</span>';
   bindShell();
+  classroom?.mount();
   updateTool();
   renderLibrary();
   renderBoard();
@@ -438,6 +442,10 @@ function renderInspectorContent() {
     persist();
   });
   $('#node-enabled').onchange = (e) => {
+    if (classroom && !classroom.allowEdit()) {
+      e.target.checked = n.enabled !== false;
+      return;
+    }
     checkpoint();
     n.enabled = e.target.checked;
     changed();
@@ -471,6 +479,26 @@ function renderInspectorContent() {
         editing = true;
       }
       if (n.params[key] === value) return;
+      if (classroom?.isLocked()) {
+        if (!classroom.allowInput()) return;
+        if (!SOURCE_PARAMETERS[n.type]?.[key] && !classroom.allowEdit()) return;
+        const rule = SOURCE_PARAMETERS[n.type]?.[key];
+        if (
+          rule &&
+          (typeof value !== 'number' ||
+            value < rule[0] ||
+            value > rule[1] ||
+            (rule[2] && !Number.isInteger(value)))
+        ) {
+          notify(
+            lang === 'ua'
+              ? `Для запису задайте значення від ${rule[0]} до ${rule[1]}.`
+              : `For recording, enter a value between ${rule[0]} and ${rule[1]}.`,
+          );
+          input.value = n.params[key];
+          return;
+        }
+      }
       n.params[key] = value;
       if (key === 'initial' || SCENARIO_TYPES.includes(n.type)) delete runtime.state[n.id];
       const companion = $(`[data-${input.dataset.slider ? 'param' : 'slider'}="${key}"]`);
@@ -478,6 +506,8 @@ function renderInspectorContent() {
       simulate(project, runtime, 0);
       renderBoard();
       updateSignals();
+      if (SOURCE_PARAMETERS[n.type]?.[key]) classroom?.inputChanged(n.id, key, value);
+      classroom?.observeEdit();
       persist();
     };
     input.oninput = commit;
@@ -946,6 +976,7 @@ function updateCounts() {
   $('#canvas-name').textContent = project.name;
 }
 function addNode(type, point) {
+  if (classroom && !classroom.allowEdit()) return;
   setWorkspaceView('canvas');
   if (project.nodes.length >= 1000) {
     notify(t('limitReached'));
@@ -987,6 +1018,7 @@ function addNode(type, point) {
   changed();
 }
 function deleteSelection() {
+  if (classroom && !classroom.allowEdit()) return;
   cancelInteraction();
   if (!selected.size && !selectedWire) return;
   checkpoint();
@@ -1002,6 +1034,7 @@ function deleteSelection() {
   notify(t('removed'));
 }
 function duplicateSelection() {
+  if (classroom && !classroom.allowEdit()) return;
   if (!selected.size) return;
   const internal = project.wires.filter(
     (w) => selected.has(w.from.node) && selected.has(w.to.node),
@@ -1040,6 +1073,7 @@ function duplicateSelection() {
   changed();
 }
 function enableSelected(value) {
+  if (classroom && !classroom.allowEdit()) return;
   checkpoint();
   project.nodes.filter((n) => selected.has(n.id)).forEach((n) => (n.enabled = value));
   changed();
@@ -1063,6 +1097,7 @@ function nodePointerDown(e) {
     selectionChanged();
   }
   const point = worldPoint(e);
+  if (classroom?.isLocked()) return;
   gesture = {
     kind: 'nodes',
     pointerId: e.pointerId,
@@ -1080,6 +1115,7 @@ function pinPointerDown(e) {
   if (e.button !== 0) return;
   $('#viewport').focus({ preventScroll: true });
   if (wiring.pinPointerDown(e)) return;
+  if (classroom && !classroom.allowEdit()) return;
   const pin = e.currentTarget;
   const current = { node: pin.dataset.node, port: pin.dataset.pin, side: pin.dataset.side };
   if (pending) {
@@ -1170,8 +1206,14 @@ function onPointerMove(e) {
         end = worldPoint(e);
       const d =
         pending.side === 'out'
-          ? route(p, end, pending.points, project.wireStyle)
-          : route(end, p, [...pending.points].reverse(), project.wireStyle);
+          ? route(p, end, pending.points, project.wireStyle, null, {
+              start: portDirection(n, pending.port, pending.side),
+              end: { x: -1, y: 0 },
+            })
+          : route(end, p, [...pending.points].reverse(), project.wireStyle, null, {
+              start: { x: 1, y: 0 },
+              end: portDirection(n, pending.port, pending.side),
+            });
       $('#draft').setAttribute('d', d);
     }
   }
@@ -1275,6 +1317,7 @@ function exportProject() {
   }
 }
 function setRunning(next) {
+  if (next && classroom?.isPlaying()) return;
   running = next;
   $('#run').innerHTML =
     icon(next ? 'pause' : 'play', 14) + `<span>${t(next ? 'pause' : 'run')}</span><kbd>R</kbd>`;
@@ -1284,6 +1327,7 @@ function setRunning(next) {
   updateRecordingUi();
 }
 function replaceProject(next) {
+  if (classroom && !classroom.allowEdit()) return;
   setWorkspaceView('canvas');
   cancelInteraction();
   checkpoint();
@@ -1491,16 +1535,19 @@ function updateLessonSignals() {
     .join('');
 }
 function resetSimulation() {
+  if (classroom && !classroom.allowEdit()) return;
   runtime = newRuntime();
   simulate(project, runtime, 0);
   updateSignals();
 }
 function toggleSource(id) {
+  if (classroom && !classroom.allowInput()) return;
   const node = project.nodes.find((item) => item.id === id && item.type === 'switch');
   if (!node) return;
   checkpoint();
   node.params.value = node.params.value ? 0 : 1;
   changed();
+  classroom?.inputChanged(node.id, 'value', node.params.value);
 }
 function disposeMotionView() {
   motionViewToken++;
@@ -1572,12 +1619,19 @@ async function showMotionView(requestedId = null) {
       const node = project.nodes.find(
         (item) => item.id === (input.dataset.motionValue || input.dataset.motionClock),
       );
+      if (classroom && !classroom.allowInput()) return;
       node.params[isByte ? 'value' : 'frequency'] = isByte
         ? Math.round(Math.min(255, Math.max(0, number)))
         : Math.min(1000, Math.max(0, number));
       simulate(project, runtime, 0);
       renderBoard();
       updateSignals();
+      classroom?.inputChanged(
+        node.id,
+        isByte ? 'value' : 'frequency',
+        node.params[isByte ? 'value' : 'frequency'],
+      );
+      classroom?.observeEdit();
       persist();
     }),
   );
@@ -1857,6 +1911,7 @@ function bindShell() {
   $('#diagnostics').onclick = showDiagnostics;
   $('#run').onclick = () => setRunning(!running);
   $('#step').onclick = () => {
+    if (classroom?.isPlaying()) return;
     setRunning(false);
     advance(0.01 * simulationRate);
     updateSignals();
@@ -2152,6 +2207,7 @@ document.addEventListener('keydown', (e) => {
       persist();
       return;
     }
+    if (classroom && !classroom.allowEdit()) return;
     checkpoint();
     for (const n of project.nodes.filter((n) => selected.has(n.id))) {
       n.x = boundCoordinate(n.x + dx * 20);
@@ -2200,13 +2256,18 @@ window.addEventListener('resize', () => {
   drawMonitor();
 });
 window.addEventListener('beforeunload', () => {
-  project.viewport = { ...view };
-  saveProject(project);
+  const editable = classroom?.projectToSave() || project;
+  editable.viewport = { ...view };
+  saveProject(editable);
 });
 function advance(dt) {
-  const steps = simulationStepCount(dt, runtime.sampleInterval);
-  for (let i = 0; i < steps; i++) {
-    simulate(project, runtime, dt / steps);
+  const target = runtime.time + dt;
+  while (runtime.time < target) {
+    const step = Math.min(
+      runtime.sampleInterval,
+      nextSimulationInterval(project, runtime, target - runtime.time),
+    );
+    simulate(project, runtime, step);
     if (recording?.active) {
       appendRecording(recording, runtime.time, recordingSources.map(primarySignal));
       if (recording.limitReached) notify(t('recordLimit'));
@@ -2215,10 +2276,13 @@ function advance(dt) {
 }
 let lastFrame = null;
 function tick(now) {
-  if (running) {
-    const elapsed = frameSimulationDelta(now, lastFrame, simulationRate);
-    advance(elapsed);
+  const elapsed = frameSimulationDelta(now, lastFrame, simulationRate);
+  if (classroom?.isPlaying()) {
+    classroom.tick(elapsed);
+  } else if (running) {
+    advance(classroom?.recordingDelta(elapsed) ?? elapsed);
     updateSignals();
+    classroom?.tick(0);
   }
   lastFrame = now;
   requestAnimationFrame(tick);
@@ -2230,6 +2294,7 @@ wiring = createWiringEditor({
   getLanguage: () => lang,
   getSelectedWire: () => selectedWire,
   t,
+  canEdit: () => !classroom || classroom.allowEdit(),
   worldPoint,
   snapshot,
   notify,
@@ -2271,6 +2336,43 @@ wiring = createWiringEditor({
     applyView();
     persist();
   },
+});
+classroom = createClassroom({
+  getProject: () => project,
+  getRuntime: () => runtime,
+  getLanguage: () => lang,
+  getExample: () => EXAMPLES.find((example) => example.id === project.exampleId),
+  showModal,
+  closeModal,
+  notify,
+  setRunning,
+  resetForSequence: () => {
+    cancelInteraction();
+    runtime = newRuntime();
+    simulate(project, runtime, 0);
+    updateSignals();
+  },
+  adoptPlayback: (nextProject, nextRuntime) => {
+    cancelInteraction();
+    project = nextProject;
+    runtime = nextRuntime;
+    selected.clear();
+    selectedWire = null;
+    $('#project-name').value = project.name;
+    renderBoard();
+    renderInspector();
+    renderLesson();
+    updateCounts();
+    updateSignals();
+  },
+  refreshPlayback: (nextProject, nextRuntime, redraw = true) => {
+    if (nextProject) project = nextProject;
+    if (nextRuntime) runtime = nextRuntime;
+    if (redraw) renderBoard();
+    updateSignals();
+    persist();
+  },
+  loadProject: replaceProject,
 });
 simulate(project, runtime, 0);
 shell();

@@ -1,0 +1,42 @@
+/* Row and column contacts follow the pixel axes, with a separate contact per bit. */
+.type-matrix .node-content {
+  inset: 0;
+  display: block;
+}
+.type-matrix .led-matrix {
+  position: absolute;
+  left: 64px;
+  top: 52px;
+  grid-template-columns: repeat(8, 12px);
+  grid-template-rows: repeat(8, 12px);
+  gap: 10px;
+  margin: 0;
+}
+.type-matrix .led-matrix i {
+  width: 12px;
+  height: 12px;
+}
+.type-matrix .pin-edge-left {
+  left: -5px;
+}
+.type-matrix .pin-edge-left span {
+  padding: 0 11px;
+}
+.type-matrix .pin-edge-bottom {
+  right: auto;
+  width: 18px;
+  min-width: 18px;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+}
+.type-matrix .pin-edge-bottom span {
+  position: absolute;
+  bottom: 18px;
+  padding: 0;
+}
+.type-matrix .pin-edge-bottom i::after {
+  left: 2px;
+  top: -9px;
+  width: 2px;
+  height: 9px;
+}

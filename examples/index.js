@@ -1,3 +1,13 @@
+import memoryCircuit0 from './shift-register-sequence/circuit.json' with { type: 'json' };
+import memoryLesson0 from './shift-register-sequence/lesson.js';
+import memoryCircuit1 from './ram-addressing/circuit.json' with { type: 'json' };
+import memoryLesson1 from './ram-addressing/lesson.js';
+import memoryCircuit2 from './rom-lookup/circuit.json' with { type: 'json' };
+import memoryLesson2 from './rom-lookup/lesson.js';
+import memoryCircuit3 from './register-file-addressing/circuit.json' with { type: 'json' };
+import memoryLesson3 from './register-file-addressing/lesson.js';
+import memoryCircuit4 from './memory-bank-select/circuit.json' with { type: 'json' };
+import memoryLesson4 from './memory-bank-select/lesson.js';
 import automationCircuit0 from './aquarium-life-support/circuit.json' with { type: 'json' };
 import automationLesson0 from './aquarium-life-support/lesson.js';
 import automationCircuit1 from './aquarium-feeding/circuit.json' with { type: 'json' };
@@ -72,6 +82,12 @@ export const EXAMPLES = [
   { ...automationLesson5, create: () => structuredClone(automationCircuit5) },
   { ...automationLesson6, create: () => structuredClone(automationCircuit6) },
   { ...automationLesson7, create: () => structuredClone(automationCircuit7) },
+
+  { ...memoryLesson0, create: () => structuredClone(memoryCircuit0) },
+  { ...memoryLesson1, create: () => structuredClone(memoryCircuit1) },
+  { ...memoryLesson2, create: () => structuredClone(memoryCircuit2) },
+  { ...memoryLesson3, create: () => structuredClone(memoryCircuit3) },
+  { ...memoryLesson4, create: () => structuredClone(memoryCircuit4) },
 
   { ...lesson0, create: () => structuredClone(circuit0) },
   { ...lesson1, create: () => structuredClone(circuit1) },

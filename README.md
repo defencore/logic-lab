@@ -2,7 +2,7 @@
 
 A browser-based digital and mixed-signal circuit playground, designed for [logic-lab.defencore.com](https://logic-lab.defencore.com) on GitHub Pages. The editor and simulator run entirely on the visitor's device. No account, application server, external font, or runtime service is required.
 
-The interface supports English and Ukrainian. Source comments are in English; the new automation and dispatch worksheets include English and Ukrainian.
+The interface supports English and Ukrainian. Source comments are in English; the automation, dispatch, and focused memory/addressing worksheets include English and Ukrainian.
 
 ## Run locally
 
@@ -30,6 +30,7 @@ The application is written as JavaScript modules. The build bundles Three.js and
 - Search or filter the component library and add a component to the canvas.
 - Drag components to reposition them. The grid helps align the circuit.
 - Click an output pin, then an input pin, to connect them. Choose orthogonal or curved routing. Each digital pin and wire carries one bit. Connect labeled lines such as A0…A7 individually and keep matching bit numbers together; bit 0 is the least significant bit.
+- The LED matrix has its eight row contacts vertically down the left edge and eight column contacts horizontally along the bottom. Numbered contacts line up with the corresponding pixel rows and columns; each remains an independently connectable bit. This keeps the matrix compact without combining its contacts into buses.
 - Select a component to edit its label, parameters, and enabled state in the inspector. Disabled components release their outputs to high impedance.
 - Toggle switches on the canvas, run or pause the simulation, and use a single step to inspect changes.
 - Add notes and colored groups to explain parts of a circuit. Use the scope and signal indicators to inspect activity.
@@ -51,7 +52,7 @@ The library contains 62 components with guides in English and Ukrainian. Use the
 
 All seven logic gates and both binary adders include truth tables in their guides and properties. Tables distinguish inputs from outputs and explain 0 and 1. When inspecting a component on the circuit, the matching row follows its current binary signals in real time. Floating or unknown signals and disabled components show an explanation instead of highlighting a misleading row.
 
-The **Examples** catalog contains 32 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, parallel data lines, memory, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback, transport dispatch, aquarium life support, greenhouse control, smart-home energy and yard security.
+The **Examples** catalog contains 37 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, parallel data lines, memory, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback, transport dispatch, aquarium life support, greenhouse control, smart-home energy and yard security.
 
 On roomy screens, opening an example shows a lesson panel above the canvas. In compact workspaces, open the walkthrough from the toolbar when needed. Follow its steps with **Previous** and **Next**, watch the highlighted components and live pin values, and open the relevant component in the inspector. Change a switch, numeric value, or slider and compare the result with the lesson's expected behavior. Run the circuit to advance clocks and waveforms, or pause and use **Step** to examine changes in smaller increments.
 
@@ -67,9 +68,65 @@ Changes are saved automatically in browser local storage when available. Export 
 
 ### Reusable laboratory files
 
-The [laboratory collection](./examples/README.md) stores each exercise in its own `examples/<id>/` directory. Download a lab's `circuit.json` and import it directly, or open the same circuit from the in-app catalog. Each folder also contains bilingual `lesson.js` metadata and a `README.md` lab sheet (the eight new automation/dispatch sheets include English and Ukrainian) with an estimated duration, objectives, a procedure, review questions and deliverables. Export completed work as a separate project; the supplied starting circuit stays unchanged.
+The [laboratory collection](./examples/README.md) stores each exercise in its own `examples/<id>/` directory. Download a lab's `circuit.json` and import it directly, or open the same circuit from the in-app catalog. Each folder also contains bilingual `lesson.js` metadata and a `README.md` lab sheet (the automation, dispatch, and five focused memory/addressing sheets include English and Ukrainian) with an estimated duration, objectives, a procedure, review questions and deliverables. Export completed work as a separate project; the supplied starting circuit stays unchanged.
+
+Five focused exercises extend the memory progression: [manual shift-register loading and replay](./examples/shift-register-sequence/README.md), [RAM address isolation and write protection](./examples/ram-addressing/README.md), [ROM address-to-display lookup](./examples/rom-lookup/README.md), [independent register-file read/write addresses](./examples/register-file-addressing/README.md), and [two-bank memory mapping with A4 chip selection](./examples/memory-bank-select/README.md). Their lesson metadata includes ready input-action presets and observed byte outputs. A preset provides a repeatable experiment; the worksheet also asks learners to choose other data and addresses, predict results, and explain their own observations.
 
 The motion sequence progresses from [STEP/DIR fundamentals](./examples/stepper-basics/README.md), through [automatic printer-axis homing](./examples/printer-homing/README.md), to [closed-loop position control](./examples/position-control/README.md). Homing uses a minimum endstop and an enable interlock that permits reversing away from home. Position control shares one target between direction and arrival sensors, then stops inside a tolerance window.
+
+## Classroom: actions, student work, and instructor review
+
+Open **Classroom** in the header. Its **Student**, **Instructor**, and **Action sequence** tabs separate completing an exercise, preparing/reviewing assignments, and recording input operations. These are workspace modes on the same device, without accounts or authenticated roles.
+
+### Record and replay input actions
+
+1. Build the circuit and open **Classroom → Action sequence**. Choose **Record actions** to capture the current source values as the baseline and restart the circuit's internal simulation state. Recording locks circuit construction and component settings outside the supported input sources.
+2. Toggle input switches or edit supported source parameters, such as a byte value or a clock frequency. For a shift register, change the switches connected to SER, CLK, and RST in the required order. A rising CLK edge is a separate action from returning CLK to 0. The source controls in the 3D view operate the same inputs.
+3. Use the simulation's Run/Pause and Step controls when needed. Actions use simulation timestamps; changes made at the same paused time retain their recorded order. **Finish recording** retains the sequence and pauses the simulation.
+4. Choose **Replay** for real-time playback, pause/resume it from the action dock, or use **Next action** to inspect the ordered operations individually. Playback starts from the recorded baseline and recomputes the circuit rather than playing a picture of the earlier result. Circuit and manual input editing stay locked during playback.
+5. Export the sequence as `.actions.json` to reuse it elsewhere. The file contains the starting circuit, source actions, duration, and observed signals. Importing it lets you inspect and replay that experiment. The memory laboratories also offer **Example action sequence** when an action preset is available.
+
+Action sessions support at most **120 simulated seconds, 2,000 actions, 200 components, and 32 observed signals**. Each imported or exported classroom JSON file is limited to **10 MB**. These are action-recording limits; ordinary editable projects retain their separate component and wire limits. Long intervals may be processed in several bounded steps to keep the interface responsive.
+
+The waveform monitor's **Record / CSV / PNG** controls capture measured channels and traces. **Record actions** captures the operations that drive the circuit. A student work file combines the circuit and action sequence with recomputed observations and the student's explanation; waveform images and CSV captures can provide additional evidence.
+
+### Prepare and distribute an assignment
+
+1. In **Instructor** mode, build the reference solution and record a test sequence that exercises changing inputs, retained states, reset behavior, and any important address boundaries. Choose observed signals that demonstrate those requirements. A final static value alone is a weak criterion.
+2. Enter the title and instructions, select the observed signals, and create the reference key. Choose either **Inputs and observed outputs only** or **All components without wiring** for the student's starter. Sources and observed components are retained so recordings and checks have stable interfaces. If you observe an internal memory or logic component directly, that component also remains in the starter; choose an external LED, scope, display, or matrix when the internal implementation should be left to the student.
+3. Enter student identifiers, one per line, and generate individual variants. Download each `.assignment.json` file for its assigned student. The public assignment contains instructions, its issued variant, observed interfaces, and a starter without solution wiring; it does not contain the reference circuit or the instructor's test sequence.
+4. Save the updated `.teacher-key.json` after issuing variants. It contains the reference solution, test sequence, and registry of issued variants. Keep this file with the instructor and distribute only the separate student assignment files. Generating more variants changes the key, so export it again afterward.
+
+Individual variants bind work to the issued student identifier and vary supported input data. They still teach the same task and may legitimately have the same correct circuit structure. The private key supports recomputing reference results and checking issued variants; it is not an authentication service.
+
+### Complete and submit student work
+
+1. In **Student** mode, enter your name, student identifier, and optional group. Open your `.assignment.json` file and choose **Start attempt**. A variant assigned to another identifier cannot be started under your current identifier.
+2. Build the requested circuit from the starter. Structural edits add to the construction journal; moving components, changing their labels, or bending wires does not count as new construction evidence. Leave the supplied input and observed interface identifiers intact.
+3. Record an input sequence that tests your completed circuit, replay it, and explain why the observed result follows from the logic. If you change the circuit after recording, record the final version again. Include meaningful intermediate states rather than only the final output.
+4. Use **Export work for instructor** to save a `.submission.json` file. It includes the issued assignment, student details, circuit, sequence, recomputed observations, explanation, and construction journal. Send that file to the instructor through the course's usual submission channel.
+
+Browser storage restores the local classroom draft, student context, and completed action sequence after a reload when storage is available. It does not preserve an instantaneous RAM/register runtime or an in-progress simulation: replay the saved sequence to reconstruct the experiment. Download important work and the instructor key as portable backups; clearing site data or changing the browser profile can remove local drafts.
+
+### Review a batch of work
+
+In **Instructor** mode, open the matching updated instructor key and load up to **40 `.submission.json` files** at once. Each student's circuit is replayed with its submitted actions and with the instructor's reference checks. The review compares initial, intermediate, and final observed values instead of trusting values written into the file. It also checks the issued variant and assigned identifier. Save the batch outcome as `.review.json`.
+
+Functional correctness and work evidence are different review questions. A circuit can satisfy the reference checks while its construction journal, recorded experiment, or explanation still needs discussion. Look at both, and ensure that the reference checks actually exercise the intended behavior. Replaying a sequence and obtaining the expected final byte alone does not establish that the student understands the design.
+
+Batch comparison ignores component positions, labels, ordering, identifiers, and wire bends when examining topology and component parameters. It also compares ordered input actions, timing, recorded results, and reused attempt or variant identifiers. Matching minimal solutions or a published practice sequence can be expected in the same exercise; similarity is a reason for individual review, not an automatic accusation of copying.
+
+All processing stays in the browser. The modes do not authenticate identities, prevent file sharing, or provide cryptographic proof of authorship. SHA-256 checksums help detect changed files, but a knowledgeable person can edit a file and recompute its checksum. Recomputed tests catch incorrect circuit behavior and inconsistent claimed results; they cannot prove who performed the work. Use individual questions, a fresh input pattern or address variation, and the student's explanation to establish understanding.
+
+### Короткий порядок роботи українською
+
+Відкрийте **Лабораторія** в заголовку. У вкладці **Сценарій дій** почніть **Записати дії**: поточні входи стають початковими значеннями, внутрішній стан схеми скидається, а редагування її будови блокується. Перемикайте SER, CLK, RST чи інші джерела, зупиніть запис і виберіть **Відтворити** або **Наступна дія**. Дії мають час симуляції та зберігають порядок навіть при однаковому часі. Для перенесення досліду збережіть `.actions.json`. Обмеження: 120 секунд симуляції, 2 000 дій, 200 елементів, 32 контрольовані сигнали та 10 МБ на файл.
+
+У режимі **Викладач** підготуйте еталон, запишіть перевірочні дії та оберіть контрольовані сигнали. Якщо контролюється внутрішній регістр або пам’ять, цей компонент залишиться у студентській заготовці; зовнішній індикатор дозволяє залишити внутрішню реалізацію студенту. Створіть варіанти за ідентифікаторами студентів і передайте кожному його `.assignment.json`. Еталон і перевірочний сценарій є лише в `.teacher-key.json`: не передавайте цей ключ студентам і зберігайте його знову після видачі нових варіантів.
+
+У режимі **Студент** заповніть ім’я й ідентифікатор, відкрийте свій варіант і почніть спробу. Побудуйте схему, запишіть змістовний дослід, повторіть його та додайте власне пояснення. Збережіть `.submission.json` для викладача. Пересування елементів і зміна підписів не додають свідчень побудови; після зміни схеми слід записати її остаточну версію заново. Чернетка й завершений сценарій можуть відновитися після перезавантаження, але миттєвий стан ОЗП — ні: для відновлення досліду відтворіть сценарій.
+
+Викладач відкриває актуальний ключ, завантажує до 40 робіт, переглядає повторно обчислені результати, свідчення роботи та збіги, а потім зберігає `.review.json`. Правильність схеми не є доказом самостійності. Однакові мінімальні розв’язання й готові навчальні послідовності можуть бути очікуваними. Контрольна сума не підтверджує авторство; за потреби обговоріть пояснення студента та дайте новий шаблон даних чи адрес.
 
 ### Keyboard and navigation
 
@@ -131,7 +188,7 @@ RAM, ROM, and register-file sizes are intentionally bounded for interactive exam
 - `src/catalog.js`: component definitions, pins, defaults, and bilingual descriptions.
 - `src/simulator.js`: browser-independent signal evaluation and sequential state.
 - `src/project.js`: validated project import/export and local persistence.
-- `examples/index.js` and `examples/<id>/`: laboratory registry, canonical JSON circuits, bilingual lessons and lab sheets (the new automation/dispatch sheets include both languages).
+- `examples/index.js` and `examples/<id>/`: laboratory registry, canonical JSON circuits, bilingual lessons and lab sheets (the automation, dispatch, and focused memory/addressing sheets include both languages).
 - `src/guides.js`: bilingual component manuals, pin descriptions, experiments, and related examples.
 - `src/geometry.js`: grid placement, component dimensions, pin positions, and wire routing.
 - `src/wiring-ui.js`: transactional wire gestures, endpoint reconnection, and continuity presentation.
@@ -142,6 +199,9 @@ RAM, ROM, and register-file sizes are intentionally bounded for interactive exam
 - `src/waveforms.js`: sampled signal plotting with gaps for unknown values.
 - `src/simulation-time.js`: playback rates and sample-aware physics stepping.
 - `src/recording.js`: bounded waveform sessions and timestamped CSV export.
+- `src/action-sequence.js`: validated source-action recording and deterministic circuit replay.
+- `src/lab-assessment.js`: issued assignments, student submissions, reference replay, and similarity evidence.
+- `src/classroom-ui.js`: student/instructor workspaces, action controls, and batch review.
 - `src/waveform-export.js`: labeled PNG plots using actual sample timestamps.
 - `src/app.js`: editor interactions, lesson navigation, and interface state.
 - `test/`: Node.js built-in test runner checks for logic and project integrity.
@@ -187,7 +247,7 @@ These are deterministic educational simulations, not models for controlling real
 
 ## Aquarium, greenhouse and home automation
 
-The **Automation** topic adds seven laboratories using three new circuit-controlled 3D components. Together with the manual railway-dispatch laboratory, the catalog now contains 32 reusable exercises.
+The **Automation** topic adds seven laboratories using three new circuit-controlled 3D components. Together with the manual railway-dispatch laboratory, the catalog now contains 37 reusable exercises.
 
 - **Aquarium life support:** build temperature, oxygen and water-quality interlocks with AND, OR and NOT. Individual fish swim, lose health under sustained harmful conditions, and float belly-up with X eyes after death. Cold, overheating, oxygen deprivation, overfeeding, starvation, dirty water and nonstop lighting have different measured causes. Corrected conditions can heal surviving fish; reset starts a fresh ecosystem.
 - **Aquarium feeding:** compare continuous feeding with a clock, one-shot and hunger permission. Observe food, cleanliness and health instead of treating a high control signal as a single portion.
