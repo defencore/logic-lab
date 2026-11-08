@@ -39,6 +39,18 @@ export const IO = [
     'Натисніть перемикач, щоб змінити логічний рівень.',
   ),
   component(
+    'hotkey',
+    'Hotkey · Keyboard input',
+    'Hotkey · Клавіша клавіатури',
+    'io',
+    'KEY',
+    [],
+    [bit('out', 'Q')],
+    { binding: '', mode: 'hold', value: 0 },
+    'Bind a physical key or shortcut to a one-bit hold, inverted hold or toggle input.',
+    'Прив’яжіть клавішу або комбінацію до однобітного входу: утримання, інверсія чи перемикання.',
+  ),
+  component(
     'bus_input',
     'Byte value · 8-bit',
     'Значення байта · 8 біт',

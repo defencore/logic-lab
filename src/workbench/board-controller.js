@@ -7,6 +7,8 @@ import { getSceneEntries, getSceneSnapshot, sceneHealth } from '../scenes/data/s
 import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
 import { drawMini } from '../signals/waveforms.js';
 import { componentHeaderMarkup, createComponentNavigation } from './component-keyboard.js';
+import { hotkeyNodeMarkup } from './hotkey-node.js';
+import { createInlineNodeLabel } from './inline-node-label.js';
 import {
   contactEndpoint,
   createContactNavigation,
@@ -26,6 +28,9 @@ export function createBoardController(
     openScene,
     primarySignal,
     selectNode,
+    canRenameNode,
+    renameNode,
+    cancelInteraction,
   },
 ) {
   const contacts = createContactNavigation(state, applyView);
@@ -34,9 +39,19 @@ export function createBoardController(
     isKeyboard: contacts.isKeyboard,
     selectNode,
   });
+  const labels = createInlineNodeLabel(state, {
+    canEdit: canRenameNode,
+    renameNode,
+    beforeBegin: cancelInteraction,
+    restoreFocus: (id) => components.returnFocus(id, { reveal: false }),
+    labelPlaceholder: (node) => title(getDefinition(node.type)),
+    editLabel: () => t('label'),
+  });
   function nodeBody(node) {
     const d = getDefinition(node.type);
     switch (node.type) {
+      case 'hotkey':
+        return hotkeyNodeMarkup(node, state.lang);
       case 'switch':
         return `<button class="switch-control ${node.params.value ? 'is-on' : ''}" data-switch="${node.id}" aria-label="${esc(node.label || title(d))}" aria-pressed="${!!node.params.value}"><span class="switch-track"><i></i></span><span class="switch-value">${node.params.value ? '1' : '0'}</span></button>`;
       case 'led':
@@ -78,9 +93,10 @@ export function createBoardController(
     }
   }
   function renderBoard() {
+    const editingLabel = labels.beforeRender();
     const focused = document.activeElement?.closest?.('.pin');
     const focusedEndpoint = focused ? contactEndpoint(focused) : null;
-    const focusedControl = components.captureFocus();
+    const focusedControl = editingLabel ? null : components.captureFocus();
     $('#nodes').innerHTML = state.project.nodes
       .map((n) => {
         const d = getDefinition(n.type),
@@ -100,6 +116,7 @@ export function createBoardController(
     $('#draft').setAttribute('d', '');
     $$('.circuit-node').forEach((el) => el.addEventListener('pointerdown', nodePointerDown));
     $$('[data-node-header]').forEach(components.bind);
+    $$('[data-node-header]').forEach(labels.bind);
     $$('.pin').forEach((el) => {
       el.style.setProperty('--contact-gap', `${el.dataset.contactGap}px`);
       contacts.bind(el, pinPointerDown);
@@ -115,6 +132,7 @@ export function createBoardController(
     updateContactTargets(state.project, state.pending);
     if (focusedEndpoint) focusContact(focusedEndpoint);
     else if (focusedControl) components.restoreFocus(focusedControl);
+    labels.restoreAfterRender();
     state.wiring?.refresh();
   }
   function updateBoardSignals() {
@@ -130,6 +148,10 @@ export function createBoardController(
         pin.classList.add(signalClass(v));
       });
       const readout = $('.node-readout', el);
+      if (n.type === 'hotkey') {
+        $('.hotkey-widget', el).classList.toggle('is-pressed', n.params.value === 1);
+        $('.hotkey-widget', el).classList.toggle('is-high', signalOutputs.out === 1);
+      }
       if (readout) {
         const first = primarySignal(n);
         readout.textContent =

@@ -6,6 +6,7 @@ export function createView(context) {
   const { state, services, actions, t } = context;
   function changed({ reset = false } = {}) {
     if (reset) state.runtime = actions.newRuntime();
+    services.hotkeys?.reconcile();
     simulate(state.project, state.runtime, 0);
     services.board.render();
     services.inspector.render();

@@ -35,6 +35,7 @@ export function startApplication() {
   bindApplicationEvents(context);
   simulate(state.project, state.runtime, 0);
   actions.shell();
+  services.hotkeys.reconcile();
   services.recovery = createProjectRecovery(context);
   services.recovery.mount();
   services.recovery.open();

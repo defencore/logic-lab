@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "name": "Keyboard inputs: three modes",
+  "nodes": [
+    {
+      "id": "hold",
+      "type": "hotkey",
+      "x": 100,
+      "y": 100,
+      "label": "A · hold",
+      "enabled": true,
+      "params": {
+        "binding": "KeyA",
+        "mode": "hold",
+        "value": 0
+      }
+    },
+    {
+      "id": "hold-lamp",
+      "type": "led",
+      "x": 520,
+      "y": 100,
+      "label": "A · Q",
+      "enabled": true,
+      "params": {
+        "color": "#73e5aa"
+      }
+    },
+    {
+      "id": "inverted",
+      "type": "hotkey",
+      "x": 100,
+      "y": 320,
+      "label": "S · inverted",
+      "enabled": true,
+      "params": {
+        "binding": "KeyS",
+        "mode": "inverted",
+        "value": 0
+      }
+    },
+    {
+      "id": "inverted-lamp",
+      "type": "led",
+      "x": 520,
+      "y": 320,
+      "label": "S · Q",
+      "enabled": true,
+      "params": {
+        "color": "#f4b860"
+      }
+    },
+    {
+      "id": "toggle",
+      "type": "hotkey",
+      "x": 100,
+      "y": 540,
+      "label": "D · toggle",
+      "enabled": true,
+      "params": {
+        "binding": "KeyD",
+        "mode": "toggle",
+        "value": 0
+      }
+    },
+    {
+      "id": "toggle-lamp",
+      "type": "led",
+      "x": 520,
+      "y": 540,
+      "label": "D · Q",
+      "enabled": true,
+      "params": {
+        "color": "#77bdf2"
+      }
+    }
+  ],
+  "wires": [
+    {
+      "id": "hold-out-lamp",
+      "from": {
+        "node": "hold",
+        "port": "out"
+      },
+      "to": {
+        "node": "hold-lamp",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "inverted-out-lamp",
+      "from": {
+        "node": "inverted",
+        "port": "out"
+      },
+      "to": {
+        "node": "inverted-lamp",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "toggle-out-lamp",
+      "from": {
+        "node": "toggle",
+        "port": "out"
+      },
+      "to": {
+        "node": "toggle-lamp",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "keyboard-inputs"
+}

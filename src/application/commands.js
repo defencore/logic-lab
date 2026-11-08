@@ -88,6 +88,10 @@ export function createCommands(context) {
       .map((n) => {
         const copy = structuredClone(n);
         copy.id = uid('n');
+        if (copy.type === 'hotkey') {
+          copy.params.binding = '';
+          copy.params.value = 0;
+        }
         copy.x = boundCoordinate(copy.x + 40);
         copy.y = boundCoordinate(copy.y + 40);
         map.set(n.id, copy.id);
@@ -115,6 +119,16 @@ export function createCommands(context) {
     actions.checkpoint();
     state.project.nodes.filter((n) => state.selected.has(n.id)).forEach((n) => (n.enabled = value));
     actions.changed();
+  }
+  function renameNode(id, value) {
+    if (services.classroom && !services.classroom.allowEdit()) return false;
+    const node = state.project.nodes.find((item) => item.id === id);
+    if (!node || typeof value !== 'string' || value.length > 100) return false;
+    if ((node.label || '') === value) return true;
+    actions.checkpoint();
+    node.label = value;
+    actions.changed();
+    return true;
   }
   function exportProject() {
     try {
@@ -180,6 +194,7 @@ export function createCommands(context) {
     deleteSelection,
     duplicateSelection,
     enableSelected,
+    renameNode,
     exportProject,
     replaceProject,
     confirmReplace,

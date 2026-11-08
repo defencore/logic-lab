@@ -42,7 +42,8 @@ export function createComponentNavigation(
   root = document,
 ) {
   let lastOpened = null;
-  function focusControl(value) {
+  let suppressReveal = false;
+  function focusControl(value, { reveal = true } = {}) {
     if (!value) return false;
     const header = value.kind === 'header';
     const control = [
@@ -50,7 +51,12 @@ export function createComponentNavigation(
     ].find(
       (element) => (header ? element.dataset.nodeHeader : element.dataset.switch) === value.node,
     );
-    control?.focus({ preventScroll: true });
+    suppressReveal = !reveal;
+    try {
+      control?.focus({ preventScroll: true });
+    } finally {
+      suppressReveal = false;
+    }
     return !!control;
   }
   function captureFocus() {
@@ -67,9 +73,10 @@ export function createComponentNavigation(
       if (node) revealComponent(header, node, state, applyView, root);
     };
     header.addEventListener('focus', () => {
-      if (isKeyboard()) reveal();
+      if (isKeyboard() && !suppressReveal) reveal();
     });
     header.addEventListener('click', (event) => {
+      if (event.target.closest?.('input,textarea,select,[contenteditable]')) return;
       // Assistive technology can activate a button role without dispatching keyboard events.
       if (event.detail !== 0) return;
       event.stopPropagation();
@@ -78,6 +85,7 @@ export function createComponentNavigation(
       selectNode(id, { inspect: true });
     });
     header.addEventListener('keydown', (event) => {
+      if (event.target.closest?.('input,textarea,select,[contenteditable]')) return;
       if (event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
       if (['Enter', ' '].includes(event.key)) {
         event.preventDefault();
@@ -118,6 +126,6 @@ export function createComponentNavigation(
     bind,
     captureFocus,
     restoreFocus: focusControl,
-    returnFocus: (id = lastOpened) => focusControl({ kind: 'header', node: id }),
+    returnFocus: (id = lastOpened, options) => focusControl({ kind: 'header', node: id }, options),
   };
 }

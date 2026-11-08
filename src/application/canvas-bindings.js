@@ -11,7 +11,10 @@ export function createCanvasBindings(context) {
     vp.addEventListener(
       'pointerdown',
       (e) => {
-        if (e.target.closest('.canvas-tools,.canvas-bottom')) return;
+        if (
+          e.target.closest('.canvas-tools,.canvas-bottom,input,textarea,select,[contenteditable]')
+        )
+          return;
         if (state.gesture || services.wiring.busy) {
           e.preventDefault();
           e.stopImmediatePropagation();

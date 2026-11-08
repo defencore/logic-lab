@@ -10,6 +10,14 @@ import { boundCoordinate } from './model.js';
 import { focusContact } from '../workbench/contact-interaction.js';
 export function bindApplicationEvents(context) {
   const { state, services, actions, t } = context;
+  document.addEventListener('keydown', (event) => services.hotkeys?.keyDown(event), {
+    capture: true,
+  });
+  document.addEventListener('keyup', (event) => services.hotkeys?.keyUp(event), { capture: true });
+  document.addEventListener('focusin', (event) => services.hotkeys?.focusChanged(event.target));
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) services.hotkeys?.suspend();
+  });
   document.addEventListener('pointermove', actions.onPointerMove);
   document.addEventListener('pointerup', actions.onPointerUp);
   document.addEventListener('pointercancel', (e) => {
@@ -142,6 +150,7 @@ export function bindApplicationEvents(context) {
     actions.updateTool();
   });
   window.addEventListener('blur', () => {
+    services.hotkeys?.suspend();
     state.spaceHeld = false;
     state.shiftHeld = false;
     state.suppressPanClick = false;

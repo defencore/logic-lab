@@ -99,14 +99,14 @@ export function createEditing(context) {
     commands.refresh();
     return true;
   }
-  function clear() {
+  function clear({ refreshInspector = true } = {}) {
     commands.cancelGesture();
     state.action = null;
     state.activeHandle = null;
     state.traceSeed = null;
     state.hoverSeed = null;
     commands.refresh();
-    options.refreshInspector();
+    if (refreshInspector) options.refreshInspector();
   }
   function blankPointerDown(event) {
     $('#viewport').focus({ preventScroll: true });

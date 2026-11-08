@@ -1,0 +1,42 @@
+.hotkey-properties .hotkey-binding,
+.hotkey-properties .hotkey-output {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: var(--text-xs);
+}
+.hotkey-properties output {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #f5faf7;
+  color: var(--deep);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.hotkey-binding-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.hotkey-binding-actions button {
+  min-height: 32px;
+  padding: 5px 8px;
+  font-size: var(--text-xs);
+}
+.hotkey-properties .hotkey-help,
+.hotkey-properties .hotkey-status {
+  font-size: var(--text-xs);
+  line-height: var(--leading-copy);
+}
+.hotkey-properties .hotkey-help {
+  color: var(--muted);
+}
+.hotkey-properties .hotkey-status {
+  color: var(--deep);
+}
+.hotkey-properties .hotkey-status:empty {
+  display: none;
+}

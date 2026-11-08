@@ -50,11 +50,11 @@ Hover a pin to preview its connections without changing the circuit. Choose **Tr
 
 ## Learn with guides and experiments
 
-The library contains 62 components with guides in English and Ukrainian. Use the category disclosure above the results to filter the library. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
+The library contains 63 components with guides in English and Ukrainian. Use the category disclosure above the results to filter the library. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
 
 All seven logic gates and both binary adders include truth tables in their guides and properties. Tables distinguish inputs from outputs and explain 0 and 1. When inspecting a component on the circuit, the matching row follows its current binary signals in real time. Floating or unknown signals and disabled components show an explanation instead of highlighting a misleading row.
 
-The **Examples** catalog contains 37 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, parallel data lines, memory, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback, transport dispatch, aquarium life support, greenhouse control, smart-home energy and yard security.
+The **Examples** catalog contains 38 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, parallel data lines, memory, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback, transport dispatch, aquarium life support, greenhouse control, smart-home energy and yard security.
 
 On roomy screens, opening an example shows a lesson panel above the canvas. In compact workspaces, open the walkthrough from the toolbar when needed. Follow its steps with **Previous** and **Next**, watch the highlighted components and live pin values, and open the relevant component in the inspector. Change a switch, numeric value, or slider and compare the result with the lesson's expected behavior. Run the circuit to advance clocks and waveforms, or pause and use **Step** to examine changes in smaller increments.
 
@@ -149,6 +149,12 @@ All processing stays in the browser. The modes do not authenticate identities, p
 У режимі **Студент** заповніть ім’я й ідентифікатор, відкрийте свій варіант і почніть спробу. Побудуйте схему, запишіть змістовний дослід, повторіть його та додайте власне пояснення. Збережіть `.submission.json` для викладача. Пересування елементів і зміна підписів не додають свідчень побудови; після зміни схеми слід записати її остаточну версію заново. Чернетка й завершений сценарій можуть відновитися після перезавантаження, але миттєвий стан ОЗП — ні: для відновлення досліду відтворіть сценарій.
 
 Викладач відкриває актуальний ключ, завантажує до 40 робіт, переглядає повторно обчислені результати, свідчення роботи та збіги, а потім зберігає `.review.json`. Правильність схеми не є доказом самостійності. Однакові мінімальні розв’язання й готові навчальні послідовності можуть бути очікуваними. Контрольна сума не підтверджує авторство; за потреби обговоріть пояснення студента та дайте новий шаблон даних чи адрес.
+
+### Hotkey inputs and direct renaming
+
+Double-click a component heading to edit its label on the canvas. **Enter** or leaving the field saves one undoable change; **Escape** cancels. An empty label restores the component’s default title. Read-only previews cannot be renamed.
+
+The **Hotkey** component supplies one digital output. In **Hold** mode it is 1 while its assigned key is pressed and 0 after release; **Inverted hold** reverses these levels. **Toggle** changes the output once per fresh press, ignoring keyboard autorepeat. In Properties, choose **Assign a key**, then press a physical key or **Shift + key**. Duplicate assignments and system/browser combinations are rejected. Assigned workspace keys take priority over editor shortcuts; typing in fields and activating interface buttons retain their normal behavior. Clicking outside the browser or opening a dialog releases momentary inputs; a toggle keeps its latched value. Recorded experiments store actual input edges and replay without physical keyboard input. The **Keyboard inputs** example includes all three modes, indicators, a ready action sequence and a bilingual laboratory worksheet.
 
 ### Keyboard and navigation
 
@@ -292,7 +298,7 @@ These are deterministic educational simulations, not models for controlling real
 
 ## Aquarium, greenhouse and home automation
 
-The **Automation** topic adds seven laboratories using three new circuit-controlled 3D components. Together with the manual railway-dispatch laboratory, the catalog now contains 37 reusable exercises.
+The **Automation** topic adds seven laboratories using three new circuit-controlled 3D components. Together with the manual railway-dispatch laboratory, the catalog now contains 38 reusable exercises.
 
 - **Aquarium life support:** build temperature, oxygen and water-quality interlocks with AND, OR and NOT. Individual fish swim, lose health under sustained harmful conditions, and float belly-up with X eyes after death. Cold, overheating, oxygen deprivation, overfeeding, starvation, dirty water and nonstop lighting have different measured causes. Corrected conditions can heal surviving fish; reset starts a fresh ecosystem.
 - **Aquarium feeding:** compare continuous feeding with a clock, one-shot and hunger permission. Observe food, cleanliness and health instead of treating a high control signal as a single portion.

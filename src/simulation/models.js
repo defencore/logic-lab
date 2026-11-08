@@ -1,4 +1,5 @@
 import { getDefinition } from '../components/catalog/index.js';
+import { hotkeyBindingError } from '../components/catalog/hotkey-bindings.js';
 import {
   isScenarioType,
   initialScenarioState,
@@ -108,6 +109,14 @@ export function evaluate(node, runtime, incoming) {
       return out(1);
     case 'switch':
       return out(Number(number(p.value) !== 0));
+    case 'hotkey':
+      if (
+        hotkeyBindingError(p.binding) ||
+        !['hold', 'inverted', 'toggle'].includes(p.mode) ||
+        ![0, 1].includes(p.value)
+      )
+        return out('X');
+      return out(p.mode === 'inverted' ? 1 - p.value : p.value);
     case 'bus_input': {
       const value = Math.round(clamp(number(p.value), 0, 255));
       return { out: value, nibble: value & 15, address: value & 7 };

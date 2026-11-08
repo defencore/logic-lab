@@ -51,6 +51,7 @@ export function createSimulation(context) {
     }
   }
   function tick(now) {
+    services.hotkeys?.reconcile();
     const elapsed = frameSimulationDelta(now, state.lastFrame, state.simulationRate);
     if (services.classroom?.isPlaying()) {
       services.simulationRunner.discard();

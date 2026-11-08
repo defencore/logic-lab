@@ -1,6 +1,7 @@
 import { getDefinition } from '../components/catalog/index.js';
 import { MIN_ZOOM, MAX_ZOOM } from './viewport.js';
 import { createProjectStorage } from './project-storage.js';
+import { validateHotkeyNodes } from './hotkey-config.js';
 
 export { STORAGE_KEY, PROJECT_RECOVERY_KEY } from './project-storage.js';
 const MAX_NODES = 1000;
@@ -182,6 +183,7 @@ export function validateProject(value) {
       params: parameters(item.params ?? {}, `Parameters of ${id}`, definition),
     };
   });
+  validateHotkeyNodes(nodes);
   const nodeMap = new Map(nodes.map((node) => [node.id, node]));
   const wireIds = new Set();
   const connections = new Set();

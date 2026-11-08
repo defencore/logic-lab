@@ -55,9 +55,9 @@ export function createGestures(context) {
     $('#marquee')?.remove();
     $('#viewport')?.classList.remove('panning');
   }
-  function cancelInteraction() {
+  function cancelInteraction({ refreshInspector = true } = {}) {
     actions.cancelGesture();
-    services.wiring?.clear();
+    services.wiring?.clear({ refreshInspector });
     if ($('#draft')) actions.cancelWire();
   }
   function startPan(e) {

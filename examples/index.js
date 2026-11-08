@@ -44,6 +44,8 @@ import motionCircuit2 from './position-control/circuit.json' with { type: 'json'
 import motionLesson2 from './position-control/lesson.js';
 import circuit0 from './half-adder/circuit.json' with { type: 'json' };
 import lesson0 from './half-adder/lesson.js';
+import keyboardCircuit from './keyboard-inputs/circuit.json' with { type: 'json' };
+import keyboardLesson from './keyboard-inputs/lesson.js';
 import circuit1 from './logic-gates/circuit.json' with { type: 'json' };
 import lesson1 from './logic-gates/lesson.js';
 import circuit2 from './full-adder/circuit.json' with { type: 'json' };
@@ -89,6 +91,7 @@ export const EXAMPLES = [
   { ...memoryLesson3, create: () => structuredClone(memoryCircuit3) },
   { ...memoryLesson4, create: () => structuredClone(memoryCircuit4) },
 
+  { ...keyboardLesson, create: () => structuredClone(keyboardCircuit) },
   { ...lesson0, create: () => structuredClone(circuit0) },
   { ...lesson1, create: () => structuredClone(circuit1) },
   { ...lesson2, create: () => structuredClone(circuit2) },

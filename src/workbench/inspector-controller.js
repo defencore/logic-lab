@@ -7,6 +7,7 @@ import { truthTableMarkup } from '../learning/truth-tables.js';
 import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
 import { SOURCE_PARAMETERS } from '../simulation/input-sources.js';
 import { parameterField, memoryBytes } from './component-parameters.js';
+import { createHotkeyProperties, hotkeyPropertiesMarkup } from './hotkey-properties.js';
 
 export function createInspectorController(state, actions) {
   let lastInspectorKey = '';
@@ -26,7 +27,9 @@ export function createInspectorController(state, actions) {
     duplicateSelection,
     enableSelected,
   } = actions;
+  const hotkeys = createHotkeyProperties(state, actions);
   function renderInspector() {
+    hotkeys.cancel();
     renderInspectorContent();
     state.wiring?.decorateInspector();
   }
@@ -77,6 +80,7 @@ export function createInspectorController(state, actions) {
     }
     const d = getDefinition(n.type);
     const params = { ...d.defaults, ...n.params };
+    const parameterEntries = n.type === 'hotkey' ? [] : Object.entries(params);
     const header = `<div class="inspector-selected"><span class="inspector-symbol">${['and', 'or', 'not', 'nand', 'nor', 'xor', 'xnor'].includes(n.type) ? gateIcon(n.type, 36) : icon('box', 28)}</span><span class="eyebrow">${esc(n.type.toUpperCase().replaceAll('_', ' '))}</span><h3>${esc(title(d))}</h3><p>${esc(state.lang === 'ua' ? d.descriptionUa || d.description : d.description)}</p></div>`;
     const tabs = `<div class="inspector-tabs" role="tablist"><button role="tab" aria-selected="${state.inspectorTab === 'properties'}" data-inspector-tab="properties">${t('properties')}</button><button role="tab" aria-selected="${state.inspectorTab === 'guide'}" data-inspector-tab="guide">${icon('help', 13)}${t('usageGuide')}</button></div>`;
     if (state.inspectorTab === 'guide') {
@@ -87,15 +91,14 @@ export function createInspectorController(state, actions) {
       return;
     }
     el.innerHTML = `${header}${tabs}<div class="property-section"><h4>${t('properties')}</h4><label>${t('label')}<input id="node-label" value="${esc(n.label || '')}" placeholder="${esc(title(d))}" maxlength="100"></label><label class="toggle-row">${t('enabled')}<input type="checkbox" id="node-enabled" class="toggle-input" ${n.enabled !== false ? 'checked' : ''}></label></div>${
-      Object.keys(params).length
-        ? `<div class="property-section"><h4>${t('parameters')}</h4>${SCENARIO_TYPES.includes(n.type) ? `<p class="parameter-help">${t('sceneParamReset')}</p>` : ''}${Object.entries(
-            params,
-          )
+      parameterEntries.length
+        ? `<div class="property-section"><h4>${t('parameters')}</h4>${SCENARIO_TYPES.includes(n.type) ? `<p class="parameter-help">${t('sceneParamReset')}</p>` : ''}${parameterEntries
             .map(([key, value]) => parameterField(key, value, n.type, state.lang, t))
             .join('')}</div>`
         : ''
-    }<div class="property-section"><h4>${t('signalState')}</h4><div id="inspector-signals"></div></div><div class="inspector-node-actions"><button id="duplicate-node" class="soft-btn">${icon('layers', 15)}${t('duplicate')}</button><button id="delete-node" class="danger-btn" title="${t('delete')}">${icon('trash', 15)}</button></div>${truthTableMarkup(n.type, state.lang, n.id)}`;
+    }${hotkeyPropertiesMarkup(n, state.lang)}<div class="property-section"><h4>${t('signalState')}</h4><div id="inspector-signals"></div></div><div class="inspector-node-actions"><button id="duplicate-node" class="soft-btn">${icon('layers', 15)}${t('duplicate')}</button><button id="delete-node" class="danger-btn" title="${t('delete')}">${icon('trash', 15)}</button></div>${truthTableMarkup(n.type, state.lang, n.id)}`;
     bindInspectorTabs();
+    hotkeys.bind(n);
     bindLiveText($('#node-label'), (value) => {
       if (state.classroom?.isPlaying()) {
         state.classroom.allowEdit();
@@ -225,6 +228,7 @@ export function createInspectorController(state, actions) {
     updateGuideSignals();
   }
   function updateInspectorSignals() {
+    hotkeys.update();
     const playback = !!state.classroom?.isPlaying();
     const recording = !!state.classroom?.isRecording();
     const selectedNode = state.project.nodes.find((node) => state.selected.has(node.id));

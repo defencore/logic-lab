@@ -1,0 +1,26 @@
+.node-header.is-label-editing {
+  position: relative;
+  cursor: text;
+}
+
+.node-header.is-label-editing > span:not(.node-type-dot) {
+  visibility: hidden;
+}
+
+.node-label-editor {
+  position: absolute;
+  inset: 3px 5px 3px 18px;
+  z-index: 4;
+  width: calc(100% - 23px);
+  min-width: 0;
+  padding: 2px 4px;
+  border: 1px solid #1e5894;
+  border-radius: 3px;
+  background: #fff;
+  color: #1b2938;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  user-select: text;
+  cursor: text;
+}

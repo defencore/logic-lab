@@ -11,11 +11,13 @@ import { createSceneController } from '../workbench/scene-controller.js';
 import { createInspectorController } from '../workbench/inspector-controller.js';
 import { createLearningController } from '../workbench/learning-controller.js';
 import { createDialogs } from '../workbench/dialogs.js';
+import { createHotkeyController } from './hotkey-controller.js';
 export function composeWorkbench(context) {
   const { state, services, actions, t, title } = context;
   services.dialogs = createDialogs({
     t,
     beforeOpen: () => {
+      services.hotkeys?.suspend();
       state.spaceHeld = false;
       state.shiftHeld = false;
       actions.cancelInteraction();
@@ -33,6 +35,9 @@ export function composeWorkbench(context) {
     nodePointerDown: actions.nodePointerDown,
     pinPointerDown: actions.pinPointerDown,
     toggleSource: actions.toggleSource,
+    canRenameNode: () => !services.classroom || services.classroom.allowEdit(),
+    renameNode: actions.renameNode,
+    cancelInteraction: actions.cancelInteraction,
     openScene: (id) => services.scenes.open(id),
     primarySignal: (node) => services.monitor.primarySignal(node),
     selectNode: (id, { inspect = false } = {}) => {
@@ -92,6 +97,7 @@ export function composeWorkbench(context) {
     deleteSelection: actions.deleteSelection,
     duplicateSelection: actions.duplicateSelection,
     enableSelected: actions.enableSelected,
+    beginHotkeyCapture: (request) => services.hotkeys.beginCapture(request),
   });
   services.scenes = createSceneController(state, {
     t,
@@ -207,5 +213,47 @@ export function composeWorkbench(context) {
       actions.persist();
     },
     loadProject: actions.replaceProject,
+  });
+  const canWriteHotkey = () => !services.classroom.isLocked() || services.classroom.isRecording();
+  services.hotkeys = createHotkeyController({
+    getProject: () => state.project,
+    canWrite: canWriteHotkey,
+    canActivate: () =>
+      canWriteHotkey() &&
+      !services.dialogs.isOpen() &&
+      !state.gesture &&
+      !$('.project-files')?.open &&
+      !$('.canvas-tools')?.classList.contains('more-tools-open') &&
+      !$('#component-library')?.classList.contains('mobile-open'),
+    canCapture: (id) =>
+      !services.classroom.isLocked() &&
+      !services.dialogs.isOpen() &&
+      state.selected.size === 1 &&
+      state.selected.has(id) &&
+      state.project.nodes.some((node) => node.id === id && node.type === 'hotkey'),
+    writeValue: (id, value) => {
+      const node = state.project.nodes.find((node) => node.id === id && node.type === 'hotkey');
+      if (!node || (node.params.value ?? 0) === value) return;
+      node.params.value = value;
+      simulate(state.project, state.runtime, 0);
+      actions.updateSignals();
+      services.classroom.inputChanged(id, 'value', value);
+      actions.persist();
+    },
+    onClaim: () => {
+      state.spaceHeld = false;
+      state.shiftHeld = false;
+      actions.updateTool();
+    },
+    beforeCapture: () => {
+      state.spaceHeld = false;
+      state.shiftHeld = false;
+      actions.cancelInteraction({ refreshInspector: false });
+      actions.updateTool();
+    },
+    focusWorkspace: () => {
+      actions.setWorkspaceView('canvas');
+      $('#viewport').focus({ preventScroll: true });
+    },
   });
 }

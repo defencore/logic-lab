@@ -10,6 +10,7 @@ import notGuide from './gates/not.js';
 import gndGuide from './io/gnd.js';
 import vccGuide from './io/vcc.js';
 import switchGuide from './io/switch.js';
+import hotkeyGuide from './io/hotkey.js';
 import busInputGuide from './io/bus-input.js';
 import clockGuide from './io/clock.js';
 import ledGuide from './io/led.js';
@@ -75,6 +76,7 @@ const manuals = [
   ['gnd', gndGuide],
   ['vcc', vccGuide],
   ['switch', switchGuide],
+  ['hotkey', hotkeyGuide],
   ['bus_input', busInputGuide],
   ['clock', clockGuide],
   ['led', ledGuide],

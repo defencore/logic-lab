@@ -69,8 +69,8 @@ const byteInitial = new Set(['register', 'shift_register', 'counter']);
 export function parameterRule(type, key) {
   let limits = bounds[key];
   let integer = integerKeys.has(key);
-  if (key === 'value' && ['switch', 'bus_input'].includes(type)) {
-    limits = [0, type === 'switch' ? 1 : 255, 1];
+  if (key === 'value' && ['switch', 'hotkey', 'bus_input'].includes(type)) {
+    limits = [0, type === 'bus_input' ? 255 : 1, 1];
     integer = true;
   }
   if (key === 'initial' && (bitInitial.has(type) || byteInitial.has(type))) {
