@@ -3,6 +3,8 @@ export const JUNCTION = Object.freeze({
   scale: 0.1,
   carLength: 0.84,
   carWidth: 0.5,
+  vehicleY: 0.18,
+  roadSurfaceY: 0.195,
   laneOffset: 0.43,
   zebraNear: -1.975,
   zebraWidth: 0.55,
@@ -36,6 +38,9 @@ export const RAILWAY = Object.freeze({
   roadEntryPosition: -70,
   roadExitPosition: 70,
   barrierRate: 1.25,
+  trainY: 0.3014,
+  roadSurfaceY: 0.315,
+  carY: 0.3,
 });
 
 // This reservation includes the shared rail and both converging turnout mouths.
@@ -130,11 +135,11 @@ export function trainFootprint(train) {
 }
 
 export const trainCollisionBody = (train) =>
-  collisionBody('train', { ...railwayPose(train), y: 0.3 });
+  collisionBody('train', { ...railwayPose(train), y: RAILWAY.trainY });
 export const carCollisionBody = (car, kind = 'junction') =>
   collisionBody('car', {
     ...(kind === 'railway' ? roadCarPose(car) : junctionCarPose(car)),
-    y: 0.18,
+    y: kind === 'railway' ? RAILWAY.carY : JUNCTION.vehicleY,
   });
 
 export function carFootprint(car, kind = 'junction') {

@@ -2,6 +2,7 @@ import { AUTOMATION_TYPES } from './automation-worlds.js';
 import { createAutomationModel, AUTOMATION_FRAMING } from './automation-view.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { boundsForScene, fitCameraToBounds, updateSceneDepth } from './scene-camera.js';
 import {
   JUNCTION,
   RAILWAY,
@@ -100,12 +101,11 @@ export function createScenarioView(
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = 1;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xeaf0e8);
-  scene.fog = new THREE.Fog(0xeaf0e8, 27, 65);
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
@@ -115,8 +115,8 @@ export function createScenarioView(
   controls.maxPolarAngle = Math.PI * 0.49;
   const root = new THREE.Group();
   scene.add(root);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x83977c, 2.7));
-  const sun = new THREE.DirectionalLight(0xfff7e7, 3.6);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x83977c, 1.7));
+  const sun = new THREE.DirectionalLight(0xfff7e7, 2.7);
   sun.position.set(-7, 16, 11);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -130,7 +130,7 @@ export function createScenarioView(
   });
   sun.shadow.normalBias = 0.025;
   scene.add(sun);
-  const fill = new THREE.DirectionalLight(0xe4efff, 1.5);
+  const fill = new THREE.DirectionalLight(0xe4efff, 0.8);
   fill.position.set(9, 7, -12);
   scene.add(fill);
   const materials = new Map();
@@ -161,9 +161,23 @@ export function createScenarioView(
     return object;
   };
   mesh(scene, box(150, 0.1, 150), material(0xe1e9dc), 0, -0.2);
-  mesh(root, box(13.8, 0.25, type === 'railway' ? 18.6 : 13.8), material(0xd3ddc9), 0, -0.04);
   const context = { root, keep, material, geometry, box, cylinder, sphere, mesh, language };
   const model = createScenarioModel(type, context);
+  const frameBounds = model.bounds || boundsForScene(root);
+  let activeBounds = frameBounds;
+  const stageBounds = new THREE.Box3().setFromObject(root).union(frameBounds);
+  const footprint = stageBounds.getSize(new THREE.Vector3());
+  const centre = stageBounds.getCenter(new THREE.Vector3());
+  const stage = mesh(
+    root,
+    box(footprint.x + 0.9, 0.25, footprint.z + 0.9),
+    material(0xd3ddc9),
+    centre.x,
+    -0.04,
+    centre.z,
+  );
+  stage.userData.frameIgnore = true;
+  let viewDirection;
   function resize() {
     if (disposed) return;
     const bounds = container.getBoundingClientRect();
@@ -172,6 +186,14 @@ export function createScenarioView(
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    if (viewDirection)
+      fitCameraToBounds(
+        camera,
+        controls,
+        activeBounds,
+        camera.position.clone().sub(controls.target),
+        { scene },
+      );
   }
   function setView(view = 'perspective') {
     if (disposed) return;
@@ -208,10 +230,11 @@ export function createScenarioView(
         top: [0, 23, 0.001],
       },
     }[type];
-    controls.target.set(...framing.target);
-    camera.position.set(...framing[view === 'front' || view === 'top' ? view : 'perspective']);
-    camera.lookAt(controls.target);
-    controls.update();
+    viewDirection = new THREE.Vector3(
+      ...framing[view === 'front' || view === 'top' ? view : 'perspective'],
+    ).sub(new THREE.Vector3(...framing.target));
+    activeBounds = view === 'top' ? frameBounds : model.focusBounds || frameBounds;
+    fitCameraToBounds(camera, controls, activeBounds, viewDirection, { scene });
   }
   const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(resize) : null;
   observer?.observe(container);
@@ -257,6 +280,7 @@ export function createScenarioView(
     frame = requestAnimationFrame(animate);
     if (contextLost || document.hidden || !container.isConnected) return;
     controls.update();
+    updateSceneDepth(scene, camera, controls);
     renderer.render(scene, camera);
   }
   resize();
@@ -294,10 +318,10 @@ export function createScenarioView(
 }
 
 function createTrafficLight({ root, mesh, box, cylinder, sphere, material, keep }) {
-  mesh(root, box(4.5, 0.08, 13.4), material(0x46505a), -1.5, 0.14);
+  mesh(root, box(4.5, 0.08, 13.4), material(0x46505a), -1.5, 0.14).userData.frameIgnore = true;
   for (let z = -5; z <= 5; z += 1.7)
     mesh(root, box(0.1, 0.012, 0.85), material(0xf1ead8), -1.5, 0.19, z);
-  mesh(root, box(2.4, 0.22, 13.4), material(0xb6bdbb), 2, 0.2);
+  mesh(root, box(2.4, 0.22, 13.4), material(0xb6bdbb), 2, 0.2).userData.frameIgnore = true;
   mesh(root, cylinder(0.12, 0.15, 4.5), material(0x8c999b, 0.75, 0.3), 2, 2.5, 0);
   mesh(root, box(0.85, 2.6, 0.65), material(0x26312e), 2, 4.1, 0);
   const lamps = [0xdf3930, 0xf4b52c, 0x38b76b].map((color, index) => {
@@ -491,8 +515,11 @@ function createTrafficJunction(context) {
   const { root, mesh, box, cylinder, sphere, material } = context;
   const asphalt = material(0x49525c),
     paint = material(0xf6f0d9);
-  mesh(root, box(2.7, 0.09, 13.4), asphalt, 0, 0.15);
-  mesh(root, box(13.4, 0.09, 2.7), asphalt, 0, 0.151);
+  // Separate coplanar road arms avoid overlapping asphalt faces in the centre.
+  mesh(root, box(2.7, 0.09, 14.2), asphalt, 0, 0.15).userData.role = 'junction-asphalt';
+  for (const side of [-1, 1])
+    mesh(root, box(5.75, 0.09, 2.7), asphalt, side * 4.225, 0.15).userData.role =
+      'junction-asphalt';
   for (const side of [-1, 1])
     for (let p = 2.1; p < 6.4; p += 1.0) {
       mesh(root, box(0.06, 0.013, 0.45), paint, 0, 0.205, p * side);
@@ -545,9 +572,11 @@ function createTrafficJunction(context) {
           root.add(car.group);
         }
         const pose = junctionCarPose(data);
-        car.group.position.set(pose.x, 0.18, pose.z);
+        car.group.position.set(pose.x, JUNCTION.vehicleY, pose.z);
         car.group.rotation.set(0, pose.heading, 0);
         car.damage.visible = !!data.crashed;
+        car.group.visible =
+          Math.abs(data.position * JUNCTION.scale) <= 7.1 - JUNCTION.carLength / 2;
         for (const wheel of car.wheels)
           wheel.rotation.x = (finite(data.position) * JUNCTION.scale) / 0.115;
       });
@@ -636,22 +665,59 @@ function createRailway(context) {
   };
   const makeTrack = (name, pointAt, offsetAt) => {
     const curve = trackCurve(pointAt, 0);
-    mesh(root, keep(new THREE.TubeGeometry(curve, 160, 0.27, 8, false)), ballast, 0, 0.22).scale.y =
-      0.45;
+    const bed = mesh(
+      root,
+      keep(new THREE.TubeGeometry(curve, 160, 0.42, 8, false)),
+      ballast,
+      0,
+      0.115,
+    );
+    bed.scale.y = 0.14;
+    bed.userData.role = 'rail-ballast';
     for (const offset of [-0.19, 0.19]) {
-      const rail = mesh(
-        root,
-        keep(
-          new THREE.TubeGeometry(
-            trackCurve((t) => offsetAt(t, offset), 0.29),
-            160,
-            0.025,
-            6,
-            false,
-          ),
-        ),
-        steel,
+      const profile = [
+        [-0.043, 0.245],
+        [0.043, 0.245],
+        [0.043, 0.253],
+        [0.013, 0.257],
+        [0.013, 0.292],
+        [0.027, 0.295],
+        [0.027, 0.315],
+        [-0.027, 0.315],
+        [-0.027, 0.295],
+        [-0.013, 0.292],
+        [-0.013, 0.257],
+        [-0.043, 0.253],
+      ];
+      const positions = [],
+        indices = [],
+        count = profile.length,
+        segments = 160;
+      for (let step = 0; step <= segments; step++) {
+        for (const [width, y] of profile) {
+          const point = offsetAt(step / segments, offset + width);
+          positions.push(point.x, y, point.z);
+        }
+        if (step > 0)
+          for (let side = 0; side < count; side++) {
+            const a = (step - 1) * count + side,
+              b = (step - 1) * count + ((side + 1) % count);
+            indices.push(a, b, a + count, b, b + count, a + count);
+          }
+      }
+      const caps = THREE.ShapeUtils.triangulateShape(
+        profile.map(([x, y]) => new THREE.Vector2(x, y)),
+        [],
       );
+      for (const [a, b, c] of caps)
+        indices.push(c, b, a, a + segments * count, b + segments * count, c + segments * count);
+      const solid = new THREE.BufferGeometry();
+      solid.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      solid.setIndex(indices);
+      const shape = keep(solid.toNonIndexed());
+      solid.dispose();
+      shape.computeVertexNormals();
+      const rail = mesh(root, shape, steel);
       rail.userData = { role: 'rail', track: name, offset };
     }
     const length = curve.getLength();
@@ -660,6 +726,7 @@ function createRailway(context) {
         tangent = curve.getTangentAt(d / length);
       const tie = mesh(root, box(0.73, 0.075, 0.11), timber, p.x, 0.21, p.z);
       tie.rotation.y = Math.atan2(tangent.x, tangent.z);
+      tie.userData.role = 'rail-sleeper';
     }
   };
   makeTrack(
@@ -673,9 +740,40 @@ function createRailway(context) {
       (t) => railwayPoint(track, -125 + t * 125),
       (t, offset) => railwayOffsetPoint(track, -125 + t * 125, offset),
     );
-  mesh(root, box(12.8, 0.08, 1.6), material(0x4b555c), 0, 0.15, RAILWAY.roadZ);
+  const road = new THREE.Group();
+  root.add(road);
+  road.userData.role = 'rail-crossing-deck';
+  for (const side of [-1, 1])
+    mesh(
+      road,
+      box(6.54, 0.23, 1.6),
+      material(0x4b555c),
+      side * 4.23,
+      RAILWAY.roadSurfaceY - 0.115,
+      RAILWAY.roadZ,
+    );
+  mesh(road, box(1.92, 0.17, 1.6), material(0x4b555c), 0, 0.17, RAILWAY.roadZ);
+  // Flush panels leave clearance beside each rail head for train wheel flanges.
+  for (const x of [-0.61, 0, 0.61]) {
+    const deck = mesh(
+      road,
+      box(x === 0 ? 0.27 : 0.7, 0.06, 1.6),
+      material(0x7c725e),
+      x,
+      RAILWAY.roadSurfaceY - 0.03,
+      RAILWAY.roadZ,
+    );
+    deck.userData.role = 'crossing-panel';
+  }
   for (const x of [-5, -3, 3, 5])
-    mesh(root, box(1.1, 0.015, 0.06), material(0xf3ead3), x, 0.2, RAILWAY.roadZ);
+    mesh(
+      root,
+      box(1.1, 0.015, 0.06),
+      material(0xf3ead3),
+      x,
+      RAILWAY.roadSurfaceY + 0.012,
+      RAILWAY.roadZ,
+    );
   const turnouts = [0, 1].map((end) => {
     const group = new THREE.Group();
     root.add(group);
@@ -696,11 +794,11 @@ function createRailway(context) {
     const routes = [0, 1].map((route) => {
       const line =
         route === (end ? 1 : 0)
-          ? trackCurve((t) => railwayPoint(end ? 'b' : 'a', -55 + t * 55), 0.34)
-          : trackCurve((t) => ({ x: 0, z: end ? 2.1 + (1 - t) * 3.3 : -3.3 + t * 3.3 }), 0.34);
+          ? trackCurve((t) => railwayPoint(end ? 'b' : 'a', -55 + t * 55), 0.268)
+          : trackCurve((t) => ({ x: 0, z: end ? 2.1 + (1 - t) * 3.3 : -3.3 + t * 3.3 }), 0.268);
       const rail = mesh(
         root,
-        keep(new THREE.TubeGeometry(line, 80, 0.027, 6, false)),
+        keep(new THREE.TubeGeometry(line, 80, 0.015, 6, false)),
         material(0x2aaf80, 0.25),
       );
       rail.userData = { role: 'selected-rail-route', end, route };
@@ -731,13 +829,17 @@ function createRailway(context) {
       mesh(arm, box(0.105, 0.115, 0.15), material(0xb84539), 0, 0, -side * (0.15 + i * 0.33));
     return arm;
   });
-  mesh(root, cylinder(0.04, 0.04, 1.5), steel, 1.3, 0.85, -1.9);
+  mesh(root, cylinder(0.025, 0.035, 1.5), steel, 1.3, 0.835, -1.9);
   const speedSign = buildSpeedSign(context, root, 60, 1.3, 1.6, -1.9);
   const trains = new Map();
   const roadCars = new Map();
   const aftermath = buildAftermath(context, root);
   aftermath.userData.role = 'collision-aftermath';
   return {
+    focusBounds: new THREE.Box3(
+      new THREE.Vector3(-3.5, 0.085, -3.6),
+      new THREE.Vector3(3.5, 3.0, 5.6),
+    ),
     update({ state = {}, parameters = {} }) {
       signalA.set(!active(state.signals?.a), 0, state.signals?.a);
       signalB.set(!active(state.signals?.b), 0, state.signals?.b);
@@ -765,7 +867,7 @@ function createRailway(context) {
           root.add(train.group);
         }
         const pose = railwayPose(data);
-        train.group.position.set(pose.x, 0.3, pose.z);
+        train.group.position.set(pose.x, RAILWAY.trainY, pose.z);
         train.group.rotation.set(0, pose.heading, 0);
         train.damage.visible = !!data.crashed || !!data.derailed;
         for (const wheel of train.wheels)
@@ -789,7 +891,8 @@ function createRailway(context) {
           root.add(car.group);
         }
         const pose = roadCarPose(data);
-        car.group.position.set(pose.x, 0.18, pose.z);
+        car.group.position.set(pose.x, RAILWAY.carY, pose.z);
+        car.group.visible = Math.abs(pose.x) <= 7.5 - JUNCTION.carLength / 2;
         car.group.rotation.set(0, pose.heading, 0);
         car.damage.visible = !!data.crashed;
         for (const wheel of car.wheels)
@@ -814,7 +917,7 @@ function createAnimalFeeder(context) {
   const steel = material(0xb5c0bd, 0.75, 0.3),
     green = material(0x4e7a68, 0.2),
     feed = material(0xb68b4c);
-  mesh(root, box(11.5, 0.08, 9.5), material(0xcbbd9d), 0, 0.13);
+  mesh(root, box(9.0, 0.08, 5.8), material(0xcbbd9d), -0.3, 0.13).userData.frameIgnore = true;
   const clear = keep(
     new THREE.MeshStandardMaterial({
       color: 0xe6f0e9,
@@ -832,7 +935,13 @@ function createAnimalFeeder(context) {
   mesh(root, cylinder(1.1, 0.16, 1.1, 36), steel, -2.6, 2.65);
   const hopperFill = mesh(root, cylinder(0.98, 0.98, 1), feed, -2.6, 3.4);
   const funnelFeed = mesh(root, cylinder(0.98, 0.13, 0.95, 32), feed, -2.6, 2.75);
-  mesh(root, box(0.8, 0.6, 0.75), green, -3.7, 2.1);
+  const motor = mesh(root, box(0.8, 0.6, 0.75), green, -3.7, 2.1);
+  motor.userData.role = 'feeder-motor';
+  const coupling = mesh(root, cylinder(0.065, 0.065, 0.68), steel, -2.975, 2.1);
+  coupling.rotation.z = Math.PI / 2;
+  coupling.userData.role = 'feeder-coupling';
+  mesh(root, box(0.9, 0.12, 0.8), steel, -3.7, 1.74);
+  for (const z of [-0.3, 0.3]) mesh(root, box(0.1, 1.5, 0.08), steel, -3.7, 0.92, z);
   const pipe = mesh(root, cylinder(0.21, 0.21, 3.2, 28), clear, -1.0, 2.1);
   pipe.rotation.z = Math.PI / 2;
   const auger = new THREE.Group();
@@ -840,6 +949,7 @@ function createAnimalFeeder(context) {
   root.add(auger);
   const shaft = mesh(auger, cylinder(0.045, 0.045, 3.3), steel);
   shaft.rotation.z = Math.PI / 2;
+  shaft.userData.role = 'feeder-shaft';
   const helix = new THREE.CatmullRomCurve3(
     Array.from(
       { length: 150 },
@@ -853,9 +963,11 @@ function createAnimalFeeder(context) {
   );
   mesh(auger, keep(new THREE.TubeGeometry(helix, 170, 0.035, 6, false)), material(0xc0a066, 0.65));
   const chute = mesh(root, cylinder(0.2, 0.2, 0.65), steel, 0.7, 1.85);
-  chute.rotation.z = -0.4;
+  chute.rotation.z = 0.4;
+  chute.userData.role = 'feeder-chute';
   const bowl = new THREE.Group();
-  bowl.position.set(0.95, 0.18, 0);
+  bowl.position.set(0.95, 0.15, 0);
+  bowl.userData.role = 'feeder-bowl';
   root.add(bowl);
   mesh(
     bowl,
@@ -876,6 +988,7 @@ function createAnimalFeeder(context) {
     material(0x7f9997, 0.7, 0.3),
   );
   const bowlFood = mesh(bowl, cylinder(0.72, 0.64, 0.2, 32), feed, 0, 0.17);
+  bowlFood.userData.role = 'feeder-bowl-food';
   const pelletGeometry = sphere(0.045);
   const spilled = keep(new THREE.InstancedMesh(pelletGeometry, feed, 140));
   spilled.castShadow = true;
@@ -886,7 +999,8 @@ function createAnimalFeeder(context) {
   root.add(stream);
   const matrix = new THREE.Object3D();
   const animal = new THREE.Group();
-  animal.position.set(2.85, 0.2, 0);
+  animal.position.set(2.55, 0.085, 0);
+  animal.userData.role = 'feeder-animal';
   animal.rotation.y = -Math.PI / 2;
   root.add(animal);
   const fur = material(0xb38b60),
@@ -909,7 +1023,7 @@ function createAnimalFeeder(context) {
       leg.position.set(x, 0.66, z);
       animal.add(leg);
       mesh(leg, cylinder(0.075, 0.06, 0.52, 16), fur, 0, -0.24);
-      mesh(leg, sphere(0.105), paws, 0, -0.47, 0.04);
+      mesh(leg, sphere(0.105), paws, 0, -0.47, 0.04).userData.role = 'feeder-paw';
       legs.push(leg);
     }
   const head = new THREE.Group();
@@ -931,6 +1045,9 @@ function createAnimalFeeder(context) {
     ear.rotation.z = x * -0.9;
     mesh(head, sphere(0.042), black, x, 0.16, 0.42);
   }
+  const tongue = mesh(head, box(0.09, 0.025, 0.16), material(0xc7877f), 0, -0.04, 0.72);
+  tongue.userData.role = 'feeder-tongue';
+  tongue.visible = false;
   const tail = new THREE.Group();
   tail.position.set(0, 0.92, -0.77);
   animal.add(tail);
@@ -968,15 +1085,16 @@ function createAnimalFeeder(context) {
         finite(state.bowl) / Math.max(1, finite(parameters.bowlCapacity, 100)),
       );
       bowlFood.visible = bowlRatio > 0;
-      bowlFood.scale.y = Math.max(0.02, bowlRatio);
-      bowlFood.position.y = 0.13 + bowlRatio * 0.12;
+      bowlFood.scale.y = Math.max(0.001, bowlRatio * 1.2);
+      bowlFood.position.y = 0.09 + bowlRatio * 0.12;
+      bowlFood.scale.x = bowlFood.scale.z = 0.9 + bowlRatio * 0.1;
       if (state.dispensing) auger.rotation.x = finite(state.time) * 8;
       stream.visible = !!state.dispensing;
       for (let i = 0; i < 13; i++) {
         const p = (finite(state.time) * 1.8 + i / 13) % 1;
         matrix.position.set(
-          0.78 + Math.sin(i * 2.4) * 0.08,
-          1.5 - p * 1.1,
+          0.83 + Math.sin(i * 2.4) * 0.04,
+          1.5 - p * (1.5 - (0.24 + bowlRatio * 0.24)),
           Math.cos(i * 2.4) * 0.08,
         );
         matrix.rotation.set(i, i * 1.7, 0);
@@ -995,8 +1113,9 @@ function createAnimalFeeder(context) {
       spilled.instanceMatrix.needsUpdate = true;
       const phase = finite(state.animal?.phase) * Math.PI * 2;
       head.rotation.x = state.animal?.eating
-        ? 0.75 + Math.sin(phase * 2) * 0.09
+        ? 0.95 + Math.sin(phase * 2) * 0.04
         : -0.1 + Math.sin(phase) * 0.04;
+      tongue.visible = !!state.animal?.eating;
       tail.rotation.z = Math.sin(phase) * (state.animal?.eating ? 0.2 : 0.4);
       legs.forEach(
         (leg, index) =>
@@ -1016,7 +1135,7 @@ function createWaterTank(context) {
   const metal = material(0xb7c6c8, 0.75, 0.3),
     pumpPaint = material(0x3f7b79, 0.35),
     dark = material(0x344947);
-  mesh(root, box(10.5, 0.11, 9), material(0xc4d1d0), 0, 0.15);
+  mesh(root, box(10.5, 0.11, 9), material(0xc4d1d0), 0, 0.15).userData.frameIgnore = true;
   const glass = keep(
     new THREE.MeshStandardMaterial({
       color: 0xd8edf0,
@@ -1110,12 +1229,14 @@ function createWaterTank(context) {
     [2.8, 0.94, 0],
     [3.3, 0.65, 0],
     [3.8, 0.65, 0],
+    [4.0, 0.5, 0],
+    [4.0, 0.36, 0],
   ]);
   mesh(root, box(1.25, 0.24, 1.2), dark, -3.0, 0.32);
-  const pump = mesh(root, cylinder(0.48, 0.48, 0.9), pumpPaint, -3.0, 0.84, 0.25);
+  const pump = mesh(root, cylinder(0.48, 0.48, 0.9), pumpPaint, -3.0, 0.92, 0.25);
   pump.rotation.x = Math.PI / 2;
   const propeller = new THREE.Group();
-  propeller.position.set(-3.0, 0.84, 0.73);
+  propeller.position.set(-3.0, 0.92, 0.73);
   root.add(propeller);
   mesh(propeller, cylinder(0.09, 0.09, 0.08), metal).rotation.x = Math.PI / 2;
   for (let i = 0; i < 5; i++) {
@@ -1130,7 +1251,11 @@ function createWaterTank(context) {
     blade.rotation.z = i * Math.PI * 0.4 + 0.4;
   }
   const stream = mesh(root, cylinder(0.055, 0.055, 1, 14), flowPaint, 0, 3.0);
-  const drainStream = mesh(root, cylinder(0.06, 0.06, 0.36, 14), flowPaint, 3.8, 0.45);
+  const drainStream = mesh(root, cylinder(0.06, 0.06, 0.14, 14), flowPaint, 4.0, 0.29);
+  drainStream.userData.role = 'tank-drain-stream';
+  mesh(root, box(0.8, 0.018, 0.7), dark, 4.0, 0.215);
+  for (let index = -3; index <= 3; index++)
+    mesh(root, box(0.035, 0.02, 0.62), metal, 4 + index * 0.1, 0.23);
   const floodPaint = keep(
     new THREE.MeshStandardMaterial({
       color: 0x50a9c5,
@@ -1169,9 +1294,11 @@ function createWaterTank(context) {
       flowPaint,
     ),
   );
-  mesh(root, box(0.32, 4.8, 0.08), material(0xe4ece7), 0.9, 3.2, 1.4);
+  const ruler = mesh(root, box(0.32, 4.8, 0.08), material(0xe4ece7), 0, 3.2, 1.73);
+  ruler.userData.role = 'tank-level-ruler';
+  for (const y of [1.0, 5.4]) mesh(root, box(0.12, 0.09, 0.18), metal, 0, y, 1.67);
   for (let i = 0; i <= 10; i++)
-    mesh(root, box(i % 5 === 0 ? 0.27 : 0.17, 0.025, 0.015), dark, 0.9, 0.84 + i * 0.47, 1.45);
+    mesh(root, box(i % 5 === 0 ? 0.27 : 0.17, 0.025, 0.015), dark, 0, 0.86 + i * 0.468, 1.78);
   const beaconPaint = keep(
     new THREE.MeshStandardMaterial({ color: 0x3a9867, emissive: 0x3a9867, emissiveIntensity: 0.4 }),
   );
@@ -1179,12 +1306,12 @@ function createWaterTank(context) {
   return {
     update({ state = {}, parameters = {} }) {
       const ratio = clamp(finite(state.level) / 100),
-        height = Math.max(0.005, ratio * 4.7),
-        top = 0.85 + height;
+        height = Math.max(0.005, ratio * 4.68),
+        top = 0.86 + height;
       water.visible = ratio > 0;
       surface.visible = ratio > 0;
       water.scale.y = height;
-      water.position.y = 0.85 + height / 2;
+      water.position.y = 0.86 + height / 2;
       surface.position.y = top + 0.01;
       for (let i = 0; i < ripples.length; i++) {
         const wave =

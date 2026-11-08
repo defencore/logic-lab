@@ -347,3 +347,143 @@ test('the first train/car contact witnesses lie on actual rendered triangle surf
     );
   });
 });
+
+function byRole(root, role) {
+  const found = [];
+  root.traverse((object) => {
+    if (object.userData.role === role) found.push(object);
+  });
+  return found;
+}
+function worldBounds(object) {
+  object.updateWorldMatrix(true, true);
+  return new THREE.Box3().setFromObject(object);
+}
+
+test('rail beds support exposed sleepers and flush crossing decks support both trains and cars', () => {
+  withScene('railway', (root, model) => {
+    const state = initialScenarioState({ type: 'railway', params: {} });
+    model.update({ state, parameters: {} });
+    root.updateMatrixWorld(true);
+    const railTop = Math.max(...byRole(root, 'rail').map((object) => worldBounds(object).max.y));
+    const bedTop = Math.max(
+      ...byRole(root, 'rail-ballast').map((object) => worldBounds(object).max.y),
+    );
+    const sleeperBottom = Math.min(
+      ...byRole(root, 'rail-sleeper').map((object) => worldBounds(object).min.y),
+    );
+    assert.ok(bedTop <= sleeperBottom + 0.002, 'Ballast cannot bury the sleepers');
+    assert.ok(railTop > bedTop + 0.1, 'Steel rail heads remain clearly above the bed');
+    assert.ok(Math.abs(worldBounds(byRole(root, 'rail-crossing-deck')[0]).max.y - railTop) < 1e-6);
+    for (const group of [...entities(root, 'rail_train'), ...entities(root, 'rail_car')])
+      group.traverse((object) => {
+        if (object.userData.collisionPart?.startsWith('wheel:'))
+          assert.ok(
+            Math.abs(worldBounds(object).min.y - railTop) < 1e-6,
+            'Actual tyres and rail heads meet',
+          );
+        if (object.userData.collisionPart === 'plow')
+          assert.ok(
+            worldBounds(object).min.y > railTop + 0.01,
+            'Cowcatcher clears the crossing surface',
+          );
+      });
+  });
+});
+
+test('locomotive coupling joins the wagon and car proportions remain longer than their width', () => {
+  withScene('railway', (root, model) => {
+    model.update({ state: initialScenarioState({ type: 'railway', params: {} }) });
+    for (const group of entities(root, 'rail_train')) {
+      const parts = new Map();
+      group.traverse((object) => {
+        if (object.userData.collisionPart) parts.set(object.userData.collisionPart, object);
+      });
+      const coupling = worldBounds(parts.get('coupler'));
+      assert.ok(coupling.intersectsBox(worldBounds(parts.get('chassis'))));
+      assert.ok(coupling.intersectsBox(worldBounds(parts.get('wagon'))));
+    }
+    const size = worldBounds(entities(root, 'rail_car')[0]).getSize(new THREE.Vector3());
+    assert.ok(size.x / size.z > 1.85, 'Road-car length should be close to twice its width');
+  });
+});
+
+test('feeder paws and bowl rest on the pad, with a connected motor and contained food at all fill levels', () => {
+  withScene('animal_feeder', (root, model) => {
+    const base = {
+      hopper: 300,
+      bowl: 10,
+      spilled: 0,
+      time: 0,
+      dispensing: true,
+      animal: { phase: 0, eating: false },
+    };
+    model.update({ state: base, parameters: { bowlCapacity: 100 } });
+    for (const paw of byRole(root, 'feeder-paw'))
+      assert.ok(Math.abs(worldBounds(paw).min.y - 0.17) < 1e-6);
+    assert.ok(Math.abs(worldBounds(byRole(root, 'feeder-bowl')[0]).min.y - 0.17) < 1e-6);
+    const coupling = worldBounds(byRole(root, 'feeder-coupling')[0]);
+    assert.ok(coupling.intersectsBox(worldBounds(byRole(root, 'feeder-motor')[0])));
+    assert.ok(coupling.intersectsBox(worldBounds(byRole(root, 'feeder-shaft')[0])));
+    for (const bowl of [1, 10, 50, 100]) {
+      model.update({ state: { ...base, bowl }, parameters: { bowlCapacity: 100 } });
+      const food = worldBounds(byRole(root, 'feeder-bowl-food')[0]);
+      assert.ok(Math.abs(food.min.y - 0.24) < 1e-6, 'Food rests on the inner bowl floor');
+      const localTop = food.max.y - 0.15;
+      const innerRadius = 0.66 + ((localTop - 0.09) * (0.74 - 0.66)) / (0.34 - 0.09);
+      assert.ok(
+        (food.max.x - food.min.x) / 2 < innerRadius,
+        'Fill does not pass through the measured inner wall',
+      );
+    }
+  });
+});
+
+test('tank ruler clears its curved wall and the drain stream reaches a visible outlet destination', () => {
+  withScene('water_tank', (root, model) => {
+    model.update({ state: { level: 50, time: 0, pumping: true, draining: true } });
+    const ruler = worldBounds(byRole(root, 'tank-level-ruler')[0]);
+    assert.ok(ruler.min.z > 1.65 + 0.025, 'Flat ruler is outside the curved tank wall');
+    const flow = worldBounds(byRole(root, 'tank-drain-stream')[0]);
+    assert.ok(Math.abs(flow.max.y - 0.36) < 1e-6, 'Flow meets the downward pipe outlet');
+    assert.ok(
+      flow.min.y <= 0.24 && flow.min.y >= 0.205,
+      'Flow reaches the drain grate at ground level',
+    );
+  });
+});
+
+test('road surfaces support complete cars at spawn and exit while long queues enter from outside the scene', () => {
+  withScene('railway', (root, model) => {
+    const state = initialScenarioState({ type: 'railway', params: {} });
+    for (const position of [-70, 70]) {
+      for (const car of state.roadCars) car.position = position;
+      model.update({ state });
+      const deck = worldBounds(byRole(root, 'rail-crossing-deck')[0]);
+      for (const car of entities(root, 'rail_car')) {
+        const body = worldBounds(car);
+        assert.ok(body.min.x >= deck.min.x && body.max.x <= deck.max.x);
+      }
+    }
+  });
+  withScene('traffic_junction', (root, model) => {
+    const state = initialScenarioState({ type: 'traffic_junction', params: { initialCars: 8 } });
+    model.update({ state });
+    const roads = new THREE.Box3();
+    byRole(root, 'junction-asphalt').forEach((object) => roads.union(worldBounds(object)));
+    const cars = entities(root, 'junction_car');
+    assert.ok(
+      cars.some((car) => !car.visible),
+      'Far queued vehicles wait outside the visible road',
+    );
+    for (const car of cars.filter((car) => car.visible)) {
+      const body = worldBounds(car);
+      assert.ok(
+        body.min.x >= roads.min.x &&
+          body.max.x <= roads.max.x &&
+          body.min.z >= roads.min.z &&
+          body.max.z <= roads.max.z,
+      );
+    }
+  });
+});

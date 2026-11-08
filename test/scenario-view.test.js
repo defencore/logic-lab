@@ -234,14 +234,19 @@ test('every actual scene constructor builds and updates normal and failed Three.
         );
         const left = rails
           .find((object) => object.userData.offset < 0)
-          .geometry.parameters.path.getPoint(0.8);
+          .geometry.getAttribute('position');
         const right = rails
           .find((object) => object.userData.offset > 0)
-          .geometry.parameters.path.getPoint(0.8);
-        assert.ok(
-          Math.abs(left.distanceTo(right) - 0.38) < 1e-10,
-          'Parallel curved rails keep a constant normal gauge',
-        );
+          .geometry.getAttribute('position');
+        assert.equal(left.count, right.count);
+        for (let index = 0; index < left.count; index += 31) {
+          const a = new THREE.Vector3().fromBufferAttribute(left, index);
+          const b = new THREE.Vector3().fromBufferAttribute(right, index);
+          assert.ok(
+            Math.abs(a.distanceTo(b) - 0.38) < 1e-6,
+            'Actual curved steel profiles preserve normal gauge',
+          );
+        }
       }
       model.update({
         state: { ...failure, cars: [], trains: [], roadCars: [], hopper: 0, bowl: 0, level: 0 },

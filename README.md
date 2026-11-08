@@ -148,7 +148,7 @@ The mechanical model is idealized: it does not simulate inertia, torque, missed 
 
 ## Interactive 3D laboratories
 
-The header's **3D** action appears only when the circuit contains a stepper mechanism or an interactive scene object. Sensors alone and ordinary logic circuits do not show it. Each scene component also has its own **Open 3D view** action; when several objects are present, choose one in the scene selector. The scene, source controls, sensor outputs, simulation pause and reset all use the same circuit runtime.
+The header's **3D** action appears only when the circuit contains a stepper mechanism or an interactive scene object. Sensors alone and ordinary logic circuits do not show it. Each scene component also has its own **Open 3D view** action; when several objects are present, choose one in the scene selector. The scene, source controls, sensor outputs, simulation pause and reset all use the same circuit runtime. Camera presets fit the apparatus to the available viewport; resizing preserves the orbit direction. Railway perspective and front views focus on the crossing and turnouts, while the top view shows the complete layout.
 
 The **3D scenes & automation** example topic contains the transport, feeder and water-tank laboratories with editable circuits, bilingual walkthroughs and standalone worksheets:
 

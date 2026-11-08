@@ -42,10 +42,19 @@ function lamp(context, parent, x, y, z, color = 0xffd76b) {
     },
   };
 }
-function spray(context, parent, origin, material, count = 15) {
+function spray(
+  context,
+  parent,
+  origin,
+  material,
+  count = 15,
+  targetY = 0.36,
+  spread = 1.1,
+  arc = 0.45,
+) {
   const drops = Array.from({ length: count }, (_, index) => {
     const object = context.mesh(parent, context.sphere(0.028), material);
-    object.userData.role = 'water-drop';
+    object.userData = { role: 'water-drop', frameIgnore: true };
     return { object, phase: index / count };
   });
   return {
@@ -55,9 +64,9 @@ function spray(context, parent, origin, material, count = 15) {
         const progress = (time * 0.65 + phase) % 1,
           angle = index * 2.399;
         object.position.set(
-          origin[0] + Math.cos(angle) * progress * 1.1,
-          origin[1] + Math.sin(progress * Math.PI) * 0.65 - progress * 0.8,
-          origin[2] + Math.sin(angle) * progress * 1.1,
+          origin[0] + Math.cos(angle) * progress * spread,
+          origin[1] + (targetY - origin[1]) * progress + Math.sin(progress * Math.PI) * arc,
+          origin[2] + Math.sin(angle) * progress * spread,
         );
       });
     },
@@ -110,9 +119,23 @@ function thermometer(context, parent, x, y, z) {
   };
 }
 
+function fishPose(time, index, count) {
+  const layers = Math.ceil(count / 2);
+  const spacing = layers === 4 ? 0.76 : layers === 3 ? 1 : 1.1;
+  const bottom = layers === 4 ? 1.57 : layers === 3 ? 1.7 : layers === 2 ? 2.05 : 2.6;
+  const phase = time * (0.32 + index * 0.025) + index * 1.7;
+  return {
+    x: Math.sin(phase) * 2.5,
+    y: bottom + Math.floor(index / 2) * spacing + Math.sin(phase * 0.7) * 0.025,
+    z: (index % 2 ? 0.55 : -0.55) + Math.cos(phase) * 0.17,
+    heading: Math.atan2(0.17 * Math.sin(phase), 2.5 * Math.cos(phase)),
+  };
+}
+
 function fish(context, index) {
   const group = new THREE.Group();
   group.userData = { role: 'aquarium-fish', fishId: index + 1 };
+  group.scale.setScalar(0.82);
   const colors = [0xf0a24e, 0x5a9fb7, 0xe58a7f, 0xb6a8d2, 0x9da75b, 0xdcb94e, 0x7cb4a9, 0xb79b75];
   const bodyMaterial = paint(context, colors[index % colors.length]);
   const body = context.mesh(group, context.sphere(0.46), bodyMaterial);
@@ -190,30 +213,36 @@ function aquarium(context) {
   const rim = material(0x344c54, 0.35),
     wood = material(0x96724d),
     sand = material(0xc5b28b);
-  mesh(root, box(8.5, 0.35, 4.7), wood, 0, 0.55, 0);
+  mesh(root, box(8.6, 0.3, 4.7), wood, 0, 0.7, 0).userData.role = 'aquarium-table';
   for (const x of [-3.6, 3.6])
-    for (const z of [-1.8, 1.8]) mesh(root, box(0.35, 0.75, 0.35), wood, x, 0.3, z);
-  mesh(root, box(8, 0.22, 4), sand, 0, 0.9, 0);
+    for (const z of [-1.8, 1.8])
+      mesh(root, box(0.35, 0.465, 0.35), wood, x, 0.3175, z).userData.role = 'aquarium-leg';
+  mesh(root, box(8.1, 0.1, 4.1), material(0x718d8f), 0, 0.9, 0);
+  mesh(root, box(7.9, 0.13, 3.9), sand, 0, 1.015, 0).userData.role = 'aquarium-sand';
   const glass = paint(context, 0xc0edf0, {
     transparent: true,
-    opacity: 0.12,
+    opacity: 0.07,
     depthWrite: false,
-    side: THREE.DoubleSide,
     roughness: 0.1,
   });
   const water = paint(context, 0x65cbd5, {
     transparent: true,
-    opacity: 0.16,
+    opacity: 0.11,
     depthWrite: false,
-    side: THREE.DoubleSide,
   });
-  const waterMesh = mesh(root, box(7.94, 3.4, 3.94), water, 0, 2.65, 0);
+  const waterMesh = mesh(root, box(7.88, 3.27, 3.88), water, 0, 2.715, 0);
   waterMesh.userData.role = 'aquarium-water';
   waterMesh.renderOrder = 2;
-  for (const x of [-4, 4]) mesh(root, box(0.06, 3.8, 4.05), glass, x, 2.85, 0);
+  for (const z of [-1.94, 1.94])
+    mesh(root, box(7.88, 0.025, 0.025), material(0x65aeb9), 0, 4.35, z);
+  for (const x of [-3.94, 3.94])
+    mesh(root, box(0.025, 0.025, 3.88), material(0x65aeb9), x, 4.35, 0);
+  for (const x of [-4, 4])
+    mesh(root, box(0.06, 3.8, 4.05), glass, x, 2.85, 0).userData.role = 'aquarium-glass';
   for (const z of [-2, 2]) {
     const panel = mesh(root, box(8.05, 3.8, 0.06), glass, 0, 2.85, z);
     panel.renderOrder = 3;
+    panel.userData.role = 'aquarium-glass';
   }
   for (const y of [0.98, 4.75]) {
     for (const z of [-2, 2]) mesh(root, box(8.15, 0.13, 0.14), rim, 0, y, z);
@@ -227,22 +256,22 @@ function aquarium(context) {
       sphere(0.13 + (index % 3) * 0.035),
       material(index % 2 ? 0xb69f7e : 0xd9c7a2),
       Math.sin(index * 2.4) * 3.6,
-      1.06,
-      Math.cos(index * 1.8) * 1.7,
+      1.1,
+      -1.55 + Math.cos(index * 1.8) * 0.12,
     );
     stone.scale.y = 0.55;
   }
   for (const [x, z, height] of [
-    [-2.9, -1.2, 1.7],
-    [2.9, -1, 1.4],
-    [-1.3, -1.5, 1.1],
-    [1.4, 1.3, 0.9],
+    [-2.9, -1.65, 1.7],
+    [2.9, -1.65, 1.4],
+    [-1.3, -1.65, 1.1],
+    [1.4, -1.65, 0.9],
   ]) {
     const stem = plant(context, root, x, z, height, 0x3d8a64);
-    stem.group.position.y = 1.04;
+    stem.group.position.y = 1.08;
   }
-  mesh(root, box(1.0, 0.7, 0.85), material(0x99785b), 1.9, 1.42, -0.7);
-  const cave = ring(context, root, 0.27, material(0x3e4b47), 1.9, 1.45, -0.25);
+  mesh(root, box(0.9, 0.6, 0.5), material(0x99785b), 0, 1.38, -1.65);
+  const cave = ring(context, root, 0.24, material(0x3e4b47), 0, 1.4, -1.38);
   cave.scale.set(1.3, 1, 1);
   const heaterMaterial = paint(context, 0x746a57, { emissive: 0xf77c37, emissiveIntensity: 0 });
   const heater = mesh(root, cylinder(0.11, 0.11, 2.5), heaterMaterial, -3.55, 2.4, -1.5);
@@ -255,11 +284,12 @@ function aquarium(context) {
       [-3.55, 3.9, -1.5],
       [-3.55, 5, -1.5],
       [-4.6, 5, -1.5],
-      [-4.6, 1, -1.5],
+      [-4.6, 0.8, -1.5],
     ],
     0.045,
     rim,
   );
+  mesh(root, box(0.5, 0.7, 0.5), rim, -4.6, 0.435, -1.5);
   mesh(root, box(0.6, 1.5, 0.65), rim, 3.5, 3.1, -1.5);
   const rotor = mesh(
     root,
@@ -272,27 +302,27 @@ function aquarium(context) {
   rotor.userData.role = 'aquarium-filter';
   mesh(rotor, box(0.06, 0.35, 0.035), material(0xabe7d4));
   mesh(rotor, box(0.35, 0.06, 0.035), material(0xabe7d4));
-  mesh(root, box(0.9, 1.2, 0.9), rim, 4.8, 1.55, 0.5);
+  mesh(root, box(0.9, 1.2, 0.9), rim, 4.8, 0.685, 0.5);
   const chiller = new THREE.Group();
   root.add(chiller);
-  chiller.position.set(4.8, 1.65, 0.98);
+  chiller.position.set(4.8, 0.8, 0.98);
   chiller.userData.role = 'aquarium-cooler';
   ring(context, chiller, 0.3, material(0x71afc3), 0, 0, 0);
   for (let index = 0; index < 3; index++) {
-    const blade = mesh(chiller, box(0.08, 0.42, 0.04), material(0x71afc3));
+    const blade = mesh(chiller, box(0.08, 0.34, 0.04), material(0x71afc3));
     blade.position.set(
-      Math.sin((index * Math.PI * 2) / 3) * 0.1,
-      Math.cos((index * Math.PI * 2) / 3) * 0.1,
+      Math.sin((index * Math.PI * 2) / 3) * 0.08,
+      Math.cos((index * Math.PI * 2) / 3) * 0.08,
       0,
     );
     blade.rotation.z = (-index * Math.PI * 2) / 3;
   }
-  const coolerLamp = lamp(context, root, 4.8, 2.05, 0.98, 0x82d6f2);
+  const coolerLamp = lamp(context, root, 4.8, 1.15, 0.98, 0x82d6f2);
   tube(
     context,
     root,
     [
-      [4.8, 2.2, 0.5],
+      [4.8, 1.3, 0.5],
       [4.8, 4.9, 0.5],
       [3.2, 4.9, 0.5],
       [3.2, 3.8, 0.5],
@@ -304,7 +334,7 @@ function aquarium(context) {
     context,
     root,
     [
-      [4.8, 0.9, 1.4],
+      [4.8, 0.1, 1.4],
       [4.8, 5.0, 1.4],
       [3.3, 5.0, 1.4],
       [3.3, 4.5, 1.4],
@@ -315,8 +345,10 @@ function aquarium(context) {
   const freshWater = Array.from({ length: 10 }, () =>
     mesh(root, sphere(0.035), material(0x7bc9de)),
   );
-  freshWater.forEach((object) => (object.userData.role = 'aquarium-water-change'));
-  const oxygenStone = mesh(root, box(0.7, 0.12, 0.35), material(0x687a85), -2, 1.15, 0.7);
+  freshWater.forEach(
+    (object) => (object.userData = { role: 'aquarium-water-change', frameIgnore: true }),
+  );
+  const oxygenStone = mesh(root, box(0.7, 0.12, 0.35), material(0x687a85), -2, 1.14, 0.7);
   oxygenStone.userData.role = 'aquarium-aerator';
   const bubbleMaterial = paint(context, 0xb8f3f6, {
     transparent: true,
@@ -327,17 +359,20 @@ function aquarium(context) {
   const bubbles = Array.from({ length: 22 }, (_, index) =>
     mesh(root, sphere(0.035 + (index % 3) * 0.012), bubbleMaterial),
   );
-  bubbles.forEach((object) => (object.userData.role = 'oxygen-bubble'));
-  const hood = mesh(root, box(6.8, 0.18, 0.55), rim, 0, 5.0, -0.45);
+  bubbles.forEach((object) => (object.userData = { role: 'oxygen-bubble', frameIgnore: true }));
+  for (const x of [-2.8, 2.8])
+    mesh(root, box(0.16, 0.16, 4.1), rim, x, 4.87, 0).userData.role = 'aquarium-bridge';
+  const hood = mesh(root, box(6.8, 0.18, 0.55), rim, 0, 5.04, -0.45);
   hood.userData.role = 'aquarium-light';
   const lights = Array.from({ length: 8 }, (_, index) =>
     lamp(context, root, -2.8 + index * 0.8, 4.88, -0.45),
   );
-  const feeder = mesh(root, box(0.75, 0.55, 0.7), material(0xd4a36b), 2.6, 5.0, 0.8);
+  const feeder = mesh(root, box(0.75, 0.55, 0.7), material(0xd4a36b), 2.6, 5.225, 0.8);
   feeder.userData.role = 'aquarium-feeder';
+  mesh(root, cylinder(0.1, 0.1, 0.18), rim, 2.6, 4.88, 0.8);
   const pellets = Array.from({ length: 10 }, () => mesh(root, sphere(0.045), material(0x986242)));
-  pellets.forEach((object) => (object.userData.role = 'food-pellet'));
-  const meter = thermometer(context, root, -4.45, 2.85, 2.0);
+  pellets.forEach((object) => (object.userData = { role: 'food-pellet', frameIgnore: true }));
+  const meter = thermometer(context, root, -3.65, 2.85, 2.085);
   const fishes = new Map(),
     dirtyWaterColor = new THREE.Color(0x779154),
     cleanWaterColor = new THREE.Color(0x65cbd5),
@@ -374,7 +409,7 @@ function aquarium(context) {
         const phase = (time * 0.5 + index / 10) % 1;
         object.position.set(
           2.6 + Math.sin(index * 3.5) * 0.2,
-          4.7 - phase * 3.5,
+          4.78 - phase * 3.6,
           0.8 + Math.cos(index) * 0.2,
         );
       });
@@ -385,29 +420,26 @@ function aquarium(context) {
           fishes.set(data.id, model);
           root.add(model.group);
         }
-        const model = fishes.get(data.id),
-          phase = time * (0.32 + index * 0.025) + index * 1.7;
+        const model = fishes.get(data.id);
         model.group.visible = true;
         if (data.alive !== false) {
-          model.group.position.set(
-            Math.sin(phase) * 2.7,
-            2.15 + Math.sin(phase * 0.7 + index) * 0.65,
-            Math.cos(phase * 0.8 + index) * 1.15,
-          );
-          model.group.rotation.set(
-            0,
-            Math.cos(phase) >= 0 ? 0 : Math.PI,
-            Math.sin(phase * 1.7) * 0.04,
-          );
+          const pose = fishPose(time, index, list.length);
+          model.group.position.set(pose.x, pose.y, pose.z);
+          // The long axis follows the path tangent, including smooth turns.
+          model.group.rotation.set(0, pose.heading, 0);
           model.tail.rotation.y = Math.sin(time * 7 + index) * 0.35;
         } else {
+          const origin = fishPose(finite(data.deadAt, time), index, list.length);
           const rise = clamp((time - finite(data.deadAt, time)) * 0.45);
+          // Spread on the separate swimming levels before rising to one surface.
+          const spread = THREE.MathUtils.smoothstep(rise, 0, 0.5);
+          const lift = THREE.MathUtils.smoothstep(rise, 0.5, 1);
           model.group.position.set(
-            Math.sin(index * 2.4) * 2.65,
-            2.3 + rise * 1.7,
-            Math.cos(index * 1.5) * 1.1,
+            THREE.MathUtils.lerp(origin.x, -2.65 + Math.floor(index / 2) * 1.75, spread),
+            THREE.MathUtils.lerp(origin.y, 4.07, lift),
+            THREE.MathUtils.lerp(origin.z, index % 2 ? 0.8 : -0.8, spread),
           );
-          model.group.rotation.set(Math.PI, 0, 0.12);
+          model.group.rotation.set(Math.PI, 0, 0);
           model.tail.rotation.y = 0;
         }
         model.group.userData.alive = data.alive !== false;
@@ -425,41 +457,119 @@ function aquarium(context) {
 
 function greenhouse(context) {
   const { root, mesh, box, cylinder, material } = context;
-  const frame = material(0x627b71, 0.45),
-    soil = material(0x72513b),
-    water = paint(context, 0x6ebfcd);
-  mesh(root, box(10, 0.2, 8), material(0xb9c6a5), 0, 0.25, 0);
-  for (const z of [-3.8, 3.8])
-    for (const x of [-4.6, 0, 4.6]) {
-      mesh(root, cylinder(0.06, 0.06, 3.5), frame, x, 2.1, z);
-      tube(
-        context,
-        root,
-        [
-          [x, 3.85, z],
-          [x, 5.1, 0],
-          [x, 3.85, -z],
-        ],
-        0.055,
-        frame,
-      );
-    }
-  for (const y of [0.55, 3.85])
-    for (const z of [-3.8, 3.8]) mesh(root, box(9.3, 0.08, 0.08), frame, 0, y, z);
+  const frame = material(0x526e60, 0.35),
+    soil = material(0x674a35),
+    water = paint(context, 0x60b4cb);
+  const floorY = 0.285,
+    eaveY = 3.85,
+    ridgeY = 4.95,
+    halfDepth = 3.8,
+    pitch = Math.atan2(ridgeY - eaveY, halfDepth);
+  const slab = mesh(root, box(10, 0.2, 8), material(0xa8bb96), 0, 0.185, 0);
+  slab.userData = { role: 'greenhouse-slab', frameIgnore: true };
+  for (const x of [-4.6, 0, 4.6]) {
+    for (const z of [-halfDepth, halfDepth])
+      mesh(root, cylinder(0.06, 0.06, eaveY - floorY), frame, x, (eaveY + floorY) / 2, z);
+    // One gable rib per bay, with straight rafters seated on the side posts.
+    tube(
+      context,
+      root,
+      [
+        [x, eaveY, -halfDepth],
+        [x, ridgeY, 0],
+      ],
+      0.055,
+      frame,
+    );
+    tube(
+      context,
+      root,
+      [
+        [x, ridgeY, 0],
+        [x, eaveY, halfDepth],
+      ],
+      0.055,
+      frame,
+    );
+  }
+  for (const z of [-halfDepth, halfDepth])
+    for (const y of [floorY + 0.06, eaveY]) mesh(root, box(9.3, 0.08, 0.08), frame, 0, y, z);
+  mesh(root, box(9.3, 0.09, 0.09), frame, 0, ridgeY, 0);
   const glass = paint(context, 0xb9ddd0, {
     transparent: true,
-    opacity: 0.1,
+    opacity: 0.065,
     depthWrite: false,
     side: THREE.DoubleSide,
   });
-  for (const x of [-4.6, 4.6]) mesh(root, box(0.045, 3.3, 7.6), glass, x, 2.2, 0);
-  mesh(root, box(9.2, 3.3, 0.045), glass, 0, 2.2, -3.8);
+  const wallHeight = eaveY - floorY;
+  for (const x of [-4.6, 4.6]) {
+    mesh(root, box(0.035, wallHeight, 7.6), glass, x, floorY + wallHeight / 2, 0);
+    const shape = new THREE.Shape();
+    shape.moveTo(-halfDepth, 0);
+    shape.lineTo(halfDepth, 0);
+    shape.lineTo(0, ridgeY - eaveY);
+    shape.closePath();
+    const end = mesh(
+      root,
+      context.geometry('greenhouse-gable', () => new THREE.ShapeGeometry(shape)),
+      glass,
+      x,
+      eaveY,
+      0,
+    );
+    end.rotation.y = Math.PI / 2;
+  }
+  mesh(root, box(9.2, wallHeight, 0.035), glass, 0, floorY + wallHeight / 2, -halfDepth);
+  for (const x of [-2.65, 2.65])
+    mesh(root, box(3.9, wallHeight, 0.035), glass, x, floorY + wallHeight / 2, halfDepth);
+  for (const x of [-0.7, 0.7]) mesh(root, box(0.07, 2.6, 0.08), frame, x, floorY + 1.3, halfDepth);
+  mesh(root, box(1.47, 0.07, 0.08), frame, 0, floorY + 2.6, halfDepth);
+  mesh(root, box(1.33, 2.53, 0.035), glass, 0, floorY + 1.265, halfDepth);
+  mesh(
+    root,
+    box(1.33, wallHeight - 2.6, 0.035),
+    glass,
+    0,
+    floorY + 2.6 + (wallHeight - 2.6) / 2,
+    halfDepth,
+  );
+  mesh(root, cylinder(0.035, 0.035, 0.22), frame, 0.47, 1.65, halfDepth + 0.06).rotation.x =
+    Math.PI / 2;
+  const roofPanel = (x1, x2, z1, z2) => {
+    const z = (z1 + z2) / 2,
+      side = z < 0 ? -1 : 1;
+    const panel = mesh(
+      root,
+      box(x2 - x1, 0.025, (z2 - z1) / Math.cos(pitch)),
+      glass,
+      (x1 + x2) / 2,
+      ridgeY - Math.abs(z) * Math.tan(pitch),
+      z,
+    );
+    panel.rotation.x = side * pitch;
+    panel.userData.role = 'greenhouse-roof';
+  };
+  roofPanel(-4.6, 4.6, 0, halfDepth);
+  roofPanel(-4.6, -1.25, -halfDepth, 0);
+  roofPanel(1.25, 4.6, -halfDepth, 0);
+  roofPanel(-1.25, 1.25, -halfDepth, -2.65);
+  roofPanel(-1.25, 1.25, -0.45, 0);
+  const vent = new THREE.Group();
+  root.add(vent);
+  vent.position.set(0, ridgeY - 0.45 * Math.tan(pitch), -0.45);
+  vent.userData.role = 'greenhouse-vent';
+  const ventLength = 2.2 / Math.cos(pitch);
+  mesh(vent, box(2.5, 0.035, ventLength), glass, 0, 0, -ventLength / 2);
+  for (const x of [-1.25, 1.25])
+    mesh(vent, box(0.045, 0.06, ventLength), frame, x, 0, -ventLength / 2);
+  for (const z of [0, -ventLength]) mesh(vent, box(2.5, 0.06, 0.045), frame, 0, 0, z);
   const plants = [],
     wiltColor = new THREE.Color(0x9b7d48),
     healthyLeafColor = new THREE.Color(0x4c9655);
+  const sprays = [];
   for (const x of [-2.65, 2.65]) {
-    mesh(root, box(2.6, 0.65, 6.4), material(0xac8664), x, 0.7, 0);
-    mesh(root, box(2.42, 0.12, 6.2), soil, x, 1.07, 0);
+    mesh(root, box(2.6, 0.65, 6.4), material(0xac8664), x, floorY + 0.325, 0);
+    mesh(root, box(2.42, 0.12, 6.2), soil, x, 0.995, 0).userData.role = 'greenhouse-soil';
     for (let index = 0; index < 5; index++) {
       const item = plant(
         context,
@@ -469,60 +579,62 @@ function greenhouse(context) {
         1.2,
         index % 2 ? 0x679b4d : 0x4e945c,
       );
-      item.group.position.y = 1.15;
+      item.group.position.y = 1.055;
+      item.group.userData.role = 'greenhouse-plant';
       plants.push(item);
       mesh(item.group, context.sphere(0.12), material(0xd16c45), 0.17, 0.7, 0.16);
     }
+    const pipeMaterial = material(0x394c49);
     tube(
       context,
       root,
       [
-        [x, 1.15, -3.1],
-        [x, 1.15, 3.1],
+        [x, 1.055, -2.95],
+        [x, 3.25, -2.95],
+        [x, 3.25, 2.95],
       ],
       0.04,
-      material(0x394c49),
+      pipeMaterial,
     );
+    for (const z of [-1.6, 1.6]) {
+      mesh(root, cylinder(0.08, 0.05, 0.13), pipeMaterial, x, 3.17, z);
+      sprays.push(spray(context, root, [x, 3.1, z], water, 12, 1.085, 1.1, 0.08));
+    }
   }
-  for (const z of [-2, 0, 2]) mesh(root, box(1.1, 0.045, 0.8), material(0xd9cbb3), 0, 0.42, z);
-  const vent = new THREE.Group();
-  root.add(vent);
-  vent.position.set(0, 4.1, -2.4);
-  vent.userData.role = 'greenhouse-vent';
-  mesh(vent, box(2.4, 0.08, 2.0), glass, 0, 0, -1);
+  for (const z of [-2, 0, 2])
+    mesh(root, box(1.1, 0.045, 0.8), material(0xd9cbb3), 0, floorY + 0.0225, z);
   const fan = new THREE.Group();
   root.add(fan);
-  fan.position.set(0, 2.75, -3.65);
+  fan.position.set(0, 2.75, -3.69);
   fan.userData.role = 'greenhouse-fan';
-  ring(context, root, 0.5, frame, 0, 2.75, -3.6);
+  mesh(root, box(1.05, 1.05, 0.1), frame, 0, 2.75, -3.75);
+  ring(context, root, 0.47, material(0xc0d0c4), 0, 2.75, -3.68);
   for (let index = 0; index < 4; index++) {
-    const blade = mesh(fan, box(0.18, 0.7, 0.08), material(0xa2b7ab));
+    const blade = mesh(fan, box(0.16, 0.48, 0.045), material(0xa2b7ab));
     blade.position.set(
-      Math.sin((index * Math.PI) / 2) * 0.22,
-      Math.cos((index * Math.PI) / 2) * 0.22,
+      Math.sin((index * Math.PI) / 2) * 0.16,
+      Math.cos((index * Math.PI) / 2) * 0.16,
       0,
     );
     blade.rotation.z = (-index * Math.PI) / 2;
   }
   const heater = paint(context, 0x7b6956, { emissive: 0xe87d3c, emissiveIntensity: 0 });
-  mesh(root, box(0.8, 0.65, 0.65), heater, -0.1, 0.85, -2.7);
-  const light = lamp(context, root, 0, 4.0, 0, 0xd3c0ff);
+  mesh(root, box(0.8, 0.65, 0.65), heater, 0, floorY + 0.325, -3.1);
+  const light = lamp(context, root, 0, 4.02, 0, 0xd3c0ff);
   mesh(root, box(4.5, 0.12, 0.35), frame, 0, 4.2, 0);
-  const sprays = [
-    spray(context, root, [-2.65, 2.45, 0], water),
-    spray(context, root, [2.65, 2.45, 0], water),
-  ];
-  const meter = thermometer(context, root, 4.95, 2.5, 2.8);
+  for (const x of [-2, 2]) mesh(root, cylinder(0.025, 0.025, 0.645), frame, x, 4.5825, 0);
+  const meter = thermometer(context, root, 3.9, 2.4, 3.86);
   const flood = mesh(
     root,
     box(8.7, 0.025, 6.8),
     paint(context, 0x73bbce, { transparent: true, opacity: 0.45, depthWrite: false }),
     0,
-    0.5,
+    0.35,
     0,
   );
   flood.userData.role = 'greenhouse-flood';
   return {
+    bounds: new THREE.Box3(new THREE.Vector3(-5, 0.085, -4), new THREE.Vector3(5, 5.75, 4.05)),
     update({ state = {} }) {
       const c = state.controls || {},
         time = finite(state.time),
@@ -538,7 +650,7 @@ function greenhouse(context) {
               Math.sin(time * 0.8 + index) * 0.025),
         );
       });
-      vent.rotation.x = on(c.vent) ? -0.65 : 0;
+      vent.rotation.x = -pitch + (on(c.vent) ? 0.65 : 0);
       fan.rotation.z = on(c.vent) ? time * 7 : 0;
       heater.emissiveIntensity = on(c.heater) ? 1.4 : 0;
       light.set(on(c.grow_light));
@@ -555,54 +667,115 @@ function home(context) {
     roof = material(0x6c8b81),
     wood = material(0x947453),
     metal = material(0x4c6766, 0.4);
-  mesh(root, box(12, 0.25, 11), material(0xaabe8c), 0, 0.3, 0);
-  mesh(root, box(5.5, 3, 4.3), wall, -1, 1.95, -1.25);
-  const roofMesh = mesh(
-    root,
-    context.geometry('home-roof', () => new THREE.CylinderGeometry(0.1, 4.1, 1.9, 4)),
-    roof,
-    -1,
-    4.3,
-    -1.25,
-  );
-  roofMesh.rotation.y = Math.PI / 4;
-  roofMesh.scale.z = 0.85;
-  mesh(root, box(0.65, 1.15, 0.65), material(0x9c7967), -2.8, 4.5, -2.2);
+  const slab = mesh(root, box(12, 0.25, 11), material(0xaabe8c), 0, 0.21, 0);
+  slab.userData = { role: 'home-slab', frameIgnore: true };
+  mesh(root, box(5.7, 0.16, 4.5), material(0xaaa99c), -1, 0.415, -1.25);
+  mesh(root, box(5.5, 2.85, 4.3), wall, -1, 1.92, -1.25).userData.role = 'home-walls';
+  const roofPitch = Math.atan2(1.45, 3);
+  for (const side of [-1, 1]) {
+    const panel = mesh(
+      root,
+      box(Math.hypot(3, 1.45), 0.12, 4.8),
+      roof,
+      -1 + side * 1.5,
+      4.07,
+      -1.25,
+    );
+    panel.rotation.z = -side * roofPitch;
+    panel.userData.role = 'home-roof';
+  }
+  mesh(root, box(0.16, 0.12, 4.9), roof, -1, 4.805, -1.25);
+  const gable = new THREE.Shape();
+  gable.moveTo(-2.75, 0);
+  gable.lineTo(2.75, 0);
+  gable.lineTo(2.75, 0.12);
+  gable.lineTo(0, 1.39);
+  gable.lineTo(-2.75, 0.12);
+  gable.closePath();
+  const gableMaterial = paint(context, 0xe8d7bc, { side: THREE.DoubleSide });
+  for (const z of [-3.4, 0.9])
+    mesh(
+      root,
+      context.geometry('home-gable', () => new THREE.ShapeGeometry(gable)),
+      gableMaterial,
+      -1,
+      3.345,
+      z,
+    );
+  mesh(root, box(0.65, 1.3, 0.65), material(0x9c7967), -2.8, 4.15, -2.2);
   const windowMaterial = paint(context, 0x607d83, { emissive: 0xffcc7c, emissiveIntensity: 0 });
   for (const x of [-2.7, 0.7]) {
     mesh(root, box(1.15, 1.1, 0.08), windowMaterial, x, 2.1, 0.94);
     for (const dx of [-0.6, 0, 0.6]) mesh(root, box(0.05, 1.2, 0.08), wood, x + dx, 2.1, 1.01);
-    mesh(root, box(1.25, 0.06, 0.08), wood, x, 2.1, 1.01);
+    for (const y of [1.5, 2.1, 2.7]) mesh(root, box(1.25, 0.06, 0.08), wood, x, y, 1.01);
   }
   mesh(root, box(0.9, 1.9, 0.13), wood, -1, 1.48, 0.98);
   mesh(root, sphere(0.055), material(0xd3b77d, 0.8), -0.7, 1.5, 1.08);
-  mesh(root, box(2.0, 0.12, 4.0), material(0xc5bba4), -1, 0.5, 3.0);
-  const fenceZ = 5.1;
-  for (const x of [-5.6, 5.6])
-    for (let z = -4.7; z <= 4.8; z += 0.6) mesh(root, box(0.1, 1.1, 0.32), wood, x, 1.0, z);
-  for (let x = -5.5; x <= 5.5; x += 0.65)
-    if (x < -2.4 || x > 0.4) mesh(root, box(0.32, 1.1, 0.1), wood, x, 1.0, fenceZ);
-  for (const x of [-2.5, 0.55]) mesh(root, box(0.25, 1.5, 0.3), metal, x, 1.2, fenceZ);
+  mesh(root, box(2.1, 0.25, 1.3), material(0xb0ac9c), -1, 0.21, 6.05);
+  mesh(root, box(2, 0.08, 5.6), material(0xc5bba4), -1, 0.375, 3.9).userData.role = 'home-path';
+  mesh(root, box(1.3, 0.17, 0.6), material(0xb3aa96), -1, 0.42, 1.2);
+  const fenceZ = 5.1,
+    gateZ = 5.32;
+  const fenceMesh = (shape, x, y, z) => {
+    const object = mesh(root, shape, wood, x, y, z);
+    object.userData.role = 'home-fence';
+    return object;
+  };
+  for (const x of [-5.6, 5.6]) {
+    for (let z = -4.8; z <= 4.8; z += 0.6) fenceMesh(box(0.1, 1.1, 0.32), x, 0.885, z);
+    for (const y of [0.65, 1.2]) fenceMesh(box(0.1, 0.1, 9.9), x, y, 0);
+  }
+  for (let x = -5.5; x <= 5.5; x += 0.65) {
+    fenceMesh(box(0.32, 1.1, 0.1), x, 0.885, -5.1);
+    if (x < -2.65 || x > 0.7) fenceMesh(box(0.32, 1.1, 0.1), x, 0.885, fenceZ);
+  }
+  for (const y of [0.65, 1.2]) {
+    fenceMesh(box(11.2, 0.1, 0.1), 0, y, -5.1);
+    fenceMesh(box(2.85, 0.1, 0.1), -4.175, y, fenceZ);
+    fenceMesh(box(4.95, 0.1, 0.1), 3.125, y, fenceZ);
+  }
+  for (const x of [-2.5, 0.55])
+    mesh(root, box(0.25, 1.5, 0.3), metal, x, 1.085, fenceZ).userData.role = 'home-gate-post';
+  mesh(root, box(5.6, 0.025, 0.16), metal, -2.5, 0.3475, gateZ).userData.role = 'home-gate-track';
   const gate = new THREE.Group();
   root.add(gate);
-  gate.position.set(-1, 0.95, fenceZ);
+  gate.position.set(-0.975, 0.96, gateZ);
   gate.userData.role = 'home-gate';
-  for (let x = -1.4; x <= 1.4; x += 0.4) mesh(gate, box(0.1, 1.0, 0.1), metal, x, 0, 0);
-  for (const y of [-0.4, 0.4]) mesh(gate, box(2.9, 0.1, 0.1), metal, 0, y, 0);
+  for (let x = -1.2; x <= 1.21; x += 0.4) mesh(gate, box(0.1, 1, 0.1), metal, x, 0, 0);
+  for (const y of [-0.4, 0.4]) mesh(gate, box(2.7, 0.1, 0.1), metal, 0, y, 0);
+  for (const x of [-1.1, 1.1]) {
+    const wheel = mesh(gate, cylinder(0.075, 0.075, 0.07, 20), material(0x303e3d), x, -0.525, 0);
+    wheel.rotation.x = Math.PI / 2;
+    wheel.userData.role = 'home-gate-wheel';
+  }
   const exterior = [];
   for (const x of [-4.7, 4.7]) {
-    mesh(root, cylinder(0.045, 0.045, 2.2), metal, x, 1.55, 3.7);
-    exterior.push(lamp(context, root, x, 2.7, 3.7));
+    mesh(root, cylinder(0.045, 0.045, 2.2), metal, x, 1.435, 3.7);
+    exterior.push(lamp(context, root, x, 2.6, 3.7));
   }
+  mesh(root, cylinder(0.82, 0.82, 0.15), material(0xa0a99c), 4.3, 0.41, -3.4);
   const tank = mesh(
     root,
     cylinder(0.7, 0.7, 2.2),
-    paint(context, 0x7b9e9f, { transparent: true, opacity: 0.35, depthWrite: false }),
+    paint(context, 0x7b9e9f, { transparent: true, opacity: 0.22, depthWrite: false }),
     4.3,
-    1.6,
+    1.585,
     -3.4,
   );
   tank.userData.role = 'home-water-tank';
+  for (const angle of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) {
+    const rib = mesh(
+      root,
+      box(0.035, 2.15, 0.035),
+      metal,
+      4.3 + Math.sin(angle) * 0.715,
+      1.61,
+      -3.4 + Math.cos(angle) * 0.715,
+    );
+    rib.userData.role = 'home-tank-rib';
+  }
+  mesh(root, cylinder(0.73, 0.73, 0.1), metal, 4.3, 2.735, -3.4);
+  mesh(root, cylinder(0.75, 0.75, 0.09), metal, 4.3, 0.53, -3.4);
   const water = mesh(root, cylinder(0.65, 0.65, 2.0), paint(context, 0x599eae), 4.3, 1.6, -3.4);
   water.userData.role = 'home-water';
   tube(
@@ -616,27 +789,39 @@ function home(context) {
     0.06,
     metal,
   );
-  const sprinkler = mesh(root, cylinder(0.07, 0.09, 0.6), metal, 2.8, 0.8, 2.1);
+  const sprinkler = mesh(root, cylinder(0.07, 0.09, 0.6), metal, 2.8, 0.635, 2.1);
   sprinkler.userData.role = 'home-sprinkler';
-  const drops = spray(context, root, [2.8, 1.15, 2.1], paint(context, 0x77c4d9), 24);
+  const drops = spray(
+    context,
+    root,
+    [2.8, 0.98, 2.1],
+    paint(context, 0x77c4d9),
+    24,
+    0.365,
+    1.1,
+    0.65,
+  );
   const alarm = lamp(context, root, 1.2, 3.2, 1.02, 0xf15448);
   alarm.object.userData.role = 'home-alarm';
   const heater = paint(context, 0x89785e, { emissive: 0xf58b42, emissiveIntensity: 0 });
-  mesh(root, box(0.9, 0.6, 0.2), heater, -3.8, 1.0, 0.7);
+  mesh(root, box(0.9, 0.6, 0.2), heater, -2.7, 1.0, 1.0);
   const fan = new THREE.Group();
   root.add(fan);
-  fan.position.set(1.78, 2.3, -1.0);
+  const fanMount = ring(context, root, 0.43, material(0xa6bbb1), 1.79, 2.3, -1);
+  fanMount.rotation.y = Math.PI / 2;
+  fan.position.set(1.81, 2.3, -1.0);
   fan.rotation.y = Math.PI / 2;
   fan.userData.role = 'home-fan';
   for (let index = 0; index < 3; index++) {
-    const blade = mesh(fan, box(0.15, 0.65, 0.05), metal);
+    const blade = mesh(fan, box(0.15, 0.46, 0.05), metal);
     blade.position.set(
-      Math.sin((index * 2 * Math.PI) / 3) * 0.18,
-      Math.cos((index * 2 * Math.PI) / 3) * 0.18,
+      Math.sin((index * 2 * Math.PI) / 3) * 0.15,
+      Math.cos((index * 2 * Math.PI) / 3) * 0.15,
       0,
     );
     blade.rotation.z = (-index * 2 * Math.PI) / 3;
   }
+  mesh(fan, cylinder(0.1, 0.1, 0.1), metal).rotation.x = Math.PI / 2;
   const visitor = new THREE.Group();
   root.add(visitor);
   visitor.userData.role = 'home-visitor';
@@ -644,11 +829,14 @@ function home(context) {
   mesh(visitor, box(0.34, 0.5, 0.22), material(0x6488ac), 0, 0.75, 0);
   for (const x of [-0.11, 0.11]) mesh(visitor, box(0.1, 0.45, 0.12), material(0x46565b), x, 0.3, 0);
   const rainMaterial = paint(context, 0x82b6d1, { transparent: true, opacity: 0.55 });
-  const rain = Array.from({ length: 40 }, (_, index) =>
-    mesh(root, box(0.02, 0.2, 0.02), rainMaterial),
-  );
+  const rain = Array.from({ length: 40 }, () => {
+    const drop = mesh(root, box(0.02, 0.2, 0.02), rainMaterial);
+    drop.userData.frameIgnore = true;
+    return drop;
+  });
   const meter = thermometer(context, root, -4.2, 2.4, 1.0);
   return {
+    bounds: new THREE.Box3(new THREE.Vector3(-5.8, 0.085, -5.2), new THREE.Vector3(5.8, 4.9, 6.7)),
     update({ state = {}, parameters = {} }) {
       const c = state.controls || {},
         time = finite(state.time),
@@ -659,8 +847,9 @@ function home(context) {
       windowMaterial.emissiveIntensity = on(c.indoor_light) ? 1.5 : 0;
       windowMaterial.color.set(on(c.indoor_light) ? 0xf5d38f : 0x607d83);
       exterior.forEach((item) => item.set(on(c.outdoor_light)));
-      gate.position.x = -1 - finite(state.gate) * 3.1;
-      const level = clamp(finite(state.water, 70) / 100, 0.001, 1);
+      gate.position.x = -0.975 - clamp(finite(state.gate)) * 3.05;
+      const level = clamp(finite(state.water, 70) / 100);
+      water.visible = level > 0;
       water.scale.y = level;
       water.position.y = 0.6 + level;
       drops.update(time, on(c.sprinkler) && finite(state.water) > 0);
@@ -668,7 +857,7 @@ function home(context) {
       heater.emissiveIntensity = on(c.heater) ? 1.3 : 0;
       fan.rotation.z = on(c.fan) ? time * 6 : 0;
       visitor.visible = motion;
-      visitor.position.set(-1, 0.45, 5.75 + Math.sin(time) * 0.08);
+      visitor.position.set(-1, 0.34, 5.75 + Math.sin(time) * 0.08);
       rain.forEach((object, index) => {
         object.visible = raining;
         object.position.set(

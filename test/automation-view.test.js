@@ -114,7 +114,7 @@ test('aquarium fish swim, gradually rise belly-up after death and replace their 
   const lower = live.map((object) => object.position.y);
   model.update({ state: { ...dead, time: 8 }, parameters: {} });
   live.forEach((object, index) => {
-    assert.ok(object.position.y > lower[index] + 1);
+    assert.ok(object.position.y > lower[index] + 0.5);
     assert.ok(Math.abs(object.rotation.x - Math.PI) < 1e-9);
     assert.equal(object.userData.alive, false);
   });
@@ -209,5 +209,171 @@ test('house gate, tank level, visitor, alarm and rain show the same state as the
   model.update({ state: { ...state, time: 24 }, parameters: { dayLength: 60 } });
   assert.notDeepEqual(transforms(root), withRain);
   assert.equal(objects(root, 'home-visitor')[0].visible, false);
+  dispose();
+});
+
+function bounds(object) {
+  object.updateWorldMatrix(true, true);
+  return new THREE.Box3().setFromObject(object, true);
+}
+
+test('all eight fish remain inside the actual water volume and keep separated swimming lanes', () => {
+  const { root, model, dispose } = fixture('aquarium');
+  const state = initialAutomationState({ type: 'aquarium', params: { fishCount: 8 } });
+  const water = bounds(objects(root, 'aquarium-water')[0]);
+  const sand = bounds(objects(root, 'aquarium-sand')[0]);
+  assert.ok(water.min.y >= sand.max.y - 1e-6, 'water starts at the sand surface');
+  for (let time = 0; time <= 80; time += 0.5) {
+    model.update({ state: { ...state, time }, parameters: {} });
+    const fish = objects(root, 'aquarium-fish');
+    const boxes = fish.map(bounds);
+    for (const box of boxes) {
+      assert.ok(
+        water.containsBox(box),
+        `entire fish stays behind glass and below water at ${time}`,
+      );
+      assert.ok(box.min.y > sand.max.y, 'fish clears sand and rear decorations');
+    }
+    for (let a = 0; a < boxes.length; a++)
+      for (let b = a + 1; b < boxes.length; b++)
+        assert.equal(boxes[a].intersectsBox(boxes[b]), false, `fish ${a}/${b} at ${time}`);
+  }
+  model.update({ state: { ...state, time: 20 }, parameters: {} });
+  const lastSwimming = objects(root, 'aquarium-fish').map((fish) => fish.position.clone());
+  const deadFish = state.fish.map((fish) => ({ ...fish, alive: false, deadAt: 20 }));
+  model.update({ state: { ...state, time: 20, fish: deadFish }, parameters: {} });
+  objects(root, 'aquarium-fish').forEach((fish, index) =>
+    assert.ok(
+      fish.position.distanceTo(lastSwimming[index]) < 1e-9,
+      'death does not teleport fish to a different location',
+    ),
+  );
+  for (let time = 20; time <= 23; time += 0.05) {
+    model.update({ state: { ...state, time, fish: deadFish }, parameters: {} });
+    const boxes = objects(root, 'aquarium-fish').map(bounds);
+    for (const box of boxes) assert.ok(water.containsBox(box), 'rising fish remains in the water');
+    for (let a = 0; a < boxes.length; a++)
+      for (let b = a + 1; b < boxes.length; b++)
+        assert.equal(
+          boxes[a].intersectsBox(boxes[b]),
+          false,
+          'floating fish do not pass through each other',
+        );
+  }
+  for (const fish of objects(root, 'aquarium-fish')) {
+    const box = bounds(fish);
+    assert.ok(water.containsBox(box), 'belly-up fish floats below the actual water surface');
+    assert.ok(box.max.y > water.max.y - 0.1, 'dead fish reaches the surface');
+  }
+  for (const leg of objects(root, 'aquarium-leg'))
+    assert.ok(Math.abs(bounds(leg).min.y - 0.085) < 1e-6);
+  const table = bounds(objects(root, 'aquarium-table')[0]);
+  for (const leg of objects(root, 'aquarium-leg'))
+    assert.ok(Math.abs(bounds(leg).max.y - table.min.y) < 1e-6);
+  dispose();
+});
+
+test('greenhouse glazing forms a pitched roof and the hinged vent stays within the framing envelope', () => {
+  const { root, model, dispose } = fixture('greenhouse');
+  const state = initialAutomationState({ type: 'greenhouse' });
+  model.update({ state, parameters: {} });
+  const vent = objects(root, 'greenhouse-vent')[0];
+  const hinge = vent.position.clone();
+  const closed = bounds(vent);
+  assert.equal(
+    objects(root, 'greenhouse-roof').length,
+    5,
+    'roof is tiled around a real vent opening',
+  );
+  assert.ok(closed.min.z >= -2.7 && closed.max.z <= -0.4, 'closed vent is inside the rear roof');
+  assert.ok(closed.min.y > 4.1 && closed.max.y < 4.9, 'closed vent follows the roof pitch');
+  model.update({
+    state: { ...state, controls: { ...state.controls, vent: 1, pump: 1 } },
+    parameters: {},
+  });
+  assert.deepEqual(vent.position, hinge, 'vent rotates about its seated ridge-side hinge');
+  const open = bounds(vent);
+  assert.ok(open.max.y > closed.max.y + 0.5);
+  assert.ok(model.bounds.containsBox(open), 'full vent travel fits the stable camera bounds');
+  assert.ok(Math.abs(bounds(objects(root, 'greenhouse-slab')[0]).min.y - 0.085) < 1e-6);
+  for (let time = 0; time < 8; time += 0.1) {
+    model.update({
+      state: { ...state, time, controls: { ...state.controls, pump: 1 } },
+      parameters: {},
+    });
+    const beds = objects(root, 'greenhouse-soil').map(bounds);
+    for (const drop of objects(root, 'water-drop')) {
+      const point = drop.getWorldPosition(new THREE.Vector3());
+      assert.ok(
+        point.y > beds[0].max.y,
+        'drops terminate at soil rather than falling through the floor',
+      );
+      assert.ok(
+        beds.some(
+          (bed) =>
+            point.x > bed.min.x &&
+            point.x < bed.max.x &&
+            point.z > bed.min.z &&
+            point.z < bed.max.z,
+        ),
+        'irrigation falls within a planted bed',
+      );
+    }
+  }
+  dispose();
+});
+
+test('sliding home gate clears posts and fences throughout its entire travel and water stays inside its tank', () => {
+  const { root, model, dispose } = fixture('smart_home');
+  const state = initialAutomationState({ type: 'smart_home' });
+  const fixed = [...objects(root, 'home-fence'), ...objects(root, 'home-gate-post')].map(bounds);
+  const lawn = bounds(objects(root, 'home-slab')[0]);
+  const rail = bounds(objects(root, 'home-gate-track')[0]);
+  assert.ok(
+    Math.abs(rail.min.y - lawn.max.y) < 1e-6,
+    'gate rail is seated on the modeled lawn slab',
+  );
+  assert.ok(
+    rail.min.x >= lawn.min.x &&
+      rail.max.x <= lawn.max.x &&
+      rail.min.z >= lawn.min.z &&
+      rail.max.z <= lawn.max.z,
+  );
+  for (let gate = 0; gate <= 1.001; gate += 0.05) {
+    model.update({ state: { ...state, gate, water: gate * 100 }, parameters: {} });
+    const moving = bounds(objects(root, 'home-gate')[0]);
+    assert.ok(
+      model.bounds.containsBox(moving),
+      'the stable camera envelope contains the full gate sweep',
+    );
+    for (const wheel of objects(root, 'home-gate-wheel')) {
+      const contact = bounds(wheel);
+      assert.ok(Math.abs(contact.min.y - rail.max.y) < 1e-6, 'wheel tread touches the actual rail');
+      assert.ok(
+        contact.min.x >= rail.min.x &&
+          contact.max.x <= rail.max.x &&
+          contact.min.z >= rail.min.z &&
+          contact.max.z <= rail.max.z,
+        'wheel stays on the rail from closed to fully open',
+      );
+    }
+    assert.ok(
+      fixed.every((box) => !box.intersectsBox(moving)),
+      `gate clears fence and posts at ${gate}`,
+    );
+    const tank = bounds(objects(root, 'home-water-tank')[0]);
+    const water = objects(root, 'home-water')[0];
+    if (water.visible)
+      assert.ok(tank.containsBox(bounds(water)), 'all fill levels stay inside the actual shell');
+  }
+  model.update({ state: { ...state, water: 0, time: 8 }, parameters: {} });
+  assert.equal(
+    objects(root, 'home-water')[0].visible,
+    false,
+    'an empty tank has no floating water disc',
+  );
+  const visitor = bounds(objects(root, 'home-visitor')[0]);
+  const path = bounds(objects(root, 'home-path')[0]);
+  assert.ok(Math.abs(visitor.min.y - path.max.y) < 1e-6, 'visitor feet stand on the entrance path');
   dispose();
 });

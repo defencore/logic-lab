@@ -9,7 +9,7 @@ const part = (id, shape, size, position = [0, 0, 0], options = {}) =>
     ...options,
   });
 
-export const CAR_SCALE = Object.freeze([0.96, 1, 1]);
+export const CAR_SCALE = Object.freeze([0.82, 1, 1]);
 export const TRAIN_SCALE = Object.freeze([0.68, 0.68, 0.68]);
 export const CAR_PARTS = Object.freeze([
   part('body', 'capsule', [0.19, 0.43, 5, 16], [0, 0.25, 0], {
@@ -29,7 +29,7 @@ export const CAR_PARTS = Object.freeze([
   ),
   ...[-1, 1].flatMap((side) =>
     [-0.27, 0.27].map((z) =>
-      part(`wheel:${side}:${z}`, 'cylinder', [0.115, 0.115, 0.079, 18], [side * 0.22, 0.13, z], {
+      part(`wheel:${side}:${z}`, 'cylinder', [0.115, 0.115, 0.079, 24], [side * 0.22, 0.13, z], {
         rotation: [0, 0, Math.PI / 2],
         paint: 'tire',
         wheel: true,
@@ -70,8 +70,10 @@ export const TRAIN_PARTS = Object.freeze([
   part('headlight', 'sphere', [0.075, 24, 16], [0, 0.64, 0.54], { paint: 'lamp' }),
   part('plow', 'cone', [0.36, 0.28, 4], [0, 0.22, 0.66], {
     rotation: [Math.PI / 2, 0, 0],
+    scale: [1, 1, 0.45],
     paint: 'plow',
   }),
+  part('coupler', 'box', [0.12, 0.09, 0.22], [0, 0.27, -0.82], { paint: 'dark' }),
   part('wagon', 'box', [0.58, 0.38, 0.55], [0, 0.49, -1.14], { paint: 'body' }),
   ...Array.from({ length: 9 }, (_, i) =>
     part(
@@ -84,7 +86,7 @@ export const TRAIN_PARTS = Object.freeze([
   ),
   ...[-1, 1].flatMap((side) =>
     [-1.3, -0.98, -0.47, -0.06, 0.35].map((z) =>
-      part(`wheel:${side}:${z}`, 'cylinder', [0.15, 0.15, 0.08, 18], [side * 0.32, 0.17, z], {
+      part(`wheel:${side}:${z}`, 'cylinder', [0.15, 0.15, 0.08, 24], [side * 0.28, 0.17, z], {
         rotation: [0, 0, Math.PI / 2],
         paint: 'dark',
         wheel: true,
