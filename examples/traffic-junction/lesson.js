@@ -19,12 +19,12 @@ export default {
         },
         {
           title: 'Explain the clearance interval',
-          text: 'During each amber phase neither axis has a green light. Vehicles already crossing can clear before the other axis receives green. Observe queues, moving cars and the passed counter; inspect decoder gates to follow each phase.',
+          text: 'During each amber phase neither axis has green. A red or amber car stops with its complete nose before the zebra and stop line; following cars retain a body-length gap. Vehicles already beyond the line clear before the other axis receives green. Observe both queues and actual passed cars.',
           nodes: ['ns-green', 'ns-yellow', 'ew-green', 'ew-yellow'],
         },
         {
           title: 'Bypass the safe sequence',
-          text: 'For a repeatable collision, set Unsafe east/west override=0, pulse Reset junction from 0 to 1 and back, then turn the override on immediately. Both directions now receive green at the initial phase. Cars physically collide and Crash latches; changing lamps afterward does not undo the collision.',
+          text: 'For a repeatable collision, pause the app, turn Unsafe east/west override off, and click Reset simulation in the 3D panel to restart the clock at time zero. Turn the override on before resuming. Both directions now receive green during the initial phase; actual vehicle bodies collide and Crash latches. Changing lamps afterward does not undo the collision.',
           nodes: ['reset', 'unsafe', 'override', 'crash'],
         },
         {
@@ -34,7 +34,7 @@ export default {
         },
       ],
       expected:
-        'Safe phases service both axes without collision. The unsafe override produces a real collision and a latched Crash that requires reset.',
+        'Safe phases keep stopped vehicle noses before the zebra, preserve queue spacing and serve both directions. The unsafe override can cause contact between actual vehicle bodies and latch Crash; signals alone are not a collision.',
     },
     ua: {
       goal: 'Декодуйте лічильник у безконфліктні фази й спостерігайте наслідок обходу керування.',
@@ -46,12 +46,12 @@ export default {
         },
         {
           title: 'Поясніть інтервал очищення',
-          text: 'Під час жовтої фази жоден напрямок не має зеленого. Машини на перехресті встигають виїхати до зеленого іншому напрямку. Спостерігайте черги, рух і лічильник пройдених машин та перевірте елементи декодера.',
+          text: 'Під час жовтої фази жоден напрямок не має зеленого. Передня частина машини зупиняється до зебри й стоп-лінії; наступні машини лишають проміжок між кузовами. Ті, що вже за лінією, виїжджають до зеленого іншому напрямку. Спостерігайте черги та справжні проїзди.',
           nodes: ['ns-green', 'ns-yellow', 'ew-green', 'ew-yellow'],
         },
         {
           title: 'Обійдіть правильну послідовність',
-          text: 'Для повторюваної аварії задайте Unsafe east/west override=0, перемкніть Reset junction в 1 та 0, потім одразу ввімкніть override. У початковій фазі обидва напрямки отримають зелений. Машини зіткнуться, Crash запам’ятається; зміна ламп не скасує аварію.',
+          text: 'Для повторюваної аварії поставте застосунок на паузу, вимкніть Unsafe east/west override та натисніть Скинути симуляцію у 3D-панелі для часу нуль. Увімкніть override до продовження. У початковій фазі обидва напрямки матимуть зелений; реальні кузови зіткнуться й Crash запам’ятається. Зміна ламп не скасує аварію.',
           nodes: ['reset', 'unsafe', 'override', 'crash'],
         },
         {
@@ -61,7 +61,7 @@ export default {
         },
       ],
       expected:
-        'Правильні фази обслуговують обидва напрямки без зіткнення. Override спричиняє справжнє зіткнення та запам’ятований Crash до скидання.',
+        'Правильні фази утримують передні частини машин до зебри, зберігають чергу й пропускають обидва напрямки. Небезпечний обхід може звести реальні кузови й запам’ятати Crash; самі сигнали не є зіткненням.',
     },
   },
   circuitPath: 'examples/traffic-junction/circuit.json',
@@ -81,14 +81,14 @@ export default {
     tasks: {
       en: [
         'Open the junction in 3D and keep both app Run and Scene run active. The two low counter bits select NS green, NS amber, EW green and EW amber. The 0.1 Hz clock advances phases every 10 seconds after the first 5-second half-cycle.',
-        'During each amber phase neither axis has a green light. Vehicles already crossing can clear before the other axis receives green. Observe queues, moving cars and the passed counter; inspect decoder gates to follow each phase.',
-        'For a repeatable collision, set Unsafe east/west override=0, pulse Reset junction from 0 to 1 and back, then turn the override on immediately. Both directions now receive green at the initial phase. Cars physically collide and Crash latches; changing lamps afterward does not undo the collision.',
+        'During each amber phase neither axis has green. A red or amber car stops with its complete nose before the zebra and stop line; following cars retain a body-length gap. Vehicles already beyond the line clear before the other axis receives green. Observe both queues and actual passed cars.',
+        'For a repeatable collision, pause the app, turn Unsafe east/west override off, and click Reset simulation in the 3D panel to restart the clock at time zero. Turn the override on before resuming. Both directions now receive green during the initial phase; actual vehicle bodies collide and Crash latches. Changing lamps afterward does not undo the collision.',
         'Turn the unsafe override off before pulsing Reset junction again. Scene run=0 freezes traffic and holds the phase counter, while the source clock can continue. Return Scene run=1 to resume the controlled cycle.',
       ],
       ua: [
         'Відкрийте перехрестя в 3D та залиште активними Запуск і Scene run. Два молодші біти обирають NS green, NS amber, EW green, EW amber. Такт 0.1 Гц перемикає фази кожні 10 с після першого півперіоду 5 с.',
-        'Під час жовтої фази жоден напрямок не має зеленого. Машини на перехресті встигають виїхати до зеленого іншому напрямку. Спостерігайте черги, рух і лічильник пройдених машин та перевірте елементи декодера.',
-        'Для повторюваної аварії задайте Unsafe east/west override=0, перемкніть Reset junction в 1 та 0, потім одразу ввімкніть override. У початковій фазі обидва напрямки отримають зелений. Машини зіткнуться, Crash запам’ятається; зміна ламп не скасує аварію.',
+        'Під час жовтої фази жоден напрямок не має зеленого. Передня частина машини зупиняється до зебри й стоп-лінії; наступні машини лишають проміжок між кузовами. Ті, що вже за лінією, виїжджають до зеленого іншому напрямку. Спостерігайте черги та справжні проїзди.',
+        'Для повторюваної аварії поставте застосунок на паузу, вимкніть Unsafe east/west override та натисніть Скинути симуляцію у 3D-панелі для часу нуль. Увімкніть override до продовження. У початковій фазі обидва напрямки матимуть зелений; реальні кузови зіткнуться й Crash запам’ятається. Зміна ламп не скасує аварію.',
         'Вимкніть небезпечний override перед новим імпульсом Reset junction. Scene run=0 зупиняє транспорт і фазовий лічильник, хоча джерело такту може працювати. Scene run=1 відновлює цикл.',
       ],
     },
@@ -97,11 +97,13 @@ export default {
         'Why are mutually exclusive greens alone insufficient without clearance time?',
         'Which counter bits determine the four phases?',
         'Why must the unsafe override be removed before reset?',
+        'Where is the front of a stopped car relative to the zebra, and what clearance remains between queued bodies?',
       ],
       ua: [
         'Чому взаємного виключення зелених недостатньо без часу очищення?',
         'Які біти лічильника визначають чотири фази?',
         'Чому override слід вимкнути перед скиданням?',
+        'Де передня частина зупиненої машини відносно зебри та який проміжок лишається між кузовами?',
       ],
     },
     deliverables: {

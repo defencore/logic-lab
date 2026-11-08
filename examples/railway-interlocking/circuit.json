@@ -189,6 +189,72 @@
       "label": "Railway fault latched",
       "enabled": true,
       "params": {}
+    },
+    {
+      "id": "gate-ready",
+      "type": "and",
+      "x": 620,
+      "y": 920,
+      "label": "Gates closed AND road clear",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "safe-a",
+      "type": "and",
+      "x": 890,
+      "y": 920,
+      "label": "A request AND crossing ready",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "safe-b",
+      "type": "and",
+      "x": 1160,
+      "y": 920,
+      "label": "B request AND crossing ready",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "window",
+      "type": "clock",
+      "x": 20,
+      "y": 1000,
+      "label": "Rail window · 20 s road / 20 s rail",
+      "enabled": true,
+      "params": {
+        "frequency": 0.025,
+        "duty": 0.5
+      }
+    },
+    {
+      "id": "rail-request",
+      "type": "and",
+      "x": 620,
+      "y": 1120,
+      "label": "Rail window AND approach request",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "dispatch-ready",
+      "type": "and",
+      "x": 890,
+      "y": 1120,
+      "label": "Rail window AND crossing ready",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "rail-window-led",
+      "type": "led",
+      "x": 320,
+      "y": 1000,
+      "label": "Rail dispatch window",
+      "enabled": true,
+      "params": {}
     }
   ],
   "wires": [
@@ -361,18 +427,6 @@
       "width": 1
     },
     {
-      "id": "admit-a-out-permit-a-a",
-      "from": {
-        "node": "admit-a",
-        "port": "out"
-      },
-      "to": {
-        "node": "permit-a",
-        "port": "a"
-      },
-      "width": 1
-    },
-    {
       "id": "unsafe-out-permit-a-b",
       "from": {
         "node": "unsafe",
@@ -381,18 +435,6 @@
       "to": {
         "node": "permit-a",
         "port": "b"
-      },
-      "width": 1
-    },
-    {
-      "id": "admit-b-out-permit-b-a",
-      "from": {
-        "node": "admit-b",
-        "port": "out"
-      },
-      "to": {
-        "node": "permit-b",
-        "port": "a"
       },
       "width": 1
     },
@@ -453,18 +495,6 @@
       "to": {
         "node": "requests",
         "port": "b"
-      },
-      "width": 1
-    },
-    {
-      "id": "requests-out-need-barrier-a",
-      "from": {
-        "node": "requests",
-        "port": "out"
-      },
-      "to": {
-        "node": "need-barrier",
-        "port": "a"
       },
       "width": 1
     },
@@ -536,6 +566,174 @@
       },
       "to": {
         "node": "fault",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "railway-gate_closed-gate-ready-a",
+      "from": {
+        "node": "railway",
+        "port": "gate_closed"
+      },
+      "to": {
+        "node": "gate-ready",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "railway-crossing_clear-gate-ready-b",
+      "from": {
+        "node": "railway",
+        "port": "crossing_clear"
+      },
+      "to": {
+        "node": "gate-ready",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "admit-a-out-safe-a-a",
+      "from": {
+        "node": "admit-a",
+        "port": "out"
+      },
+      "to": {
+        "node": "safe-a",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "admit-b-out-safe-b-a",
+      "from": {
+        "node": "admit-b",
+        "port": "out"
+      },
+      "to": {
+        "node": "safe-b",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "safe-a-out-permit-a-a",
+      "from": {
+        "node": "safe-a",
+        "port": "out"
+      },
+      "to": {
+        "node": "permit-a",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "safe-b-out-permit-b-a",
+      "from": {
+        "node": "safe-b",
+        "port": "out"
+      },
+      "to": {
+        "node": "permit-b",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "window-out-rail-request-a",
+      "from": {
+        "node": "window",
+        "port": "out"
+      },
+      "to": {
+        "node": "rail-request",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "requests-out-rail-request-b",
+      "from": {
+        "node": "requests",
+        "port": "out"
+      },
+      "to": {
+        "node": "rail-request",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "rail-request-out-need-barrier-a",
+      "from": {
+        "node": "rail-request",
+        "port": "out"
+      },
+      "to": {
+        "node": "need-barrier",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "window-out-dispatch-ready-a",
+      "from": {
+        "node": "window",
+        "port": "out"
+      },
+      "to": {
+        "node": "dispatch-ready",
+        "port": "a"
+      },
+      "width": 1
+    },
+    {
+      "id": "gate-ready-out-dispatch-ready-b",
+      "from": {
+        "node": "gate-ready",
+        "port": "out"
+      },
+      "to": {
+        "node": "dispatch-ready",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "dispatch-ready-out-safe-a-b",
+      "from": {
+        "node": "dispatch-ready",
+        "port": "out"
+      },
+      "to": {
+        "node": "safe-a",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "dispatch-ready-out-safe-b-b",
+      "from": {
+        "node": "dispatch-ready",
+        "port": "out"
+      },
+      "to": {
+        "node": "safe-b",
+        "port": "b"
+      },
+      "width": 1
+    },
+    {
+      "id": "window-out-rail-window-led-in",
+      "from": {
+        "node": "window",
+        "port": "out"
+      },
+      "to": {
+        "node": "rail-window-led",
         "port": "in"
       },
       "width": 1

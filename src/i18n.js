@@ -20,7 +20,8 @@ export const TEXT = {
       'Speed restriction exceeded. Entering the turnout at this speed derails the train.',
     sceneWrongRoute: 'Derailment — the turnout was aligned for the other approach.',
     scenePoints: 'Derailment — the turnout moved beneath a train.',
-    sceneBarrier: 'Crossing accident — the barrier was open while the train crossed.',
+    sceneBarrier:
+      'A moving vehicle collided with a train at the crossing. Close road access and wait until the crossing is clear before releasing a train.',
     sceneSpill: 'Food spilled — the bowl was filled beyond its safe level.',
     sceneOverfed: 'Unsafe bowl level. Stop dispensing using the FULL feedback signal.',
     sceneOverflow: 'The tank overflowed. Stop the pump and reset after correcting the logic.',
@@ -285,7 +286,8 @@ export const TEXT = {
       'Перевищено дозволену швидкість. На стрілці це призводить до сходження з рейок.',
     sceneWrongRoute: 'Сходження з рейок — стрілка була переведена для іншого напрямку.',
     scenePoints: 'Сходження з рейок — стрілка перемкнулася під потягом.',
-    sceneBarrier: 'Аварія на переїзді — шлагбаум був відкритий під час руху потяга.',
+    sceneBarrier:
+      'Автомобіль зіткнувся з потягом на переїзді. Закрийте в’їзд і дочекайтеся вільного переїзду перед дозволом руху потяга.',
     sceneSpill: 'Корм розсипався — миску заповнено понад безпечний рівень.',
     sceneOverfed: 'Небезпечний рівень корму в мисці. Обмежте подачу за датчиком FULL.',
     sceneOverflow:

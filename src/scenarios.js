@@ -1,3 +1,16 @@
+import {
+  JUNCTION,
+  RAILWAY,
+  carFootprint,
+  trainFootprint,
+  overlaps,
+  contactPoint,
+  trainReservesSection,
+  trainInTurnout,
+  trainAtEntryTurnout,
+  crossingClear,
+} from './transport-geometry.js';
+
 export const SCENARIO_TYPES = Object.freeze([
   'traffic_light',
   'traffic_junction',
@@ -138,7 +151,6 @@ function controls(type, inputs = {}) {
 
 const uncertain = (control) => Object.values(control).some((value) => value === 'X');
 const flag = (latched, control) => (latched ? 1 : uncertain(control) ? 'X' : 0);
-const trainIn = (train, low, high) => train.position >= low && train.position - 12 <= high;
 
 export function initialScenarioState(node) {
   const p = parameters(node);
@@ -163,6 +175,8 @@ export function initialScenarioState(node) {
         nextId: count * 2 + 1,
         passed: 0,
         crash: false,
+        collisionPoint: null,
+        collisionPair: null,
         lights: { ns_green: 0, ns_yellow: 0, ew_green: 0, ew_yellow: 0 },
       };
     }
@@ -191,6 +205,28 @@ export function initialScenarioState(node) {
         ],
         points: 0,
         barrier: 0,
+        barrierTarget: 0,
+        roadCars: [
+          {
+            id: 'road-a',
+            direction: 1,
+            position: -55,
+            speed: RAILWAY.roadSpeed,
+            stopped: false,
+            crashed: false,
+          },
+          {
+            id: 'road-b',
+            direction: -1,
+            position: -90,
+            speed: RAILWAY.roadSpeed,
+            stopped: false,
+            crashed: false,
+          },
+        ],
+        roadPassed: 0,
+        collisionPoint: null,
+        collisionPair: null,
         signals: { a: 0, b: 0 },
         passed: 0,
         fault: false,
@@ -228,9 +264,40 @@ export function initialScenarioState(node) {
   }
 }
 
+function collisionFraction(a, b, old, shapeA, shapeB) {
+  const at = (vehicle, fraction) => ({
+    ...vehicle,
+    position:
+      (old.get(vehicle) ?? vehicle.position) +
+      (vehicle.position - (old.get(vehicle) ?? vehicle.position)) * fraction,
+  });
+  if (overlaps(shapeA(at(a, 0)), shapeB(at(b, 0)))) return 0;
+  if (!overlaps(shapeA(a), shapeB(b))) return null;
+  let low = 0,
+    high = 1;
+  for (let index = 0; index < 24; index++) {
+    const middle = (low + high) / 2;
+    if (overlaps(shapeA(at(a, middle)), shapeB(at(b, middle)))) high = middle;
+    else low = middle;
+  }
+  return high;
+}
+
+function stopAtContact(a, b, old, fraction, shapeA, shapeB) {
+  for (const vehicle of [a, b]) {
+    const start = old.get(vehicle) ?? vehicle.position;
+    vehicle.position = start + (vehicle.position - start) * fraction;
+    vehicle.crashed = true;
+    vehicle.stopped = true;
+    vehicle.speed = 0;
+  }
+  return contactPoint(shapeA(a), shapeB(b));
+}
+
 function advanceTraffic(state, c, p, dt) {
   if (state.crash) return;
   const speed = Math.max(0, numeric(p.carSpeed, 12));
+  const old = new Map(state.cars.map((car) => [car, car.position]));
   for (const axis of ['ns', 'ew']) {
     const green = c[`${axis}_green`] === 1 && c[`${axis}_yellow`] === 0;
     const lane = state.cars
@@ -239,8 +306,8 @@ function advanceTraffic(state, c, p, dt) {
     let ahead = Infinity;
     for (const car of lane) {
       const old = car.position;
-      const stop = !green && old <= -12 + 1e-9 ? -12 : Infinity;
-      car.position = Math.min(old + speed * dt, stop, ahead - 7);
+      const stop = !green && old <= JUNCTION.stopPosition + 1e-9 ? JUNCTION.stopPosition : Infinity;
+      car.position = Math.max(old, Math.min(old + speed * dt, stop, ahead - JUNCTION.queueHeadway));
       car.stopped = car.position - old < 1e-9;
       ahead = car.position;
     }
@@ -250,11 +317,11 @@ function advanceTraffic(state, c, p, dt) {
     if (arrivals > 0) {
       state.spawn[axis] = Math.max(0, state.spawn[axis] - arrivals * interval);
       const tail = lane.at(-1)?.position ?? Infinity;
-      if (lane.length < 12 && tail > -58) {
+      if (lane.length < 12 && tail >= JUNCTION.spawnPosition + JUNCTION.queueHeadway) {
         const car = {
           id: `car-${state.nextId++}`,
           axis,
-          position: -65,
+          position: JUNCTION.spawnPosition,
           stopped: false,
           crashed: false,
         };
@@ -263,17 +330,30 @@ function advanceTraffic(state, c, p, dt) {
       }
     }
   }
-  const ns = state.cars.filter((car) => car.axis === 'ns' && Math.abs(car.position) <= 5);
-  const ew = state.cars.filter((car) => car.axis === 'ew' && Math.abs(car.position) <= 5);
-  if (ns.length && ew.length) {
+  let first = null;
+  for (let a = 0; a < state.cars.length; a++)
+    for (let b = a + 1; b < state.cars.length; b++) {
+      const one = state.cars[a],
+        two = state.cars[b];
+      const fraction = collisionFraction(one, two, old, carFootprint, carFootprint);
+      if (fraction !== null && (!first || fraction < first.fraction))
+        first = { one, two, fraction };
+    }
+  if (first) {
     state.crash = true;
     state.failure = 'collision';
-    for (const car of [...ns, ...ew]) car.crashed = true;
+    for (const car of state.cars)
+      if (old.has(car))
+        car.position = old.get(car) + (car.position - old.get(car)) * first.fraction;
+    first.one.crashed = true;
+    first.two.crashed = true;
+    state.collisionPoint = contactPoint(carFootprint(first.one), carFootprint(first.two));
+    state.collisionPair = [first.one.id, first.two.id];
     for (const car of state.cars) car.stopped = true;
   }
-  const departed = state.cars.filter((car) => car.position > 55);
+  const departed = state.cars.filter((car) => car.position > JUNCTION.exitPosition);
   state.passed += departed.length;
-  state.cars = state.cars.filter((car) => car.position <= 55);
+  state.cars = state.cars.filter((car) => car.position <= JUNCTION.exitPosition);
 }
 
 function railFault(state, reason) {
@@ -284,6 +364,41 @@ function railFault(state, reason) {
 
 function advanceRailway(state, c, p, dt) {
   const speedLimit = Math.max(0, numeric(p.speedLimit, 60));
+  state.roadCars ??= [];
+  const old = new Map(
+    [...state.trains, ...state.roadCars].map((vehicle) => [vehicle, vehicle.position]),
+  );
+  // A closing request stops new entrants immediately, while cars already inside clear.
+  for (const direction of [1, -1]) {
+    const lane = state.roadCars
+      .filter((car) => car.direction === direction)
+      .sort((a, b) => b.position - a.position);
+    let ahead = Infinity;
+    for (const car of lane) {
+      if (car.crashed) {
+        car.speed = 0;
+        car.stopped = true;
+        ahead = car.position;
+        continue;
+      }
+      const stop =
+        (c.barrier === 1 || state.barrier > 1e-9) && car.position <= RAILWAY.roadStopPosition + 1e-9
+          ? RAILWAY.roadStopPosition
+          : Infinity;
+      const before = car.position;
+      car.position = Math.max(
+        before,
+        Math.min(before + RAILWAY.roadSpeed * dt, stop, ahead - JUNCTION.queueHeadway),
+      );
+      car.stopped = car.position - before < 1e-10;
+      car.speed = car.stopped ? 0 : RAILWAY.roadSpeed;
+      ahead = car.position;
+    }
+  }
+  state.barrierTarget = c.barrier;
+  if (c.barrier === 0) state.barrier = Math.max(0, state.barrier - RAILWAY.barrierRate * dt);
+  else if (crossingClear(state.roadCars))
+    state.barrier = Math.min(1, state.barrier + RAILWAY.barrierRate * dt);
   for (const train of state.trains) {
     if (train.crashed || train.derailed) {
       train.speed = 0;
@@ -291,11 +406,14 @@ function advanceRailway(state, c, p, dt) {
       continue;
     }
     const old = train.position;
-    const stop = c[`signal_${train.track}`] === 0 && old <= -16 + 1e-9 ? -16 : Infinity;
+    const stop =
+      c[`signal_${train.track}`] === 0 && old <= RAILWAY.stopPosition + 1e-9
+        ? RAILWAY.stopPosition
+        : Infinity;
     train.position = Math.min(old + (c.throttle / 3.6) * dt, stop);
     train.speed = train.position - old > 1e-10 ? c.throttle : 0;
     train.stopped = train.speed === 0;
-    if (old < 0 && train.position >= 0 && c.points !== Number(train.track === 'b')) {
+    if (c.points !== Number(train.track === 'b') && trainAtEntryTurnout(train)) {
       railFault(state, 'wrong_route');
       train.derailed = true;
       train.speed = 0;
@@ -303,38 +421,87 @@ function advanceRailway(state, c, p, dt) {
     }
     if (train.speed > speedLimit) {
       railFault(state, 'overspeed');
-      if (trainIn(train, -4, 12)) {
+      if (trainInTurnout(train)) {
         train.derailed = true;
         train.speed = 0;
         train.stopped = true;
       }
     }
-    if (c.barrier === 0 && trainIn(train, 12, 24)) {
-      railFault(state, 'open_barrier');
-      train.crashed = true;
-      train.speed = 0;
-      train.stopped = true;
+  }
+  const roadShape = (car) => carFootprint(car, 'railway');
+  const contacts = [];
+  for (let a = 0; a < state.trains.length; a++) {
+    for (let b = a + 1; b < state.trains.length; b++) {
+      const fraction = collisionFraction(
+        state.trains[a],
+        state.trains[b],
+        old,
+        trainFootprint,
+        trainFootprint,
+      );
+      if (fraction !== null)
+        contacts.push({
+          a: state.trains[a],
+          b: state.trains[b],
+          fraction,
+          shapeA: trainFootprint,
+          shapeB: trainFootprint,
+          reason: 'collision',
+        });
+    }
+    for (const car of state.roadCars) {
+      const fraction = collisionFraction(state.trains[a], car, old, trainFootprint, roadShape);
+      if (fraction !== null)
+        contacts.push({
+          a: state.trains[a],
+          b: car,
+          fraction,
+          shapeA: trainFootprint,
+          shapeB: roadShape,
+          reason: 'open_barrier',
+        });
     }
   }
-  const [a, b] = state.trains;
-  if (trainIn(a, 0, 35) && trainIn(b, 0, 35)) {
-    const aLow = Math.max(0, a.position - 12),
-      aHigh = Math.min(35, a.position);
-    const bLow = Math.max(0, 35 - b.position),
-      bHigh = Math.min(35, 47 - b.position);
-    if (Math.max(aLow, bLow) <= Math.min(aHigh, bHigh)) {
-      railFault(state, 'collision');
-      for (const train of state.trains) {
-        train.crashed = true;
-        train.speed = 0;
-        train.stopped = true;
-      }
-    }
+  const impacted = new Set();
+  for (const contact of contacts.sort((a, b) => a.fraction - b.fraction)) {
+    if (impacted.has(contact.a) || impacted.has(contact.b)) continue;
+    if (contact.a.crashed && contact.b.crashed) continue;
+    railFault(state, contact.reason);
+    const point = stopAtContact(
+      contact.a,
+      contact.b,
+      old,
+      contact.fraction,
+      contact.shapeA,
+      contact.shapeB,
+    );
+    state.collisionPoint ||= point;
+    state.collisionPair ||= [contact.a.id, contact.b.id];
+    impacted.add(contact.a);
+    impacted.add(contact.b);
   }
   for (const train of state.trains)
     if (!train.crashed && !train.derailed && train.position > 95) {
       train.position = -110 + (train.position - 95);
       state.passed++;
+    }
+  for (const car of state.roadCars)
+    if (!car.crashed && car.position > RAILWAY.roadExitPosition) {
+      const lane = state.roadCars.filter(
+        (other) => other !== car && other.direction === car.direction,
+      );
+      if (
+        lane.every((other) => other.position >= RAILWAY.roadEntryPosition + JUNCTION.queueHeadway)
+      ) {
+        car.position =
+          RAILWAY.roadEntryPosition +
+          Math.min(car.position - RAILWAY.roadExitPosition, RAILWAY.roadSpeed * dt);
+        state.roadPassed = (state.roadPassed || 0) + 1;
+      } else {
+        car.position = RAILWAY.roadExitPosition + 0.001;
+        car.speed = 0;
+        car.stopped = true;
+      }
     }
 }
 
@@ -417,14 +584,14 @@ export function advanceScenario(node, state, inputs, dt) {
   if (node.type === 'railway' && !next.uncertain) {
     if (c.points !== next.points)
       for (const train of next.trains)
-        if (trainIn(train, -4, 12)) {
+        if (trainInTurnout(train)) {
           railFault(next, 'points_under_train');
           train.derailed = true;
           train.speed = 0;
           train.stopped = true;
         }
     next.points = c.points;
-    next.barrier = c.barrier;
+    next.barrierTarget = c.barrier;
     next.signals = { a: c.signal_a, b: c.signal_b };
   }
   if (node.type === 'animal_feeder') {
@@ -456,7 +623,7 @@ export function advanceScenario(node, state, inputs, dt) {
       : node.type === 'railway'
         ? Math.max(1, c.throttle / 3.6)
         : 1;
-  const count = Math.min(10_000, Math.max(1, Math.ceil(duration / Math.min(0.02, 1 / speed))));
+  const count = Math.min(10_000, Math.max(1, Math.ceil(duration / Math.min(0.01, 0.25 / speed))));
   const step = duration / count;
   for (let index = 0; index < count && step > 0; index++) {
     next.time += step;
@@ -476,7 +643,17 @@ export function evaluateScenario(node, state, inputs) {
   if (scenarioParameterError(node)) {
     const ports = {
       traffic_junction: ['ns_wait', 'ew_wait', 'crash', 'passed'],
-      railway: ['approach_a', 'approach_b', 'occupied', 'fault', 'speed', 'passed'],
+      railway: [
+        'approach_a',
+        'approach_b',
+        'occupied',
+        'fault',
+        'speed',
+        'passed',
+        'gate_closed',
+        'crossing_clear',
+        'cars_wait',
+      ],
       animal_feeder: ['hungry', 'full', 'empty', 'alarm', 'level', 'hopper', 'fed'],
       water_tank: ['low', 'high', 'overflow', 'level'],
     };
@@ -491,10 +668,16 @@ export function evaluateScenario(node, state, inputs) {
     case 'traffic_junction':
       return {
         ns_wait: Number(
-          s.cars.some((car) => car.axis === 'ns' && car.stopped && car.position <= -12 + 1e-9),
+          s.cars.some(
+            (car) =>
+              car.axis === 'ns' && car.stopped && car.position <= JUNCTION.stopPosition + 1e-9,
+          ),
         ),
         ew_wait: Number(
-          s.cars.some((car) => car.axis === 'ew' && car.stopped && car.position <= -12 + 1e-9),
+          s.cars.some(
+            (car) =>
+              car.axis === 'ew' && car.stopped && car.position <= JUNCTION.stopPosition + 1e-9,
+          ),
         ),
         crash: flag(s.crash, c),
         passed: s.passed & 255,
@@ -503,18 +686,25 @@ export function evaluateScenario(node, state, inputs) {
       return {
         approach_a: Number(
           s.trains.some(
-            (train) => train.track === 'a' && train.position >= -75 && train.position <= 0,
+            (train) => train.track === 'a' && train.position >= -100 && train.position <= 0,
           ),
         ),
         approach_b: Number(
           s.trains.some(
-            (train) => train.track === 'b' && train.position >= -75 && train.position <= 0,
+            (train) => train.track === 'b' && train.position >= -100 && train.position <= 0,
           ),
         ),
-        occupied: Number(s.trains.some((train) => trainIn(train, 0, 35))),
+        occupied: Number(s.trains.some(trainReservesSection)),
         fault: flag(s.fault, c),
         speed: uncertain(c) ? 'X' : Math.max(...s.trains.map((train) => train.speed)),
         passed: s.passed & 255,
+        gate_closed: Number(s.barrier >= 1 - 1e-9),
+        crossing_clear: Number(crossingClear(s.roadCars || [])),
+        cars_wait: Number(
+          (s.roadCars || []).some(
+            (car) => car.stopped && !car.crashed && car.position <= RAILWAY.roadStopPosition + 1e-9,
+          ),
+        ),
       };
     case 'animal_feeder':
       return {

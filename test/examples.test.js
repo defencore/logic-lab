@@ -4,6 +4,13 @@ import { readFile } from 'node:fs/promises';
 import { EXAMPLES, createExample } from '../examples/index.js';
 import { validateProject, parseProject, serializeProject } from '../src/project.js';
 import { createRuntime, simulate } from '../src/simulator.js';
+import {
+  JUNCTION,
+  RAILWAY,
+  RAIL_RESERVATION,
+  trainFootprint,
+  carFootprint,
+} from '../src/transport-geometry.js';
 
 function open(id) {
   const project = createExample(id),
@@ -471,10 +478,30 @@ test('traffic-light laboratory exposes all eight real lamp states and valid pass
 test('junction laboratory decodes safe phases, then creates a physical collision and resets', () => {
   const context = open('traffic-junction'),
     phases = new Set();
-  advanceProcess(context, 40, (current) => {
+  advanceProcess(context, 120, (current) => {
     const signals = current.runtime.inputs.junction;
     assert.ok(!(signals.ns_green && signals.ew_green));
     assert.equal(output(current, 'junction', 'crash'), 0);
+    const cars = processState(current, 'junction').cars;
+    for (const car of cars.filter((car) => car.stopped)) {
+      const nose = car.position * JUNCTION.scale + JUNCTION.carLength / 2;
+      assert.ok(
+        nose <= JUNCTION.stopLine + 1e-7,
+        'Stopped car body must remain behind its stop line.',
+      );
+      assert.ok(nose < JUNCTION.zebraNear, 'A red queue must not occupy the zebra.');
+    }
+    for (const axis of ['ns', 'ew']) {
+      const lane = cars.filter((car) => car.axis === axis).sort((a, b) => b.position - a.position);
+      for (let index = 1; index < lane.length; index++) {
+        const gap =
+          (lane[index - 1].position - lane[index].position) * JUNCTION.scale - JUNCTION.carLength;
+        assert.ok(
+          gap >= JUNCTION.queueGap - 1e-7,
+          'Queued bodies must retain their physical clearance.',
+        );
+      }
+    }
     phases.add([signals.ns_green, signals.ns_yellow, signals.ew_green, signals.ew_yellow].join(''));
   });
   assert.equal(phases.size, 4);
@@ -485,6 +512,17 @@ test('junction laboratory decodes safe phases, then creates a physical collision
   advanceProcess(context, 8);
   assert.equal(output(context, 'junction', 'crash'), 1);
   assert.ok(processState(context, 'junction').cars.filter((car) => car.crashed).length >= 2);
+  const collision = processState(context, 'junction');
+  const bodies = collision.collisionPair.map((id) =>
+    carFootprint(collision.cars.find((car) => car.id === id)),
+  );
+  assert.ok(
+    bodiesContact(...bodies),
+    'A junction crash must be actual contact, not just simultaneous signals.',
+  );
+  assert.ok(
+    Number.isFinite(collision.collisionPoint.x) && Number.isFinite(collision.collisionPoint.z),
+  );
   value(context, 'unsafe', 0);
   advanceProcess(context, 0.2);
   assert.equal(output(context, 'junction', 'crash'), 1);
@@ -496,31 +534,162 @@ test('junction laboratory decodes safe phases, then creates a physical collision
   assert.ok(output(context, 'junction', 'passed') > 0);
 });
 
-test('railway laboratory interlocks normal dispatch and exposes separate physical failures', () => {
-  const safe = open('railway-interlocking');
-  advanceProcess(safe, 50, (context) => assert.equal(output(context, 'railway', 'fault'), 0));
-  assert.ok(output(safe, 'railway', 'passed') >= 2);
-  for (const [source, unsafe, fault, duration] of [
-    ['unsafe', 1, 'collision', 16],
-    ['throttle', 120, 'overspeed', 4],
-    ['open', 1, 'open_barrier', 10],
-  ]) {
-    const context = open('railway-interlocking');
-    value(context, source, unsafe);
-    advanceProcess(context, duration);
-    assert.equal(output(context, 'railway', 'fault'), 1, fault);
+function bodyCorners(body) {
+  const cosine = Math.cos(body.heading),
+    sine = Math.sin(body.heading);
+  return [
+    [-1, -1],
+    [-1, 1],
+    [1, 1],
+    [1, -1],
+  ].map(([right, forward]) => ({
+    x: body.x + right * body.halfWidth * cosine + forward * body.halfLength * sine,
+    z: body.z - right * body.halfWidth * sine + forward * body.halfLength * cosine,
+  }));
+}
+function bodiesContact(first, second) {
+  const a = bodyCorners(first),
+    b = bodyCorners(second);
+  for (const polygon of [a, b])
+    for (let index = 0; index < polygon.length; index++) {
+      const next = polygon[(index + 1) % polygon.length];
+      const normal = { x: polygon[index].z - next.z, z: next.x - polygon[index].x };
+      const project = (points) => points.map((point) => point.x * normal.x + point.z * normal.z);
+      const ap = project(a),
+        bp = project(b);
+      if (Math.max(...ap) < Math.min(...bp) - 1e-7 || Math.max(...bp) < Math.min(...ap) - 1e-7)
+        return false;
+    }
+  return true;
+}
+function collisionBodies(state) {
+  const objects = [...state.trains, ...(state.roadCars || [])];
+  return state.collisionPair.map((id) => {
+    const object = objects.find((item) => item.id === id);
+    assert.ok(object && object.crashed, `Missing crashed body ${id}`);
+    return object.track ? trainFootprint(object) : carFootprint(object, 'railway');
+  });
+}
+
+test('canonical railway circuit safely alternates real road and train traffic for three minutes', () => {
+  const context = open('railway-interlocking');
+  let previousPoints = processState(context, 'railway').points;
+  let handovers = 0,
+    queues = 0,
+    railWindows = 0;
+  const movingRoadCars = new Set();
+  assert.equal(output(context, 'window'), 0, 'The laboratory must begin with moving road traffic.');
+  advanceProcess(context, 180, (current) => {
+    const state = processState(current, 'railway');
+    const controls = current.runtime.inputs.railway;
+    assert.equal(output(current, 'railway', 'fault'), 0);
+    assert.ok(state.trains.every((train) => !train.crashed && !train.derailed));
+    assert.ok(state.roadCars.every((car) => !car.crashed));
+    assert.ok(!(controls.signal_a && controls.signal_b));
+    if (controls.signal_a || controls.signal_b) {
+      railWindows++;
+      assert.equal(output(current, 'window'), 1);
+      assert.equal(output(current, 'railway', 'gate_closed'), 1);
+      assert.equal(output(current, 'railway', 'crossing_clear'), 1);
+    }
+    if (state.points !== previousPoints) {
+      handovers++;
+      assert.ok(
+        state.trains.every((train) => !bodiesContact(trainFootprint(train), RAIL_RESERVATION)),
+        'Points changed before the entire train cleared the protected corridor.',
+      );
+      previousPoints = state.points;
+    }
+    for (const train of state.trains)
+      if (train.stopped && train.position <= RAILWAY.stopPosition + 1e-7) {
+        assert.ok(
+          !bodiesContact(trainFootprint(train), RAIL_RESERVATION),
+          'A red-signal waiting train must not reserve the protected route.',
+        );
+      }
+    for (const car of state.roadCars) {
+      if (car.speed > 0) movingRoadCars.add(car.id);
+      if (car.stopped && car.position < 0) {
+        queues++;
+        assert.ok(
+          car.position * RAILWAY.roadScale + JUNCTION.carLength / 2 < -RAILWAY.gateX,
+          'A queued road vehicle nose must stop before the gate.',
+        );
+      }
+    }
+  });
+  const state = processState(context, 'railway');
+  assert.ok(state.passed >= 6);
+  assert.ok(state.roadPassed >= 6);
+  assert.ok(handovers >= 4 && railWindows > 0 && queues > 0);
+  assert.equal(movingRoadCars.size, 2);
+});
+
+test('railway unsafe overrides report actual train/train and train/road body contact', () => {
+  for (const open of [0, 1]) {
+    const context = openRailwayUnsafe(open);
+    advanceProcess(context, 16);
     const state = processState(context, 'railway');
-    assert.ok(state.faults.includes(fault), `${fault}: ${state.faults}`);
+    assert.equal(output(context, 'railway', 'fault'), 1);
+    assert.ok(state.faults.includes(open ? 'open_barrier' : 'collision'));
+    const bodies = collisionBodies(state);
     assert.ok(
-      state.trains.some((train) => (fault === 'overspeed' ? train.derailed : train.crashed)),
-      fault,
+      bodiesContact(...bodies),
+      'A recorded collision must involve contacting physical bodies.',
     );
-    value(context, source, source === 'throttle' ? 30 : 0);
+    assert.ok(Number.isFinite(state.collisionPoint.x) && Number.isFinite(state.collisionPoint.z));
+    assert.ok(
+      open
+        ? state.collisionPair.some((id) => id.startsWith('road-'))
+        : state.collisionPair.every((id) => id.startsWith('train-')),
+    );
+    value(context, 'unsafe', 0);
+    value(context, 'open', 0);
     advanceProcess(context, 0.1);
     assert.equal(output(context, 'railway', 'fault'), 1);
     value(context, 'reset', 1);
     assert.equal(output(context, 'railway', 'fault'), 0);
   }
+});
+function openRailwayUnsafe(openBarrier = 0) {
+  const context = open('railway-interlocking');
+  value(context, 'unsafe', 1);
+  value(context, 'open', openBarrier);
+  return context;
+}
+
+test('an open railway gate is protected by red signals and cannot invent a crash on an empty road', () => {
+  const guarded = open('railway-interlocking');
+  value(guarded, 'open', 1);
+  advanceProcess(guarded, 45);
+  assert.equal(output(guarded, 'railway', 'fault'), 0);
+  assert.ok(processState(guarded, 'railway').roadPassed > 0);
+  assert.ok(
+    processState(guarded, 'railway').trains.every(
+      (train) => train.stopped && train.position === RAILWAY.stopPosition,
+    ),
+  );
+  const empty = openRailwayUnsafe(1);
+  const state = processState(empty, 'railway');
+  state.roadCars = [];
+  state.trains = state.trains.filter((train) => train.track === 'a');
+  advanceProcess(empty, 25);
+  assert.equal(output(empty, 'railway', 'fault'), 0);
+  assert.equal(processState(empty, 'railway').collisionPair, null);
+  assert.ok(
+    processState(empty, 'railway').passed >= 1,
+    'The isolated train must actually cross, not merely remain stopped.',
+  );
+});
+
+test('railway overspeed remains a physical derailment independently of crossing accidents', () => {
+  const context = open('railway-interlocking');
+  value(context, 'unsafe', 1);
+  value(context, 'throttle', 120);
+  advanceProcess(context, 4);
+  const state = processState(context, 'railway');
+  assert.ok(state.faults.includes('overspeed'));
+  assert.ok(state.trains.some((train) => train.derailed));
 });
 
 test('feeder laboratory maintains bowl feedback, guards empty storage and refills on an edge', () => {

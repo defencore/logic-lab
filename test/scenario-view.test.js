@@ -2,14 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
-  railwayPoint,
   SCENARIO_VIEW_TYPES,
   createScenarioView,
   createScenarioModel,
 } from '../src/scenario-view.js';
+import { railwayPoint } from '../src/transport-geometry.js';
 
 test('railway approaches converge onto opposite ends of the shared section', () => {
-  assert.deepEqual(railwayPoint('a', 0), { x: 0, z: 0 });
+  assert.ok(Math.abs(railwayPoint('a', 0).x) < 1e-12);
+  assert.equal(railwayPoint('a', 0).z, 0);
   assert.deepEqual(railwayPoint('b', 35), { x: 0, z: 0 });
   assert.equal(railwayPoint('a', 35).z, railwayPoint('b', 0).z);
   assert.ok(railwayPoint('a', -55).x < 0);
@@ -29,7 +30,14 @@ test('every actual scene constructor builds and updates normal and failed Three.
           width: 0,
           height: 0,
           getContext() {
-            return { clearRect() {}, fillText() {} };
+            return {
+              clearRect() {},
+              fillText() {},
+              fillRect() {},
+              beginPath() {},
+              arc() {},
+              stroke() {},
+            };
           },
         };
       },
@@ -53,6 +61,10 @@ test('every actual scene constructor builds and updates normal and failed Three.
         trains: [
           { id: 'a', track: 'a', position: -48 },
           { id: 'b', track: 'b', position: -85 },
+        ],
+        roadCars: [
+          { id: 'road-a', direction: 1, position: -20 },
+          { id: 'road-b', direction: -1, position: -25 },
         ],
         faults: [],
       },
@@ -128,6 +140,8 @@ test('every actual scene constructor builds and updates normal and failed Three.
         faults: ['open_barrier'],
         trains: normal.trains?.map((train) => ({ ...train, crashed: true, derailed: true })),
         cars: normal.cars?.map((car) => ({ ...car, crashed: true })),
+        roadCars: normal.roadCars?.map((car) => ({ ...car, crashed: true })),
+        collisionPoint: { x: 0.13, z: 1.1 },
       };
       model.update({ state: failure, parameters: {} });
       let meshes = 0;
@@ -149,8 +163,88 @@ test('every actual scene constructor builds and updates normal and failed Three.
         }
       });
       assert.ok(meshes > 10, `${type}: populated scene`);
+      if (type === 'traffic_junction' || type === 'railway') {
+        const aftermath = root.children.find(
+          (object) => object.userData.role === 'collision-aftermath',
+        );
+        assert.equal(aftermath.position.x, failure.collisionPoint.x);
+        assert.equal(aftermath.position.z, failure.collisionPoint.z);
+      }
+      if (type === 'railway') {
+        const vehicles = root.children.filter(
+          (object) => object.userData.transportKind === 'rail_car',
+        );
+        assert.equal(
+          vehicles.length,
+          normal.roadCars.length,
+          'Only actual model road cars are drawn',
+        );
+        const signs = [];
+        root.traverse((object) => {
+          if (object.userData.role === 'speed-sign-face') signs.push(object);
+        });
+        assert.equal(signs.length, 2);
+        assert.equal(
+          signs[0].material.map,
+          signs[1].material.map,
+          'Ring and number are on one shared face texture',
+        );
+        for (const face of signs) {
+          assert.equal(
+            face.isSprite,
+            undefined,
+            'Sign text does not billboard independently of its disk',
+          );
+          assert.ok(
+            face.geometry
+              .getAttribute('position')
+              .array.every((value, index) => index % 3 !== 2 || Math.abs(value) < 1e-12),
+            'Sign face vertices share one plane',
+          );
+          const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(face.quaternion);
+          assert.ok(
+            normal.z * face.position.z > 0,
+            'Each side faces outward without mirrored backside text',
+          );
+        }
+        model.update({ state: { ...failure, barrier: 0.5 }, parameters: {} });
+        const arms = [];
+        root.traverse((object) => {
+          if (object.userData.role === 'rail-gate-arm') arms.push(object);
+        });
+        assert.equal(arms.length, 2);
+        for (const arm of arms)
+          assert.ok(
+            Math.abs(arm.rotation.x + (arm.userData.direction * Math.PI) / 4) < 1e-12,
+            'Half-closed gate renders a 45-degree angle',
+          );
+        model.update({ state: { ...failure, barrier: 1 }, parameters: {} });
+        root.updateMatrixWorld(true);
+        for (const arm of arms) {
+          const bounds = new THREE.Box3().setFromObject(arm),
+            size = bounds.getSize(new THREE.Vector3());
+          assert.ok(size.z > 1.6 && size.x < 0.2, 'Closed arm spans the road along Z');
+          assert.ok(
+            bounds.max.x < -1 || bounds.min.x > 1,
+            'Closed arm never spans the railway centerline',
+          );
+        }
+        const rails = root.children.filter(
+          (object) => object.userData.role === 'rail' && object.userData.track === 'a',
+        );
+        const left = rails
+          .find((object) => object.userData.offset < 0)
+          .geometry.parameters.path.getPoint(0.8);
+        const right = rails
+          .find((object) => object.userData.offset > 0)
+          .geometry.parameters.path.getPoint(0.8);
+        assert.ok(
+          Math.abs(left.distanceTo(right) - 0.38) < 1e-10,
+          'Parallel curved rails keep a constant normal gauge',
+        );
+      }
       model.update({
-        state: { ...failure, cars: [], trains: [], hopper: 0, bowl: 0, level: 0 },
+        state: { ...failure, cars: [], trains: [], roadCars: [], hopper: 0, bowl: 0, level: 0 },
         parameters: {},
       });
       for (const resource of resources) resource.dispose();

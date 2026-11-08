@@ -1,5 +1,14 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import {
+  JUNCTION,
+  RAILWAY,
+  junctionCarPose,
+  railwayPoint,
+  railwayPose,
+  railwayOffsetPoint,
+  roadCarPose,
+} from './transport-geometry.js';
 
 const finite = (value, fallback = 0) =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback;
@@ -372,6 +381,7 @@ function buildSignal(context, parent, x, z, rotation = 0, scale = 1) {
 function buildCar(context, color = 0x547ca3) {
   const { mesh, box, cylinder, sphere, material, geometry } = context;
   const group = new THREE.Group();
+  group.scale.x = 0.96;
   const wheels = [];
   const body = mesh(
     group,
@@ -410,7 +420,9 @@ function buildCar(context, color = 0x547ca3) {
     const tail = mesh(group, sphere(0.039), material(0xc54438), x, 0.27, -0.4);
     tail.scale.z = 0.4;
   }
-  return { group, wheels };
+  const damage = mesh(group, box(0.32, 0.008, 0.28), material(0x3b3c35), 0, 0.545, -0.02);
+  damage.visible = false;
+  return { group, wheels, damage };
 }
 
 function buildAftermath(context, parent) {
@@ -463,11 +475,15 @@ function createTrafficJunction(context) {
       mesh(root, box(0.06, 0.013, 0.45), paint, 0, 0.205, p * side);
       mesh(root, box(0.45, 0.013, 0.06), paint, p * side, 0.205, 0);
     }
+  const zebraCenter = -JUNCTION.zebraNear - JUNCTION.zebraWidth / 2;
   for (const side of [-1, 1])
     for (let i = -3; i <= 3; i++) {
-      mesh(root, box(0.23, 0.015, 0.55), paint, i * 0.32, 0.207, 1.7 * side);
-      mesh(root, box(0.55, 0.015, 0.23), paint, 1.7 * side, 0.207, i * 0.32);
+      mesh(root, box(0.23, 0.015, JUNCTION.zebraWidth), paint, i * 0.32, 0.207, zebraCenter * side);
+      mesh(root, box(JUNCTION.zebraWidth, 0.015, 0.23), paint, zebraCenter * side, 0.207, i * 0.32);
     }
+  const nsStop = mesh(root, box(1.2, 0.015, 0.06), paint, -0.65, 0.208, JUNCTION.stopLine);
+  const ewStop = mesh(root, box(0.06, 0.015, 1.2), paint, JUNCTION.stopLine, 0.208, 0.65);
+  nsStop.userData.role = ewStop.userData.role = 'junction-stop-line';
   const ns = buildSignal(context, root, 1.7, -2.0, Math.PI);
   const ew = buildSignal(context, root, -2.0, -1.7, -Math.PI / 2);
   for (const x of [-4.2, 4.2])
@@ -478,6 +494,7 @@ function createTrafficJunction(context) {
     }
   const cars = new Map();
   const aftermath = buildAftermath(context, root);
+  aftermath.userData.role = 'collision-aftermath';
   const colors = [0x517fa6, 0xc27847, 0xe2e0cf, 0x82976b, 0x9b6a8f];
   return {
     update({ state = {} }) {
@@ -498,37 +515,28 @@ function createTrafficJunction(context) {
         let car = cars.get(data.id);
         if (!car) {
           car = buildCar(context, colors[index % colors.length]);
+          car.group.name = `junction-car:${data.id}`;
+          car.group.userData.transportId = data.id;
+          car.group.userData.transportKind = 'junction_car';
           cars.set(data.id, car);
           root.add(car.group);
         }
-        const p = finite(data.position) * 0.1;
-        if (data.axis === 'ns') {
-          car.group.position.set(-0.43, 0.11, p);
-          car.group.rotation.set(0, 0, data.crashed ? -0.15 : 0);
-        } else {
-          car.group.position.set(p, 0.11, 0.43);
-          car.group.rotation.set(data.crashed ? 0.15 : 0, Math.PI / 2, 0);
-        }
-        for (const wheel of car.wheels) wheel.rotation.x = finite(data.position) * 0.8;
+        const pose = junctionCarPose(data);
+        car.group.position.set(pose.x, 0.18, pose.z);
+        car.group.rotation.set(0, pose.heading, 0);
+        car.damage.visible = !!data.crashed;
+        for (const wheel of car.wheels)
+          wheel.rotation.x = (finite(data.position) * JUNCTION.scale) / 0.115;
       });
       for (const [id, car] of cars)
         if (!live.has(id)) {
           car.group.removeFromParent();
           cars.delete(id);
         }
-      aftermath.visible = !!state.crash;
+      aftermath.visible = !!state.crash && !!state.collisionPoint;
+      if (state.collisionPoint)
+        aftermath.position.set(state.collisionPoint.x, 0, state.collisionPoint.z);
     },
-  };
-}
-
-/** Local progress increases for both trains; their shared-track directions oppose. */
-export function railwayPoint(track, position) {
-  const p = finite(position);
-  const t = clamp((p + 55) / 55);
-  const bend = 1 - t * t * (3 - 2 * t);
-  return {
-    x: bend === 0 ? 0 : (track === 'b' ? 2.7 : -2.7) * bend,
-    z: (track === 'b' ? 35 - p : p) * 0.06,
   };
 }
 
@@ -583,45 +591,68 @@ function buildTrain(context, color) {
       wheels.push(wheel);
     }
   group.scale.setScalar(0.68);
-  return { group, wheels };
+  const damage = new THREE.Group();
+  group.add(damage);
+  damage.visible = false;
+  for (const angle of [-Math.PI / 4, Math.PI / 4]) {
+    const scar = mesh(damage, box(0.3, 0.03, 0.008), material(0x34362e), 0, 0.62, 0.516);
+    scar.rotation.z = angle;
+  }
+  return { group, wheels, damage };
 }
 
-function buildLabel(context, parent, initial, x, y, z, width = 1) {
+function buildSpeedSign(context, parent, initial, x, y, z) {
   const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 128;
+  canvas.width = 512;
+  canvas.height = 512;
   const paint = canvas.getContext('2d');
   const texture = context.keep(new THREE.CanvasTexture(canvas));
   texture.colorSpace = THREE.SRGBColorSpace;
-  const sprite = new THREE.Sprite(
-    context.keep(
-      new THREE.SpriteMaterial({
-        map: texture,
-        transparent: true,
-        depthTest: false,
-        toneMapped: false,
-      }),
-    ),
+  const sign = new THREE.Group();
+  sign.position.set(x, y, z);
+  sign.userData.role = 'speed-sign';
+  parent.add(sign);
+  const backing = context.mesh(
+    sign,
+    context.cylinder(0.36, 0.36, 0.05, 40),
+    context.material(0x8d9b9b, 0.7),
   );
-  sprite.position.set(x, y, z);
-  sprite.scale.set(width, width / 2, 1);
-  sprite.renderOrder = 6;
-  parent.add(sprite);
+  backing.rotation.x = Math.PI / 2;
+  const faceMaterial = context.keep(
+    new THREE.MeshBasicMaterial({ map: texture, toneMapped: false }),
+  );
+  const faceGeometry = context.geometry(
+    'speed-sign-face',
+    () => new THREE.CircleGeometry(0.36, 48),
+  );
+  for (const direction of [-1, 1]) {
+    const face = context.mesh(sign, faceGeometry, faceMaterial, 0, 0, direction * 0.031);
+    face.rotation.y = direction < 0 ? Math.PI : 0;
+    face.userData.role = 'speed-sign-face';
+    face.castShadow = false;
+  }
   let previous;
-  const set = (value) => {
-    const content = String(value).slice(0, 30);
+  const set = (value, warning = false) => {
+    const content = `${value}:${warning}`;
     if (content === previous || !paint) return;
     previous = content;
-    paint.clearRect(0, 0, 256, 128);
+    paint.clearRect(0, 0, 512, 512);
+    paint.fillStyle = '#fff9ed';
+    paint.fillRect(0, 0, 512, 512);
+    paint.beginPath();
+    paint.arc(256, 256, 220, 0, Math.PI * 2);
+    paint.lineWidth = 35;
+    paint.strokeStyle = warning ? '#e53d26' : '#b4342e';
+    paint.stroke();
     paint.fillStyle = '#23362e';
-    paint.font = '700 82px system-ui,sans-serif';
+    paint.font = '750 230px system-ui,sans-serif';
     paint.textAlign = 'center';
     paint.textBaseline = 'middle';
-    paint.fillText(content, 128, 64, 250);
+    paint.fillText(String(value), 256, 270, 360);
     texture.needsUpdate = true;
   };
   set(initial);
-  return { sprite, set };
+  return { group: sign, set };
 }
 
 function createRailway(context) {
@@ -629,14 +660,33 @@ function createRailway(context) {
   const steel = material(0xaeb7b7, 0.85, 0.25),
     timber = material(0x7c634a),
     ballast = material(0x9e9d90);
-  const makeTrack = (points) => {
-    const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(p.x, 0.22, p.z)));
-    mesh(root, keep(new THREE.TubeGeometry(curve, 110, 0.27, 8, false)), ballast).scale.y = 0.45;
+  const trackCurve = (pointAt, height) => {
+    const curve = new THREE.Curve();
+    curve.getPoint = (t, target = new THREE.Vector3()) => {
+      const point = pointAt(t);
+      return target.set(point.x, height, point.z);
+    };
+    return curve;
+  };
+  const makeTrack = (name, pointAt, offsetAt) => {
+    const curve = trackCurve(pointAt, 0);
+    mesh(root, keep(new THREE.TubeGeometry(curve, 160, 0.27, 8, false)), ballast, 0, 0.22).scale.y =
+      0.45;
     for (const offset of [-0.19, 0.19]) {
-      const rail = new THREE.CatmullRomCurve3(
-        points.map((p) => new THREE.Vector3(p.x + offset, 0.29, p.z)),
+      const rail = mesh(
+        root,
+        keep(
+          new THREE.TubeGeometry(
+            trackCurve((t) => offsetAt(t, offset), 0.29),
+            160,
+            0.025,
+            6,
+            false,
+          ),
+        ),
+        steel,
       );
-      mesh(root, keep(new THREE.TubeGeometry(rail, 110, 0.025, 6, false)), steel);
+      rail.userData = { role: 'rail', track: name, offset };
     }
     const length = curve.getLength();
     for (let d = 0; d <= length; d += 0.34) {
@@ -646,52 +696,59 @@ function createRailway(context) {
       tie.rotation.y = Math.atan2(tangent.x, tangent.z);
     }
   };
-  makeTrack([
-    { x: 0, z: -7.8 },
-    { x: 0, z: 8.5 },
-  ]);
+  makeTrack(
+    'shared',
+    (t) => ({ x: 0, z: -7.8 + t * 16.3 }),
+    (t, offset) => ({ x: offset, z: -7.8 + t * 16.3 }),
+  );
   for (const track of ['a', 'b'])
-    makeTrack(Array.from({ length: 45 }, (_, i) => railwayPoint(track, -125 + (i * 125) / 44)));
-  mesh(root, box(12.8, 0.08, 1.6), material(0x4b555c), 0, 0.15, 1.1);
+    makeTrack(
+      track,
+      (t) => railwayPoint(track, -125 + t * 125),
+      (t, offset) => railwayOffsetPoint(track, -125 + t * 125, offset),
+    );
+  mesh(root, box(12.8, 0.08, 1.6), material(0x4b555c), 0, 0.15, RAILWAY.roadZ);
   for (const x of [-5, -3, 3, 5])
-    mesh(root, box(1.1, 0.015, 0.06), material(0xf3ead3), x, 0.2, 1.1);
+    mesh(root, box(1.1, 0.015, 0.06), material(0xf3ead3), x, 0.2, RAILWAY.roadZ);
   const bladeA = mesh(root, box(0.035, 0.055, 0.9), steel, -0.08, 0.32, -0.2);
   const bladeB = mesh(root, box(0.035, 0.055, 0.9), steel, 0.08, 0.32, 2.12);
   mesh(root, box(0.5, 0.18, 0.34), material(0x5e7767), 0.7, 0.25, -0.4);
   const signalA = buildSignal(context, root, -1.05, -1.0, Math.PI, 0.72);
   const signalB = buildSignal(context, root, 1.05, 3.0, 0, 0.72);
-  const barrier = new THREE.Group();
-  barrier.position.set(-1.35, 0.65, 0.5);
-  root.add(barrier);
-  mesh(root, box(0.34, 0.85, 0.4), material(0xdec492), -0.15, -0.15);
-  const arm = new THREE.Group();
-  barrier.add(arm);
-  mesh(arm, box(3.0, 0.11, 0.1), material(0xf5f0df), 1.5);
-  for (let i = 0; i < 7; i++) mesh(arm, box(0.2, 0.115, 0.105), material(0xb84539), 0.2 + i * 0.43);
+  const arms = [-1, 1].map((side) => {
+    const gate = new THREE.Group();
+    root.add(gate);
+    gate.position.set(side * RAILWAY.gateX, 0.65, side < 0 ? RAILWAY.gateZNear : RAILWAY.gateZFar);
+    gate.userData.role = 'rail-gate';
+    mesh(gate, box(0.34, 0.85, 0.3), material(0xdec492), side * 0.16, -0.15);
+    const arm = new THREE.Group();
+    gate.add(arm);
+    arm.userData = { role: 'rail-gate-arm', direction: -side };
+    mesh(
+      arm,
+      box(0.1, 0.11, RAILWAY.gateLength),
+      material(0xf5f0df),
+      0,
+      0,
+      (-side * RAILWAY.gateLength) / 2,
+    );
+    for (let i = 0; i < 5; i++)
+      mesh(arm, box(0.105, 0.115, 0.15), material(0xb84539), 0, 0, -side * (0.15 + i * 0.33));
+    return arm;
+  });
   mesh(root, cylinder(0.04, 0.04, 1.5), steel, 1.3, 0.85, -1.9);
-  const speedSign = mesh(root, cylinder(0.36, 0.36, 0.05, 32), material(0xf6efd9), 1.3, 1.6, -1.9);
-  speedSign.rotation.x = Math.PI / 2;
-  const redRing = mesh(
-    root,
-    geometry('speed-sign-ring', () => new THREE.TorusGeometry(0.31, 0.045, 8, 32)),
-    material(0xb13e37),
-    1.3,
-    1.6,
-    -1.86,
-  );
-  const speedLabel = buildLabel(context, root, '60', 1.3, 1.6, -1.82, 0.47);
-  const crossingCar = buildCar(context, 0xb69854);
-  crossingCar.group.position.set(-2.7, 0.1, 1.1);
-  crossingCar.group.rotation.y = Math.PI / 2;
-  root.add(crossingCar.group);
+  const speedSign = buildSpeedSign(context, root, 60, 1.3, 1.6, -1.9);
   const trains = new Map();
+  const roadCars = new Map();
   const aftermath = buildAftermath(context, root);
-  aftermath.position.z = 0.95;
+  aftermath.userData.role = 'collision-aftermath';
   return {
     update({ state = {}, parameters = {} }) {
       signalA.set(!active(state.signals?.a), 0, state.signals?.a);
       signalB.set(!active(state.signals?.b), 0, state.signals?.b);
-      arm.rotation.z = active(state.barrier) ? 0 : Math.PI * 0.46;
+      for (const arm of arms)
+        arm.rotation.x =
+          (-arm.userData.direction * (1 - clamp(finite(state.barrier))) * Math.PI) / 2;
       bladeA.rotation.y = state.points ? -0.22 : 0.05;
       bladeB.rotation.y = state.points ? 0.05 : -0.22;
       const live = new Set();
@@ -700,40 +757,53 @@ function createRailway(context) {
         let train = trains.get(data.id);
         if (!train) {
           train = buildTrain(context, data.track === 'a' ? 0x3d748c : 0x9c5449);
+          train.group.name = `rail-train:${data.id}`;
+          train.group.userData.transportId = data.id;
+          train.group.userData.transportKind = 'rail_train';
           trains.set(data.id, train);
           root.add(train.group);
         }
-        const p = railwayPoint(data.track, data.position),
-          next = railwayPoint(data.track, finite(data.position) + 0.2);
-        train.group.position.set(p.x + (data.derailed ? 0.24 : 0), 0.2, p.z);
-        train.group.rotation.set(
-          data.crashed ? 0.12 : 0,
-          Math.atan2(next.x - p.x, next.z - p.z),
-          data.derailed ? -0.42 : data.crashed ? 0.16 : 0,
-        );
-        for (const wheel of train.wheels) wheel.rotation.x = finite(data.position) * 0.5;
+        const pose = railwayPose(data);
+        train.group.position.set(pose.x, 0.3, pose.z);
+        train.group.rotation.set(0, pose.heading, 0);
+        train.damage.visible = !!data.crashed || !!data.derailed;
+        for (const wheel of train.wheels)
+          wheel.rotation.x = (finite(data.position) * RAILWAY.scale) / (0.15 * 0.68);
       }
       for (const [id, train] of trains)
         if (!live.has(id)) {
           train.group.removeFromParent();
           trains.delete(id);
         }
-      const failed = (state.trains || []).filter((train) => train.crashed || train.derailed);
-      aftermath.visible = failed.length > 0;
-      if (failed.length) {
-        const positions = failed.map((train) => railwayPoint(train.track, train.position));
-        aftermath.position.set(
-          positions.reduce((sum, p) => sum + p.x, 0) / positions.length,
-          0,
-          positions.reduce((sum, p) => sum + p.z, 0) / positions.length,
-        );
+      const liveCars = new Set();
+      for (const data of state.roadCars || []) {
+        liveCars.add(data.id);
+        let car = roadCars.get(data.id);
+        if (!car) {
+          car = buildCar(context, data.direction === -1 ? 0xb69854 : 0x567fa1);
+          car.group.name = `rail-car:${data.id}`;
+          car.group.userData.transportId = data.id;
+          car.group.userData.transportKind = 'rail_car';
+          roadCars.set(data.id, car);
+          root.add(car.group);
+        }
+        const pose = roadCarPose(data);
+        car.group.position.set(pose.x, 0.18, pose.z);
+        car.group.rotation.set(0, pose.heading, 0);
+        car.damage.visible = !!data.crashed;
+        for (const wheel of car.wheels)
+          wheel.rotation.x = (finite(data.position) * RAILWAY.roadScale) / 0.115;
       }
-      const crossingCrash = (state.faults || []).includes('open_barrier');
-      crossingCar.group.position.x = crossingCrash ? 0.25 : -2.7;
-      crossingCar.group.rotation.x = crossingCrash ? 0.27 : 0;
-      crossingCar.group.rotation.z = crossingCrash ? -0.15 : 0;
-      speedLabel.set(Math.round(finite(parameters.speedLimit, 60)));
-      redRing.material = material(state.fault ? 0xc34736 : 0xb13e37);
+      for (const [id, car] of roadCars)
+        if (!liveCars.has(id)) {
+          car.group.removeFromParent();
+          roadCars.delete(id);
+        }
+      const derailed = (state.trains || []).find((train) => train.derailed);
+      aftermath.visible = !!state.collisionPoint || !!derailed;
+      const point = state.collisionPoint || (derailed ? railwayPose(derailed) : null);
+      if (point) aftermath.position.set(point.x, 0, point.z);
+      speedSign.set(Math.round(finite(parameters.speedLimit, 60)), !!state.fault);
     },
   };
 }

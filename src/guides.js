@@ -2765,8 +2765,8 @@ add('traffic_junction', {
   ],
   steps: [
     [
-      'Connect mutually exclusive NS_GREEN and EW_GREEN commands and their amber phases. Yellow stops new entries while cars already in the junction clear.',
-      'Підключіть взаємно виключні NS_GREEN та EW_GREEN і жовті фази. Жовтий зупиняє нові в’їзди, поки машини на перехресті виїжджають.',
+      'Connect mutually exclusive NS_GREEN and EW_GREEN commands and amber clearance phases. Red/amber stops the complete car nose before its stop line and zebra; already admitted vehicles continue through.',
+      'Підключіть взаємно виключні NS_GREEN та EW_GREEN і жовті інтервали очищення. Червоний/жовтий зупиняє всю передню частину машини до лінії й зебри; допущені машини продовжують рух.',
     ],
     [
       'Use a counter/decoder for green, amber, opposite green, opposite amber. Set carSpeed=12 meters/second, arrivalInterval=4 seconds and initialCars=2 per axis for the supplied laboratory.',
@@ -2782,8 +2782,8 @@ add('traffic_junction', {
     'Запустіть правильні чотири фази, потім скиньте й увімкніть обидва зелені в початковій фазі. Машини можуть фізично зустрітися в зоні конфлікту.',
   ],
   expected: [
-    'Safe phases move traffic through both approaches and increase PASSED. A collision freezes the crashed traffic and latches CRASH until RESET; changing signals alone does not clear it.',
-    'Правильні фази пропускають обидва напрямки й збільшують PASSED. Зіткнення зупиняє аварійний рух і тримає CRASH до RESET; зміна сигналів не очищає його.',
+    'Safe phases keep stopped noses behind the zebra, preserve body-length queue gaps and increase PASSED. CRASH latches only when actual vehicle footprints contact, then clears with RESET; simultaneous green alone is not a collision.',
+    'Правильні фази тримають передні частини до зебри, зберігають проміжки між кузовами й збільшують PASSED. CRASH запам’ятовується лише при контакті реальних габаритів і скидається RESET; сам одночасний зелений не є зіткненням.',
   ],
   pitfalls: [
     [
@@ -2844,39 +2844,39 @@ add('traffic_junction', {
 
 add('railway', {
   purpose: [
-    'A shared railway block models two trains, signals, a turnout and a level-crossing barrier, making dispatch interlocks and their failures observable in 3D.',
-    'Спільна залізнична ділянка моделює два поїзди, сигнали, стрілку й шлагбаум, щоб блокування та його відмови були видимі в 3D.',
+    'A railway and road crossing models finite train/car bodies, timed road gates and a complete-route reservation, so interlocking prevents physical contact instead of hiding vehicles.',
+    'Залізничний переїзд моделює повні тіла поїздів і машин, часові шлагбауми та повне резервування, щоб блокування запобігало фізичному контакту замість приховування транспорту.',
   ],
   steps: [
     [
-      'Use APPROACH_A/B and OCCUPIED to admit one route at a time. Give A priority if both request, and retain POINTS with an SR latch until the block is clear.',
-      'За APPROACH_A/B та OCCUPIED дозволяйте один маршрут. Надайте A пріоритет при двох запитах і утримуйте POINTS через SR до звільнення ділянки.',
+      'Use APPROACH_A/B and OCCUPIED to request one route at a time. Reserve the converging, shared and divergent corridor until the entire train tail clears; retain POINTS with an SR latch throughout that reservation.',
+      'За APPROACH_A/B та OCCUPIED обирайте один маршрут. Резервуйте вхідну, спільну й вихідну ділянки до виходу всього хвоста; утримуйте POINTS через SR увесь час резервування.',
     ],
     [
-      'Close BARRIER before an approaching train reaches the crossing. Supply an eight-bit THROTTLE in actual km/h; set speedLimit=60 and use THROTTLE=30 for the safe exercise.',
-      'Закрийте BARRIER до прибуття поїзда на переїзд. Подайте восьмибітний THROTTLE у км/год; задайте speedLimit=60 і THROTTLE=30 для правильного досліду.',
+      'Alternate rail and road windows. Command BARRIER closed for a rail request or occupied reservation, then require GATE_CLOSED=1 and CROSSING_CLEAR=1 before showing green. Road cars already inside must clear before the gates lower. Use THROTTLE=30 km/h with speedLimit=60.',
+      'Чергуйте дорожні й залізничні вікна. Закривайте BARRIER для залізничного запиту чи зайнятого резервування, а перед зеленим вимагайте GATE_CLOSED=1 та CROSSING_CLEAR=1. Машини всередині спершу мають виїхати. Використайте THROTTLE=30 км/год та speedLimit=60.',
     ],
     [
-      'Set initialA=-48 and initialB=-85 meters to reproduce the laboratory spacing. Drive RUN high, RESET low and open the railway 3D scene. Reset after each independent fault experiment.',
-      'Задайте initialA=-48 та initialB=-85 м для відстаней лабораторної. Подайте RUN=1, RESET=0 і відкрийте залізницю в 3D. Скидайте після кожного окремого аварійного досліду.',
+      'Set initialA=-48 and initialB=-85 meters for the supplied spacing. With RUN=1 and RESET=0, inspect moving road traffic, stopped train noses and the train passage counter in 3D. The 40-second laboratory cycle starts with 20 seconds for road traffic.',
+      'Задайте initialA=-48 та initialB=-85 м. При RUN=1, RESET=0 спостерігайте в 3D рух машин, зупинені передні частини поїздів і лічильник проїзду потягів. Цикл лабораторної 40 с починається з 20 с для автодороги.',
     ],
   ],
   experiment: [
-    'Compare safe priority dispatch with three separate tests: both signals green, THROTTLE=120, and an open barrier while a train crosses. Restore safe inputs before each reset.',
-    'Порівняйте правильний пріоритетний пропуск із трьома дослідами: обидва зелені, THROTTLE=120 та відкритий шлагбаум під поїздом. Відновлюйте правильні входи перед кожним скиданням.',
+    'Compare the guarded cycle with a forced-open gate: the ready guard keeps trains red. Then bypass signals to inspect actual body contact; test THROTTLE=120 separately for turnout derailment. An empty road must not create a collision merely because the gates are open.',
+    'Порівняйте правильний цикл із примусово відкритими шлагбаумами: захист лишає поїздам червоний. Потім обійдіть сигнали для перевірки справжнього контакту; окремо задайте THROTTLE=120 для сходження. Порожня дорога не створює аварії лише через відкриті шлагбауми.',
   ],
   expected: [
-    'Safe interlocking admits trains sequentially and counts passages. Opposing admissions can collide; overspeed at the turnout or moving points under a train can derail it; an open crossing records a fault. Faults latch until reset.',
-    'Блокування пропускає поїзди почергово й лічить проїзди. Зустрічні дозволи спричиняють зіткнення; швидкість на стрілці чи її рух під поїздом — сходження; відкритий переїзд — несправність. Вони тримаються до скидання.',
+    'Trains and road cars both make repeated safe passages. A committed train keeps its route and closed gates until its full tail clears, even when the rail window ends. Collisions require overlapping physical bodies; overspeed or points violations can cause separate visible derailments.',
+    'Поїзди й машини багаторазово безпечно проїжджають. Допущений поїзд зберігає маршрут і закриті шлагбауми до виходу всього хвоста, навіть після кінця вікна. Зіткнення потребує контакту тіл; швидкість чи стрілка окремо можуть спричинити видиме сходження.',
   ],
   pitfalls: [
     [
-      'OCCUPIED covers the train body, not only its nose. Do not switch POINTS when occupancy is high, even after an approach request disappears.',
-      'OCCUPIED враховує тіло поїзда, не лише голову. Не перемикайте POINTS при зайнятості, навіть якщо запит наближення вже зник.',
+      'OCCUPIED is a complete-body route reservation, not a nose-only test. A train waiting behind its red stop line must not reserve the block; an admitted train must retain it until its rear clears the divergent exit.',
+      'OCCUPIED — резервування для всього тіла, не лише голови. Поїзд перед червоною стоп-лінією не має займати ділянку; допущений зберігає її до виходу хвоста з вихідної стрілки.',
     ],
     [
-      'A red signal stops a train at its stop line; it does not teleport an already admitted train out of the block. A fault bit is history, not simply the current signal combination.',
-      'Червоний зупиняє поїзд перед лінією, а не прибирає вже допущений поїзд із ділянки. Fault — історія, а не лише поточна комбінація сигналів.',
+      'A close command is not closed-gate feedback: lowering takes time and waits for cars inside. Keep a road window so queued cars can move. An open gate is not itself contact, and a static decorative car must never trigger an accident.',
+      'Команда закривання не є підтвердженням: опускання триває певний час і чекає виїзду машин. Лишайте дорожнє вікно для черги. Відкритий шлагбаум сам не є контактом, декоративна нерухома машина не спричиняє аварії.',
     ],
   ],
   inputs: {
@@ -2893,8 +2893,8 @@ add('railway', {
       'POINTS: маршрут 0 для A, 1 для B. Зміна під поїздом на ділянці є несправністю.',
     ],
     barrier: [
-      'BARRIER: 1 closes the level-crossing barrier; 0 raises it.',
-      'BARRIER: 1 закриває шлагбаум переїзду, 0 піднімає.',
+      'BARRIER: 1 requests the gates across the road to close, 0 requests opening. Actual closure is timed and reported by GATE_CLOSED; the gates do not block the rails.',
+      'BARRIER: 1 просить закрити шлагбауми поперек дороги, 0 — відкрити. Закривання має тривалість і підтверджується GATE_CLOSED; шлагбауми не перекривають рейки.',
     ],
     throttle: [
       'THROTTLE: eight-bit speed command in km/h, not a percentage; compare it with speedLimit.',
@@ -2919,8 +2919,8 @@ add('railway', {
       'APPROACH_B: поїзд B наближається з протилежного боку.',
     ],
     occupied: [
-      'OCCUPIED: some train body overlaps the controlled shared-block interval.',
-      'OCCUPIED: тіло принаймні одного поїзда займає контрольовану ділянку.',
+      'OCCUPIED: complete protected-route reservation after admission, held until the entire train rear clears the corridor.',
+      'OCCUPIED: повне резервування після дозволеного в’їзду до виходу всього хвоста із захищеного коридору.',
     ],
     fault: [
       'FAULT: any latched collision, overspeed, moving-points or open-barrier failure.',
@@ -2933,6 +2933,18 @@ add('railway', {
     passed: [
       'PASSED: eight-bit count of trains that cleared the route before respawning.',
       'PASSED: восьмибітна кількість поїздів, що завершили маршрут до повторної появи.',
+    ],
+    gate_closed: [
+      'GATE_CLOSED: actual gate arms are fully lowered, not merely commanded closed.',
+      'GATE_CLOSED: фактичні шлагбауми повністю опущені, а не лише мають команду закривання.',
+    ],
+    crossing_clear: [
+      'CROSSING_CLEAR: no full road-vehicle body remains inside the protected crossing between the gates.',
+      'CROSSING_CLEAR: жодне повне тіло дорожньої машини не лишається в захищеному переїзді між шлагбаумами.',
+    ],
+    cars_wait: [
+      'CARS_WAIT: road vehicles are queued before the closed/closing gate stop lines.',
+      'CARS_WAIT: дорожні машини чекають перед стоп-лініями закритих чи закриваних шлагбаумів.',
     ],
   },
   examples: ['railway-interlocking'],

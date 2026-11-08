@@ -154,7 +154,7 @@ The **3D scenes & automation** example topic contains five laboratories with edi
 
 - **Traffic light:** drive red, amber and green separately and inspect the VALID and GO outputs. Multiple lamps or darkness are invalid.
 - **Traffic junction:** use a counter and clearance phases to manage real queues. Conflicting releases can cause a collision; CRASH stays latched until reset.
-- **Railway interlocking:** dispatch two trains through a shared block, align the turnout, close the level-crossing barrier, and obey the speed restriction. Unsafe control can cause collisions, crossing accidents or derailments.
+- **Railway interlocking:** alternate road and rail windows, wait for physically closed road gates and a clear crossing, and reserve the complete train route until its tail clears. Both road cars and trains move from the same physics state. Unsafe bypasses can cause actual body collisions or derailments; an open empty crossing does not invent an accident.
 - **Animal feeder:** use hunger, bowl-full and empty-hopper feedback to control an auger. The animal consumes measured food, the hopper is finite, and unsafe filling triggers an alarm.
 - **Water tank:** use LOW and HIGH feedback with a latch to regulate the pump against a drain. Flow rates change the measured water level; overflow stays latched until reset.
 
