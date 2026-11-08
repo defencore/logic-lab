@@ -1,22 +1,51 @@
+import { getDefinition } from './catalog.js';
+
 // Each text pair contains English first and Ukrainian second.
 export const GUIDES = Object.create(null);
 
 function add(type, content) {
+  const definition = getDefinition(type);
+  const describePins = (direction, index) =>
+    Object.fromEntries(
+      definition[direction].map((pin) => {
+        const description = content[direction]?.[pin.group || pin.id]?.[index];
+        if (!pin.group) return [pin.id, description];
+        return [
+          pin.id,
+          index === 0
+            ? `${pin.label}: separate bit ${pin.bit}, binary weight ${2 ** pin.bit}. ${description}`
+            : `${pin.label}: окремий біт ${pin.bit}, двійкова вага ${2 ** pin.bit}. ${description}`,
+        ];
+      }),
+    );
+  const groups = ['inputs', 'outputs'].flatMap((direction) =>
+    definition.signals[direction]
+      .filter((signal) => signal.width > 1)
+      .map((signal) => {
+        const pins = definition[direction].filter((pin) => pin.group === signal.id);
+        return `${pins[0].label}…${pins.at(-1).label}`;
+      }),
+  );
   GUIDES[type] = Object.fromEntries(
     ['en', 'ua'].map((language, index) => [
       language,
       {
         purpose: content.purpose[index],
-        steps: content.steps.map((text) => text[index]),
+        steps: [
+          ...(groups.length
+            ? [
+                index === 0
+                  ? `Connect each labeled line separately: ${groups.join(', ')}. Match the bit indices; bit 0 has weight 1. Each wire carries one bit.`
+                  : `Підключайте кожну підписану лінію окремо: ${groups.join(', ')}. Зберігайте номери бітів; біт 0 має вагу 1. Кожен дріт передає один біт.`,
+              ]
+            : []),
+          ...content.steps.map((text) => text[index]),
+        ],
         experiment: content.experiment[index],
         expected: content.expected[index],
         pitfalls: content.pitfalls.map((text) => text[index]),
-        inputs: Object.fromEntries(
-          Object.entries(content.inputs || {}).map(([id, text]) => [id, text[index]]),
-        ),
-        outputs: Object.fromEntries(
-          Object.entries(content.outputs || {}).map(([id, text]) => [id, text[index]]),
-        ),
+        inputs: describePins('inputs', index),
+        outputs: describePins('outputs', index),
         examples: [...content.examples],
       },
     ]),
@@ -347,8 +376,8 @@ add('gnd', {
   ],
   pitfalls: [
     [
-      'This is a logic source, not a simulated electrical reference or a complete 8-bit zero bus.',
-      'Це логічне джерело, а не модель електричної землі чи готова 8-бітна нульова шина.',
+      'This is a logic source, not a simulated electrical reference or a all eight zero-valued data lines.',
+      'Це логічне джерело, а не модель електричної землі чи готові вісім нульових ліній даних.',
     ],
     [
       'A strong 1 on the same net conflicts with Ground and creates X. Disabling Ground releases its output to Z.',
@@ -443,8 +472,8 @@ add('switch', {
       'Утримання ручного такту в 1 не створює повторних фронтів.',
     ],
     [
-      'Value is interpreted as a bit: zero is low and a nonzero value is high. Use Bus value for numbers.',
-      'Value трактується як біт: нуль є 0, ненульове значення — 1. Для чисел використовуйте Значення шини.',
+      'Value is interpreted as a bit: zero is low and a nonzero value is high. Use Byte value for numbers.',
+      'Value трактується як біт: нуль є 0, ненульове значення — 1. Для чисел використовуйте Значення байта.',
     ],
   ],
   outputs: {
@@ -455,26 +484,26 @@ add('switch', {
 
 add('bus_input', {
   purpose: [
-    'Bus value supplies a whole unsigned byte, plus narrower views for BCD digits and addresses.',
-    'Значення шини задає цілий беззнаковий байт і його вужчі частини для BCD-цифр та адрес.',
+    'Byte value supplies a whole unsigned byte, plus narrower views for BCD digits and addresses.',
+    'Значення байта задає цілий беззнаковий байт і його вужчі частини для BCD-цифр та адрес.',
   ],
   steps: [
     [
-      'Add Bus value and set Value to an integer from 0 to 255.',
-      'Додайте Значення шини та задайте ціле Value від 0 до 255.',
+      'Add Byte value and set Value to an integer from 0 to 255.',
+      'Додайте Значення байта та задайте ціле Value від 0 до 255.',
     ],
     [
-      'Connect BYTE to an 8-bit data pin, LOW4 to a 4-bit pin, or LOW3 to a 3-bit pin.',
-      'Підключіть BYTE до 8-бітного входу, LOW4 до 4-бітного або LOW3 до 3-бітного.',
+      'Connect D0…D7 to the eight data inputs, or use the BCD and ADDR lines for four-bit and three-bit values.',
+      'Підключіть D0…D7 до восьми входів даних або використайте окремі лінії BCD і ADDR для чотирьох та трьох бітів.',
     ],
     [
-      'Read the receiver value in Properties to check that you chose the intended width.',
-      'Перевірте значення приймача у властивостях, щоб підтвердити правильну ширину.',
+      'Check each receiver bit in Properties and keep the line numbers in the same order.',
+      'Перевірте кожен біт приймача у властивостях і збережіть порядок номерів ліній.',
     ],
   ],
   experiment: [
-    'Set Value=173. Compare BYTE=173, LOW4=13 and LOW3=5.',
-    'Задайте Value=173. Порівняйте BYTE=173, LOW4=13 та LOW3=5.',
+    'Set Value=173. Compare D=173, BCD=13 and ADDR=5.',
+    'Задайте Value=173. Порівняйте D=173, BCD=13 та ADDR=5.',
   ],
   expected: [
     'The narrower outputs contain only the lowest bits; they are not decimal-digit conversions.',
@@ -482,21 +511,21 @@ add('bus_input', {
   ],
   pitfalls: [
     [
-      'A port width must match the receiving bus. A one-bit switch cannot replace a complete byte.',
-      'Ширина порту має відповідати вхідній шині. Однобітний перемикач не замінює цілий байт.',
+      'Connect every required bit separately. A switch can drive any single data line; tie unused inputs to Ground.',
+      'Підключіть кожен потрібний біт окремо. Перемикач може керувати однією лінією; невикористані входи підключіть до Землі.',
     ],
     [
-      'For a BCD decoder keep LOW4 between 0 and 9; values 10–15 are not decimal digits.',
-      'Для BCD-декодера тримайте LOW4 у межах 0–9; значення 10–15 не є десятковими цифрами.',
+      'For a BCD decoder keep BCD between 0 and 9; values 10–15 are not decimal digits.',
+      'Для BCD-декодера тримайте BCD у межах 0–9; значення 10–15 не є десятковими цифрами.',
     ],
   ],
   outputs: {
     out: [
-      'BYTE: the rounded value clamped to 0–255, eight bits.',
-      'BYTE: округлене значення в межах 0–255, вісім бітів.',
+      'D: the rounded value clamped to 0–255, shown on eight separate lines.',
+      'D: округлене значення в межах 0–255 на восьми окремих лініях.',
     ],
-    nibble: ['LOW4: value AND 15, range 0–15.', 'LOW4: значення І 15, діапазон 0–15.'],
-    address: ['LOW3: value AND 7, range 0–7.', 'LOW3: значення І 7, діапазон 0–7.'],
+    nibble: ['BCD: value AND 15, range 0–15.', 'BCD: значення І 15, діапазон 0–15.'],
+    address: ['ADDR: value AND 7, range 0–7.', 'ADDR: значення І 7, діапазон 0–7.'],
   },
   examples: ['bcd-display', 'bus-mux', 'alu', 'ram'],
 });
@@ -558,8 +587,8 @@ add('led', {
       'Додайте світлодіод біля виходу, який потрібно спостерігати.',
     ],
     [
-      'Connect a one-bit output to D; use a splitter before observing an individual bus bit.',
-      'Підключіть однобітний вихід до D; для окремого біта шини спочатку використайте розгалужувач.',
+      'Connect any individual digital output directly to D; each data-bit output can drive an LED.',
+      'Підключіть окремий цифровий вихід безпосередньо до D; кожен вихід біта може керувати світлодіодом.',
     ],
     [
       'Set Color in Properties and run or change the source switch.',
@@ -597,8 +626,8 @@ add('matrix', {
   ],
   steps: [
     [
-      'Use two Bus value sources and connect BYTE to ROWS and COLS.',
-      'Використайте два джерела Значення шини та підключіть BYTE до ROWS і COLS.',
+      'Use two Byte value sources: wire D0…D7 separately to ROWS0…ROWS7 and COLS0…COLS7.',
+      'Використайте два джерела Значення байта: окремо з’єднайте D0…D7 із ROWS0…ROWS7 та COLS0…COLS7.',
     ],
     [
       'Set both masks to 1 to select the first row and first column.',
@@ -647,12 +676,12 @@ add('sevenseg', {
   ],
   steps: [
     [
-      'Connect an 8-bit source to the display input.',
-      'Підключіть 8-бітне джерело до входу індикатора.',
+      'Wire source lines D0…D7 to display contacts a,b,c,d,e,f,g,dp in that order.',
+      'Окремо з’єднайте лінії D0…D7 джерела з контактами a,b,c,d,e,f,g,dp індикатора.',
     ],
     [
-      'For decimal digits, put BCD → 7-segment between Bus value LOW4 and the display.',
-      'Для десяткових цифр поставте BCD → 7 сегментів між LOW4 джерела шини та індикатором.',
+      'For decimal digits, put BCD → 7-segment between Byte value BCD and the display.',
+      'Для десяткових цифр поставте BCD → 7 сегментів між BCD джерела байта та індикатором.',
     ],
     [
       'Alternatively set the raw mask to 63 for digit 0 or 127 for digit 8.',
@@ -689,8 +718,8 @@ add('scope', {
   ],
   steps: [
     [
-      'Branch a wire from the signal output into SIGNAL; the scope accepts a bit, bus or analog voltage.',
-      'Розгалузьте дріт від виходу сигналу до SIGNAL; осцилограф приймає біт, шину чи аналогову напругу.',
+      'Branch one signal line into SIGNAL; the scope accepts one digital bit or one analog voltage.',
+      'Розгалузьте одну лінію сигналу до SIGNAL; осцилограф приймає один цифровий біт або аналогову напругу.',
     ],
     [
       'Set Range to a useful vertical scale, for example 1 for logic or 5 for a 5 V waveform.',
@@ -706,8 +735,8 @@ add('scope', {
     'Окремо підключіть тактовий генератор та АМ-генератор; порівняйте прямокутний сигнал із модульованою хвилею.',
   ],
   expected: [
-    'Digital inputs alternate between 0 and 1; a byte trace displays its numeric value; analog traces display voltage.',
-    'Цифровий вхід змінюється між 0 і 1; байтова осцилограма показує число; аналогова — напругу.',
+    'A digital line alternates between 0 and 1; analog traces display voltage. Read a full byte on its source component.',
+    'Цифрова лінія змінюється між 0 і 1; аналогова осцилограма показує напругу. Цілий байт читайте на компоненті джерела.',
   ],
   pitfalls: [
     [
@@ -721,8 +750,8 @@ add('scope', {
   ],
   inputs: {
     in: [
-      'SIGNAL: a non-driving observation input accepting digital, bus and analog values.',
-      'SIGNAL: спостережний вхід, що приймає цифрові, шинні та аналогові значення і не керує лінією.',
+      'SIGNAL: a non-driving observation input for one digital line or one analog voltage.',
+      'SIGNAL: спостережний вхід однієї цифрової лінії або аналогової напруги, який не керує лінією.',
     ],
   },
   examples: ['mixed-signals', 'pwm-servos', 'adc-dac'],
@@ -735,12 +764,12 @@ add('mux', {
   ],
   steps: [
     [
-      'Connect two Bus value BYTE outputs to A and B, using values 12 and 200.',
-      'Підключіть два виходи BYTE джерел шини до A і B зі значеннями 12 та 200.',
+      'Wire two Byte value sources D0…D7 to A0…A7 and B0…B7, using values 12 and 200.',
+      'Окремо підключіть D0…D7 двох джерел байта до A0…A7 і B0…B7 зі значеннями 12 та 200.',
     ],
     [
-      'Connect a switch to S and Y to a bus probe or splitter.',
-      'Підключіть перемикач до S, а Y — до осцилографа шини або розгалужувача.',
+      'Connect a switch to S; wire Y0…Y7 to separate LEDs or the corresponding receiver inputs.',
+      'Підключіть перемикач до S, а Y0…Y7 — до окремих світлодіодів або відповідних входів приймача.',
     ],
     [
       'Toggle S while watching the output value.',
@@ -757,8 +786,8 @@ add('mux', {
   ],
   pitfalls: [
     [
-      'A, B and Y are all 8-bit buses; S is one bit. A multiplexer selects data rather than merging it.',
-      'A, B та Y — 8-бітні шини; S — один біт. Мультиплексор обирає дані, а не об’єднує їх.',
+      'A, B and Y each have eight independent lines; S is one bit. Keep matching bit numbers together.',
+      'A, B та Y мають по вісім окремих ліній; S — один біт. З’єднуйте біти з однаковими номерами.',
     ],
     [
       'A floating S makes the result uncertain unless both input values already match.',
@@ -782,10 +811,13 @@ add('demux', {
     'Демультиплексор 1:2 спрямовує один байт до одного з двох приймачів.',
   ],
   steps: [
-    ['Connect a Bus value BYTE output to D.', 'Підключіть вихід BYTE джерела шини до D.'],
     [
-      'Use a switch for S and connect Y0 and Y1 to separate probes.',
-      'Подайте перемикач на S та підключіть Y0 і Y1 до окремих осцилографів.',
+      'Wire Byte value outputs D0…D7 separately to the matching D0…D7 inputs.',
+      'Окремо з’єднайте виходи D0…D7 джерела байта з відповідними входами D0…D7.',
+    ],
+    [
+      'Use a switch for S and connect individual lines of output groups Y0 and Y1 to separate LEDs.',
+      'Подайте перемикач на S та підключіть окремі лінії груп Y0 і Y1 до світлодіодів.',
     ],
     ['Set D=37 and toggle the select switch.', 'Задайте D=37 та перемикайте сигнал вибору.'],
   ],
@@ -799,8 +831,8 @@ add('demux', {
   ],
   pitfalls: [
     [
-      'The unselected output is driven to zero, not released to Z. Use tri-state buffers for a shared bus.',
-      'Необраний вихід примусово має нуль, а не Z. Для спільної шини використовуйте буфери з трьома станами.',
+      'The unselected output is driven to zero, not released to Z. Use tri-state buffers for shared data lines.',
+      'Необраний вихід примусово має нуль, а не Z. Для спільних ліній даних використовуйте буфери з трьома станами.',
     ],
     [
       'A floating or unknown S makes both destinations uncertain.',
@@ -916,7 +948,10 @@ add('comparator', {
     'Компаратор показує, чи один беззнаковий байт більший, рівний або менший за інший.',
   ],
   steps: [
-    ['Connect Bus value BYTE outputs to A and B.', 'Підключіть виходи BYTE джерел шини до A та B.'],
+    [
+      'Wire Byte value outputs D0…D7 separately to A0…A7 and B0…B7.',
+      'Окремо з’єднайте виходи D0…D7 джерел байта з A0…A7 та B0…B7.',
+    ],
     ['Attach three LEDs to >, = and <.', 'Приєднайте три світлодіоди до >, = та <.'],
     [
       'Set A=10,B=20, then make A equal to and greater than B.',
@@ -959,10 +994,13 @@ add('decoder', {
     'BCD-декодер перетворює чотирибітну десяткову цифру на маску сегментів для її зображення.',
   ],
   steps: [
-    ['Connect Bus value LOW4 to BCD.', 'Підключіть LOW4 джерела шини до BCD.'],
     [
-      'Connect SEG to the 8-bit input of a 7-segment display.',
-      'Підключіть SEG до 8-бітного входу семисегментного індикатора.',
+      'Wire the four BCD lines separately to BCD0…BCD3.',
+      'Окремо підключіть чотири лінії BCD джерела байта до BCD0…BCD3.',
+    ],
+    [
+      'Wire SEG0…SEG7 to display contacts a,b,c,d,e,f,g,dp in order.',
+      'Окремо з’єднайте SEG0…SEG7 із контактами a,b,c,d,e,f,g,dp семисегментного індикатора.',
     ],
     ['Set the source Value to a digit from 0 to 9.', 'Задайте джерелу Value від 0 до 9.'],
   ],
@@ -1005,8 +1043,14 @@ add('encoder', {
     'Шифратор 8:3 перетворює позицію одного активного вхідного біта на його трьохбітний номер.',
   ],
   steps: [
-    ['Connect Bus value BYTE to D.', 'Підключіть BYTE джерела шини до D.'],
-    ['Probe CODE and attach an LED to V.', 'Підключіть осцилограф до CODE та світлодіод до V.'],
+    [
+      'Wire Byte value lines D0…D7 to the matching D0…D7 inputs.',
+      'З’єднайте лінії D0…D7 джерела байта з відповідними входами D0…D7.',
+    ],
+    [
+      'Observe CODE0…CODE2 with separate LEDs and attach another LED to V.',
+      'Підключіть окремі світлодіоди до CODE0…CODE2 та ще один до V.',
+    ],
     [
       'Use one-hot values 1,2,4,8,16,32,64,128.',
       'Використовуйте значення з одним активним бітом: 1,2,4,8,16,32,64,128.',
@@ -1268,8 +1312,8 @@ add('register', {
   ],
   steps: [
     [
-      'Connect a Bus value BYTE output to D and a manual clock to CLK.',
-      'Підключіть BYTE джерела шини до D та ручний такт до CLK.',
+      'Wire D0…D7 of a Byte value source to the eight D inputs and a manual clock to CLK.',
+      'Окремо з’єднайте D0…D7 джерела байта з вісьмома входами D, а ручний такт — із CLK.',
     ],
     [
       'Connect EN to VCC or a switch at 1; keep RST at 0.',
@@ -1327,8 +1371,8 @@ add('shift_register', {
       'Подайте перемикач даних на SER та ручний такт на CLK; тримайте RST=0.',
     ],
     [
-      'Connect Q to a splitter and observe its eight bits with LEDs.',
-      'Підключіть Q до розгалужувача та спостерігайте вісім бітів світлодіодами.',
+      'Connect Q0…Q7 directly to eight LEDs to observe the stored bits.',
+      'Підключіть Q0…Q7 безпосередньо до восьми світлодіодів для спостереження бітів.',
     ],
     [
       'Set SER before each rising edge; after the edge return CLK to 0.',
@@ -1345,8 +1389,8 @@ add('shift_register', {
   ],
   pitfalls: [
     [
-      'Q7 shows the current most significant stored bit, not a separate delayed copy of SER.',
-      'Q7 показує поточний старший збережений біт, а не окрему затриману копію SER.',
+      'SOUT repeats the current Q7 stored bit, rather than a separate delayed copy of SER.',
+      'SOUT повторює поточний збережений біт Q7, а не окрему затриману копію SER.',
     ],
     [
       'RST clears all bits; Initial selects startup contents after a simulation reset. There is no parallel-load input.',
@@ -1363,7 +1407,10 @@ add('shift_register', {
   },
   outputs: {
     out: ['Q: all eight stored bits as one byte.', 'Q: усі вісім збережених бітів одним байтом.'],
-    serial: ['Q7: the current highest stored bit.', 'Q7: поточний старший збережений біт.'],
+    serial: [
+      'SOUT: the current highest stored bit, equal to Q7.',
+      'SOUT: поточний старший збережений біт, тотожний Q7.',
+    ],
   },
   examples: ['counter', 'd-memory'],
 });
@@ -1429,8 +1476,8 @@ add('ram', {
   ],
   steps: [
     [
-      'Connect LOW4 of an address source to ADDR and BYTE of a data source to DATA.',
-      'Підключіть LOW4 джерела адреси до ADDR та BYTE джерела даних до DATA.',
+      'Wire BCD0…BCD3 of the address source to ADDR0…ADDR3 and data D0…D7 to DATA0…DATA7.',
+      'Окремо підключіть BCD0…BCD3 джерела адреси до ADDR0…ADDR3 та D0…D7 джерела даних до DATA0…DATA7.',
     ],
     [
       'Use switches for CS, OE, WE and a manual CLK. Start CS=1,OE=1,WE=0,CLK=0.',
@@ -1500,12 +1547,12 @@ add('rom', {
       'Введіть до 16 байтів через кому в Data; приймаються десяткові та шістнадцяткові з префіксом 0x.',
     ],
     [
-      'Connect Bus value LOW4 to ADDR and keep CS=1,OE=1.',
-      'Підключіть LOW4 джерела шини до ADDR та тримайте CS=1,OE=1.',
+      'Wire the four BCD lines to ADDR0…ADDR3 and keep CS=1,OE=1.',
+      'Окремо підключіть чотири лінії BCD до ADDR0…ADDR3 та тримайте CS=1,OE=1.',
     ],
     [
-      'Probe Q and step the address from 0 through the populated locations.',
-      'Підключіть осцилограф до Q та змінюйте адресу від 0 по заповнених комірках.',
+      'Read the ROM value and observe Q0…Q7 while stepping through populated addresses.',
+      'Читайте значення ПЗП та спостерігайте Q0…Q7, змінюючи адресу по заповнених комірках.',
     ],
   ],
   experiment: [
@@ -1550,8 +1597,8 @@ add('register_file', {
   ],
   steps: [
     [
-      'Connect separate Bus value LOW3 outputs to RA and WA, and BYTE data to DATA.',
-      'Підключіть окремі LOW3 джерел шини до RA і WA та байтові дані до DATA.',
+      'Wire three ADDR lines each to RA0…RA2 and WA0…WA2, and eight D lines to DATA0…DATA7.',
+      'Підключіть по три лінії ADDR до RA0…RA2 і WA0…WA2 та вісім ліній D до DATA0…DATA7.',
     ],
     [
       'Connect a manual clock to CLK and a switch to WE; start both at 0.',
@@ -1572,8 +1619,8 @@ add('register_file', {
   ],
   pitfalls: [
     [
-      'RA and WA are three bits for addresses 0–7; do not use the four-bit LOW4 port.',
-      'RA і WA мають три біти для адрес 0–7; не використовуйте чотирибітний LOW4.',
+      'RA and WA have three separate lines for addresses 0–7; connect exactly bits 0, 1 and 2.',
+      'RA і WA мають по три окремі лінії для адрес 0–7; підключіть саме біти 0, 1 та 2.',
     ],
     [
       'WE defaults inactive if unwired. Resetting the simulation clears all eight registers; there is no separate reset pin.',
@@ -1610,13 +1657,13 @@ add('register_file', {
 
 add('dac', {
   purpose: [
-    'A digital-to-analog converter turns an unsigned byte into a voltage, bridging logic buses and analog blocks.',
-    'Цифро-аналоговий перетворювач перетворює беззнаковий байт на напругу та з’єднує цифрові шини з аналоговими блоками.',
+    'A digital-to-analog converter turns an unsigned byte into a voltage, bridging separate digital lines and analog blocks.',
+    'Цифро-аналоговий перетворювач перетворює беззнаковий байт на напругу та з’єднує окремі цифрові лінії з аналоговими блоками.',
   ],
   steps: [
     [
-      'Connect Bus value BYTE to D and set Vcc=5.',
-      'Підключіть BYTE джерела шини до D та задайте Vcc=5.',
+      'Wire D0…D7 of the Byte value source to DAC inputs D0…D7 and set Vcc=5.',
+      'Окремо підключіть D0…D7 джерела байта до входів ЦАП D0…D7 та задайте Vcc=5.',
     ],
     ['Connect V to an oscilloscope with Range=5.', 'Підключіть V до осцилографа з Range=5.'],
     ['Change the source byte through 0,128,255.', 'Змінюйте байт джерела на 0,128,255.'],
@@ -1664,13 +1711,13 @@ add('adc', {
       'Задайте додатну опорну напругу Vcc, наприклад 5 В, відповідно до діапазону джерела.',
     ],
     [
-      'Connect D to a bus probe, splitter or another DAC.',
-      'Підключіть D до осцилографа шини, розгалужувача або іншого ЦАП.',
+      'Connect D0…D7 to individual LEDs or the eight inputs of another DAC.',
+      'Підключіть D0…D7 до окремих світлодіодів або восьми входів іншого ЦАП.',
     ],
   ],
   experiment: [
-    'Build BYTE → DAC → ADC with the same Vcc for both converters and vary BYTE.',
-    'Побудуйте BYTE → ЦАП → АЦП з однаковим Vcc обох перетворювачів та змінюйте BYTE.',
+    'Build D → DAC → ADC with the same Vcc for both converters and vary D.',
+    'Побудуйте D → ЦАП → АЦП з однаковим Vcc обох перетворювачів та змінюйте D.',
   ],
   expected: [
     'D=round(clamp(V/Vcc,0,1)×255). Equal references recover the original byte; voltages outside the range saturate.',
@@ -1678,8 +1725,8 @@ add('adc', {
   ],
   pitfalls: [
     [
-      'A voltage is not an eight-bit bus: use the analog V pin and observe the digital D pin separately.',
-      'Напруга не є восьмибітною шиною: використовуйте аналоговий V і окремо спостерігайте цифровий D.',
+      'Use the analog V contact for voltage and the separate digital D0…D7 contacts for the converted code.',
+      'Для напруги використовуйте аналоговий контакт V, а для цифрового коду — окремі контакти D0…D7.',
     ],
     [
       'This ADC samples every simulation step and has no conversion clock, latency or noise model.',
@@ -1716,8 +1763,8 @@ add('am', {
       'Спочатку залиште MOD непідключеним для внутрішньої синусоїдальної модуляції.',
     ],
     [
-      'Then connect a switch, bus or DAC to MOD to supply external modulation.',
-      'Потім підключіть перемикач, шину або ЦАП до MOD для зовнішньої модуляції.',
+      'Then connect a switch, one digital data line or a DAC output to MOD for external modulation.',
+      'Потім підключіть перемикач, одну цифрову лінію або вихід ЦАП до MOD для зовнішньої модуляції.',
     ],
   ],
   experiment: [
@@ -1744,8 +1791,8 @@ add('am', {
   ],
   inputs: {
     mod: [
-      'MOD: optional analog voltage, digital bit or bus. An unwired input selects the internal sine.',
-      'MOD: необов’язкова аналогова напруга, цифровий біт чи шина. Без дроту обрано внутрішню синусоїду.',
+      'MOD: optional analog voltage or digital bit. An unwired input selects the internal sine.',
+      'MOD: необов’язкова аналогова напруга або цифровий біт. Без дроту обрано внутрішню синусоїду.',
     ],
   },
   outputs: {
@@ -1796,8 +1843,8 @@ add('fm', {
   ],
   inputs: {
     mod: [
-      'MOD: optional voltage, bit or bus normalized to modulation −1…+1; unwired uses an internal sine.',
-      'MOD: необов’язкова напруга, біт чи шина, нормовані до −1…+1; без дроту використовується синусоїда.',
+      'MOD: optional voltage or bit normalized to modulation −1…+1; unwired uses an internal sine.',
+      'MOD: необов’язкова напруга або біт, нормовані до −1…+1; без дроту використовується синусоїда.',
     ],
   },
   outputs: {
@@ -1927,10 +1974,13 @@ add('alu', {
   ],
   steps: [
     [
-      'Connect Bus value BYTE sources to A and B and a LOW3 source to OP.',
-      'Підключіть джерела BYTE до A і B та LOW3 до OP.',
+      'Wire two eight-line sources to A0…A7 and B0…B7 and three ADDR lines to OP0…OP2.',
+      'Підключіть по вісім окремих ліній до A0…A7 і B0…B7 та три лінії ADDR до OP0…OP2.',
     ],
-    ['Probe Y and connect LEDs to C and Z.', 'Підключіть осцилограф до Y та світлодіоди до C і Z.'],
+    [
+      'Observe Y0…Y7 separately and connect LEDs to C and Z; the component readout shows the byte.',
+      'Спостерігайте Y0…Y7 окремо та підключіть світлодіоди до C і Z; індикатор компонента показує байт.',
+    ],
     [
       'Try OP 0 add, 1 subtract, 2 AND, 3 OR, 4 XOR, 5 left shift, 6 right shift, 7 NOT A.',
       'Спробуйте OP: 0 додавання, 1 віднімання, 2 І, 3 АБО, 4 XOR, 5 зсув уліво, 6 вправо, 7 НЕ A.',
@@ -1981,21 +2031,21 @@ add('alu', {
 
 add('tristate', {
   purpose: [
-    'A tri-state buffer lets one device drive a shared byte bus or disconnect itself electrically.',
-    'Буфер із трьома станами дозволяє пристрою керувати спільною байтовою шиною або електрично від’єднатися.',
+    'A tri-state buffer lets one device drive eight shared data lines or disconnect itself electrically.',
+    'Буфер із трьома станами дозволяє пристрою керувати вісьмома спільними лініями даних або електрично від’єднатися.',
   ],
   steps: [
     [
-      'Connect a Bus value BYTE output to D and a switch to EN.',
-      'Підключіть BYTE джерела шини до D та перемикач до EN.',
+      'Wire D0…D7 of a Byte value source to D0…D7 and a switch to EN.',
+      'Окремо з’єднайте D0…D7 джерела байта з D0…D7, а перемикач — із EN.',
     ],
     [
-      'Connect Q to a bus probe; EN=1 enables data and EN=0 releases the line.',
-      'Підключіть Q до осцилографа шини; EN=1 дозволяє дані, EN=0 відпускає лінію.',
+      'Connect Q0…Q7 to separate receiver inputs; EN=1 drives all lines and EN=0 releases them.',
+      'Підключіть Q0…Q7 до окремих входів приймача; EN=1 передає дані, EN=0 відпускає лінії.',
     ],
     [
-      'To share a bus, connect a second buffer Q to that same receiving input with its own EN.',
-      'Для спільної шини підключіть Q другого буфера до того самого входу приймача з власним EN.',
+      'For shared data lines, connect each Q bit of a second buffer to the matching receiver input, with its own EN.',
+      'Для спільних ліній даних підключіть кожен біт Q другого буфера до відповідного входу приймача з власним EN.',
     ],
   ],
   experiment: [
@@ -2003,8 +2053,8 @@ add('tristate', {
     'Використайте байти 12 і 200. Дозвольте лише перший буфер, потім другий, потім обидва.',
   ],
   expected: [
-    'A single enabled driver supplies its byte. Both disabled give Z; disagreeing enabled drivers give X throughout the shared net.',
-    'Один дозволений вихід задає свій байт. Обидва вимкнені дають Z; різні дозволені дані дають X у всій спільній мережі.',
+    'A single enabled driver supplies its byte. Both disabled give Z; disagreeing enabled drivers give X only on the conflicting bit lines.',
+    'Один дозволений вихід задає свій байт. Обидва вимкнені дають Z; різні дозволені дані дають X лише на лініях із конфліктом бітів.',
   ],
   pitfalls: [
     [
@@ -2027,7 +2077,10 @@ add('tristate', {
     ],
   },
   outputs: {
-    out: ['Q: enabled byte or a released bus.', 'Q: дозволений байт або відпущена шина.'],
+    out: [
+      'Q: eight enabled data lines or released Z lines.',
+      'Q: вісім дозволених ліній даних або відпущені лінії Z.',
+    ],
   },
   examples: ['bus-mux', 'wired-and'],
 });
@@ -2038,8 +2091,14 @@ add('priority_encoder', {
     'Пріоритетний шифратор обирає активний запит із найбільшим номером, коли одночасно встановлено кілька бітів.',
   ],
   steps: [
-    ['Connect a Bus value BYTE source to D.', 'Підключіть BYTE джерела шини до D.'],
-    ['Probe CODE and attach an LED to V.', 'Підключіть осцилограф до CODE та світлодіод до V.'],
+    [
+      'Wire Byte value D0…D7 separately to D0…D7.',
+      'З’єднайте лінії D0…D7 джерела байта з відповідними входами D0…D7.',
+    ],
+    [
+      'Observe CODE0…CODE2 with separate LEDs and attach another LED to V.',
+      'Підключіть окремі світлодіоди до CODE0…CODE2 та ще один до V.',
+    ],
     ['Try input masks 1,8,12,128 and 255.', 'Спробуйте вхідні маски 1,8,12,128 та 255.'],
   ],
   experiment: [
@@ -2081,11 +2140,14 @@ add('priority_encoder', {
 
 add('splitter', {
   purpose: [
-    'A bus splitter exposes each bit of one byte as an individual digital wire.',
-    'Розгалужувач шини виводить кожен біт одного байта окремим цифровим дротом.',
+    'A line breakout routes eight individual data inputs to numbered outputs without changing their values.',
+    'Розгалужувач ліній передає вісім окремих входів даних на пронумеровані виходи без зміни значень.',
   ],
   steps: [
-    ['Connect an 8-bit source to BUS.', 'Підключіть 8-бітне джерело до BUS.'],
+    [
+      'Connect the eight source lines separately to D0…D7.',
+      'Окремо підключіть вісім ліній джерела до D0…D7.',
+    ],
     [
       'Wire outputs 0–7 to separate LEDs, keeping their bit numbers visible.',
       'Підключіть виходи 0–7 до окремих світлодіодів зі збереженням номерів бітів.',
@@ -2096,8 +2158,8 @@ add('splitter', {
     ],
   ],
   experiment: [
-    'Use a counter on BUS; compare how often bits 0,1,2 toggle.',
-    'Подайте лічильник на BUS та порівняйте частоту перемикання бітів 0,1,2.',
+    'Wire counter Q0…Q7 to D0…D7; compare how often outputs 0,1,2 toggle.',
+    'З’єднайте Q0…Q7 лічильника з D0…D7 та порівняйте частоту виходів 0,1,2.',
   ],
   expected: [
     '165=128+32+4+1, so bits 7,5,2,0 are high. Each higher counter bit toggles half as often as the previous one.',
@@ -2115,16 +2177,16 @@ add('splitter', {
   ],
   inputs: {
     in: [
-      'BUS: the unsigned byte to separate into eight bits.',
-      'BUS: беззнаковий байт для поділу на вісім бітів.',
+      'D: eight independently wired input bits, kept in numbered order.',
+      'D: вісім окремо підключених вхідних бітів зі збереженням номерів.',
     ],
   },
   outputs: Object.fromEntries(
     Array.from({ length: 8 }, (_, index) => [
       `b${index}`,
       [
-        `Bit ${index}: weight ${2 ** index}; (BUS >> ${index}) AND 1.`,
-        `Біт ${index}: вага ${2 ** index}; (BUS >> ${index}) І 1.`,
+        `Bit ${index}: weight ${2 ** index}; (D >> ${index}) AND 1.`,
+        `Біт ${index}: вага ${2 ** index}; (D >> ${index}) І 1.`,
       ],
     ]),
   ),
@@ -2133,8 +2195,8 @@ add('splitter', {
 
 add('merger', {
   purpose: [
-    'A bus merger packs eight separate digital signals into one unsigned byte.',
-    'Об’єднувач шини пакує вісім окремих цифрових сигналів в один беззнаковий байт.',
+    'A line bank keeps eight separate digital signals in numbered order and shows their combined byte value.',
+    'Блок ліній зберігає порядок восьми окремих цифрових сигналів та показує їхнє спільне байтове значення.',
   ],
   steps: [
     [
@@ -2146,13 +2208,13 @@ add('merger', {
       'Підключіть невикористані біти до Землі, щоб усі біти були визначеними.',
     ],
     [
-      'Connect BUS to a bus probe or DAC and vary the switches.',
-      'Підключіть BUS до осцилографа шини або ЦАП та змінюйте перемикачі.',
+      'Wire Q0…Q7 separately to DAC inputs D0…D7 and vary the switches.',
+      'Окремо з’єднайте Q0…Q7 з входами ЦАП D0…D7 та змінюйте перемикачі.',
     ],
   ],
   experiment: [
-    'Set only bits 0,2 and 7 high, then pass BUS through a splitter to verify the same pattern.',
-    'Встановіть лише біти 0,2 і 7 та подайте BUS на розгалужувач для перевірки тієї самої комбінації.',
+    'Set only bits 0,2 and 7 high, then wire Q0…Q7 through a line breakout to verify the same pattern.',
+    'Встановіть лише біти 0,2 і 7 та підключіть Q0…Q7 до розгалужувача для перевірки тієї самої комбінації.',
   ],
   expected: [
     'The resulting byte is 1+4+128=133. Setting bit n adds the weight 2ⁿ.',
@@ -2164,8 +2226,8 @@ add('merger', {
       'Непідключений біт є Z, а не 0, і робить зібраний байт невідомим. Задайте всі вісім входів.',
     ],
     [
-      'A merger packs independent bits; it does not safely combine several complete bus drivers. Use tri-state control for that.',
-      'Об’єднувач пакує незалежні біти, а не безпечно з’єднує кілька повних шинних виходів. Для цього потрібне керування трьома станами.',
+      'Each output keeps its own bit. Connecting several active drivers to the same bit can cause X; use tri-state control.',
+      'Кожен вихід зберігає власний біт. Кілька активних джерел на одному біті можуть дати X; використовуйте керування трьома станами.',
     ],
   ],
   inputs: Object.fromEntries(
@@ -2179,8 +2241,8 @@ add('merger', {
   ),
   outputs: {
     out: [
-      'BUS: sum of each defined input bit times its binary weight.',
-      'BUS: сума добутків кожного визначеного біта на його двійкову вагу.',
+      'Q: eight separate output bits; the readout sums their binary weights.',
+      'Q: вісім окремих вихідних бітів; індикатор підсумовує їхні двійкові ваги.',
     ],
   },
   examples: ['bus-mux', 'counter'],
@@ -2317,8 +2379,8 @@ add('pulldown', {
       'Вимкнений компонент перемикача дає Z, а перемикач у стані 0 активно задає нуль; це різні випадки.',
     ],
     [
-      'This is a one-bit weak source, not an automatic eight-bit bus terminator.',
-      'Це однобітне слабке джерело, а не автоматичний термінатор восьмибітної шини.',
+      'This is a one-bit weak source, not a pull resistor for all eight lines at once.',
+      'Це однобітне слабке джерело, а не підтягування всіх восьми ліній одночасно.',
     ],
   ],
   outputs: {
@@ -2337,8 +2399,8 @@ add('schmitt', {
   ],
   steps: [
     [
-      'Connect Bus value → DAC → Schmitt V and connect Q to an LED.',
-      'З’єднайте Значення шини → ЦАП → V тригера Шмітта та Q зі світлодіодом.',
+      'Connect Byte value → DAC → Schmitt V and connect Q to an LED.',
+      'З’єднайте Значення байта → ЦАП → V тригера Шмітта та Q зі світлодіодом.',
     ],
     [
       'Set DAC Vcc=5 and Schmitt Low=1.5 V, High=3.5 V.',

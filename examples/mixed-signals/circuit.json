@@ -39,7 +39,7 @@
     {
       "id": "counter",
       "type": "counter",
-      "x": 320,
+      "x": 360,
       "y": 240,
       "label": "Digital ramp",
       "enabled": true,
@@ -50,7 +50,7 @@
     {
       "id": "dac",
       "type": "dac",
-      "x": 600,
+      "x": 760,
       "y": 240,
       "label": "DAC · modulation voltage",
       "enabled": true,
@@ -61,7 +61,7 @@
     {
       "id": "am",
       "type": "am",
-      "x": 900,
+      "x": 1160,
       "y": 80,
       "label": "AM carrier",
       "enabled": true,
@@ -75,7 +75,7 @@
     {
       "id": "fm",
       "type": "fm",
-      "x": 900,
+      "x": 1160,
       "y": 400,
       "label": "FM carrier",
       "enabled": true,
@@ -89,8 +89,8 @@
     {
       "id": "ramp-scope",
       "type": "scope",
-      "x": 600,
-      "y": 500,
+      "x": 760,
+      "y": 580,
       "label": "Modulation voltage",
       "enabled": true,
       "params": {
@@ -100,7 +100,7 @@
     {
       "id": "mod-scope",
       "type": "scope",
-      "x": 1200,
+      "x": 1560,
       "y": 80,
       "label": "AM waveform",
       "enabled": true,
@@ -111,7 +111,7 @@
     {
       "id": "fm-scope",
       "type": "scope",
-      "x": 1200,
+      "x": 1560,
       "y": 400,
       "label": "FM waveform",
       "enabled": true,
@@ -158,16 +158,100 @@
       "width": 1
     },
     {
-      "id": "counter-out-dac-in",
+      "id": "counter-out-dac-in-bit0",
       "from": {
         "node": "counter",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "dac",
-        "port": "in"
+        "port": "in0"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "counter-out-dac-in-bit1",
+      "from": {
+        "node": "counter",
+        "port": "out1"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in1"
+      },
+      "width": 1
+    },
+    {
+      "id": "counter-out-dac-in-bit2",
+      "from": {
+        "node": "counter",
+        "port": "out2"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in2"
+      },
+      "width": 1
+    },
+    {
+      "id": "counter-out-dac-in-bit3",
+      "from": {
+        "node": "counter",
+        "port": "out3"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in3"
+      },
+      "width": 1
+    },
+    {
+      "id": "counter-out-dac-in-bit4",
+      "from": {
+        "node": "counter",
+        "port": "out4"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in4"
+      },
+      "width": 1
+    },
+    {
+      "id": "counter-out-dac-in-bit5",
+      "from": {
+        "node": "counter",
+        "port": "out5"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in5"
+      },
+      "width": 1
+    },
+    {
+      "id": "counter-out-dac-in-bit6",
+      "from": {
+        "node": "counter",
+        "port": "out6"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in6"
+      },
+      "width": 1
+    },
+    {
+      "id": "counter-out-dac-in-bit7",
+      "from": {
+        "node": "counter",
+        "port": "out7"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in7"
+      },
+      "width": 1
     },
     {
       "id": "dac-out-am-mod",

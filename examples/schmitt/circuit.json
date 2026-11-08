@@ -16,7 +16,7 @@
     {
       "id": "dac",
       "type": "dac",
-      "x": 360,
+      "x": 480,
       "y": 220,
       "label": "Byte → 0–5 V",
       "enabled": true,
@@ -27,7 +27,7 @@
     {
       "id": "schmitt",
       "type": "schmitt",
-      "x": 660,
+      "x": 880,
       "y": 220,
       "label": "Hysteresis · 1.5 / 3.5 V",
       "enabled": true,
@@ -39,7 +39,7 @@
     {
       "id": "clean",
       "type": "led",
-      "x": 960,
+      "x": 1200,
       "y": 220,
       "label": "Clean digital output",
       "enabled": true,
@@ -48,8 +48,8 @@
     {
       "id": "voltage",
       "type": "scope",
-      "x": 360,
-      "y": 460,
+      "x": 480,
+      "y": 560,
       "label": "Input voltage",
       "enabled": true,
       "params": {
@@ -59,16 +59,100 @@
   ],
   "wires": [
     {
-      "id": "level-out-dac-in",
+      "id": "level-out-dac-in-bit0",
       "from": {
         "node": "level",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "dac",
-        "port": "in"
+        "port": "in0"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "level-out-dac-in-bit1",
+      "from": {
+        "node": "level",
+        "port": "out1"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in1"
+      },
+      "width": 1
+    },
+    {
+      "id": "level-out-dac-in-bit2",
+      "from": {
+        "node": "level",
+        "port": "out2"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in2"
+      },
+      "width": 1
+    },
+    {
+      "id": "level-out-dac-in-bit3",
+      "from": {
+        "node": "level",
+        "port": "out3"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in3"
+      },
+      "width": 1
+    },
+    {
+      "id": "level-out-dac-in-bit4",
+      "from": {
+        "node": "level",
+        "port": "out4"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in4"
+      },
+      "width": 1
+    },
+    {
+      "id": "level-out-dac-in-bit5",
+      "from": {
+        "node": "level",
+        "port": "out5"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in5"
+      },
+      "width": 1
+    },
+    {
+      "id": "level-out-dac-in-bit6",
+      "from": {
+        "node": "level",
+        "port": "out6"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in6"
+      },
+      "width": 1
+    },
+    {
+      "id": "level-out-dac-in-bit7",
+      "from": {
+        "node": "level",
+        "port": "out7"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in7"
+      },
+      "width": 1
     },
     {
       "id": "dac-out-schmitt-in",

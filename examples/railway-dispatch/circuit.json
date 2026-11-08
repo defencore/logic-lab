@@ -281,16 +281,100 @@
       "width": 1
     },
     {
-      "id": "throttle-out-world-throttle",
+      "id": "throttle-out-world-throttle-b0",
       "from": {
         "node": "throttle",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "world",
-        "port": "throttle"
+        "port": "throttle0"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "throttle-out-world-throttle-b1",
+      "from": {
+        "node": "throttle",
+        "port": "out1"
+      },
+      "to": {
+        "node": "world",
+        "port": "throttle1"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-world-throttle-b2",
+      "from": {
+        "node": "throttle",
+        "port": "out2"
+      },
+      "to": {
+        "node": "world",
+        "port": "throttle2"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-world-throttle-b3",
+      "from": {
+        "node": "throttle",
+        "port": "out3"
+      },
+      "to": {
+        "node": "world",
+        "port": "throttle3"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-world-throttle-b4",
+      "from": {
+        "node": "throttle",
+        "port": "out4"
+      },
+      "to": {
+        "node": "world",
+        "port": "throttle4"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-world-throttle-b5",
+      "from": {
+        "node": "throttle",
+        "port": "out5"
+      },
+      "to": {
+        "node": "world",
+        "port": "throttle5"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-world-throttle-b6",
+      "from": {
+        "node": "throttle",
+        "port": "out6"
+      },
+      "to": {
+        "node": "world",
+        "port": "throttle6"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-world-throttle-b7",
+      "from": {
+        "node": "throttle",
+        "port": "out7"
+      },
+      "to": {
+        "node": "world",
+        "port": "throttle7"
+      },
+      "width": 1
     },
     {
       "id": "close-road-out-barrier-a",

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createRuntime, simulate } from '../src/simulator.js';
 import {
   getSceneEntries,
   getSceneSnapshot,
@@ -56,16 +57,15 @@ test('scene snapshots follow live circuit state and never invent safe outputs', 
   const runtime = {
     time: 4,
     state: { road: { scenario: state } },
-    inputs: { road: { ns_green: 1 } },
-    outputs: { road: { crash: 1 } },
+    signals: { inputs: { road: { ns_green: 1 } }, outputs: { road: { crash: 1 } } },
   };
   const snapshot = getSceneSnapshot(project, runtime, getSceneEntries(project)[0]);
   assert.equal(snapshot.parameters.carSpeed, 8);
   assert.equal(snapshot.time, 4);
   assert.equal(snapshot.state, state);
-  assert.equal(snapshot.inputs, runtime.inputs.road);
+  assert.equal(snapshot.inputs, runtime.signals.inputs.road);
   assert.deepEqual(sceneHealth(snapshot), { status: 'fault', reason: 'collision' });
-  runtime.outputs.road.crash = 'X';
+  runtime.signals.outputs.road.crash = 'X';
   assert.equal(sceneHealth(snapshot).status, 'unknown');
   state.failure = 'invalid_parameters';
   assert.deepEqual(sceneHealth(snapshot), { status: 'warning', reason: 'invalid_parameters' });
@@ -93,8 +93,7 @@ test('automation objects expose their actual runtime through the same scene sele
     const state = { kind: entry.type, temperature: 24 };
     const runtime = {
       state: { [entry.nodeId]: { scenario: state } },
-      inputs: { [entry.nodeId]: {} },
-      outputs: { [entry.nodeId]: { temperature: 24 } },
+      signals: { inputs: { [entry.nodeId]: {} }, outputs: { [entry.nodeId]: { temperature: 24 } } },
       time: 2,
     };
     const snapshot = getSceneSnapshot(project, runtime, entry);
@@ -167,4 +166,100 @@ test('process messages distinguish fish and plant damage from current security a
     }),
     { status: 'fault', reason: 'empty_tank' },
   );
+});
+
+test('split railway command contacts retain aggregate 3D commands and passage readouts', () => {
+  const project = {
+    nodes: [
+      { id: 'throttle', type: 'bus_input', params: { value: 90 } },
+      { id: 'rail', type: 'railway', params: {} },
+    ],
+    wires: Array.from({ length: 8 }, (_, bit) => ({
+      id: `speed-${bit}`,
+      from: { node: 'throttle', port: `out${bit}` },
+      to: { node: 'rail', port: `throttle${bit}` },
+      width: 1,
+    })),
+  };
+  const runtime = createRuntime();
+  simulate(project, runtime, 0);
+  runtime.state.rail.scenario.passed = 165;
+  simulate(project, runtime, 0);
+  const snapshot = getSceneSnapshot(project, runtime, getSceneEntries(project)[0]);
+  assert.equal(runtime.signals.inputs.rail.throttle, 90);
+  assert.equal(sceneActuatorValues(snapshot).throttle, 90);
+  assert.equal(snapshot.outputs.passed, 165);
+  assert.equal(runtime.outputs.rail.passed, undefined);
+  assert.deepEqual(
+    Array.from({ length: 8 }, (_, bit) => runtime.outputs.rail[`passed${bit}`]),
+    [1, 0, 1, 0, 0, 1, 0, 1],
+  );
+  assert.ok(Object.keys(sceneActuatorValues(snapshot)).every((id) => !/^throttle\d/.test(id)));
+});
+
+test('optional unwired railway byte contacts use the documented speed without floating-pin warnings', () => {
+  const project = { nodes: [{ id: 'rail', type: 'railway', params: {} }], wires: [] };
+  const runtime = createRuntime();
+  simulate(project, runtime, 0.01);
+  assert.deepEqual(runtime.diagnostics, []);
+  const snapshot = getSceneSnapshot(project, runtime, getSceneEntries(project)[0]);
+  assert.equal(sceneActuatorValues(snapshot).throttle, 30);
+  assert.equal(snapshot.outputs.speed, 30);
+});
+
+test('one conflicting command bit freezes a 3D mechanism while keeping other wires independent', () => {
+  const project = {
+    nodes: [
+      { id: 'throttle', type: 'bus_input', params: { value: 85 } },
+      { id: 'low', type: 'gnd', params: {} },
+      { id: 'rail', type: 'railway', params: {} },
+    ],
+    wires: [
+      ...Array.from({ length: 8 }, (_, bit) => ({
+        id: `speed-${bit}`,
+        from: { node: 'throttle', port: `out${bit}` },
+        to: { node: 'rail', port: `throttle${bit}` },
+        width: 1,
+      })),
+      {
+        id: 'conflict',
+        from: { node: 'low', port: 'out' },
+        to: { node: 'rail', port: 'throttle0' },
+        width: 1,
+      },
+    ],
+  };
+  const runtime = createRuntime();
+  simulate(project, runtime, 0);
+  const positions = runtime.state.rail.scenario.trains.map((train) => train.position);
+  simulate(project, runtime, 0.1);
+  assert.deepEqual(
+    runtime.state.rail.scenario.trains.map((train) => train.position),
+    positions,
+  );
+  assert.equal(runtime.inputs.rail.throttle0, 'X');
+  assert.equal(runtime.inputs.rail.throttle1, 0);
+  assert.equal(runtime.inputs.rail.throttle2, 1);
+  assert.equal(runtime.signals.inputs.rail.throttle, 'X');
+  assert.equal(getSceneSnapshot(project, runtime, getSceneEntries(project)[0]).outputs.fault, 'X');
+});
+
+test('aquarium alive contacts expose individual bits without changing its measured 3D count', () => {
+  const project = {
+    nodes: [{ id: 'tank', type: 'aquarium', params: { fishCount: 4 } }],
+    wires: [],
+  };
+  const runtime = createRuntime();
+  simulate(project, runtime, 0);
+  const snapshot = getSceneSnapshot(project, runtime, getSceneEntries(project)[0]);
+  assert.equal(snapshot.outputs.alive, 4);
+  assert.deepEqual(
+    Array.from({ length: 8 }, (_, bit) => runtime.outputs.tank[`alive${bit}`]),
+    [0, 0, 1, 0, 0, 0, 0, 0],
+  );
+  assert.equal(runtime.outputs.tank.alive, undefined);
+  project.nodes[0].enabled = false;
+  simulate(project, runtime, 0);
+  assert.equal(snapshot.outputs.alive, 4);
+  assert.equal(getSceneSnapshot(project, runtime, getSceneEntries(project)[0]).outputs.alive, 'Z');
 });

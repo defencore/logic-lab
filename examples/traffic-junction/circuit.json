@@ -147,7 +147,7 @@
     {
       "id": "crash",
       "type": "led",
-      "x": 1900,
+      "x": 1940,
       "y": 230,
       "label": "Collision latched",
       "enabled": true,
@@ -192,16 +192,100 @@
       "width": 1
     },
     {
-      "id": "phase-out-bits-in",
+      "id": "phase-out-bits-in-b0",
       "from": {
         "node": "phase",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "bits",
-        "port": "in"
+        "port": "in0"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "phase-out-bits-in-b1",
+      "from": {
+        "node": "phase",
+        "port": "out1"
+      },
+      "to": {
+        "node": "bits",
+        "port": "in1"
+      },
+      "width": 1
+    },
+    {
+      "id": "phase-out-bits-in-b2",
+      "from": {
+        "node": "phase",
+        "port": "out2"
+      },
+      "to": {
+        "node": "bits",
+        "port": "in2"
+      },
+      "width": 1
+    },
+    {
+      "id": "phase-out-bits-in-b3",
+      "from": {
+        "node": "phase",
+        "port": "out3"
+      },
+      "to": {
+        "node": "bits",
+        "port": "in3"
+      },
+      "width": 1
+    },
+    {
+      "id": "phase-out-bits-in-b4",
+      "from": {
+        "node": "phase",
+        "port": "out4"
+      },
+      "to": {
+        "node": "bits",
+        "port": "in4"
+      },
+      "width": 1
+    },
+    {
+      "id": "phase-out-bits-in-b5",
+      "from": {
+        "node": "phase",
+        "port": "out5"
+      },
+      "to": {
+        "node": "bits",
+        "port": "in5"
+      },
+      "width": 1
+    },
+    {
+      "id": "phase-out-bits-in-b6",
+      "from": {
+        "node": "phase",
+        "port": "out6"
+      },
+      "to": {
+        "node": "bits",
+        "port": "in6"
+      },
+      "width": 1
+    },
+    {
+      "id": "phase-out-bits-in-b7",
+      "from": {
+        "node": "phase",
+        "port": "out7"
+      },
+      "to": {
+        "node": "bits",
+        "port": "in7"
+      },
+      "width": 1
     },
     {
       "id": "bits-b0-not0-a",

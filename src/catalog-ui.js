@@ -27,7 +27,8 @@ export function renderLibraryCategories(category = 'all', language = 'en') {
   category = validCategory(category);
   const t = (key) => TEXT[language][key];
   const categories = [{ id: 'all', label: t('all'), ua: t('all') }, ...CATEGORIES];
-  return `<div class="library-category-filters" role="group" aria-label="${esc(t('browseCategories'))}">${categories
+  const current = categories.find((entry) => entry.id === category);
+  return `<details class="library-category-browser"><summary><span>${esc(name(current, language))}</span>${icon('down', 13)}</summary><div class="library-category-filters" role="group" aria-label="${esc(t('browseCategories'))}">${categories
     .map((entry) => {
       const count =
         entry.id === 'all'
@@ -35,7 +36,7 @@ export function renderLibraryCategories(category = 'all', language = 'en') {
           : COMPONENTS.filter((component) => component.category === entry.id).length;
       return `<button type="button" class="category-filter ${category === entry.id ? 'active' : ''}" data-category="${entry.id}" aria-pressed="${category === entry.id}" title="${esc(name(entry, language))} · ${count}"><span class="category-filter-icon" aria-hidden="true">${entry.id === 'gates' ? gateIcon('and', 19) : icon(categoryIcon[entry.id], 17)}</span><span class="category-filter-name">${esc(name(entry, language))}</span><span class="category-filter-count">${count}</span></button>`;
     })
-    .join('')}</div>`;
+    .join('')}</div></details>`;
 }
 
 export function renderLibraryItems({ category = 'all', query = '', language = 'en' } = {}) {
@@ -67,7 +68,11 @@ export function renderLibraryItems({ category = 'all', query = '', language = 'e
           const glyph = ['and', 'or', 'not', 'nand', 'nor', 'xor', 'xnor'].includes(definition.type)
             ? gateIcon(definition.type, 32)
             : `<span class="component-glyph" aria-hidden="true">${esc(definition.symbol || definition.type.toUpperCase())}</span>`;
-          return `<div class="library-row"><button type="button" class="library-item" draggable="true" data-component="${definition.type}" title="${esc(description)}" aria-label="${esc(t('addComponent'))}: ${esc(label)}"><span class="component-symbol cat-${definition.category}">${glyph}</span><span class="component-info"><strong>${esc(label)}</strong><small class="component-description">${esc(description)}</small><code class="component-type">${esc(definition.type.toUpperCase().replaceAll('_', ' '))}</code></span><span class="item-plus" aria-hidden="true">${icon('plus', 15)}</span></button><button type="button" class="library-guide" data-read-guide="${definition.type}" title="${esc(t('readGuide'))}: ${esc(label)}" aria-label="${esc(t('usageGuide'))}: ${esc(label)}">${icon('help', 16)}</button></div>`;
+          const typeLabel =
+            definition.type === 'bus_input'
+              ? 'BYTE INPUT'
+              : definition.type.toUpperCase().replaceAll('_', ' ');
+          return `<div class="library-row"><button type="button" class="library-item" draggable="true" data-component="${definition.type}" title="${esc(description)}" aria-label="${esc(t('addComponent'))}: ${esc(label)}"><span class="component-symbol cat-${definition.category}">${glyph}</span><span class="component-info"><strong>${esc(label)}</strong><small class="component-description">${esc(description)}</small><code class="component-type">${esc(typeLabel)}</code></span><span class="item-plus" aria-hidden="true">${icon('plus', 15)}</span></button><button type="button" class="library-guide" data-read-guide="${definition.type}" title="${esc(t('readGuide'))}: ${esc(label)}" aria-label="${esc(t('usageGuide'))}: ${esc(label)}">${icon('help', 16)}</button></div>`;
         })
         .join('')}</section>`;
     })

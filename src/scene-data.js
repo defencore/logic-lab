@@ -23,8 +23,8 @@ export function getSceneSnapshot(project, runtime, entry) {
   return {
     node,
     parameters: { ...getDefinition(node.type).defaults, ...node.params },
-    inputs: runtime.inputs[node.id] || {},
-    outputs: runtime.outputs[node.id] || {},
+    inputs: runtime.signals.inputs[node.id] || {},
+    outputs: runtime.signals.outputs[node.id] || {},
     state: runtime.state[node.id]?.scenario,
     time: runtime.time,
   };
@@ -102,7 +102,7 @@ export function sceneControlSwitch(project, nodeId, port) {
 export function sceneActuatorValues(snapshot) {
   const defaults = SCENARIO_INPUT_DEFAULTS[snapshot.node.type];
   return Object.fromEntries(
-    getDefinition(snapshot.node.type).inputs.map(({ id }) => {
+    getDefinition(snapshot.node.type).signals.inputs.map(({ id }) => {
       if (snapshot.node.enabled === false) return [id, 'Z'];
       if (id === 'points' || id === 'exit_points') return [id, snapshot.outputs[`${id}_state`]];
       const input = snapshot.inputs[id];

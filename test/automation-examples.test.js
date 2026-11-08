@@ -32,8 +32,8 @@ function advance(context, seconds, observe = () => {}, dt = 0.05) {
     observe(context);
   }
 }
-const output = (context, id = 'world', port = 'alarm') => context.runtime.outputs[id][port];
-const input = (context, port, id = 'world') => context.runtime.inputs[id][port];
+const output = (context, id = 'world', port = 'alarm') => context.runtime.signals.outputs[id][port];
+const input = (context, port, id = 'world') => context.runtime.signals.inputs[id][port];
 const state = (context) => context.runtime.state.world.scenario;
 function reset(context) {
   source(context, 'reset', 1);

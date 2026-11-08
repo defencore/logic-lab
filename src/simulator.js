@@ -62,12 +62,15 @@ export function createRuntime() {
     time: 0,
     outputs: Object.create(null),
     inputs: Object.create(null),
+    signals: { inputs: Object.create(null), outputs: Object.create(null) },
     wireValues: Object.create(null),
     state: Object.create(null),
     history: Object.create(null),
+    historyTimes: [],
     diagnostics: [],
     steps: 0,
     sampleInterval: 0,
+    sampleElapsed: 0,
     lastSampleTime: 0,
   };
 }
@@ -100,10 +103,14 @@ function initialState(node) {
     q: ['d_ff', 'jk_ff', 't_ff', 'sr_latch', 'schmitt'].includes(node.type)
       ? Number(initial !== 0)
       : initial & 255,
+    qBits: Array.from({ length: 8 }, (_, bit) => (initial >> bit) & 1),
     lastClock: 0,
     lastTrigger: 0,
     pulseUntil: -1,
     memory: Array(node.type === 'register_file' ? 8 : 16).fill(0),
+    memoryBits: Array.from({ length: node.type === 'register_file' ? 8 : 16 }, () =>
+      Array(8).fill(0),
+    ),
     angles: [0, 0, 0, 0],
     position: motion?.valid ? clamp(number(parameters.initial), motion.minimum, motion.maximum) : 0,
     lastStep: null,
@@ -130,6 +137,79 @@ function resolveDrivers(drivers) {
   return selected.every((driver) => driver.value === first) ? first : 'X';
 }
 
+function packBits(bits) {
+  if (bits.every((value) => value === 'Z')) return 'Z';
+  if (bits.some(unknown)) return 'X';
+  return bits.reduce((value, bit, index) => value | (logic(bit) << index), 0);
+}
+
+function signalValues(signals, contacts) {
+  return Object.fromEntries(
+    signals.map((signal) => [
+      signal.id,
+      signal.width === 1
+        ? (contacts[signal.id] ?? 'Z')
+        : packBits(
+            Array.from(
+              { length: signal.width },
+              (_, index) => contacts[`${signal.id}${index}`] ?? 'Z',
+            ),
+          ),
+    ]),
+  );
+}
+
+function outputContacts(node, values, runtime) {
+  const inputs = runtime.inputs[node.id];
+  const control = runtime.signals.inputs[node.id];
+  const state = runtime.state[node.id];
+  return Object.fromEntries(
+    getDefinition(node.type).outputs.map((port) => {
+      const value = values[port.group || port.id] ?? 'Z';
+      let result = port.group && !unknown(value) ? (value >> port.bit) & 1 : value;
+      if (node.enabled !== false) {
+        if (node.type === 'register' || node.type === 'shift_register') {
+          result = state.qBits[port.id === 'serial' ? 7 : port.bit];
+        } else if (
+          node.type === 'ram' &&
+          active(control.cs, 1) &&
+          active(control.oe, 1) &&
+          !active(control.we) &&
+          !unknown(control.address)
+        ) {
+          result = state.memoryBits[control.address & 15][port.bit];
+        } else if (node.type === 'register_file' && !unknown(control.read)) {
+          result = state.memoryBits[control.read & 7][port.bit];
+        } else if (node.type === 'mux') {
+          const a = inputs[`a${port.bit}`],
+            b = inputs[`b${port.bit}`];
+          result = logic(control.sel) === 0 ? a : logic(control.sel) === 1 ? b : a === b ? a : 'X';
+        } else if (node.type === 'demux') {
+          const selected = logic(control.sel);
+          result =
+            selected === 0 || selected === 1
+              ? (port.group === 'a') === (selected === 0)
+                ? inputs[`in${port.bit}`]
+                : 0
+              : 'X';
+        } else if (node.type === 'tristate') {
+          result =
+            logic(control.enable) === 0
+              ? 'Z'
+              : logic(control.enable) === 1
+                ? inputs[`in${port.bit}`]
+                : 'X';
+        } else if (node.type === 'splitter') {
+          result = inputs[`in${Number(port.id.slice(1))}`];
+        } else if (node.type === 'merger') {
+          result = inputs[`b${port.bit}`];
+        }
+      }
+      return [port.id, result];
+    }),
+  );
+}
+
 function readInputs(nodes, incoming, runtime) {
   for (const node of nodes) {
     const definition = getDefinition(node.type);
@@ -144,6 +224,7 @@ function readInputs(nodes, incoming, runtime) {
       );
     }
     runtime.inputs[node.id] = inputs;
+    runtime.signals.inputs[node.id] = signalValues(definition.signals.inputs, inputs);
   }
 }
 
@@ -164,9 +245,9 @@ function modulationInput(node, value, p, incoming) {
 function evaluate(node, runtime, incoming) {
   const definition = getDefinition(node.type);
   if (node.enabled === false)
-    return Object.fromEntries(definition.outputs.map((port) => [port.id, 'Z']));
+    return Object.fromEntries(definition.signals.outputs.map((port) => [port.id, 'Z']));
   const p = { ...definition.defaults, ...node.params };
-  const i = runtime.inputs[node.id];
+  const i = runtime.signals.inputs[node.id];
   const s = runtime.state[node.id];
   if (isScenarioType(node.type)) return evaluateScenario(node, s.scenario, i);
   const a = logic(i.a),
@@ -208,13 +289,12 @@ function evaluate(node, runtime, incoming) {
     case 'not':
       return out(complement(a));
     case 'mux':
-      return out(logic(i.sel) === 0 ? i.a : logic(i.sel) === 1 ? i.b : i.a === i.b ? i.a : 'X');
     case 'demux':
-      return logic(i.sel) === 0
-        ? { a: i.in, b: 0 }
-        : logic(i.sel) === 1
-          ? { a: 0, b: i.in }
-          : { a: 'X', b: 'X' };
+    case 'tristate':
+    case 'splitter':
+    case 'merger':
+      // These components route individual contacts in outputContacts.
+      return {};
     case 'half_adder':
       return allKnown(a, b)
         ? { sum: a ^ b, carry: a & b }
@@ -373,23 +453,6 @@ function evaluate(node, runtime, incoming) {
       const result = raw & 255;
       return { out: result, carry: Number(raw > 255 || raw < 0), zero: Number(result === 0) };
     }
-    case 'tristate':
-      return out(logic(i.enable) === 0 ? 'Z' : logic(i.enable) === 1 ? i.in : 'X');
-    case 'splitter':
-      return Object.fromEntries(
-        Array.from({ length: 8 }, (_, index) => [
-          `b${index}`,
-          unknown(i.in) ? i.in : (i.in >> index) & 1,
-        ]),
-      );
-    case 'merger': {
-      const bits = Array.from({ length: 8 }, (_, index) => logic(i[`b${index}`]));
-      return out(
-        bits.some(unknown)
-          ? 'X'
-          : bits.reduce((value, bitValue, index) => value | (bitValue << index), 0),
-      );
-    }
     case 'open_drain':
       return out(logic(i.in) === 0 ? 0 : logic(i.in) === 1 ? 'Z' : 'X');
     case 'schmitt': {
@@ -414,14 +477,20 @@ function settle(nodes, incoming, runtime) {
     const updates = new Map();
     let changed = false;
     for (const node of nodes) {
-      const output = evaluate(node, runtime, incoming);
-      updates.set(node.id, output);
+      const output = outputContacts(node, evaluate(node, runtime, incoming), runtime);
+      updates.set(node, output);
       if (
         Object.entries(output).some(([port, value]) => runtime.outputs[node.id]?.[port] !== value)
       )
         changed = true;
     }
-    for (const [id, output] of updates) runtime.outputs[id] = output;
+    for (const [node, output] of updates) {
+      runtime.outputs[node.id] = output;
+      runtime.signals.outputs[node.id] = signalValues(
+        getDefinition(node.type).signals.outputs,
+        output,
+      );
+    }
     if (!changed) return true;
   }
   readInputs(nodes, incoming, runtime);
@@ -431,7 +500,7 @@ function settle(nodes, incoming, runtime) {
 function advanceState(nodes, runtime, incoming, dt) {
   const updates = new Map();
   for (const node of nodes) {
-    const i = runtime.inputs[node.id],
+    const i = runtime.signals.inputs[node.id],
       s = runtime.state[node.id];
     const p = { ...getDefinition(node.type).defaults, ...node.params };
     const next = { ...s };
@@ -514,27 +583,49 @@ function advanceState(nodes, runtime, incoming, dt) {
           else if (rising && logic(i.t) !== 0) next.q = 'X';
           break;
         case 'register':
-          if (reset) next.q = 0;
-          else if (rising && active(i.enable, 1)) next.q = unknown(i.d) ? 'X' : i.d & 255;
+          if (reset) {
+            next.q = 0;
+            next.qBits = Array(8).fill(0);
+          } else if (rising && active(i.enable, 1)) {
+            next.qBits = Array.from({ length: 8 }, (_, bit) =>
+              logic(runtime.inputs[node.id][`d${bit}`]),
+            );
+            next.q = packBits(next.qBits);
+          }
           break;
         case 'counter':
           if (reset) next.q = 0;
           else if (rising && active(i.enable, 1)) next.q = unknown(s.q) ? 'X' : (s.q + 1) & 255;
           break;
         case 'shift_register':
-          if (reset) next.q = 0;
-          else if (rising) next.q = allKnown(s.q, i.d) ? ((s.q << 1) | logic(i.d)) & 255 : 'X';
+          if (reset) {
+            next.q = 0;
+            next.qBits = Array(8).fill(0);
+          } else if (rising) {
+            next.qBits = [logic(i.d), ...s.qBits.slice(0, 7)];
+            next.q = packBits(next.qBits);
+          }
           break;
         case 'ram':
-          if (rising && active(i.cs, 1) && active(i.we) && allKnown(i.address, i.data)) {
+          if (rising && active(i.cs, 1) && active(i.we) && !unknown(i.address)) {
             next.memory = [...s.memory];
-            next.memory[i.address & 15] = i.data & 255;
+            next.memoryBits = [...s.memoryBits];
+            const data = Array.from({ length: 8 }, (_, bit) =>
+              logic(runtime.inputs[node.id][`data${bit}`]),
+            );
+            next.memoryBits[i.address & 15] = data;
+            next.memory[i.address & 15] = packBits(data);
           }
           break;
         case 'register_file':
-          if (rising && active(i.we) && allKnown(i.write, i.data)) {
+          if (rising && active(i.we) && !unknown(i.write)) {
             next.memory = [...s.memory];
-            next.memory[i.write & 7] = i.data & 255;
+            next.memoryBits = [...s.memoryBits];
+            const data = Array.from({ length: 8 }, (_, bit) =>
+              logic(runtime.inputs[node.id][`data${bit}`]),
+            );
+            next.memoryBits[i.write & 7] = data;
+            next.memory[i.write & 7] = packBits(data);
           }
           break;
         case 'monostable': {
@@ -610,10 +701,9 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
   runtime.steps++;
   runtime.diagnostics = [];
   const sampleInterval = Math.max(0, number(runtime.sampleInterval));
+  runtime.sampleElapsed += dt;
   const sampleDue =
-    dt > 0 &&
-    (sampleInterval === 0 ||
-      runtime.time - number(runtime.lastSampleTime) + 1e-12 >= sampleInterval);
+    dt > 0 && (sampleInterval === 0 || runtime.sampleElapsed + 1e-12 >= sampleInterval);
   const nodes = (project.nodes || []).filter((node) => getDefinition(node.type));
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const incoming = new Map();
@@ -630,6 +720,8 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
       delete runtime.state[id];
       delete runtime.outputs[id];
       delete runtime.inputs[id];
+      delete runtime.signals.inputs[id];
+      delete runtime.signals.outputs[id];
       delete runtime.history[id];
     }
   for (const node of nodes) {
@@ -646,7 +738,12 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
       (port) => port.id === wire.from.port,
     );
     const targetPort = getDefinition(target.type).inputs.find((port) => port.id === wire.to.port);
-    if (!sourcePort || !targetPort) continue;
+    if (
+      !sourcePort ||
+      !targetPort ||
+      (!targetPort.acceptAny && !!sourcePort.analog !== !!targetPort.analog)
+    )
+      continue;
     const sourceKey = `out:${source.id}:${sourcePort.id}`;
     const targetKey = `in:${target.id}:${targetPort.id}`;
     parents.set(find(sourceKey), find(targetKey));
@@ -691,7 +788,7 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
       });
     for (const port of definition.inputs) {
       const value = runtime.inputs[node.id]?.[port.id];
-      if (value === 'Z' && !(optionalInputs[node.type] || []).includes(port.id))
+      if (value === 'Z' && !(optionalInputs[node.type] || []).includes(port.group || port.id))
         runtime.diagnostics.push({
           level: 'warning',
           code: 'floating',
@@ -736,8 +833,8 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
         node: node.id,
         message: `${node.label || definition.label}: position is unknown after an uncertain control signal. Apply Reset to restore the initial position.`,
       });
-    const outputValues = Object.values(runtime.outputs[node.id] || {});
-    const inputValues = Object.values(runtime.inputs[node.id] || {});
+    const outputValues = Object.values(runtime.signals.outputs[node.id] || {});
+    const inputValues = Object.values(runtime.signals.inputs[node.id] || {});
     if (sampleDue && (outputValues.length || inputValues.length)) {
       const value =
         node.type === 'scope'
@@ -748,6 +845,18 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
       if (history.length > HISTORY_CAPACITY) history.splice(0, history.length - HISTORY_CAPACITY);
     }
   }
-  if (sampleDue) runtime.lastSampleTime = runtime.time;
+  if (sampleDue) {
+    runtime.sampleElapsed = sampleInterval
+      ? Math.max(
+          0,
+          runtime.sampleElapsed -
+            Math.floor((runtime.sampleElapsed + 1e-12) / sampleInterval) * sampleInterval,
+        )
+      : 0;
+    runtime.lastSampleTime = runtime.time;
+    runtime.historyTimes.push(runtime.time);
+    if (runtime.historyTimes.length > HISTORY_CAPACITY)
+      runtime.historyTimes.splice(0, runtime.historyTimes.length - HISTORY_CAPACITY);
+  }
   return runtime;
 }

@@ -39,7 +39,7 @@ const positions = (state) =>
   state.cars?.map((car) => car.position) ??
   state.trains?.map((train) => train.position) ?? [state.bowl ?? state.level];
 
-test('scenario definitions expose fixed pins, mechanical units and one shared set of defaults', () => {
+test('scenario models expose aggregate signals and simulators expose individual contacts', () => {
   assert.ok(Object.isFrozen(SCENARIO_TYPES));
   for (const type of SCENARIO_TYPES) {
     const definition = getDefinition(type);
@@ -49,9 +49,32 @@ test('scenario definitions expose fixed pins, mechanical units and one shared se
       state = initialScenarioState(n);
     assert.deepEqual(
       Object.keys(evaluateScenario(n, state, {})).sort(),
+      definition.signals.outputs.map(({ id }) => id).sort(),
+    );
+    const runtime = simulate({ nodes: [n], wires: [] }, createRuntime(), 0);
+    assert.deepEqual(
+      Object.keys(runtime.outputs.scene).sort(),
       definition.outputs.map(({ id }) => id).sort(),
     );
+    assert.ok([...definition.inputs, ...definition.outputs].every(({ width }) => width === 1));
   }
+  const aquarium = getDefinition('aquarium');
+  assert.equal(aquarium.signals.outputs.find(({ id }) => id === 'alive').width, 8);
+  assert.deepEqual(
+    aquarium.outputs.filter(({ group }) => group === 'alive').map(({ id, bit }) => [id, bit]),
+    Array.from({ length: 8 }, (_, bit) => [`alive${bit}`, bit]),
+  );
+  const runtime = simulate(
+    { nodes: [node('aquarium', { fishCount: 4 })], wires: [] },
+    createRuntime(),
+    0,
+  );
+  assert.equal(runtime.signals.outputs.scene.alive, 4);
+  assert.equal(runtime.outputs.scene.alive, undefined);
+  assert.deepEqual(
+    Array.from({ length: 8 }, (_, bit) => runtime.outputs.scene[`alive${bit}`]),
+    [0, 0, 1, 0, 0, 0, 0, 0],
+  );
   assert.equal(getDefinition('railway').outputs.find(({ id }) => id === 'speed').unit, 'km/h');
   assert.equal(getDefinition('animal_feeder').outputs.find(({ id }) => id === 'level').unit, 'g');
   assert.equal(getDefinition('water_tank').outputs.find(({ id }) => id === 'level').unit, '%');

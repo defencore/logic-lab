@@ -1,4 +1,7 @@
 const paths = {
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  probe: '<path d="m4 20 6-6m-3-3 6 6M9 9l7-7 6 6-7 7Z M16 2l6 6"/>',
+  more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   play: '<path d="m8 5 11 7-11 7Z"/>',
   pause: '<path d="M9 5v14M15 5v14"/>',

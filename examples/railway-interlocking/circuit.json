@@ -221,7 +221,7 @@
       "id": "window",
       "type": "clock",
       "x": 20,
-      "y": 1000,
+      "y": 1300,
       "label": "Rail window · 20 s road / 20 s rail",
       "enabled": true,
       "params": {
@@ -283,16 +283,100 @@
       "width": 1
     },
     {
-      "id": "throttle-out-railway-throttle",
+      "id": "throttle-out-railway-throttle-b0",
       "from": {
         "node": "throttle",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "railway",
-        "port": "throttle"
+        "port": "throttle0"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "throttle-out-railway-throttle-b1",
+      "from": {
+        "node": "throttle",
+        "port": "out1"
+      },
+      "to": {
+        "node": "railway",
+        "port": "throttle1"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-railway-throttle-b2",
+      "from": {
+        "node": "throttle",
+        "port": "out2"
+      },
+      "to": {
+        "node": "railway",
+        "port": "throttle2"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-railway-throttle-b3",
+      "from": {
+        "node": "throttle",
+        "port": "out3"
+      },
+      "to": {
+        "node": "railway",
+        "port": "throttle3"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-railway-throttle-b4",
+      "from": {
+        "node": "throttle",
+        "port": "out4"
+      },
+      "to": {
+        "node": "railway",
+        "port": "throttle4"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-railway-throttle-b5",
+      "from": {
+        "node": "throttle",
+        "port": "out5"
+      },
+      "to": {
+        "node": "railway",
+        "port": "throttle5"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-railway-throttle-b6",
+      "from": {
+        "node": "throttle",
+        "port": "out6"
+      },
+      "to": {
+        "node": "railway",
+        "port": "throttle6"
+      },
+      "width": 1
+    },
+    {
+      "id": "throttle-out-railway-throttle-b7",
+      "from": {
+        "node": "throttle",
+        "port": "out7"
+      },
+      "to": {
+        "node": "railway",
+        "port": "throttle7"
+      },
+      "width": 1
     },
     {
       "id": "railway-occupied-free-a",

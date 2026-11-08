@@ -12,7 +12,7 @@ export default {
       steps: [
         {
           title: 'Read digit 5',
-          text: 'The input value starts at 5. LOW4 carries its four-bit code; the decoder produces the eight-bit segment mask that lights a 5.',
+          text: 'The input value starts at 5. The four BCD lines carry its code separately; the decoder produces the eight-bit segment mask that lights a 5.',
           nodes: ['digit', 'decoder', 'display'],
         },
         {
@@ -34,7 +34,7 @@ export default {
       steps: [
         {
           title: 'Прочитайте цифру 5',
-          text: 'Вхідне значення — 5. LOW4 передає чотирибітний код; декодер формує восьмибітну маску сегментів цифри 5.',
+          text: 'Вхідне значення — 5. Чотири окремі лінії BCD передають код; декодер формує восьмибітну маску сегментів цифри 5.',
           nodes: ['digit', 'decoder', 'display'],
         },
         {
@@ -68,12 +68,12 @@ export default {
     },
     tasks: {
       en: [
-        'The input value starts at 5. LOW4 carries its four-bit code; the decoder produces the eight-bit segment mask that lights a 5.',
+        'The input value starts at 5. The four BCD lines carry its code separately; the decoder produces the eight-bit segment mask that lights a 5.',
         'Select the Digit component header. In Parameters, change Value to 0, then 8, then 9. The display updates immediately without Run.',
         'Set Value to 10. BCD only defines 0–9, so this decoder blanks the display. Restore a value from 0 to 9.',
       ],
       ua: [
-        'Вхідне значення — 5. LOW4 передає чотирибітний код; декодер формує восьмибітну маску сегментів цифри 5.',
+        'Вхідне значення — 5. Чотири окремі лінії BCD передають код; декодер формує восьмибітну маску сегментів цифри 5.',
         'Оберіть заголовок Digit. У параметрах змініть Значення на 0, потім 8 і 9. Індикатор оновиться відразу, без Запуску.',
         'Задайте Значення 10. BCD визначає лише цифри 0–9, тому цей декодер гасить індикатор. Поверніть значення від 0 до 9.',
       ],

@@ -29,25 +29,39 @@ The application is written as JavaScript modules. The build bundles Three.js and
 
 - Search or filter the component library and add a component to the canvas.
 - Drag components to reposition them. The grid helps align the circuit.
-- Click an output pin, then an input pin, to connect them. Choose orthogonal or curved routing. Bus connections show their bit width; use a splitter or merger to connect individual bits.
+- Click an output pin, then an input pin, to connect them. Choose orthogonal or curved routing. Each digital pin and wire carries one bit. Connect labeled lines such as A0…A7 individually and keep matching bit numbers together; bit 0 is the least significant bit.
 - Select a component to edit its label, parameters, and enabled state in the inspector. Disabled components release their outputs to high impedance.
 - Toggle switches on the canvas, run or pause the simulation, and use a single step to inspect changes.
 - Add notes and colored groups to explain parts of a circuit. Use the scope and signal indicators to inspect activity.
 - Use the included examples as starting points, including arithmetic, a BCD display, sequential logic, mixed signals, and PWM servo control.
 
+### Edit wires and trace connections
+
+Select a wire in **Select** mode to highlight its full electrical net and show route handles. Drag the line or a circular midpoint handle to slide a segment perpendicular to itself. Drag a diamond bend handle to reshape its corner. The source and destination stay attached. Handles keep a usable screen size while the circuit zoom changes.
+
+Use **Add point**, then click the selected line to insert an inline marker or click away from it to create a detour. Select a bend and use arrow keys to nudge it (Shift makes larger steps), or Delete/Backspace to remove just that point. Selected segment handles also support arrow nudging. The wire inspector can restore automatic routing. Every completed edit is one Undo step; Escape, pointer cancellation, and losing focus discard an unfinished drag.
+
+Drag an endpoint handle to a compatible pin, or click the endpoint and then choose a pin. Reconnection preserves the wire identity and validates direction, analog/digital type, and duplicate links. Dropping on an incompatible target leaves the original connection unchanged. Delete during a reconnect/add action cancels that action rather than removing the wire; the inspector has an explicit **Remove connection** action.
+
+Hover a pin to preview its connections without changing the circuit. Choose **Trace connections** (T), then click a pin or wire for a persistent purple highlight. **Connected** opens the complete contact list in the inspector; click a contact to locate its component. Blank canvas, Escape, or the clear button removes the highlight. Shared output fan-out and multiple drivers joined at an input are one electrical net. Geometric crossings and a component's unrelated inputs/outputs are not joined; tracing does not propagate through gate logic.
+
 ## Learn with guides and experiments
 
-The library contains 62 components with guides in English and Ukrainian. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
+The library contains 62 components with guides in English and Ukrainian. Use the category disclosure above the results to filter the library. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
 
 All seven logic gates and both binary adders include truth tables in their guides and properties. Tables distinguish inputs from outputs and explain 0 and 1. When inspecting a component on the circuit, the matching row follows its current binary signals in real time. Floating or unknown signals and disabled components show an explanation instead of highlighting a misleading row.
 
-The **Examples** catalog contains 32 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, buses, memory, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback, transport dispatch, aquarium life support, greenhouse control, smart-home energy and yard security.
+The **Examples** catalog contains 32 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, parallel data lines, memory, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback, transport dispatch, aquarium life support, greenhouse control, smart-home energy and yard security.
 
-After opening an example, a lesson panel appears above the canvas. Follow its steps with **Previous** and **Next**, watch the highlighted components and live pin values, and open the relevant component in the inspector. Change a switch, numeric value, or slider and compare the result with the lesson's expected behavior. Run the circuit to advance clocks and waveforms, or pause and use **Step** to examine changes in smaller increments.
+On roomy screens, opening an example shows a lesson panel above the canvas. In compact workspaces, open the walkthrough from the toolbar when needed. Follow its steps with **Previous** and **Next**, watch the highlighted components and live pin values, and open the relevant component in the inspector. Change a switch, numeric value, or slider and compare the result with the lesson's expected behavior. Run the circuit to advance clocks and waveforms, or pause and use **Step** to examine changes in smaller increments.
 
 Numeric settings, text fields, colors, and duty-cycle sliders update the circuit while you edit them. The selected lesson and step context remain available as you explore the circuit; exporting and importing the project preserves the example association so its lesson can be reopened.
 
-The signal monitor prioritizes selected components and oscilloscope probes. Choose a 0.25, 1, or 5 second time window; use the shorter window for fast signals such as the 105 Hz PWM example. Changing this window clears the previous trace and starts sampling at the new rate.
+The signal monitor prioritizes selected components and oscilloscope probes. Choose a time window from **10 ms to 60 s**; use a short window for fast generators. The global **Speed** control beside Run/Pause sets the flow of simulation time from **0.001× to 10×**, including both slow motion and acceleration, without changing configured generator frequencies. The time-window control stays with the waveform monitor. Speed and window settings are remembered in this browser. Changing the window clears the previous trace and starts sampling at the new rate.
+
+Use **Record** to capture the displayed channels with simulation timestamps. Channels and the sampling window stay fixed during a recording; speed can still change. Pausing the simulation pauses capture, and **Step** can add individual increments. **Stop recording** retains the data; **CSV** downloads the entire capture, including numeric values and X/Z states. A recording holds up to 100,000 samples, independently of the live monitor's 256-sample buffer. Resetting or replacing the circuit stops capture and keeps it available to download. **New recording** replaces the previous capture. Recordings stay in memory until a new recording or page reload, so download CSV to keep them.
+
+**PNG** saves the current displayed waveforms with channel labels and a simulation-time axis. On roomy screens the inspector sits beside the circuit and the monitor stays below. Compact screens use **Circuit**, **Inspector**, and **Waveforms** views so each task has usable space. Run/Pause remains available in every view, and recording continues while you switch views.
 
 Changes are saved automatically in browser local storage when available. Export a project to JSON for a portable backup or import a JSON project to continue editing. Browser storage belongs to this origin and browser profile; private browsing, browser settings, and clearing site data can remove it.
 
@@ -75,35 +89,39 @@ The motion sequence progresses from [STEP/DIR fundamentals](./examples/stepper-b
 | Pan with the wheel          | Shift + wheel / Alt + wheel / horizontal scroll           |
 | Select several components   | Ctrl / Cmd + click                                        |
 | Select an area              | Drag an empty canvas area                                 |
+| Trace physical connections  | T, then click a pin or wire                               |
+| Nudge wire handle           | Arrow keys; Shift for larger steps                        |
 
-Shortcuts are ignored while editing text or values. On narrow screens the inspector opens over the canvas when a component is selected; close it to return to the full canvas.
+Shortcuts are ignored while editing text or values. On compact screens, select a component and open **Inspector** to edit it; selecting or dragging a component keeps the circuit visible. The walkthrough opens only when requested. Editing tools and zoom controls sit outside the scaled circuit, with secondary tools in the **More tools** menu on phones.
 
-Canvas navigation follows WirePad: wheel zoom stays anchored at the cursor, temporary pan restores the chosen tool on release, and the zoom range is 1–400%. The component library exposes every category with a count and separate add/help actions. The laboratory catalog has a topic sidebar, search and difficulty filters, with separate circuit, worksheet and JSON actions.
+Canvas navigation follows WirePad: wheel zoom stays anchored at the cursor, temporary pan restores the chosen tool on release, and the zoom range is 1–400%. Fresh compact circuits start at a readable scale of at least 75%; Fit still frames the complete circuit, and restored or manually chosen viewports stay unchanged. The component library has a category disclosure with counts and separate add/help actions. The laboratory catalog has a topic sidebar, search and difficulty filters, with separate circuit, worksheet and JSON actions.
 
 ## Component library
 
-| Family                 | Components                                                                                              |
-| ---------------------- | ------------------------------------------------------------------------------------------------------- |
-| Logic gates            | AND, OR, NOT, NAND, NOR, XOR, XNOR                                                                      |
-| Sources and indicators | GND, VCC, toggle switch, numeric bus input, clock, LED, LED matrix, seven-segment display, oscilloscope |
-| Combinational          | Multiplexer, demultiplexer, half adder, full adder, comparator, encoder, decoder                        |
-| Sequential             | SR latch, D / JK / T flip-flops, register, shift register, binary counter                               |
-| Mixed signals          | ADC, DAC, AM / FM generators, PWM generator, servo bank                                                 |
-| Architecture           | ALU, tri-state buffer, priority encoder, bus splitter and merger                                        |
-| Memory                 | RAM, ROM, register file                                                                                 |
-| Physical behavior      | Open-drain output, pull-up and pull-down, Schmitt trigger, monostable                                   |
-| Interactive scenes     | Traffic signal, road junction, railway interlocking, animal feeder, water tank and pump                 |
-| Annotation             | Text notes and colored groups                                                                           |
+| Family                 | Components                                                                                               |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| Logic gates            | AND, OR, NOT, NAND, NOR, XOR, XNOR                                                                       |
+| Sources and indicators | GND, VCC, toggle switch, numeric byte input, clock, LED, LED matrix, seven-segment display, oscilloscope |
+| Combinational          | Multiplexer, demultiplexer, half adder, full adder, comparator, encoder, decoder                         |
+| Sequential             | SR latch, D / JK / T flip-flops, register, shift register, binary counter                                |
+| Mixed signals          | ADC, DAC, AM / FM generators, PWM generator, servo bank                                                  |
+| Architecture           | ALU, tri-state buffer, priority encoder, bit splitter and merger                                         |
+| Memory                 | RAM, ROM, register file                                                                                  |
+| Physical behavior      | Open-drain output, pull-up and pull-down, Schmitt trigger, monostable                                    |
+| Motion and sensing     | Stepper motor, limit switch, position sensor                                                             |
+| Automation             | Aquarium ecosystem, greenhouse, smart home and yard                                                      |
+| Interactive scenes     | Traffic signal, road junction, railway interlocking, animal feeder, water tank and pump                  |
+| Annotation             | Text notes and colored groups                                                                            |
 
-Bus pins have a fixed eight-bit width unless a component's pin explicitly indicates a different width, such as a four-bit memory address. The numeric bus input exposes eight-bit data, a four-bit nibble, and a three-bit address output. Use the inspector and pin labels to see the signal interface.
+Digital connections use separate one-bit lines. Eight-bit data exposes eight numbered pins, while addresses and operation codes expose their required number of lines. The numeric byte source provides D0…D7, BCD0…BCD3, and ADDR0…ADDR2; each contact can connect directly to a digital input. Analog values use a separate analog contact. Use the inspector and pin labels to follow each connection.
 
 ### Simulation model
 
 This is an educational behavioral simulator, not a transistor-level or SPICE simulator. Combinational logic settles iteratively; stateful components update on simulation steps and clock edges. There are no modeled propagation delays, setup or hold constraints, metastability, drive-current limits, thermal effects, or transistor-level TTL/CMOS characteristics.
 
-Signals carry numeric values, `Z` (high impedance), or `X` (unknown or contention). Disconnected and released outputs remain high impedance. Conflicting driven values produce an unknown state. Pull resistors are weak drivers, allowing an open-drain output to override a pull-up. Logic gates propagate unknown inputs according to their operation. A feedback loop that does not settle is reported through simulation diagnostics.
+Signals carry numeric values, `Z` (high impedance), or `X` (unknown or contention). Digital data groups expose numbered contacts rather than bundled bus ports. The scope observes one selected digital line or one analog voltage; component readouts show complete byte values. Disconnected and released outputs remain high impedance. Conflicting driven values produce an unknown state. Pull resistors are weak drivers, allowing an open-drain output to override a pull-up. Logic gates propagate unknown inputs according to their operation. A feedback loop that does not settle is reported through simulation diagnostics.
 
-Analog generators and scopes show sampled values. ADC/DAC conversion, Schmitt hysteresis, monostable timing, PWM pulses, and servo motion are simplified discrete-time models. The editor subdivides time into steps no larger than 0.5 ms (the Step button advances 10 ms total). Digital PWM edge measurements are quantized to that interval; connect the PWM duty output to the servo for an exact duty-to-angle mapping. Frequencies should stay well below the 1 kHz physics sampling limit. Faster signals cannot be represented accurately. Trace histories use a separate sampling interval determined by the time window; long windows can alias fast waveforms without changing the circuit's clock-edge evaluation. Servo visualization is a teaching aid and does not represent a hardware motor controller.
+Analog generators and scopes show sampled values. ADC/DAC conversion, Schmitt hysteresis, monostable timing, PWM pulses, and servo motion are simplified discrete-time models. The editor subdivides time into steps no larger than 0.5 ms, reducing the step further for narrow monitor windows (about 39 µs at a 10 ms window). Slow playback also reduces the simulated time advanced per display frame. The Step button advances 10 ms multiplied by the selected speed. Digital PWM edge measurements are quantized to the actual physics step; connect the PWM duty output to the servo for an exact duty-to-angle mapping. Signals still need multiple samples per period, and very narrow pulses can be missed. Trace histories use a separate sampling interval determined by the time window; long windows can alias fast waveforms. CSV timestamps and PNG axes use actual simulation times. Servo visualization is a teaching aid and does not represent a hardware motor controller.
 
 RAM, ROM, and register-file sizes are intentionally bounded for interactive examples. Their contents are simulation state unless explicitly supplied through component parameters; JSON projects store circuit structure and parameters, not an instantaneous memory snapshot or scope trace.
 
@@ -116,9 +134,15 @@ RAM, ROM, and register-file sizes are intentionally bounded for interactive exam
 - `examples/index.js` and `examples/<id>/`: laboratory registry, canonical JSON circuits, bilingual lessons and lab sheets (the new automation/dispatch sheets include both languages).
 - `src/guides.js`: bilingual component manuals, pin descriptions, experiments, and related examples.
 - `src/geometry.js`: grid placement, component dimensions, pin positions, and wire routing.
+- `src/wiring-ui.js`: transactional wire gestures, endpoint reconnection, and continuity presentation.
+- `src/continuity.js`: physical-net traversal through shared contacts.
+- `src/connections.js`: shared pin compatibility and duplicate-connection validation.
 - `src/ui-utils.js`: shared escaping, color validation, and signal formatting.
 - `src/learning-ui.js`: component guide and example catalog rendering.
 - `src/waveforms.js`: sampled signal plotting with gaps for unknown values.
+- `src/simulation-time.js`: playback rates and sample-aware physics stepping.
+- `src/recording.js`: bounded waveform sessions and timestamped CSV export.
+- `src/waveform-export.js`: labeled PNG plots using actual sample timestamps.
 - `src/app.js`: editor interactions, lesson navigation, and interface state.
 - `test/`: Node.js built-in test runner checks for logic and project integrity.
 - `scripts/`: esbuild configuration, local preview server, static distribution preparation, and syntax checks.

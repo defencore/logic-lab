@@ -17,7 +17,7 @@
       "id": "b",
       "type": "bus_input",
       "x": 40,
-      "y": 260,
+      "y": 580,
       "label": "Byte B",
       "enabled": true,
       "params": {
@@ -28,7 +28,7 @@
       "id": "select",
       "type": "switch",
       "x": 40,
-      "y": 480,
+      "y": 1120,
       "label": "Select B",
       "enabled": true,
       "params": {
@@ -38,7 +38,7 @@
     {
       "id": "mux",
       "type": "mux",
-      "x": 320,
+      "x": 440,
       "y": 240,
       "label": "Choose A or B",
       "enabled": true,
@@ -47,7 +47,7 @@
     {
       "id": "splitter",
       "type": "splitter",
-      "x": 600,
+      "x": 840,
       "y": 180,
       "label": "Split byte",
       "enabled": true,
@@ -56,7 +56,7 @@
     {
       "id": "merger",
       "type": "merger",
-      "x": 880,
+      "x": 1240,
       "y": 180,
       "label": "Merge the same bits",
       "enabled": true,
@@ -65,7 +65,7 @@
     {
       "id": "demux",
       "type": "demux",
-      "x": 1160,
+      "x": 1640,
       "y": 240,
       "label": "Route selected byte",
       "enabled": true,
@@ -74,50 +74,218 @@
     {
       "id": "left",
       "type": "scope",
-      "x": 1440,
+      "x": 2040,
       "y": 80,
-      "label": "Route 0 · byte",
+      "label": "Route 0 · bit 0",
       "enabled": true,
       "params": {
-        "range": 255
+        "range": 1
       }
     },
     {
       "id": "right",
       "type": "scope",
-      "x": 1440,
+      "x": 2040,
       "y": 400,
-      "label": "Route 1 · byte",
+      "label": "Route 1 · bit 0",
       "enabled": true,
       "params": {
-        "range": 255
+        "range": 1
       }
     }
   ],
   "wires": [
     {
-      "id": "a-out-mux-a",
+      "id": "a-out-mux-a-bit0",
       "from": {
         "node": "a",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "mux",
-        "port": "a"
+        "port": "a0"
       },
-      "width": 8
+      "width": 1
     },
     {
-      "id": "b-out-mux-b",
+      "id": "a-out-mux-a-bit1",
       "from": {
-        "node": "b",
-        "port": "out"
+        "node": "a",
+        "port": "out1"
       },
       "to": {
         "node": "mux",
-        "port": "b"
+        "port": "a1"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "a-out-mux-a-bit2",
+      "from": {
+        "node": "a",
+        "port": "out2"
+      },
+      "to": {
+        "node": "mux",
+        "port": "a2"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-mux-a-bit3",
+      "from": {
+        "node": "a",
+        "port": "out3"
+      },
+      "to": {
+        "node": "mux",
+        "port": "a3"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-mux-a-bit4",
+      "from": {
+        "node": "a",
+        "port": "out4"
+      },
+      "to": {
+        "node": "mux",
+        "port": "a4"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-mux-a-bit5",
+      "from": {
+        "node": "a",
+        "port": "out5"
+      },
+      "to": {
+        "node": "mux",
+        "port": "a5"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-mux-a-bit6",
+      "from": {
+        "node": "a",
+        "port": "out6"
+      },
+      "to": {
+        "node": "mux",
+        "port": "a6"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-mux-a-bit7",
+      "from": {
+        "node": "a",
+        "port": "out7"
+      },
+      "to": {
+        "node": "mux",
+        "port": "a7"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-mux-b-bit0",
+      "from": {
+        "node": "b",
+        "port": "out0"
+      },
+      "to": {
+        "node": "mux",
+        "port": "b0"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-mux-b-bit1",
+      "from": {
+        "node": "b",
+        "port": "out1"
+      },
+      "to": {
+        "node": "mux",
+        "port": "b1"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-mux-b-bit2",
+      "from": {
+        "node": "b",
+        "port": "out2"
+      },
+      "to": {
+        "node": "mux",
+        "port": "b2"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-mux-b-bit3",
+      "from": {
+        "node": "b",
+        "port": "out3"
+      },
+      "to": {
+        "node": "mux",
+        "port": "b3"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-mux-b-bit4",
+      "from": {
+        "node": "b",
+        "port": "out4"
+      },
+      "to": {
+        "node": "mux",
+        "port": "b4"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-mux-b-bit5",
+      "from": {
+        "node": "b",
+        "port": "out5"
+      },
+      "to": {
+        "node": "mux",
+        "port": "b5"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-mux-b-bit6",
+      "from": {
+        "node": "b",
+        "port": "out6"
+      },
+      "to": {
+        "node": "mux",
+        "port": "b6"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-mux-b-bit7",
+      "from": {
+        "node": "b",
+        "port": "out7"
+      },
+      "to": {
+        "node": "mux",
+        "port": "b7"
+      },
+      "width": 1
     },
     {
       "id": "select-out-mux-sel",
@@ -132,28 +300,196 @@
       "width": 1
     },
     {
-      "id": "mux-out-splitter-in",
+      "id": "mux-out-splitter-in-bit0",
       "from": {
         "node": "mux",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "splitter",
-        "port": "in"
+        "port": "in0"
       },
-      "width": 8
+      "width": 1
     },
     {
-      "id": "merger-out-demux-in",
+      "id": "mux-out-splitter-in-bit1",
+      "from": {
+        "node": "mux",
+        "port": "out1"
+      },
+      "to": {
+        "node": "splitter",
+        "port": "in1"
+      },
+      "width": 1
+    },
+    {
+      "id": "mux-out-splitter-in-bit2",
+      "from": {
+        "node": "mux",
+        "port": "out2"
+      },
+      "to": {
+        "node": "splitter",
+        "port": "in2"
+      },
+      "width": 1
+    },
+    {
+      "id": "mux-out-splitter-in-bit3",
+      "from": {
+        "node": "mux",
+        "port": "out3"
+      },
+      "to": {
+        "node": "splitter",
+        "port": "in3"
+      },
+      "width": 1
+    },
+    {
+      "id": "mux-out-splitter-in-bit4",
+      "from": {
+        "node": "mux",
+        "port": "out4"
+      },
+      "to": {
+        "node": "splitter",
+        "port": "in4"
+      },
+      "width": 1
+    },
+    {
+      "id": "mux-out-splitter-in-bit5",
+      "from": {
+        "node": "mux",
+        "port": "out5"
+      },
+      "to": {
+        "node": "splitter",
+        "port": "in5"
+      },
+      "width": 1
+    },
+    {
+      "id": "mux-out-splitter-in-bit6",
+      "from": {
+        "node": "mux",
+        "port": "out6"
+      },
+      "to": {
+        "node": "splitter",
+        "port": "in6"
+      },
+      "width": 1
+    },
+    {
+      "id": "mux-out-splitter-in-bit7",
+      "from": {
+        "node": "mux",
+        "port": "out7"
+      },
+      "to": {
+        "node": "splitter",
+        "port": "in7"
+      },
+      "width": 1
+    },
+    {
+      "id": "merger-out-demux-in-bit0",
       "from": {
         "node": "merger",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "demux",
-        "port": "in"
+        "port": "in0"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "merger-out-demux-in-bit1",
+      "from": {
+        "node": "merger",
+        "port": "out1"
+      },
+      "to": {
+        "node": "demux",
+        "port": "in1"
+      },
+      "width": 1
+    },
+    {
+      "id": "merger-out-demux-in-bit2",
+      "from": {
+        "node": "merger",
+        "port": "out2"
+      },
+      "to": {
+        "node": "demux",
+        "port": "in2"
+      },
+      "width": 1
+    },
+    {
+      "id": "merger-out-demux-in-bit3",
+      "from": {
+        "node": "merger",
+        "port": "out3"
+      },
+      "to": {
+        "node": "demux",
+        "port": "in3"
+      },
+      "width": 1
+    },
+    {
+      "id": "merger-out-demux-in-bit4",
+      "from": {
+        "node": "merger",
+        "port": "out4"
+      },
+      "to": {
+        "node": "demux",
+        "port": "in4"
+      },
+      "width": 1
+    },
+    {
+      "id": "merger-out-demux-in-bit5",
+      "from": {
+        "node": "merger",
+        "port": "out5"
+      },
+      "to": {
+        "node": "demux",
+        "port": "in5"
+      },
+      "width": 1
+    },
+    {
+      "id": "merger-out-demux-in-bit6",
+      "from": {
+        "node": "merger",
+        "port": "out6"
+      },
+      "to": {
+        "node": "demux",
+        "port": "in6"
+      },
+      "width": 1
+    },
+    {
+      "id": "merger-out-demux-in-bit7",
+      "from": {
+        "node": "merger",
+        "port": "out7"
+      },
+      "to": {
+        "node": "demux",
+        "port": "in7"
+      },
+      "width": 1
     },
     {
       "id": "select-out-demux-sel",
@@ -171,25 +507,25 @@
       "id": "demux-a-left-in",
       "from": {
         "node": "demux",
-        "port": "a"
+        "port": "a0"
       },
       "to": {
         "node": "left",
         "port": "in"
       },
-      "width": 8
+      "width": 1
     },
     {
       "id": "demux-b-right-in",
       "from": {
         "node": "demux",
-        "port": "b"
+        "port": "b0"
       },
       "to": {
         "node": "right",
         "port": "in"
       },
-      "width": 8
+      "width": 1
     },
     {
       "id": "splitter-b0-merger-b0",

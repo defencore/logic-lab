@@ -37,6 +37,7 @@ export async function copyPublicFiles(metafile) {
   for (const file of ['favicon.svg', 'CNAME', '.nojekyll', 'examples']) {
     await cp(new URL(`../${file}`, import.meta.url), new URL(file, output), { recursive: true });
   }
+  await cp(new URL('../fonts/OFL.txt', import.meta.url), new URL('assets/Inter-OFL.txt', output));
   const source = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   await writeFile(new URL('index.html', output), renderBuiltHtml(source, metafile));
 }
@@ -49,6 +50,7 @@ export function buildOptions() {
     entryNames: 'app-[hash]',
     chunkNames: 'chunks/[name]-[hash]',
     bundle: true,
+    loader: { '.woff2': 'file' },
     splitting: true,
     format: 'esm',
     target: ['es2022'],

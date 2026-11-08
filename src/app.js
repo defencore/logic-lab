@@ -32,6 +32,17 @@ import {
   sceneActuatorValues,
 } from './scene-data.js';
 import { SCENARIO_TYPES } from './scenarios.js';
+import { waveformPng } from './waveform-export.js';
+import { createRecording, appendRecording, stopRecording, recordingCsv } from './recording.js';
+import {
+  SIMULATION_RATES,
+  TIME_WINDOWS,
+  frameSimulationDelta,
+  simulationStepCount,
+} from './simulation-time.js';
+import { createWiringEditor } from './wiring-ui.js';
+import { checkConnection } from './connections.js';
+import { componentPins } from './component-pins.js';
 
 let lang = 'en';
 try {
@@ -44,7 +55,16 @@ const t = (key) => TEXT[lang][key] || key;
 const title = (def) => (lang === 'ua' ? def.ua || def.label : def.label);
 let project = loadProject() || createExample(EXAMPLES[0].id);
 let timeBase = 1;
+let simulationRate = 1;
+let recording = null;
+let recordingSources = [];
+try {
+  const settings = JSON.parse(localStorage.getItem('logic-lab.simulation') || '{}');
+  if (SIMULATION_RATES.includes(settings.rate)) simulationRate = settings.rate;
+  if (TIME_WINDOWS.includes(settings.timeBase)) timeBase = settings.timeBase;
+} catch {}
 function newRuntime() {
+  if (recording?.active) stopRecording(recording);
   const value = createRuntime();
   value.sampleInterval = timeBase / 255;
   return value;
@@ -54,6 +74,9 @@ let running = true;
 let inspectorTab = 'properties';
 let lastInspectorKey = '';
 let lessonOpen = true;
+let compactLessonOpen = false;
+let workspaceView = 'canvas';
+const compactLayout = window.matchMedia('(max-width: 1200px), (max-height: 720px)');
 let lessonStep = 0;
 let highlighted = new Set();
 let tool = 'select';
@@ -64,6 +87,7 @@ let category = 'all';
 let query = '';
 let selected = new Set();
 let selectedWire = null;
+let wiring;
 let pending = null;
 let gesture = null;
 let view = project.viewport || { x: 0, y: 0, zoom: 1 };
@@ -142,8 +166,9 @@ function applyView() {
   $('#viewport').style.backgroundSize = `${gridSize}px ${gridSize}px`;
   $('#viewport').style.backgroundPosition = `${view.x}px ${view.y}px`;
   $('#zoom-value').textContent = `${Math.round(view.zoom * 100)}%`;
+  wiring?.renderEditor();
 }
-function fit() {
+function fit({ readable = false } = {}) {
   const nodes = project.nodes;
   if (!nodes.length) {
     view = { x: 80, y: 80, zoom: 1 };
@@ -169,12 +194,22 @@ function fit() {
       { x: minX, y: minY, width: maxX - minX, height: maxY - minY },
       { width: el.clientWidth, height: el.clientHeight },
     ) || view;
+  if (readable && compactLayout.matches && view.zoom < 0.75) {
+    const center = screenToWorld(view, { x: el.clientWidth / 2, y: el.clientHeight / 2 });
+    view = {
+      x: el.clientWidth / 2 - center.x * 0.75,
+      y: el.clientHeight / 2 - center.y * 0.75,
+      zoom: 0.75,
+    };
+  }
   applyView();
   persist();
 }
 function setTool(next) {
+  cancelInteraction();
   tool = next;
   updateTool();
+  wiring?.refresh();
 }
 function updateTool() {
   const active = spaceHeld || shiftHeld ? 'pan' : tool;
@@ -182,24 +217,28 @@ function updateTool() {
     el.classList.toggle('active', el.dataset.tool === active),
   );
   $('#viewport').dataset.tool = active;
+  $('#more-tools').classList.toggle('active', tool === 'trace');
 }
 function shell() {
+  wiring?.cancelGesture();
   document.documentElement.lang = lang === 'ua' ? 'uk' : 'en';
   document.title = t('pageTitle');
   $('#app').innerHTML = `
     <header class="app-header"><a class="brand" href="./" aria-label="Logic Lab"><img src="./favicon.svg?v=logic-lab-1" alt=""><span>logic<span class="brand-light">lab</span><small>${esc(t('workbench'))}</small></span></a>
     <div class="header-divider"></div><div class="project-heading">${icon('folder', 16)}<input id="project-name" aria-label="${t('namePlaceholder')}" value="${esc(project.name)}" maxlength="100"><span class="project-tag">.logic</span></div>
-    <div class="header-actions"><span id="save-state" class="save-state">${icon('check', 13)}${t('saved')}</span>${button('import', 'upload', t('open'))}${button('export', 'download', t('save'))}<span class="divider"></span><button id="motion" class="soft-btn context-3d-btn" ${getSceneEntries(project).length ? '' : 'hidden'} aria-label="${t('motionView')}" title="${t('motionView')}">${icon('box', 15)}<span>3D</span></button><button id="examples" class="soft-btn" aria-label="${t('examples')}">${icon('grid', 15)}<span>${t('examples')}</span></button><button id="language" class="language-btn" aria-label="Language">${lang === 'en' ? 'EN' : 'UA'}${icon('down', 12)}</button>${button('help', 'help', t('help'))}</div></header>
-    <div class="app-body"><aside class="library" aria-label="${t('componentLibrary')}"><div class="panel-title"><h2>${t('componentLibrary')}</h2><span class="count-badge">${COMPONENTS.length}</span></div><div class="search-wrap">${icon('search', 16)}<input id="search" type="search" aria-label="${t('searchAllComponents')}" placeholder="${t('searchAllComponents')}" value="${esc(query)}" autocomplete="off"><kbd>/</kbd></div><div class="library-browse-heading">${t('browseCategories')}</div><div id="library-categories"></div><div class="library-results-heading"><span>${t('catalogResults')}</span><span id="library-result-count"></span></div><div id="library-list" class="library-list"></div><div class="library-footer"><span class="dot green"></span>${t('browserOnly')}<small>${t('dragHint')}</small></div></aside>
-    <main class="main"><div class="workspace-toolbar"><div class="workspace-title"><span class="breadcrumb">${t('workspace')}</span><span class="slash">/</span><span id="canvas-name">${esc(project.name)}</span></div><div class="simulation-controls">${button('lesson-toggle', 'note', t('showLesson'))}${button('reset', 'reset', t('reset'))}${button('step', 'step', t('step'))}<button id="run" class="run-btn" title="${t('runKeyboard')}">${icon('play', 14)}<span>${t('run')}</span><kbd>R</kbd></button></div></div>
+    <div class="header-actions"><span id="save-state" class="save-state">${icon('check', 13)}${t('saved')}</span><details class="project-files"><summary class="icon-btn" aria-label="${t('projectFiles')}" title="${t('projectFiles')}">${icon('folder', 17)}</summary><div class="file-menu-panel"><button type="button" id="import" class="file-menu-item">${icon('upload', 16)}<span>${t('open')}</span></button><button type="button" id="export" class="file-menu-item">${icon('download', 16)}<span>${t('save')}</span></button></div></details><span class="divider"></span><button id="motion" class="soft-btn context-3d-btn" ${getSceneEntries(project).length ? '' : 'hidden'} aria-label="${t('motionView')}" title="${t('motionView')}">${icon('box', 15)}<span>3D</span></button><button id="examples" class="soft-btn" aria-label="${t('examples')}">${icon('grid', 15)}<span>${t('examples')}</span></button><button id="language" class="language-btn" aria-label="Language">${lang === 'en' ? 'EN' : 'UA'}${icon('down', 12)}</button>${button('help', 'help', t('help'))}</div></header>
+    <div class="app-body"><aside id="component-library" class="library" aria-label="${t('componentLibrary')}"><div class="panel-title"><h2>${t('componentLibrary')}</h2><span class="count-badge">${COMPONENTS.length}</span>${button('close-library', 'close', t('cancel'))}</div><div class="search-wrap">${icon('search', 16)}<input id="search" type="search" aria-label="${t('searchAllComponents')}" placeholder="${t('searchAllComponents')}" value="${esc(query)}" autocomplete="off"><kbd>/</kbd></div><div id="library-categories"></div><div class="library-results-heading"><span>${t('catalogResults')}</span><span id="library-result-count"></span></div><div id="library-list" class="library-list"></div><div class="library-footer"><span class="dot green"></span>${t('browserOnly')}<small>${t('dragHint')}</small></div></aside><button id="library-backdrop" class="library-backdrop" aria-label="${t('cancel')}" tabindex="-1" hidden></button>
+    <main class="main" data-workspace-view="${workspaceView}"><div class="workspace-toolbar"><button id="library-toggle" class="icon-btn" aria-label="${t('componentLibrary')}" title="${t('componentLibrary')}" aria-controls="component-library" aria-expanded="false">${icon('grid', 18)}</button><div class="workspace-title"><span class="breadcrumb">${t('workspace')}</span><span class="slash">/</span><span id="canvas-name">${esc(project.name)}</span></div><div class="simulation-controls"><label class="simulation-rate global-speed" title="${t('simulationRateHint')}">${icon('clock', 14)}<span>${t('simulationRate')}</span><select id="simulation-rate" aria-label="${t('simulationRate')}">${SIMULATION_RATES.map((value) => `<option value="${value}" ${simulationRate === value ? 'selected' : ''}>${formatRate(value)}</option>`).join('')}</select></label>${button('lesson-toggle', 'note', t('showLesson'))}${button('reset', 'reset', t('reset'))}${button('step', 'step', t('step'))}<button id="run" class="run-btn" title="${t('runKeyboard')}">${icon('play', 14)}<span>${t('run')}</span><kbd>R</kbd></button></div></div>
+    <nav class="workspace-tabs" aria-label="${t('workspace')}">${['canvas', 'inspector', 'signals'].map((view) => `<button type="button" data-workspace-view="${view}" aria-pressed="${workspaceView === view}">${t(view === 'canvas' ? 'circuitView' : view === 'inspector' ? 'inspector' : 'signalsView')}</button>`).join('')}</nav>
+    <div class="editor-workspace"><div class="editor-toolstrip"><div class="canvas-tools"><div class="tool-group">${['select', 'pan', 'wire'].map((x, i) => `<button data-tool="${x}" class="icon-btn ${tool === x ? 'active' : ''}" title="${x === 'pan' ? t('panHint') : t(x)}" aria-label="${t(x)}">${icon(['mouse', 'hand', 'wire'][i])}</button>`).join('')}</div><button id="more-tools" class="icon-btn" aria-label="${t('moreTools')}" title="${t('moreTools')}" aria-expanded="false" aria-controls="secondary-tools">${icon('more', 18)}</button><div id="secondary-tools" class="tool-group secondary-tools">${button('add-note', 'note', t('note'))}${button('add-group', 'layers', t('group'))}${button('undo', 'undo', t('undo'))}${button('redo', 'redo', t('redo'))}<button type="button" class="icon-btn" data-tool="trace" title="${t('netTraceTool')}" aria-label="${t('netTraceTool')}">${icon('probe', 18)}</button></div></div><div class="zoom-tools">${button('zoom-out', 'minus', t('zoom'))}<button id="zoom-value" class="zoom-value" title="${t('resetZoom')}" aria-label="${t('resetZoom')}">100%</button><button id="zoom-in" class="icon-btn" aria-label="${t('zoom')}">${icon('plus', 16)}</button><span class="divider"></span>${button('fit', 'fit', t('fit'))}</div><div id="wire-context" class="wire-context"></div></div>
     <section id="lesson-panel" class="lesson-panel" hidden></section>
-    <section id="viewport" class="viewport" aria-label="${t('workspace')}" tabindex="0"><div class="canvas-heading"><span class="eyebrow">LOGIC LAB / 01</span><h1>${t('learn')}</h1><p>${t('learnDesc')}</p></div><div id="world" class="world"><svg id="wires" class="wire-layer" aria-label="${t('wires')}"></svg><div id="nodes" class="node-layer"></div><svg id="draft-layer" class="draft-layer"><path id="draft"/></svg></div><div id="empty-hint" class="empty-hint" hidden>${icon('plus', 32)}<p>${t('dragHint')}</p></div>
-    <div class="canvas-tools"><div class="tool-group">${['select', 'pan', 'wire'].map((x, i) => `<button data-tool="${x}" class="icon-btn ${tool === x ? 'active' : ''}" title="${x === 'pan' ? t('panHint') : t(x)}" aria-label="${t(x)}">${icon(['mouse', 'hand', 'wire'][i])}</button>`).join('')}<span class="divider"></span>${button('add-note', 'note', t('note'))}${button('add-group', 'layers', t('group'))}</div><div class="tool-group">${button('undo', 'undo', t('undo'))}${button('redo', 'redo', t('redo'))}</div></div>
-    <div class="canvas-bottom" title="${t('navigationHint')}"><div id="canvas-tip" class="canvas-tip">${icon('wire', 15)}${project.name === 'Half adder' ? t('tutorial') : t('connectHint')}</div><span class="navigation-hint">${t('navigationShort')}</span><div class="zoom-tools">${button('zoom-out', 'minus', t('zoom'))}<button id="zoom-value" class="zoom-value" title="${t('resetZoom')}" aria-label="${t('resetZoom')}">100%</button><button id="zoom-in" class="icon-btn" aria-label="${t('zoom')}">${icon('plus', 16)}</button><span class="divider"></span>${button('fit', 'fit', t('fit'))}</div></div></section>
-    <div class="monitor-controls"><span>${t('traceSelection')}</span><label>${t('timeWindow')} <select id="time-base" aria-label="${t('timeWindow')}">${[0.25, 1, 5].map((value) => `<option value="${value}" ${timeBase === value ? 'selected' : ''}>≈ ${value} ${t('seconds')}</option>`).join('')}</select></label></div>
+    <section id="viewport" class="viewport" aria-label="${t('workspace')}" tabindex="0"><div class="canvas-heading"><span class="eyebrow">LOGIC LAB / 01</span><h1>${t('learn')}</h1><p>${t('learnDesc')}</p></div><div id="world" class="world"><svg id="wires" class="wire-layer" aria-label="${t('wires')}"></svg><div id="nodes" class="node-layer"></div><svg id="draft-layer" class="draft-layer"><path id="draft"/></svg><svg id="wire-edit-layer" class="wire-edit-layer"></svg></div><div id="empty-hint" class="empty-hint" hidden>${icon('plus', 32)}<p>${t('dragHint')}</p></div>
+    <div class="canvas-bottom" title="${t('navigationHint')}"><div id="canvas-tip" class="canvas-tip">${icon('wire', 15)}${project.name === 'Half adder' ? t('tutorial') : t('connectHint')}</div><span class="navigation-hint">${t('navigationShort')}</span></div></section>
+    <aside class="inspector"><div class="panel-title"><h2>${t('inspector')}</h2><span class="inspector-desktop-icon">${icon('layers', 16)}</span>${button('close-inspector', 'close', t('cancel'))}</div><div id="inspector-content"></div><div class="inspector-footer"><span class="legend"><i class="dot green"></i>1 <i class="dot gray"></i>0 <i class="dot amber"></i>X <span class="z-legend">Z</span></span><button id="inspector-help" class="text-btn">${t('help')}${icon('chevron', 12)}</button></div></aside></div>
+    <div class="monitor-controls scope-toolbar"><label class="scope-timebase"><span>${t('timeWindow')}</span><select id="time-base" aria-label="${t('timeWindow')}">${TIME_WINDOWS.map((value) => `<option value="${value}" ${timeBase === value ? 'selected' : ''}>${formatWindow(value)}</option>`).join('')}</select></label><div class="scope-actions"><button id="record-toggle" class="soft-btn" aria-pressed="false" title="${t('recordHint')}">${t('recordStart')}</button><button id="record-download" class="soft-btn" disabled>${icon('download', 13)}CSV</button><button id="trace-image" class="soft-btn" title="${t('saveWaveformImage')}">${icon('download', 13)}PNG</button></div><span id="record-status" role="status" aria-live="off"></span></div>
     <section id="monitor" class="monitor ${monitorOpen ? '' : 'collapsed'}"><button id="monitor-toggle" class="monitor-heading"><span>${icon('signal', 17)}<strong>${t('timing')}</strong><span class="monitor-sub">${t('scopeHint')}</span></span><span id="simulation-badge" class="simulation-badge"><i></i>${t('paused')}</span>${icon('down', 15)}</button><div class="monitor-body"><div id="trace-labels" class="trace-labels"></div><canvas id="trace-canvas" aria-label="${t('trace')}"></canvas></div></section>
     <footer class="status-bar"><span><i class="dot green"></i>${t('status')}</span><button id="diagnostics" class="text-btn" hidden></button><span id="counts"></span><span class="time-label">t = <b id="sim-time">0.000</b> s</span></footer></main>
-    <aside class="inspector"><div class="panel-title"><h2>${t('inspector')}</h2><span class="inspector-desktop-icon">${icon('layers', 16)}</span>${button('close-inspector', 'close', t('cancel'))}</div><div id="inspector-content"></div><div class="inspector-footer"><span class="legend"><i class="dot green"></i>1 <i class="dot gray"></i>0 <i class="dot amber"></i>X <span class="z-legend">Z</span></span><button id="inspector-help" class="text-btn">${t('help')}${icon('chevron', 12)}</button></div></aside></div><div id="modal-root"></div>`;
+    </div><div id="modal-root"></div>`;
   $('#zoom-out').innerHTML = '<span style="font-size:20px">−</span>';
   bindShell();
   updateTool();
@@ -222,16 +261,21 @@ function renderLibrary() {
       category = el.dataset.category;
       renderLibrary();
       $('#library-list').scrollTop = 0;
+      $('.library-category-browser summary').focus();
     };
   });
   $$('[data-read-guide]').forEach(
     (el) => (el.onclick = () => showComponentGuide(el.dataset.readGuide)),
   );
   $$('[data-component]').forEach((el) => {
-    el.addEventListener('click', () => addNode(el.dataset.component));
+    el.addEventListener('click', () => {
+      addNode(el.dataset.component);
+      setLibraryOpen(false);
+    });
     el.addEventListener('dragstart', (e) => {
       e.dataTransfer.setData('application/logic-lab', el.dataset.component);
       e.dataTransfer.effectAllowed = 'copy';
+      requestAnimationFrame(() => setLibraryOpen(false));
     });
   });
 }
@@ -284,16 +328,17 @@ function renderBoard() {
       const d = getDefinition(n.type),
         { w, h } = dimensions(n),
         special = ['note', 'group'].includes(n.type);
-      return `<div class="circuit-node ${selected.has(n.id) ? 'selected' : ''} ${highlighted.has(n.id) ? 'lesson-highlight' : ''} ${n.enabled === false ? 'disabled' : ''} type-${n.type}" data-node="${n.id}" style="left:${n.x}px;top:${n.y}px;width:${w}px;height:${h}px;${special ? `--note-color:${safeColor(n.params.color)};` : ''}" role="group" aria-label="${esc(n.label || title(d))}"><div class="node-header"><span class="node-type-dot"></span><span>${esc(n.label || title(d))}</span><small>${special ? '' : esc(d.type.toUpperCase().replaceAll('_', ' '))}</small></div>${special ? `<div class="note-content">${esc(n.params.text || '')}</div>` : `<div class="node-content">${nodeBody(n)}</div>${['in', 'out'].map((side) => (side === 'in' ? d.inputs : d.outputs).map((p, i) => `<button class="pin pin-${side} ${p.width > 1 ? 'bus-pin' : ''} ${p.analog ? 'analog-pin' : ''}" data-pin="${esc(p.id)}" data-side="${side}" data-node="${n.id}" style="top:${58 + i * 25}px" title="${esc(p.label || p.id)}${p.width > 1 ? ' [' + p.width + ']' : ''}${p.analog ? ' · analog' : ''}" aria-label="${esc(n.label || title(d))} ${side} ${esc(p.label || p.id)}"><i></i><span>${esc(p.label || p.id)}${p.width > 1 ? `<em>${p.width}</em>` : ''}</span></button>`).join('')).join('')}`}</div>`;
+      return `<div class="circuit-node ${selected.has(n.id) ? 'selected' : ''} ${highlighted.has(n.id) ? 'lesson-highlight' : ''} ${n.enabled === false ? 'disabled' : ''} type-${n.type}" data-node="${n.id}" style="left:${n.x}px;top:${n.y}px;width:${w}px;height:${h}px;${special ? `--note-color:${safeColor(n.params.color)};` : ''}" role="group" aria-label="${esc(n.label || title(d))}"><div class="node-header"><span class="node-type-dot"></span><span>${esc(n.label || title(d))}</span><small>${special ? '' : esc(d.type.toUpperCase().replaceAll('_', ' '))}</small></div>${special ? `<div class="note-content">${esc(n.params.text || '')}</div>` : `<div class="node-content">${nodeBody(n)}</div>${componentPins(n, { label: n.label || title(d), inputLabel: t('inputs'), outputLabel: t('outputs') })}`}</div>`;
     })
     .join('');
   $('#wires').innerHTML = project.wires
     .map(
       (w) =>
-        `<g data-wire="${w.id}" class="wire-group ${selectedWire === w.id ? 'selected' : ''}"><path class="wire-hit" d="${wirePath(w, project)}"/><path class="wire-line ${w.width > 1 ? 'bus-line' : ''}" d="${wirePath(w, project)}"/>${w.width > 1 ? busLabel(w) : ''}</g>`,
+        `<g data-wire="${w.id}" class="wire-group ${selectedWire === w.id ? 'selected' : ''}"><path class="wire-hit" d="${wirePath(w, project)}"/><path class="wire-line" d="${wirePath(w, project)}"/><path class="wire-net-halo" d="${wirePath(w, project)}"/><path class="wire-net-trace" d="${wirePath(w, project)}"/></g>`,
     )
     .join('');
   $('#empty-hint').hidden = project.nodes.length > 0;
+  $('.canvas-heading').hidden = project.nodes.length > 0;
   $('#draft').setAttribute('d', '');
   $$('.circuit-node').forEach((el) => el.addEventListener('pointerdown', nodePointerDown));
   $$('.pin').forEach((el) => el.addEventListener('pointerdown', pinPointerDown));
@@ -306,23 +351,8 @@ function renderBoard() {
   $$('[data-motion-open]').forEach(
     (el) => (el.onclick = () => showMotionView(el.dataset.sceneNode)),
   );
-  $$('.wire-hit').forEach((el) =>
-    el.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      selected.clear();
-      selectedWire = el.parentElement.dataset.wire;
-      renderBoard();
-      renderInspector();
-      updateSignals();
-    }),
-  );
   applyView();
-}
-function busLabel(w) {
-  const n = project.nodes.find((n) => n.id === w.from.node);
-  if (!n) return '';
-  const p = portPoint(n, w.from.port, 'out');
-  return `<text x="${p.x + 30}" y="${p.y - 8}" class="bus-label">/${w.width}</text>`;
+  wiring?.refresh();
 }
 function selectionChanged() {
   $$('.circuit-node').forEach((el) =>
@@ -333,8 +363,13 @@ function selectionChanged() {
   );
   renderInspector();
   updateSignals();
+  wiring?.refresh();
 }
 function renderInspector() {
+  renderInspectorContent();
+  wiring?.decorateInspector();
+}
+function renderInspectorContent() {
   const el = $('#inspector-content');
   const key = `${[...selected].join(',')}|${selectedWire}|${inspectorTab}`;
   if (lastInspectorKey !== key) {
@@ -346,9 +381,9 @@ function renderInspector() {
     const w = project.wires.find((w) => w.id === selectedWire);
     if (!w) {
       selectedWire = null;
-      return renderInspector();
+      return renderInspectorContent();
     }
-    el.innerHTML = `<div class="inspector-selected"><span class="inspector-symbol">${icon('wire', 28)}</span><h3>${t('wireProperties')}</h3><p>${w.width > 1 ? t('bus') : t('digital')} · ${w.width || 1} bit</p></div><div class="property-section"><h4>${t('properties')}</h4><label>${t('source')}<input disabled value="${esc(w.from.node + '.' + w.from.port)}"></label><label>${t('destination')}<input disabled value="${esc(w.to.node + '.' + w.to.port)}"></label></div><button class="danger-btn" id="delete-node">${icon('trash', 15)}${t('removeWire')}</button>`;
+    el.innerHTML = `<div class="inspector-selected"><span class="inspector-symbol">${icon('wire', 28)}</span><h3>${t('wireProperties')}</h3><p>${t(getDefinition(project.nodes.find((node) => node.id === w.from.node).type).outputs.find((pin) => pin.id === w.from.port)?.analog ? 'analog' : 'digital')}</p></div><div class="property-section"><h4>${t('properties')}</h4><label>${t('source')}<input disabled value="${esc(w.from.node + '.' + w.from.port)}"></label><label>${t('destination')}<input disabled value="${esc(w.to.node + '.' + w.to.port)}"></label></div><button class="danger-btn" id="delete-node">${icon('trash', 15)}${t('removeWire')}</button>`;
     $('#delete-node').onclick = deleteSelection;
     return;
   }
@@ -372,7 +407,7 @@ function renderInspector() {
   const n = project.nodes.find((n) => selected.has(n.id));
   if (!n) {
     selected.clear();
-    return renderInspector();
+    return renderInspectorContent();
   }
   const d = getDefinition(n.type);
   const params = { ...d.defaults, ...n.params };
@@ -399,6 +434,7 @@ function renderInspector() {
     n.label = value;
     renderBoard();
     updateSignals();
+    wiring.decorateInspector();
     persist();
   });
   $('#node-enabled').onchange = (e) => {
@@ -613,7 +649,7 @@ function updateInspectorSignals() {
       ports
         .map((p) => {
           const v = runtime[side === 'in' ? 'inputs' : 'outputs']?.[n.id]?.[p.id];
-          return `<div class="signal-row"><span>${side === 'in' ? '↳' : '↗'} ${esc(p.label || p.id)}${p.width > 1 ? ` <small>[${p.width}]</small>` : ''}</span><b class="signal-value ${signalClass(v)}">${format(v)}${p.unit && typeof v === 'number' ? ' ' + esc(p.unit) : p.analog && typeof v === 'number' ? (n.type === 'servo' && side === 'out' ? '°' : n.type === 'servo' || n.type === 'pwm' ? '' : ' V') : ''}</b></div>`;
+          return `<div class="signal-row"><span>${side === 'in' ? '↳' : '↗'} ${esc(p.label || p.id)}</span><b class="signal-value ${signalClass(v)}">${format(v)}${p.unit && typeof v === 'number' ? ' ' + esc(p.unit) : p.analog && typeof v === 'number' ? (n.type === 'servo' && side === 'out' ? '°' : n.type === 'servo' || n.type === 'pwm' ? '' : ' V') : ''}</b></div>`;
         })
         .join(''),
     )
@@ -625,6 +661,7 @@ function updateSignals() {
     if (!el) continue;
     const ins = runtime.inputs?.[n.id] || {},
       outs = runtime.outputs?.[n.id] || {};
+    const signalOutputs = runtime.signals.outputs[n.id] || {};
     $$('.pin', el).forEach((pin) => {
       const v = (pin.dataset.side === 'in' ? ins : outs)[pin.dataset.pin];
       pin.classList.remove('high', 'low', 'unknown', 'floating');
@@ -632,11 +669,17 @@ function updateSignals() {
     });
     const readout = $('.node-readout', el);
     if (readout) {
-      const first = Object.values(outs)[0];
+      const first = primarySignal(n);
       readout.textContent =
         n.type === 'pwm'
           ? `${Math.round(Number(outs.duty ?? n.params.duty ?? 0.5) * 100)}% · ${n.params.frequency ?? 105} Hz`
-          : format(first);
+          : n.type === 'splitter'
+            ? `D: ${format(runtime.signals.inputs[n.id]?.in)}`
+            : n.type === 'demux'
+              ? getDefinition(n.type)
+                  .signals.outputs.map((port) => `${port.label}: ${format(signalOutputs[port.id])}`)
+                  .join(' · ')
+              : format(first);
     }
     if (n.type === 'led') {
       const v = ins.in;
@@ -653,7 +696,7 @@ function updateSignals() {
       const readout = $('.node-readout', el);
       readout.textContent =
         n.type === 'aquarium'
-          ? `${t('sceneAlive')}: ${format(outs.alive)} · ${format(outs.temperature)} °C`
+          ? `${t('sceneAlive')}: ${format(signalOutputs.alive)} · ${format(outs.temperature)} °C`
           : n.type === 'greenhouse'
             ? `${t('sceneGrowth')}: ${format(outs.growth)}%`
             : n.type === 'smart_home'
@@ -664,7 +707,7 @@ function updateSignals() {
                   ? `${format(outs.level)} g`
                   : n.type === 'traffic_light'
                     ? `${t('signalState')}: ${format(outs.valid)}`
-                    : `${t('scenePassed')}: ${format(outs.passed)}`;
+                    : `${t('scenePassed')}: ${format(signalOutputs.passed)}`;
       const status = $('.scene-node-state', el);
       if (status)
         status.textContent =
@@ -699,14 +742,16 @@ function updateSignals() {
         $(`[data-angle="${i}"]`, el).textContent = `${a.toFixed(0)}°`;
       }
     if (n.type === 'sevenseg') {
-      let v = Number(ins.in ?? ins.data ?? ins.segments) || 0;
-      $$('[data-segment]', el).forEach((s, i) => s.classList.toggle('lit', !!(v & (1 << i))));
+      $$('[data-segment]', el).forEach((segment, bit) =>
+        segment.classList.toggle('lit', ins[`in${bit}`] === 1),
+      );
     }
     if (n.type === 'matrix') {
-      const rows = Number(ins.rows) || 0,
-        cols = Number(ins.cols) || 0;
-      $$('[data-pixel]', el).forEach((p, i) =>
-        p.classList.toggle('lit', !!(rows & (1 << (i >> 3))) && !!(cols & (1 << i % 8))),
+      $$('[data-pixel]', el).forEach((pixel, index) =>
+        pixel.classList.toggle(
+          'lit',
+          ins[`rows${index >> 3}`] === 1 && ins[`cols${index % 8}`] === 1,
+        ),
       );
     }
     const canvas = $('.mini-scope', el);
@@ -716,12 +761,13 @@ function updateSignals() {
     const el = $(`[data-wire="${w.id}"] .wire-line`);
     if (!el) continue;
     const v = runtime.wireValues?.[w.id] ?? runtime.outputs?.[w.from.node]?.[w.from.port];
-    el.setAttribute('class', `wire-line ${signalClass(v)} ${w.width > 1 ? 'bus-line' : ''}`);
+    el.setAttribute('class', `wire-line ${signalClass(v)}`);
   }
   updateGuideSignals();
   updateLessonSignals();
   updateMotionView();
   $('#sim-time').textContent = (runtime.time || 0).toFixed(3);
+  updateRecordingUi();
   const diagnostics = $('#diagnostics');
   diagnostics.hidden = !runtime.diagnostics?.length;
   diagnostics.textContent = `${runtime.diagnostics?.length || 0} ${t('diagnostics')}`;
@@ -757,31 +803,141 @@ function traceNodes() {
 function primarySignal(node) {
   const definition = getDefinition(node.type);
   return Object.values(
-    definition.outputs.length ? runtime.outputs?.[node.id] || {} : runtime.inputs?.[node.id] || {},
+    definition.outputs.length
+      ? runtime.signals.outputs[node.id] || {}
+      : runtime.signals.inputs[node.id] || {},
   )[0];
+}
+function monitorTraces() {
+  const nodes = recording?.active ? recordingSources : traceNodes();
+  return nodes.map((node, index) => {
+    const definition = getDefinition(node.type);
+    const port = definition.signals.outputs[0] || definition.signals.inputs[0];
+    return {
+      id: node.id,
+      label: recording?.active ? recording.traces[index].label : node.label || title(definition),
+      color: traceColors[index],
+      history: runtime.history[node.id] || [],
+      current: primarySignal(node),
+      stepped: !port?.analog && !port?.acceptAny,
+    };
+  });
+}
+function formatRate(rate) {
+  return `${new Intl.NumberFormat(lang === 'ua' ? 'uk' : 'en').format(rate)}×`;
+}
+function formatWindow(seconds) {
+  return seconds < 1 ? `${seconds * 1000} ${t('milliseconds')}` : `${seconds} ${t('seconds')}`;
+}
+function saveSimulationSettings() {
+  try {
+    localStorage.setItem(
+      'logic-lab.simulation',
+      JSON.stringify({ rate: simulationRate, timeBase }),
+    );
+  } catch {}
+}
+function toggleRecording() {
+  if (recording?.active) {
+    appendRecording(recording, runtime.time, recordingSources.map(primarySignal), { force: true });
+    stopRecording(recording);
+  } else {
+    recordingSources = traceNodes();
+    if (!recordingSources.length) return notify(t('noTraces'));
+    recording = createRecording({
+      name: project.name,
+      traces: recordingSources.map((node) => ({
+        id: node.id,
+        label: node.label || title(getDefinition(node.type)),
+      })),
+      startedAt: runtime.time,
+      sampleInterval: runtime.sampleInterval,
+    });
+    appendRecording(recording, runtime.time, recordingSources.map(primarySignal));
+    monitorOpen = true;
+    $('#monitor').classList.remove('collapsed');
+  }
+  setWorkspaceView('signals');
+  updateRecordingUi();
+  drawMonitor();
+}
+function updateRecordingUi() {
+  const active = !!recording?.active;
+  const toggle = $('#record-toggle');
+  if (!toggle) return;
+  const text = t(active ? 'recordStop' : recording ? 'recordNew' : 'recordStart');
+  toggle.textContent = text;
+  toggle.classList.toggle('recording', active);
+  $('[data-workspace-view="signals"]', $('.workspace-tabs')).classList.toggle(
+    'has-recording',
+    active,
+  );
+  toggle.setAttribute('aria-pressed', String(active));
+  toggle.setAttribute('aria-label', text);
+  toggle.disabled = !active && !traceNodes().length;
+  $('#time-base').disabled = active;
+  $('#record-download').disabled = !recording?.samples.length;
+  $('#record-download').title = t('recordDownload');
+  $('#record-download').setAttribute('aria-label', t('recordDownload'));
+  $('#trace-image').disabled = !monitorTraces().length;
+  $('#trace-image').setAttribute('aria-label', t('saveWaveformImage'));
+  const state = recording
+    ? `${t(active ? (running ? 'recordActive' : 'recordPaused') : 'recordSaved')} · ${(recording.samples.at(-1)?.time || 0).toFixed(3)} ${t('seconds')} · ${new Intl.NumberFormat(lang === 'ua' ? 'uk' : 'en').format(recording.samples.length)} ${t('recordSamples')}`
+    : '';
+  if ($('#record-status').textContent !== state) $('#record-status').textContent = state;
+}
+function downloadBlob(blob, name, extension) {
+  const filename = name.replace(/[^\p{L}\p{N} _-]/gu, '').trim() || 'waveforms';
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${filename}.waveforms.${extension}`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function downloadRecording() {
+  if (!recording?.samples.length) return;
+  downloadBlob(
+    new Blob([recordingCsv(recording)], { type: 'text/csv;charset=utf-8' }),
+    recording.name,
+    'csv',
+  );
+  notify(t('recordExported'));
+}
+async function downloadWaveformImage() {
+  const traces = monitorTraces().map((trace) => ({ ...trace, history: [...trace.history] }));
+  if (!traces.length) return;
+  const times = runtime.historyTimes;
+  const startTime = times[0] ?? runtime.time;
+  const endTime = times.at(-1) ?? runtime.time;
+  try {
+    const blob = await waveformPng(traces, {
+      title: project.name,
+      startTime,
+      endTime,
+      sampleTimes: [...times],
+      timeLabel: `${t('time')} (${t('seconds')})`,
+    });
+    downloadBlob(blob, project.name, 'png');
+    notify(t('imageExported'));
+  } catch {
+    notify(t('imageExportFailed'));
+  }
 }
 function drawMonitor() {
   if (!monitorOpen) return;
   const canvas = $('#trace-canvas');
   if (!canvas) return;
-  const nodes = traceNodes();
-  $('#trace-labels').innerHTML = nodes.length
-    ? nodes
+  const traces = monitorTraces();
+  $('#trace-labels').innerHTML = traces.length
+    ? traces
         .map(
-          (node, index) =>
-            `<div class="trace-label" style="--trace:${traceColors[index]}"><i></i><span>${esc(node.label || title(getDefinition(node.type)))}</span><b>${format(primarySignal(node))}</b></div>`,
+          (trace) =>
+            `<div class="trace-label" style="--trace:${trace.color}"><i></i><span title="${esc(trace.label)}">${esc(trace.label)}</span><b>${format(trace.current)}</b></div>`,
         )
         .join('')
     : `<p class="no-traces">${t('noTraces')}</p>`;
-  paintTraces(
-    canvas,
-    nodes.map((node, index) => ({
-      history: runtime.history[node.id] || [],
-      current: primarySignal(node),
-      color: traceColors[index],
-      stepped: ['led', 'clock', 'pwm'].includes(node.type),
-    })),
-  );
+  paintTraces(canvas, traces);
 }
 function updateCounts() {
   $('#motion').hidden = getSceneEntries(project).length === 0;
@@ -790,6 +946,7 @@ function updateCounts() {
   $('#canvas-name').textContent = project.name;
 }
 function addNode(type, point) {
+  setWorkspaceView('canvas');
   if (project.nodes.length >= 1000) {
     notify(t('limitReached'));
     return;
@@ -889,6 +1046,8 @@ function enableSelected(value) {
 }
 function nodePointerDown(e) {
   if (e.target.closest('button,input,textarea,select') || e.button !== 0) return;
+  $('#viewport').focus({ preventScroll: true });
+  wiring.clear();
   e.stopPropagation();
   const id = e.currentTarget.dataset.node;
   if (e.metaKey || e.ctrlKey) {
@@ -919,6 +1078,8 @@ function pinPointerDown(e) {
   e.preventDefault();
   e.stopPropagation();
   if (e.button !== 0) return;
+  $('#viewport').focus({ preventScroll: true });
+  if (wiring.pinPointerDown(e)) return;
   const pin = e.currentTarget;
   const current = { node: pin.dataset.node, port: pin.dataset.pin, side: pin.dataset.side };
   if (pending) {
@@ -950,25 +1111,10 @@ function completeWire(target) {
   }
   const source = pending.side === 'out' ? pending : target,
     destination = pending.side === 'in' ? pending : target;
-  const sn = project.nodes.find((n) => n.id === source.node),
-    dn = project.nodes.find((n) => n.id === destination.node);
-  if (!sn || !dn) return cancelWire();
-  const sp = getDefinition(sn.type).outputs.find((p) => p.id === source.port),
-    dp = getDefinition(dn.type).inputs.find((p) => p.id === destination.port);
-  if (!dp.acceptAny && ((sp.width || 1) !== (dp.width || 1) || !!sp.analog !== !!dp.analog)) {
-    notify(t('incompatible'));
-    return;
-  }
-  if (
-    project.wires.some(
-      (w) =>
-        w.from.node === source.node &&
-        w.from.port === source.port &&
-        w.to.node === destination.node &&
-        w.to.port === destination.port,
-    )
-  ) {
-    cancelWire();
+  const check = checkConnection(project, source, destination);
+  if (!check.ok) {
+    if (check.reason === 'duplicate') cancelWire();
+    else notify(t('incompatible'));
     return;
   }
   checkpoint();
@@ -977,7 +1123,7 @@ function completeWire(target) {
     id: uid('w'),
     from: { node: source.node, port: source.port },
     to: { node: destination.node, port: destination.port },
-    width: sp.width || 1,
+    width: check.width,
     points,
   });
   cancelWire();
@@ -985,6 +1131,7 @@ function completeWire(target) {
   notify(t('connection'));
 }
 function cancelGesture() {
+  wiring?.cancelGesture();
   if (gesture?.kind === 'pan' && $('#viewport')?.hasPointerCapture(gesture.pointerId)) {
     $('#viewport').releasePointerCapture(gesture.pointerId);
   }
@@ -995,6 +1142,7 @@ function cancelGesture() {
 }
 function cancelInteraction() {
   cancelGesture();
+  wiring?.clear();
   if ($('#draft')) cancelWire();
 }
 function cancelWire() {
@@ -1005,6 +1153,7 @@ function cancelWire() {
     icon('wire', 15) + t(project.exampleId === 'half-adder' ? 'tutorial' : 'connectHint');
 }
 function startPan(e) {
+  $('#viewport').focus({ preventScroll: true });
   e.preventDefault();
   suppressPanClick = true;
   gesture = { kind: 'pan', pointerId: e.pointerId, x: e.clientX, y: e.clientY, view: { ...view } };
@@ -1012,6 +1161,7 @@ function startPan(e) {
   $('#viewport').setPointerCapture(e.pointerId);
 }
 function onPointerMove(e) {
+  if (wiring.pointerMove(e)) return;
   if (gesture && gesture.pointerId !== e.pointerId) return;
   if (pending) {
     const n = project.nodes.find((n) => n.id === pending.node);
@@ -1053,6 +1203,7 @@ function onPointerMove(e) {
       const d = wirePath(w, project);
       $$(`[data-wire="${w.id}"] path`).forEach((path) => path.setAttribute('d', d));
     }
+    wiring.refresh();
     return;
   }
   if (gesture.kind === 'marquee') {
@@ -1067,13 +1218,17 @@ function onPointerMove(e) {
   }
 }
 function onPointerUp(e) {
+  if (wiring.pointerUp(e)) return;
   if (gesture && gesture.pointerId !== e.pointerId) return;
   if (
     gesture?.kind !== 'pan' &&
     pending &&
     Math.hypot(e.clientX - pending.startX, e.clientY - pending.startY) > 5
   ) {
-    const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest('.pin');
+    const hit = document
+      .elementsFromPoint(e.clientX, e.clientY)
+      .map((element) => element.closest('.pin'))
+      .find(Boolean);
     if (hit)
       completeWire({ node: hit.dataset.node, port: hit.dataset.pin, side: hit.dataset.side });
   }
@@ -1126,8 +1281,10 @@ function setRunning(next) {
   $('#run').classList.toggle('running', next);
   $('#simulation-badge').innerHTML = `<i></i>${t(next ? 'live' : 'paused')}`;
   $('#simulation-badge').classList.toggle('live', next);
+  updateRecordingUi();
 }
 function replaceProject(next) {
+  setWorkspaceView('canvas');
   cancelInteraction();
   checkpoint();
   project = next;
@@ -1143,7 +1300,7 @@ function replaceProject(next) {
   $('#project-name').value = project.name;
   changed();
   renderLesson();
-  fit();
+  fit({ readable: !project.viewport });
   closeModal();
 }
 function confirmReplace(next) {
@@ -1281,16 +1438,19 @@ function renderLesson() {
   const { example, lesson } = current;
   lessonStep = Math.max(0, Math.min(lesson.steps.length - 1, lessonStep));
   const step = lesson.steps[lessonStep];
-  panel.hidden = !lessonOpen;
-  $('#lesson-toggle').title = t(lessonOpen ? 'hideLesson' : 'showLesson');
-  $('#lesson-toggle').setAttribute('aria-label', t(lessonOpen ? 'hideLesson' : 'showLesson'));
-  if (!lessonOpen) {
+  const visible = lessonOpen && (!compactLayout.matches || compactLessonOpen);
+  panel.hidden = !visible;
+  $('#lesson-toggle').title = t(visible ? 'hideLesson' : 'showLesson');
+  $('#lesson-toggle').setAttribute('aria-label', t(visible ? 'hideLesson' : 'showLesson'));
+  $('#lesson-toggle').setAttribute('aria-expanded', String(visible));
+  if (!visible) {
     $$('.lesson-highlight').forEach((el) => el.classList.remove('lesson-highlight'));
     return;
   }
   highlighted = new Set(step.nodes || []);
   panel.innerHTML = `<div class="lesson-heading"><span class="eyebrow">${t('lesson')} · ${esc(title(example))}</span><button id="lesson-close" class="icon-btn" aria-label="${t('hideLesson')}">${icon('close', 14)}</button></div><div class="lesson-content"><div><p class="lesson-goal">${esc(lesson.goal)}</p><strong>${lessonStep + 1}. ${esc(step.title)}</strong><p>${esc(step.text)}</p><div id="lesson-live" class="lesson-live"></div></div><div class="lesson-navigation"><span>${t('stepOf')} ${lessonStep + 1} ${t('of')} ${lesson.steps.length}</span><div><button id="lesson-prev" class="icon-btn" ${lessonStep === 0 ? 'disabled' : ''} aria-label="${t('previousStep')}">${icon('chevron', 15)}</button><button id="lesson-next" class="icon-btn" ${lessonStep === lesson.steps.length - 1 ? 'disabled' : ''} aria-label="${t('nextStep')}">${icon('chevron', 15)}</button></div><button id="lesson-inspect" class="text-btn">${t('inspectStep')}${icon('chevron', 12)}</button></div></div>${lessonStep === lesson.steps.length - 1 ? `<div class="lesson-result"><b>${t('expectedResult')}</b> ${esc(lesson.expected)}</div>` : ''}`;
   $('#lesson-close').onclick = () => {
+    compactLessonOpen = false;
     lessonOpen = false;
     renderLesson();
   };
@@ -1309,6 +1469,7 @@ function renderLesson() {
       selectedWire = null;
       inspectorTab = 'properties';
       selectionChanged();
+      setWorkspaceView('inspector');
     }
   };
   $$('.circuit-node').forEach((el) =>
@@ -1323,9 +1484,8 @@ function updateLessonSignals() {
     .filter((n) => highlighted.has(n.id))
     .slice(0, 4)
     .map((n) => {
-      const definition = getDefinition(n.type),
-        ports = definition.outputs.length ? runtime.outputs?.[n.id] : runtime.inputs?.[n.id];
-      const value = Object.values(ports || {})[0];
+      const definition = getDefinition(n.type);
+      const value = primarySignal(n);
       return `<span>${esc(n.label || title(definition))} <b class="${signalClass(value)}">${format(value)}</b></span>`;
     })
     .join('');
@@ -1508,12 +1668,12 @@ function updateMotionView() {
       }[snapshot.node.type] || [];
     $('#scene-summary').innerHTML = primary
       .map(([id, label]) => {
-        const port = definition.outputs.find((item) => item.id === id);
+        const port = definition.signals.outputs.find((item) => item.id === id);
         return `<div><span>${t(label)}</span><strong>${format(snapshot.outputs[id])}${port.unit ? ` <small>${esc(port.unit)}</small>` : ''}</strong></div>`;
       })
       .join('');
     const actuators = sceneActuatorValues(snapshot);
-    $('#scene-actuators').innerHTML = definition.inputs
+    $('#scene-actuators').innerHTML = definition.signals.inputs
       .filter((port) => !['run', 'reset'].includes(port.id))
       .map((port) => {
         const actual = actuators[port.id];
@@ -1525,7 +1685,7 @@ function updateMotionView() {
       readout.textContent = format(value);
       readout.closest('button').setAttribute('aria-pressed', String(value === 1));
     });
-    $('#scene-readouts').innerHTML = definition.outputs
+    $('#scene-readouts').innerHTML = definition.signals.outputs
       .map(
         (port) =>
           `<div class="scene-signal-row"><span>${esc(port.label || port.id)}</span><b class="signal-value ${signalClass(snapshot.outputs[port.id])}">${format(snapshot.outputs[port.id])}${port.unit ? ` <small>${esc(port.unit)}</small>` : ''}</b></div>`,
@@ -1623,8 +1783,56 @@ function closeModal() {
   if (modalOpener?.isConnected) modalOpener.focus();
   modalOpener = null;
 }
+function setLibraryOpen(open) {
+  const library = $('#component-library');
+  const wasOpen = library.classList.contains('mobile-open');
+  library.classList.toggle('mobile-open', open);
+  $('#library-toggle').setAttribute('aria-expanded', String(open));
+  $('#library-backdrop').hidden = !open;
+  if (open) {
+    library.setAttribute('role', 'dialog');
+    library.setAttribute('aria-modal', 'true');
+    $('#search').focus();
+  } else {
+    library.removeAttribute('role');
+    library.removeAttribute('aria-modal');
+    if (wasOpen) $('#library-toggle').focus();
+  }
+}
+function setToolsOpen(open) {
+  $('.canvas-tools').classList.toggle('more-tools-open', open);
+  $('#more-tools').setAttribute('aria-expanded', String(open));
+}
+function setWorkspaceView(next) {
+  if (!['canvas', 'inspector', 'signals'].includes(next)) return;
+  workspaceView = next;
+  $('.main').dataset.workspaceView = next;
+  $$('[data-workspace-view]', $('.workspace-tabs')).forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.workspaceView === next));
+  });
+  if (next === 'signals') {
+    monitorOpen = true;
+    $('#monitor').classList.remove('collapsed');
+  }
+  requestAnimationFrame(() => {
+    applyView();
+    drawMonitor();
+  });
+}
 function bindShell() {
+  wiring.bind();
+  $('#more-tools').onclick = () =>
+    setToolsOpen(!$('.canvas-tools').classList.contains('more-tools-open'));
+  $('#secondary-tools').onclick = () => setToolsOpen(false);
+  $$('[data-workspace-view]', $('.workspace-tabs')).forEach((button) => {
+    button.onclick = () => setWorkspaceView(button.dataset.workspaceView);
+  });
+  $('#library-toggle').onclick = () =>
+    setLibraryOpen(!$('#component-library').classList.contains('mobile-open'));
+  $('#close-library').onclick = () => setLibraryOpen(false);
+  $('#library-backdrop').onclick = () => setLibraryOpen(false);
   $('#close-inspector').onclick = () => {
+    setWorkspaceView('canvas');
     selected.clear();
     selectedWire = null;
     selectionChanged();
@@ -1650,22 +1858,32 @@ function bindShell() {
   $('#run').onclick = () => setRunning(!running);
   $('#step').onclick = () => {
     setRunning(false);
-    advance(0.01);
+    advance(0.01 * simulationRate);
     updateSignals();
   };
   $('#reset').onclick = resetSimulation;
   $('#undo').onclick = () => undo();
   $('#redo').onclick = () => undo(true);
-  $('#fit').onclick = fit;
+  $('#fit').onclick = () => fit();
   $('#zoom-value').onclick = resetZoom;
   $('#zoom-in').onclick = () => zoomCenter(ZOOM_IN_FACTOR);
   $('#zoom-out').onclick = () => zoomCenter(ZOOM_OUT_FACTOR);
-  $('#export').onclick = exportProject;
-  $('#import').onclick = () => $('#import-file').click();
+  $('#export').onclick = () => {
+    $('.project-files').open = false;
+    exportProject();
+  };
+  $('#import').onclick = () => {
+    $('.project-files').open = false;
+    $('#import-file').click();
+  };
   $('#examples').onclick = () => showExamples();
   $('#motion').onclick = () => showMotionView();
   $('#lesson-toggle').onclick = () => {
-    lessonOpen = !lessonOpen;
+    if (compactLayout.matches) {
+      compactLessonOpen = !compactLessonOpen;
+      if (compactLessonOpen) lessonOpen = true;
+      setWorkspaceView('canvas');
+    } else lessonOpen = !lessonOpen;
     renderLesson();
   };
   $('#help').onclick = showHelp;
@@ -1673,14 +1891,30 @@ function bindShell() {
   $('#add-note').onclick = () => addNode('note');
   $('#add-group').onclick = () => addNode('group');
   $$('.canvas-tools [data-tool]').forEach((el) => (el.onclick = () => setTool(el.dataset.tool)));
+  $('#simulation-rate').onchange = (e) => {
+    const value = Number(e.target.value);
+    if (!SIMULATION_RATES.includes(value)) return;
+    simulationRate = value;
+    saveSimulationSettings();
+  };
+  $('#record-toggle').onclick = toggleRecording;
+  $('#record-download').onclick = downloadRecording;
+  $('#trace-image').onclick = downloadWaveformImage;
+  updateRecordingUi();
   $('#time-base').onchange = (e) => {
-    timeBase = Number(e.target.value);
+    const value = Number(e.target.value);
+    if (recording?.active || !TIME_WINDOWS.includes(value)) return;
+    timeBase = value;
+    saveSimulationSettings();
     runtime.sampleInterval = timeBase / 255;
     runtime.history = Object.create(null);
+    runtime.historyTimes = [];
+    runtime.sampleElapsed = 0;
     runtime.lastSampleTime = runtime.time;
     drawMonitor();
   };
   $('#monitor-toggle').onclick = () => {
+    if (compactLayout.matches) return setWorkspaceView('canvas');
     monitorOpen = !monitorOpen;
     $('#monitor').classList.toggle('collapsed', !monitorOpen);
     requestAnimationFrame(drawMonitor);
@@ -1692,7 +1926,7 @@ function bindShell() {
     'pointerdown',
     (e) => {
       if (e.target.closest('.canvas-tools,.canvas-bottom')) return;
-      if (gesture) {
+      if (gesture || wiring.busy) {
         e.preventDefault();
         e.stopImmediatePropagation();
         return;
@@ -1723,6 +1957,7 @@ function bindShell() {
   );
   vp.addEventListener('pointerdown', (e) => {
     if (e.target.closest('.canvas-tools,.canvas-bottom,button') || e.button !== 0) return;
+    if (wiring.blankPointerDown(e)) return;
     if (pending) {
       if (pending.points.length >= 100) {
         notify(t('limitReached'));
@@ -1790,10 +2025,21 @@ document.addEventListener('pointercancel', (e) => {
   cancelGesture();
   persist();
 });
+document.addEventListener('pointerdown', (event) => {
+  if (!event.target.closest('.project-files')) $('.project-files').open = false;
+  if (!event.target.closest('.canvas-tools')) setToolsOpen(false);
+});
 document.addEventListener('keydown', (e) => {
   if (e.isComposing || e.defaultPrevented) return;
   if (e.key === 'Escape') {
-    if (modal) closeModal();
+    if ($('.project-files').open) {
+      $('.project-files').open = false;
+      $('.project-files summary').focus();
+    } else if ($('.canvas-tools').classList.contains('more-tools-open')) {
+      setToolsOpen(false);
+      $('#more-tools').focus();
+    } else if (modal) closeModal();
+    else if ($('#component-library').classList.contains('mobile-open')) setLibraryOpen(false);
     else cancelInteraction();
     return;
   }
@@ -1801,6 +2047,24 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') {
       const focusable = $$('button,input,select,textarea,a[href]', $('.modal')).filter(
         (el) => !el.disabled,
+      );
+      const first = focusable[0],
+        last = focusable.at(-1);
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    }
+    return;
+  }
+  if ($('.project-files').open || $('.canvas-tools').classList.contains('more-tools-open')) return;
+  if ($('#component-library').classList.contains('mobile-open')) {
+    if (e.key === 'Tab') {
+      const focusable = $$('button,input,a[href],summary', $('#component-library')).filter(
+        (el) => !el.disabled && el.getClientRects().length,
       );
       const first = focusable[0],
         last = focusable.at(-1);
@@ -1835,6 +2099,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (wiring.keyDown(e)) return;
   if (e.key === ' ') {
     if (e.target.closest('button,a,summary')) return;
     e.preventDefault();
@@ -1869,11 +2134,13 @@ document.addEventListener('keydown', (e) => {
   }
   if (e.key === '/') {
     e.preventDefault();
-    $('#search').focus();
+    if (compactLayout.matches) setLibraryOpen(true);
+    else $('#search').focus();
   }
   if (e.key === 'v') setTool('select');
   if (e.key === 'h') setTool('pan');
   if (e.key === 'w') setTool('wire');
+  if (e.key.toLowerCase() === 't') setTool('trace');
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
     e.preventDefault();
     const dx = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
@@ -1922,6 +2189,12 @@ $('#import-file').addEventListener('change', async (e) => {
   }
   e.target.value = '';
 });
+compactLayout.addEventListener('change', () => {
+  setLibraryOpen(false);
+  setToolsOpen(false);
+  renderLesson();
+  setWorkspaceView(workspaceView);
+});
 window.addEventListener('resize', () => {
   applyView();
   drawMonitor();
@@ -1931,22 +2204,77 @@ window.addEventListener('beforeunload', () => {
   saveProject(project);
 });
 function advance(dt) {
-  const steps = Math.ceil(dt / 0.0005);
-  for (let i = 0; i < steps; i++) simulate(project, runtime, dt / steps);
+  const steps = simulationStepCount(dt, runtime.sampleInterval);
+  for (let i = 0; i < steps; i++) {
+    simulate(project, runtime, dt / steps);
+    if (recording?.active) {
+      appendRecording(recording, runtime.time, recordingSources.map(primarySignal));
+      if (recording.limitReached) notify(t('recordLimit'));
+    }
+  }
 }
-let lastFrame = 0;
+let lastFrame = null;
 function tick(now) {
   if (running) {
-    const elapsed = lastFrame ? Math.min(0.05, (now - lastFrame) / 1000) : 0.016;
+    const elapsed = frameSimulationDelta(now, lastFrame, simulationRate);
     advance(elapsed);
     updateSignals();
   }
   lastFrame = now;
   requestAnimationFrame(tick);
 }
+wiring = createWiringEditor({
+  getProject: () => project,
+  getView: () => view,
+  getTool: () => tool,
+  getLanguage: () => lang,
+  getSelectedWire: () => selectedWire,
+  t,
+  worldPoint,
+  snapshot,
+  notify,
+  cancelConnection: cancelWire,
+  refreshInspector: renderInspector,
+  showInspector: () => setWorkspaceView('inspector'),
+  showCanvas: () => setWorkspaceView('canvas'),
+  activateSelect: () => {
+    tool = 'select';
+    updateTool();
+  },
+  selectWire: (id) => {
+    selected.clear();
+    selectedWire = id;
+    renderBoard();
+    renderInspector();
+    updateSignals();
+  },
+  commit: (before) => {
+    undoStack.push(before);
+    if (undoStack.length > 80) undoStack.shift();
+    redoStack = [];
+    changed();
+  },
+  revealNode: (id) => {
+    const node = project.nodes.find((item) => item.id === id);
+    if (!node) return;
+    setWorkspaceView('canvas');
+    selected = new Set([id]);
+    selectedWire = null;
+    renderBoard();
+    renderInspector();
+    updateSignals();
+    const size = dimensions(node),
+      viewport = $('#viewport');
+    view.zoom = Math.max(0.75, view.zoom);
+    view.x = viewport.clientWidth / 2 - (node.x + size.w / 2) * view.zoom;
+    view.y = viewport.clientHeight / 2 - (node.y + size.h / 2) * view.zoom;
+    applyView();
+    persist();
+  },
+});
 simulate(project, runtime, 0);
 shell();
 requestAnimationFrame(() => {
-  if (!project.viewport) fit();
+  if (!project.viewport) fit({ readable: true });
   requestAnimationFrame(tick);
 });
