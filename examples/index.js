@@ -1,3 +1,13 @@
+import scenarioCircuit0 from './traffic-light/circuit.json' with { type: 'json' };
+import scenarioLesson0 from './traffic-light/lesson.js';
+import scenarioCircuit1 from './traffic-junction/circuit.json' with { type: 'json' };
+import scenarioLesson1 from './traffic-junction/lesson.js';
+import scenarioCircuit2 from './railway-interlocking/circuit.json' with { type: 'json' };
+import scenarioLesson2 from './railway-interlocking/lesson.js';
+import scenarioCircuit3 from './animal-feeder/circuit.json' with { type: 'json' };
+import scenarioLesson3 from './animal-feeder/lesson.js';
+import scenarioCircuit4 from './water-tank/circuit.json' with { type: 'json' };
+import scenarioLesson4 from './water-tank/lesson.js';
 import xyzCircuit from './printer-xyz/circuit.json' with { type: 'json' };
 import xyzLesson from './printer-xyz/lesson.js';
 import motionCircuit0 from './stepper-basics/circuit.json' with { type: 'json' };
@@ -57,6 +67,11 @@ export const EXAMPLES = [
   { ...motionLesson1, create: () => structuredClone(motionCircuit1) },
   { ...motionLesson2, create: () => structuredClone(motionCircuit2) },
   { ...xyzLesson, create: () => structuredClone(xyzCircuit) },
+  { ...scenarioLesson0, create: () => structuredClone(scenarioCircuit0) },
+  { ...scenarioLesson1, create: () => structuredClone(scenarioCircuit1) },
+  { ...scenarioLesson2, create: () => structuredClone(scenarioCircuit2) },
+  { ...scenarioLesson3, create: () => structuredClone(scenarioCircuit3) },
+  { ...scenarioLesson4, create: () => structuredClone(scenarioCircuit4) },
 ];
 
 export function createExample(id = 'half-adder') {

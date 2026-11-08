@@ -37,11 +37,11 @@ The application is written as JavaScript modules. The build bundles Three.js and
 
 ## Learn with guides and experiments
 
-The library contains 54 components with guides in English and Ukrainian. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
+The library contains 59 components with guides in English and Ukrainian. Click the question-mark button beside a library component to read its guide without adding it to the circuit. For a selected component, switch between **Properties** and **Usage guide** in the inspector. Each guide explains the component's purpose, input and output pins, settings, a wiring procedure, an experiment, expected results, and common mistakes. Related examples open a complete circuit for further exploration.
 
 All seven logic gates and both binary adders include truth tables in their guides and properties. Tables distinguish inputs from outputs and explain 0 and 1. When inspecting a component on the circuit, the matching row follows its current binary signals in real time. Floating or unknown signals and disabled components show an explanation instead of highlighting a misleading row.
 
-The **Examples** catalog contains 19 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, buses, memory, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback.
+The **Examples** catalog contains 24 editable laboratories. Search by name or topic and filter by topic or difficulty. Laboratories cover gates and arithmetic, clocked state, displays, buses, memory, mixed signals, physical signal behavior, PWM control surfaces, stepper motors, printer-style homing and position feedback.
 
 After opening an example, a lesson panel appears above the canvas. Follow its steps with **Previous** and **Next**, watch the highlighted components and live pin values, and open the relevant component in the inspector. Change a switch, numeric value, or slider and compare the result with the lesson's expected behavior. Run the circuit to advance clocks and waveforms, or pause and use **Step** to examine changes in smaller increments.
 
@@ -92,6 +92,7 @@ Canvas navigation follows WirePad: wheel zoom stays anchored at the cursor, temp
 | Architecture           | ALU, tri-state buffer, priority encoder, bus splitter and merger                                        |
 | Memory                 | RAM, ROM, register file                                                                                 |
 | Physical behavior      | Open-drain output, pull-up and pull-down, Schmitt trigger, monostable                                   |
+| Interactive scenes     | Traffic signal, road junction, railway interlocking, animal feeder, water tank and pump                 |
 | Annotation             | Text notes and colored groups                                                                           |
 
 Bus pins have a fixed eight-bit width unless a component's pin explicitly indicates a different width, such as a four-bit memory address. The numeric bus input exposes eight-bit data, a four-bit nibble, and a three-bit address output. Use the inspector and pin labels to see the signal interface.
@@ -144,3 +145,17 @@ The stepper component accepts rising STEP edges, DIR, enable, and reset. Its tra
 Open **3D mechanisms** in the header or **Open 3D view** on a motor. The first three motors control the printer's X carriage, Y bed, and Z gantry. The separate view shows shaft and screw rotation, carriage travel, sensor trip markers, and live readouts. Its switches and pulse-clock controls edit the same source components as the circuit canvas. Camera presets and orbit controls affect only the view. Three.js requires WebGL 2; if graphics are unavailable, the circuit simulation still works.
 
 The mechanical model is idealized: it does not simulate inertia, torque, missed steps, collisions, acceleration planning, or real electrical motor-driver behavior. STEP pulses must be sampled by the simulator; use frequencies comfortably below its sampling limit. Reset sets the configured initial position, while physical homing requires movement and a limit signal.
+
+## Interactive 3D laboratories
+
+The header's **3D** action appears only when the circuit contains a stepper mechanism or an interactive scene object. Sensors alone and ordinary logic circuits do not show it. Each scene component also has its own **Open 3D view** action; when several objects are present, choose one in the scene selector. The scene, source controls, sensor outputs, simulation pause and reset all use the same circuit runtime.
+
+The **3D scenes & automation** example topic contains five laboratories with editable circuits, bilingual walkthroughs and standalone English worksheets:
+
+- **Traffic light:** drive red, amber and green separately and inspect the VALID and GO outputs. Multiple lamps or darkness are invalid.
+- **Traffic junction:** use a counter and clearance phases to manage real queues. Conflicting releases can cause a collision; CRASH stays latched until reset.
+- **Railway interlocking:** dispatch two trains through a shared block, align the turnout, close the level-crossing barrier, and obey the speed restriction. Unsafe control can cause collisions, crossing accidents or derailments.
+- **Animal feeder:** use hunger, bowl-full and empty-hopper feedback to control an auger. The animal consumes measured food, the hopper is finite, and unsafe filling triggers an alarm.
+- **Water tank:** use LOW and HIGH feedback with a latch to regulate the pump against a drain. Flow rates change the measured water level; overflow stays latched until reset.
+
+These are deterministic educational simulations, not models for controlling real traffic, railways, animals or industrial equipment. Scene mechanics advance once per simulation step; camera animation does not change physical state. Missing optional controls use the defaults documented in each guide. Unknown controls pause the affected mechanics and expose uncertainty. Disabled components stop advancing and release their outputs. Changing a scene's parameters resets that object; changing circuit sources keeps its physical and latched fault state. Use **Reset** after correcting an unsafe design.

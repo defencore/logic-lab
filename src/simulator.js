@@ -1,4 +1,12 @@
 import { getDefinition } from './catalog.js';
+import {
+  SCENARIO_INPUT_DEFAULTS,
+  isScenarioType,
+  initialScenarioState,
+  advanceScenario,
+  evaluateScenario,
+  scenarioParameterError,
+} from './scenarios.js';
 
 const TAU = Math.PI * 2;
 const unknown = (value) => typeof value !== 'number' || !Number.isFinite(value);
@@ -11,6 +19,7 @@ const active = (value, fallback = 0) => logic(valueOr(value, fallback)) === 1;
 const allKnown = (...values) => values.every((value) => !unknown(value));
 const decimalSegments = [0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f];
 const sequential = new Set([
+  'sr_latch',
   'd_ff',
   'jk_ff',
   't_ff',
@@ -24,6 +33,12 @@ const sequential = new Set([
 ]);
 const HISTORY_CAPACITY = 256;
 const optionalInputs = {
+  ...Object.fromEntries(
+    Object.entries(SCENARIO_INPUT_DEFAULTS).map(([type, defaults]) => [
+      type,
+      Object.keys(defaults),
+    ]),
+  ),
   clock: [],
   am: ['mod'],
   fm: ['mod'],
@@ -77,6 +92,7 @@ function motionParameters(p) {
 }
 
 function initialState(node) {
+  if (isScenarioType(node.type)) return { scenario: initialScenarioState(node) };
   const parameters = { ...getDefinition(node.type)?.defaults, ...node.params };
   const initial = Math.round(number(parameters.initial));
   const motion = node.type === 'stepper' ? motionParameters(parameters) : null;
@@ -152,6 +168,7 @@ function evaluate(node, runtime, incoming) {
   const p = { ...definition.defaults, ...node.params };
   const i = runtime.inputs[node.id];
   const s = runtime.state[node.id];
+  if (isScenarioType(node.type)) return evaluateScenario(node, s.scenario, i);
   const a = logic(i.a),
     b = logic(i.b);
   const out = (value) => ({ out: value });
@@ -231,12 +248,6 @@ function evaluate(node, runtime, incoming) {
       return { out: Math.floor(Math.log2(input)), valid: 1 };
     }
     case 'sr_latch': {
-      const set = logic(i.s),
-        reset = logic(i.r);
-      if (set === 1 && reset === 1) s.q = 'X';
-      else if (set === 1 && reset === 0) s.q = 1;
-      else if (set === 0 && reset === 1) s.q = 0;
-      else if (set !== 0 || reset !== 0) s.q = 'X';
       return qout();
     }
     case 'd_ff':
@@ -424,6 +435,11 @@ function advanceState(nodes, runtime, incoming, dt) {
       s = runtime.state[node.id];
     const p = { ...getDefinition(node.type).defaults, ...node.params };
     const next = { ...s };
+    if (isScenarioType(node.type)) {
+      if (node.enabled !== false)
+        updates.set(node.id, { ...s, scenario: advanceScenario(node, s.scenario, i, dt) });
+      continue;
+    }
     if (node.type === 'stepper') {
       const motion = motionParameters(p);
       const step = logic(i.step);
@@ -468,6 +484,15 @@ function advanceState(nodes, runtime, incoming, dt) {
       next.lastClock = clock;
       const reset = active(i.reset);
       switch (node.type) {
+        case 'sr_latch': {
+          const set = logic(i.s),
+            resetInput = logic(i.r);
+          if (set === 1 && resetInput === 1) next.q = 'X';
+          else if (set === 1 && resetInput === 0) next.q = 1;
+          else if (set === 0 && resetInput === 1) next.q = 0;
+          else if (set !== 0 || resetInput !== 0) next.q = 'X';
+          break;
+        }
         case 'd_ff':
           if (reset) next.q = 0;
           else if (rising) next.q = logic(i.d);
@@ -656,6 +681,14 @@ export function simulate(project, runtime = createRuntime(), dt = 0.01) {
   for (const node of nodes) {
     const definition = getDefinition(node.type);
     if (node.enabled === false) continue;
+    const scenarioError = isScenarioType(node.type) && scenarioParameterError(node);
+    if (scenarioError)
+      runtime.diagnostics.push({
+        level: 'error',
+        code: 'invalid_scenario',
+        node: node.id,
+        message: `${node.label || definition.label}: ${scenarioError}`,
+      });
     for (const port of definition.inputs) {
       const value = runtime.inputs[node.id]?.[port.id];
       if (value === 'Z' && !(optionalInputs[node.type] || []).includes(port.id))

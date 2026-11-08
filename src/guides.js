@@ -2700,6 +2700,408 @@ add('position_sensor', {
   examples: ['position-control', 'stepper-basics'],
 });
 
+add('traffic_light', {
+  purpose: [
+    'A traffic-light block turns three digital lamp commands into a visible signal and checks whether exactly one lamp is active.',
+    'Блок світлофора перетворює три цифрові команди на видимі лампи й перевіряє, чи активна рівно одна лампа.',
+  ],
+  steps: [
+    [
+      'Connect independent switches to RED, YELLOW and GREEN. Start with RED=1 and the other two inputs at 0.',
+      'Підключіть незалежні перемикачі до RED, YELLOW та GREEN. Почніть з RED=1 та двох інших нулів.',
+    ],
+    [
+      'Connect VALID and GO to LEDs, then open the traffic-light scene from 3D to compare the visible lamps with these outputs.',
+      'Підключіть VALID та GO до світлодіодів і відкрийте сцену світлофора через 3D для порівняння ламп із виходами.',
+    ],
+    [
+      'Test red only, amber only, green only, all off and multiple lamps on. This component has no timing parameters or hidden controller.',
+      'Перевірте окремо червоний, жовтий, зелений, усі вимкнені й кілька ввімкнених. Блок не має параметрів часу чи прихованого контролера.',
+    ],
+  ],
+  experiment: [
+    'Leave GREEN=1 and also set RED=1, then remove RED. Watch VALID and GO drop and recover while the physical lamp commands remain visible.',
+    'Залиште GREEN=1 та додайте RED=1, потім приберіть RED. Спостерігайте зникнення й відновлення VALID/GO, поки команди ламп лишаються видимими.',
+  ],
+  expected: [
+    'Exactly one lamp gives VALID=1. Only the green-only combination gives GO=1; the other seven input combinations do not grant passage.',
+    'Рівно одна лампа дає VALID=1. Лише окремий зелений дає GO=1; інші сім комбінацій не дозволяють проїзд.',
+  ],
+  pitfalls: [
+    [
+      'This intentionally simplified model rejects red plus amber together. It does not implement country-specific traffic rules or automatically sequence the lamps.',
+      'Ця спрощена модель не приймає одночасний червоний із жовтим. Вона не реалізує правила окремої країни чи автоматичне перемикання.',
+    ],
+    [
+      'Drive every lamp input with a known bit; an unconnected Z is not a deliberate all-off command. VALID describes lamp consistency, not a complete road-safety assessment.',
+      'Задайте кожній лампі визначений біт; непідключений Z не є навмисною командою вимкнення. VALID описує узгодженість ламп, а не повну безпеку дороги.',
+    ],
+  ],
+  inputs: {
+    red: ['RED: high lights the stop lamp.', 'RED: одиниця вмикає червону лампу зупинки.'],
+    yellow: [
+      'YELLOW: high lights the amber caution lamp.',
+      'YELLOW: одиниця вмикає жовту попереджувальну лампу.',
+    ],
+    green: [
+      'GREEN: high lights the green lamp; passage still requires a valid one-lamp state.',
+      'GREEN: одиниця вмикає зелену; дозвіл додатково потребує правильного стану однієї лампи.',
+    ],
+  },
+  outputs: {
+    valid: [
+      'VALID: 1 only when exactly one of RED, YELLOW and GREEN is high.',
+      'VALID: 1 лише тоді, коли рівно один RED, YELLOW чи GREEN має 1.',
+    ],
+    go: ['GO: 1 only for GREEN=1 with RED=YELLOW=0.', 'GO: 1 лише при GREEN=1 та RED=YELLOW=0.'],
+  },
+  examples: ['traffic-light', 'traffic-junction'],
+});
+
+add('traffic_junction', {
+  purpose: [
+    'A crossroad process moves real simulated cars according to two-axis signal commands, exposing queues and a latched collision for feedback experiments.',
+    'Процес перехрестя рухає змодельовані машини за сигналами двох напрямків і показує черги та запам’ятоване зіткнення для дослідів керування.',
+  ],
+  steps: [
+    [
+      'Connect mutually exclusive NS_GREEN and EW_GREEN commands and their amber phases. Yellow stops new entries while cars already in the junction clear.',
+      'Підключіть взаємно виключні NS_GREEN та EW_GREEN і жовті фази. Жовтий зупиняє нові в’їзди, поки машини на перехресті виїжджають.',
+    ],
+    [
+      'Use a counter/decoder for green, amber, opposite green, opposite amber. Set carSpeed=12 meters/second, arrivalInterval=4 seconds and initialCars=2 per axis for the supplied laboratory.',
+      'Використайте лічильник і декодер для зеленого, жовтого, протилежного зеленого та жовтого. Для лабораторної задайте carSpeed=12 м/с, arrivalInterval=4 с та initialCars=2 на напрямок.',
+    ],
+    [
+      'Drive RUN=1 and RESET=0, open the junction scene in 3D and observe cars, waiting traffic and PASSED. Pulse RESET after removing a deliberately unsafe override.',
+      'Задайте RUN=1 та RESET=0, відкрийте перехрестя в 3D і спостерігайте машини, черги та PASSED. Подавайте RESET після усунення навмисного небезпечного обходу.',
+    ],
+  ],
+  experiment: [
+    'Run the four-phase laboratory safely, then reset and force both green directions at the starting phase. The vehicles can physically meet in the conflict area.',
+    'Запустіть правильні чотири фази, потім скиньте й увімкніть обидва зелені в початковій фазі. Машини можуть фізично зустрітися в зоні конфлікту.',
+  ],
+  expected: [
+    'Safe phases move traffic through both approaches and increase PASSED. A collision freezes the crashed traffic and latches CRASH until RESET; changing signals alone does not clear it.',
+    'Правильні фази пропускають обидва напрямки й збільшують PASSED. Зіткнення зупиняє аварійний рух і тримає CRASH до RESET; зміна сигналів не очищає його.',
+  ],
+  pitfalls: [
+    [
+      'Exclusive green signals still need enough yellow or all-red clearance for existing cars. Raising carSpeed or shortening phases can invalidate a previously safe timing plan.',
+      'Навіть взаємно виключні зелені потребують достатнього жовтого чи всечервоного інтервалу. Зміна carSpeed або скорочення фаз може зіпсувати попередній безпечний цикл.',
+    ],
+    [
+      'RUN=0 pauses this process, not the whole circuit. RESET restores initialCars and clears collision history; remove the unsafe command before releasing it.',
+      'RUN=0 зупиняє цей процес, а не всю схему. RESET відновлює initialCars і стирає аварію; усуньте небезпечну команду перед відпусканням.',
+    ],
+  ],
+  inputs: {
+    ns_green: [
+      'NS_GREEN: grants north/south traffic permission to enter the junction.',
+      'NS_GREEN: дозволяє транспортові північ/південь в’їжджати на перехрестя.',
+    ],
+    ns_yellow: [
+      'NS_YELLOW: displays north/south caution and stops new entries.',
+      'NS_YELLOW: жовтий північ/південь, який зупиняє нові в’їзди.',
+    ],
+    ew_green: [
+      'EW_GREEN: grants east/west traffic permission; simultaneous opposing greens can cause a collision.',
+      'EW_GREEN: дозволяє схід/захід; одночасні зелені напрямків можуть спричинити зіткнення.',
+    ],
+    ew_yellow: [
+      'EW_YELLOW: displays east/west caution and stops new entries.',
+      'EW_YELLOW: жовтий схід/захід, який зупиняє нові в’їзди.',
+    ],
+    run: [
+      'RUN: high advances traffic; low holds process positions and arrivals. Unwired defaults high.',
+      'RUN: 1 рухає транспорт, 0 утримує позиції та надходження. Без дроту активний.',
+    ],
+    reset: [
+      'RESET: active-high reset of cars, counters and the latched crash.',
+      'RESET: активне скидання машин, лічильників і запам’ятованої аварії.',
+    ],
+  },
+  outputs: {
+    ns_wait: [
+      'NS_WAIT: one-bit flag; 1 means north/south vehicles are queued and waiting.',
+      'NS_WAIT: однобітний прапорець; 1 означає чергу машин північ/південь.',
+    ],
+    ew_wait: [
+      'EW_WAIT: one-bit flag; 1 means east/west vehicles are queued and waiting.',
+      'EW_WAIT: однобітний прапорець; 1 означає чергу машин схід/захід.',
+    ],
+    crash: [
+      'CRASH: latched collision bit, cleared only by RESET.',
+      'CRASH: запам’ятований біт зіткнення до RESET.',
+    ],
+    passed: [
+      'PASSED: eight-bit count of successfully cleared vehicles.',
+      'PASSED: восьмибітна кількість машин, що успішно виїхали.',
+    ],
+  },
+  examples: ['traffic-junction', 'traffic-light'],
+});
+
+add('railway', {
+  purpose: [
+    'A shared railway block models two trains, signals, a turnout and a level-crossing barrier, making dispatch interlocks and their failures observable in 3D.',
+    'Спільна залізнична ділянка моделює два поїзди, сигнали, стрілку й шлагбаум, щоб блокування та його відмови були видимі в 3D.',
+  ],
+  steps: [
+    [
+      'Use APPROACH_A/B and OCCUPIED to admit one route at a time. Give A priority if both request, and retain POINTS with an SR latch until the block is clear.',
+      'За APPROACH_A/B та OCCUPIED дозволяйте один маршрут. Надайте A пріоритет при двох запитах і утримуйте POINTS через SR до звільнення ділянки.',
+    ],
+    [
+      'Close BARRIER before an approaching train reaches the crossing. Supply an eight-bit THROTTLE in actual km/h; set speedLimit=60 and use THROTTLE=30 for the safe exercise.',
+      'Закрийте BARRIER до прибуття поїзда на переїзд. Подайте восьмибітний THROTTLE у км/год; задайте speedLimit=60 і THROTTLE=30 для правильного досліду.',
+    ],
+    [
+      'Set initialA=-48 and initialB=-85 meters to reproduce the laboratory spacing. Drive RUN high, RESET low and open the railway 3D scene. Reset after each independent fault experiment.',
+      'Задайте initialA=-48 та initialB=-85 м для відстаней лабораторної. Подайте RUN=1, RESET=0 і відкрийте залізницю в 3D. Скидайте після кожного окремого аварійного досліду.',
+    ],
+  ],
+  experiment: [
+    'Compare safe priority dispatch with three separate tests: both signals green, THROTTLE=120, and an open barrier while a train crosses. Restore safe inputs before each reset.',
+    'Порівняйте правильний пріоритетний пропуск із трьома дослідами: обидва зелені, THROTTLE=120 та відкритий шлагбаум під поїздом. Відновлюйте правильні входи перед кожним скиданням.',
+  ],
+  expected: [
+    'Safe interlocking admits trains sequentially and counts passages. Opposing admissions can collide; overspeed at the turnout or moving points under a train can derail it; an open crossing records a fault. Faults latch until reset.',
+    'Блокування пропускає поїзди почергово й лічить проїзди. Зустрічні дозволи спричиняють зіткнення; швидкість на стрілці чи її рух під поїздом — сходження; відкритий переїзд — несправність. Вони тримаються до скидання.',
+  ],
+  pitfalls: [
+    [
+      'OCCUPIED covers the train body, not only its nose. Do not switch POINTS when occupancy is high, even after an approach request disappears.',
+      'OCCUPIED враховує тіло поїзда, не лише голову. Не перемикайте POINTS при зайнятості, навіть якщо запит наближення вже зник.',
+    ],
+    [
+      'A red signal stops a train at its stop line; it does not teleport an already admitted train out of the block. A fault bit is history, not simply the current signal combination.',
+      'Червоний зупиняє поїзд перед лінією, а не прибирає вже допущений поїзд із ділянки. Fault — історія, а не лише поточна комбінація сигналів.',
+    ],
+  ],
+  inputs: {
+    signal_a: [
+      'SIGNAL_A: high admits train A past its red stop line into the shared track.',
+      'SIGNAL_A: 1 дозволяє поїзду A пройти червону стоп-лінію на спільну колію.',
+    ],
+    signal_b: [
+      'SIGNAL_B: high admits train B from the opposite end of the same track.',
+      'SIGNAL_B: 1 дозволяє поїзду B зайти з іншого боку тієї самої колії.',
+    ],
+    points: [
+      'POINTS: route selector, 0 for A and 1 for B. Changing it under an occupying train is a fault.',
+      'POINTS: маршрут 0 для A, 1 для B. Зміна під поїздом на ділянці є несправністю.',
+    ],
+    barrier: [
+      'BARRIER: 1 closes the level-crossing barrier; 0 raises it.',
+      'BARRIER: 1 закриває шлагбаум переїзду, 0 піднімає.',
+    ],
+    throttle: [
+      'THROTTLE: eight-bit speed command in km/h, not a percentage; compare it with speedLimit.',
+      'THROTTLE: восьмибітна команда швидкості в км/год, не відсоток; порівнюйте зі speedLimit.',
+    ],
+    run: [
+      'RUN: high advances train motion; low pauses the process. Unwired defaults high.',
+      'RUN: 1 рухає поїзди, 0 зупиняє процес. Без дроту активний.',
+    ],
+    reset: [
+      'RESET: restores initialA/initialB, clears passage counts and all latched railway failures.',
+      'RESET: відновлює initialA/initialB, очищає проїзди та всі запам’ятовані несправності.',
+    ],
+  },
+  outputs: {
+    approach_a: [
+      'APPROACH_A: train A is approaching the shared block and can request admission.',
+      'APPROACH_A: поїзд A наближається до ділянки та може запитати дозвіл.',
+    ],
+    approach_b: [
+      'APPROACH_B: train B is approaching from the opposite side.',
+      'APPROACH_B: поїзд B наближається з протилежного боку.',
+    ],
+    occupied: [
+      'OCCUPIED: some train body overlaps the controlled shared-block interval.',
+      'OCCUPIED: тіло принаймні одного поїзда займає контрольовану ділянку.',
+    ],
+    fault: [
+      'FAULT: any latched collision, overspeed, moving-points or open-barrier failure.',
+      'FAULT: запам’ятоване зіткнення, швидкість, рух стрілки чи відкритий переїзд.',
+    ],
+    speed: [
+      'SPEED: numeric railway speed in km/h for inspection and plotting.',
+      'SPEED: числова швидкість залізниці в км/год для огляду й графіка.',
+    ],
+    passed: [
+      'PASSED: eight-bit count of trains that cleared the route before respawning.',
+      'PASSED: восьмибітна кількість поїздів, що завершили маршрут до повторної появи.',
+    ],
+  },
+  examples: ['railway-interlocking'],
+});
+
+add('animal_feeder', {
+  purpose: [
+    'An animal-feeding process exposes bowl and hopper levels so a digital controller can replenish food only when needed and detect unsafe dispensing.',
+    'Процес годівниці надає рівні миски й бункера, щоб цифрове керування додавало їжу за потреби та виявляло небезпечне насипання.',
+  ],
+  steps: [
+    [
+      'Set hopperCapacity=500, bowlCapacity=100, initialHopper=300 and initialLevel=10 for the supplied lab. Open the feeder in 3D to observe both containers and the animal.',
+      'Для лабораторної задайте hopperCapacity=500, bowlCapacity=100, initialHopper=300 та initialLevel=10. Відкрийте годівницю в 3D для огляду обох місткостей і тварини.',
+    ],
+    [
+      'Use HUNGRY to set an SR latch and FULL to reset it; gate its output with NOT EMPTY before DISPENSE. Set hungryThreshold=20 and fullThreshold=60 so feedback has a useful hysteresis band.',
+      'Подайте HUNGRY на встановлення SR, FULL — на скидання; перед DISPENSE додайте NOT EMPTY. Задайте hungryThreshold=20 і fullThreshold=60 для корисного гістерезису.',
+    ],
+    [
+      'dispenseRate=25 and eatRate=4 set transfer and consumption per second. alarmThreshold=90 detects excessive bowl fill; portionSize=40 defines one FED count. Pulse REFILL from 0 to 1 to refill only the hopper.',
+      'dispenseRate=25 та eatRate=4 задають подавання й споживання за секунду. alarmThreshold=90 виявляє зайву їжу; portionSize=40 визначає одну порцію FED. Фронт REFILL 0→1 наповнює лише бункер.',
+    ],
+  ],
+  experiment: [
+    'Watch automatic fill/consume cycles, pulse hopper refill, then deliberately force DISPENSE past FULL to observe an excessive-fill alarm. Remove the override before RESET.',
+    'Спостерігайте цикли насипання й споживання, подайте Refill, потім навмисно утримуйте DISPENSE після FULL для тривоги переповнення. Приберіть обхід перед RESET.',
+  ],
+  expected: [
+    'Feedback fills until FULL, waits until HUNGRY and stops automatic transfer if EMPTY. REFILL is edge-triggered; consumed food increments FED by portionSize. Unsafe dispensing latches ALARM until reset.',
+    'Керування насипає до FULL, чекає HUNGRY та блокує автоматичне подавання при EMPTY. REFILL діє за фронтом; спожита їжа збільшує FED за portionSize. Небезпечне насипання тримає ALARM до скидання.',
+  ],
+  pitfalls: [
+    [
+      'EMPTY means the hopper is empty, not that the bowl is hungry. Refill adds no food directly to the bowl and holding REFILL high does not perform repeated refills.',
+      'EMPTY означає порожній бункер, а не голодну миску. Refill не насипає прямо до миски; утримання REFILL=1 не повторює наповнення.',
+    ],
+    [
+      'Choose hungryThreshold below fullThreshold and alarmThreshold above the intended full level. A manual override intentionally bypasses the protection; restoring inputs does not erase a latched alarm.',
+      'Задайте hungryThreshold нижче fullThreshold, а alarmThreshold вище робочого повного рівня. Ручний обхід навмисно оминає захист; відновлення входів не стирає тривогу.',
+    ],
+  ],
+  inputs: {
+    dispense: [
+      'DISPENSE: high transfers food from hopper to bowl at dispenseRate.',
+      'DISPENSE: 1 подає їжу з бункера до миски зі швидкістю dispenseRate.',
+    ],
+    refill: [
+      'REFILL: rising edge fills the hopper to hopperCapacity; return to 0 to re-arm.',
+      'REFILL: додатний фронт наповнює бункер до hopperCapacity; поверніть 0 для наступного запуску.',
+    ],
+    run: [
+      'RUN: high advances transfer and eating; low pauses this process. Unwired defaults high.',
+      'RUN: 1 запускає подавання й споживання, 0 зупиняє процес. Без дроту активний.',
+    ],
+    reset: [
+      'RESET: restores initialHopper and initialLevel and clears alarm/portion history.',
+      'RESET: відновлює initialHopper й initialLevel та очищає тривоги й порції.',
+    ],
+  },
+  outputs: {
+    hungry: [
+      'HUNGRY: bowl level is at or below hungryThreshold; use it as a feeding request.',
+      'HUNGRY: рівень миски не вищий за hungryThreshold; запит годування.',
+    ],
+    full: [
+      'FULL: bowl level is at or above fullThreshold; use it to stop feeding.',
+      'FULL: рівень миски не нижчий за fullThreshold; команда зупинення подавання.',
+    ],
+    empty: [
+      'EMPTY: the hopper has no food available for transfer.',
+      'EMPTY: у бункері немає їжі для подавання.',
+    ],
+    alarm: [
+      'ALARM: latched unsafe dispensing or excessive bowl fill, cleared by RESET.',
+      'ALARM: запам’ятоване небезпечне подавання чи надмірний рівень до RESET.',
+    ],
+    level: [
+      'LEVEL: current bowl food mass in grams for observation and feedback.',
+      'LEVEL: поточна маса їжі в мисці в грамах для огляду й керування.',
+    ],
+    hopper: [
+      'HOPPER: remaining stored food mass in grams.',
+      'HOPPER: залишок запасу їжі в бункері в грамах.',
+    ],
+    fed: [
+      'FED: eight-bit number of portionSize portions consumed by the animal.',
+      'FED: восьмибітна кількість порцій розміром portionSize, які з’їла тварина.',
+    ],
+  },
+  examples: ['animal-feeder'],
+});
+
+add('water_tank', {
+  purpose: [
+    'A water-tank process turns pump and drain commands into a measured level, exposing low/high switches and a remembered overflow for hysteresis control.',
+    'Процес резервуара перетворює команди насоса й зливу на рівень і надає нижній/верхній датчики та пам’ять переливу для гістерезисного керування.',
+  ],
+  steps: [
+    [
+      'Set capacity=100 liters and initialLevel=35 percent. Connect a drain switch to DRAIN and a controller output to PUMP, then open the tank in 3D.',
+      'Задайте capacity=100 літрів та initialLevel=35 відсотків. Підключіть перемикач зливу до DRAIN і вихід керування до PUMP та відкрийте резервуар у 3D.',
+    ],
+    [
+      'Use LOW to set an SR latch and HIGH to reset it. Set lowThreshold=20 and highThreshold=80 percent; the latch holds the pump decision between these thresholds.',
+      'LOW встановлює SR, HIGH скидає її. Задайте lowThreshold=20 та highThreshold=80 відсотків; пам’ять утримує рішення насоса між порогами.',
+    ],
+    [
+      'Set pumpRate=12 liters/second and drainRate=4 liters/second. With both active the net inflow is 8 liters/second. RUN advances the process; RESET restores the initial level and clears overflow history.',
+      'Задайте pumpRate=12 л/с та drainRate=4 л/с. При обох активних чистий приплив — 8 л/с. RUN запускає процес; RESET повертає початковий рівень і стирає перелив.',
+    ],
+  ],
+  experiment: [
+    'Observe an automatic fill/drain cycle, then bypass the latch with a forced pump and close DRAIN. After spilling, remove the override and pulse RESET to recover.',
+    'Спостерігайте автоматичний цикл, потім обійдіть пам’ять примусовим насосом і закрийте DRAIN. Після переливу приберіть обхід та подайте RESET.',
+  ],
+  expected: [
+    'The latch keeps the level near the low/high band without chattering at one threshold. An unchecked pump can reach capacity and spill; OVERFLOW remains high until reset even if the pump is later stopped.',
+    'Пам’ять утримує рівень поблизу смуги Low/High без перемикань біля одного порогу. Насос без обмеження досягає місткості й переливає; OVERFLOW тримається до скидання навіть після зупинення насоса.',
+  ],
+  pitfalls: [
+    [
+      'LEVEL and thresholds are percentages, while capacity is liters and pumpRate/drainRate are liters per second. Doubling capacity changes the percentage rate at the same flow.',
+      'LEVEL та пороги — відсотки, capacity — літри, pumpRate/drainRate — літри за секунду. Подвоєння місткості змінює відсоткову швидкість при тому самому потоці.',
+    ],
+    [
+      'LOW and HIGH can both be zero in the middle band; that is why the controller needs memory. Keep lowThreshold below highThreshold and remove a forced-pump command before resetting.',
+      'LOW і HIGH можуть одночасно бути нулями посередині; тому потрібна пам’ять. lowThreshold має бути нижчим за highThreshold; приберіть примусовий насос перед скиданням.',
+    ],
+  ],
+  inputs: {
+    pump: [
+      'PUMP: high adds water at pumpRate while the process runs.',
+      'PUMP: 1 додає воду зі швидкістю pumpRate під час роботи.',
+    ],
+    drain: [
+      'DRAIN: high opens the outlet at drainRate; low closes it.',
+      'DRAIN: 1 відкриває злив зі швидкістю drainRate, 0 закриває.',
+    ],
+    run: [
+      'RUN: high advances fill/drain physics; low freezes the process. Unwired defaults high.',
+      'RUN: 1 запускає наповнення й злив, 0 зупиняє процес. Без дроту активний.',
+    ],
+    reset: [
+      'RESET: restores initialLevel and clears the latched overflow.',
+      'RESET: відновлює initialLevel та очищає запам’ятований перелив.',
+    ],
+  },
+  outputs: {
+    low: [
+      'LOW: level is at or below lowThreshold, a request to begin filling.',
+      'LOW: рівень не вищий за lowThreshold, запит початку наповнення.',
+    ],
+    high: [
+      'HIGH: level is at or above highThreshold, a request to stop filling.',
+      'HIGH: рівень не нижчий за highThreshold, запит зупинення наповнення.',
+    ],
+    overflow: [
+      'OVERFLOW: latched record of water spilling beyond capacity.',
+      'OVERFLOW: запам’ятований факт переливу за місткість.',
+    ],
+    level: [
+      'LEVEL: current fill percentage, bounded between 0 and 100.',
+      'LEVEL: поточний відсоток наповнення в межах від 0 до 100.',
+    ],
+  },
+  examples: ['water-tank'],
+});
+
 export function getGuide(type, language = 'en') {
   return GUIDES[type]?.[language === 'ua' || language === 'uk' ? 'ua' : 'en'];
 }

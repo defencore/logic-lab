@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "name": "Manual traffic light",
+  "exampleId": "traffic-light",
+  "nodes": [
+    {
+      "id": "red",
+      "type": "switch",
+      "x": 60,
+      "y": 60,
+      "label": "Red",
+      "enabled": true,
+      "params": {
+        "value": 1
+      }
+    },
+    {
+      "id": "yellow",
+      "type": "switch",
+      "x": 60,
+      "y": 250,
+      "label": "Amber",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "green",
+      "type": "switch",
+      "x": 60,
+      "y": 440,
+      "label": "Green",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "light",
+      "type": "traffic_light",
+      "x": 380,
+      "y": 220,
+      "label": "Traffic light",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "valid",
+      "type": "led",
+      "x": 700,
+      "y": 120,
+      "label": "Valid one-lamp state",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "go",
+      "type": "led",
+      "x": 700,
+      "y": 380,
+      "label": "Permission to go",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "red-out-light-red",
+      "from": {
+        "node": "red",
+        "port": "out"
+      },
+      "to": {
+        "node": "light",
+        "port": "red"
+      },
+      "width": 1
+    },
+    {
+      "id": "yellow-out-light-yellow",
+      "from": {
+        "node": "yellow",
+        "port": "out"
+      },
+      "to": {
+        "node": "light",
+        "port": "yellow"
+      },
+      "width": 1
+    },
+    {
+      "id": "green-out-light-green",
+      "from": {
+        "node": "green",
+        "port": "out"
+      },
+      "to": {
+        "node": "light",
+        "port": "green"
+      },
+      "width": 1
+    },
+    {
+      "id": "light-valid-valid-in",
+      "from": {
+        "node": "light",
+        "port": "valid"
+      },
+      "to": {
+        "node": "valid",
+        "port": "in"
+      },
+      "width": 1
+    },
+    {
+      "id": "light-go-go-in",
+      "from": {
+        "node": "light",
+        "port": "go"
+      },
+      "to": {
+        "node": "go",
+        "port": "in"
+      },
+      "width": 1
+    }
+  ]
+}

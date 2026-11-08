@@ -1,4 +1,5 @@
 import { getDefinition } from './catalog.js';
+import { SCENARIO_TYPES } from './scenarios.js';
 export const GRID = 20;
 export const snap = (value) => Math.round(value / GRID) * GRID;
 
@@ -11,15 +12,20 @@ export function dimensions(node) {
     };
   if (node.type === 'note') return { w: 240, h: 130 };
   return {
-    w: ['scope', 'servo', 'matrix', 'am', 'fm', 'stepper'].includes(node.type)
-      ? 228
-      : node.type === 'sevenseg'
-        ? 164
-        : 160,
+    w: SCENARIO_TYPES.includes(node.type)
+      ? 284
+      : ['scope', 'servo', 'matrix', 'am', 'fm', 'stepper'].includes(node.type)
+        ? 228
+        : node.type === 'sevenseg'
+          ? 164
+          : 160,
     h: Math.max(
       100,
       54 + Math.max(d.inputs.length, d.outputs.length) * 25,
-      ['scope', 'servo', 'matrix', 'sevenseg', 'am', 'fm', 'stepper'].includes(node.type) ? 190 : 0,
+      SCENARIO_TYPES.includes(node.type) ||
+        ['scope', 'servo', 'matrix', 'sevenseg', 'am', 'fm', 'stepper'].includes(node.type)
+        ? 190
+        : 0,
     ),
   };
 }
