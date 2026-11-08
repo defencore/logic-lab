@@ -17,7 +17,7 @@ Keep the simulation running for timed observations; use Pause and Step when reco
 
 ## Procedure
 
-1. **Add 5 and 3.** Operation Value=0 selects addition. Select the ALU: result Y is 8, Carry=0 and Zero=0. A scope input also shows the decimal result.
+1. **Add 5 and 3.** Operation Value=0 selects addition. Select the ALU: result Y is 8, Carry=0 and Zero=0. The component readout shows the complete byte; the scope traces only result bit 0.
 
 2. **Choose a logic operation.** Set Operation Value to 2 for bitwise AND: 5 AND 3 = 1. Set it to 4 for XOR: result 6. Value 1 subtracts B from A, giving 2.
 

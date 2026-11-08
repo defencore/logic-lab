@@ -12,7 +12,7 @@ export default {
       steps: [
         {
           title: 'Add 5 and 3',
-          text: 'Operation Value=0 selects addition. Select the ALU: result Y is 8, Carry=0 and Zero=0. A scope input also shows the decimal result.',
+          text: 'Operation Value=0 selects addition. Select the ALU: result Y is 8, Carry=0 and Zero=0. The component readout shows the complete byte; the scope traces only result bit 0.',
           nodes: ['a', 'b', 'op', 'alu', 'result'],
         },
         {
@@ -34,7 +34,7 @@ export default {
       steps: [
         {
           title: 'Додайте 5 і 3',
-          text: 'Значення Operation=0 обирає додавання. Оберіть ALU: Y=8, Carry=0, Zero=0. Вхід осцилографа теж показує десятковий результат.',
+          text: 'Значення Operation=0 обирає додавання. Оберіть ALU: Y=8, Carry=0, Zero=0. Індикатор компонента показує цілий байт; осцилограф відстежує лише біт 0 результату.',
           nodes: ['a', 'b', 'op', 'alu', 'result'],
         },
         {
@@ -68,12 +68,12 @@ export default {
     },
     tasks: {
       en: [
-        'Operation Value=0 selects addition. Select the ALU: result Y is 8, Carry=0 and Zero=0. A scope input also shows the decimal result.',
+        'Operation Value=0 selects addition. Select the ALU: result Y is 8, Carry=0 and Zero=0. The component readout shows the complete byte; the scope traces only result bit 0.',
         'Set Operation Value to 2 for bitwise AND: 5 AND 3 = 1. Set it to 4 for XOR: result 6. Value 1 subtracts B from A, giving 2.',
         'Set A Value=255, B Value=1 and Operation Value=0. The eight-bit result wraps to 0; both Carry and Zero light up.',
       ],
       ua: [
-        'Значення Operation=0 обирає додавання. Оберіть ALU: Y=8, Carry=0, Zero=0. Вхід осцилографа теж показує десятковий результат.',
+        'Значення Operation=0 обирає додавання. Оберіть ALU: Y=8, Carry=0, Zero=0. Індикатор компонента показує цілий байт; осцилограф відстежує лише біт 0 результату.',
         'Задайте Operation=2 для побітового AND: 5 AND 3 = 1. Код 4 обирає XOR і дає 6. Код 1 віднімає B від A та дає 2.',
         'Задайте A=255, B=1, Operation=0. Восьмибітний результат повернеться до 0; Carry та Zero засвітяться.',
       ],

@@ -17,7 +17,7 @@
       "id": "data",
       "type": "bus_input",
       "x": 40,
-      "y": 240,
+      "y": 580,
       "label": "Write data",
       "enabled": true,
       "params": {
@@ -28,7 +28,7 @@
       "id": "clock",
       "type": "switch",
       "x": 40,
-      "y": 440,
+      "y": 1120,
       "label": "Write clock",
       "enabled": true,
       "params": {
@@ -39,7 +39,7 @@
       "id": "write",
       "type": "switch",
       "x": 40,
-      "y": 640,
+      "y": 1300,
       "label": "Write enable",
       "enabled": true,
       "params": {
@@ -49,8 +49,8 @@
     {
       "id": "chip",
       "type": "switch",
-      "x": 340,
-      "y": 640,
+      "x": 440,
+      "y": 920,
       "label": "Chip select",
       "enabled": true,
       "params": {
@@ -60,8 +60,8 @@
     {
       "id": "read",
       "type": "switch",
-      "x": 620,
-      "y": 640,
+      "x": 840,
+      "y": 700,
       "label": "Output enable",
       "enabled": true,
       "params": {
@@ -71,7 +71,7 @@
     {
       "id": "ram",
       "type": "ram",
-      "x": 340,
+      "x": 440,
       "y": 80,
       "label": "RAM · writable",
       "enabled": true,
@@ -80,7 +80,7 @@
     {
       "id": "rom",
       "type": "rom",
-      "x": 640,
+      "x": 840,
       "y": 80,
       "label": "ROM · fixed data",
       "enabled": true,
@@ -91,7 +91,7 @@
     {
       "id": "registers",
       "type": "register_file",
-      "x": 940,
+      "x": 1240,
       "y": 80,
       "label": "Register file",
       "enabled": true,
@@ -100,61 +100,181 @@
     {
       "id": "ram-view",
       "type": "scope",
-      "x": 340,
-      "y": 420,
-      "label": "RAM output",
+      "x": 440,
+      "y": 640,
+      "label": "RAM output · bit 0",
       "enabled": true,
       "params": {
-        "range": 255
+        "range": 1
       }
     },
     {
       "id": "rom-view",
       "type": "scope",
-      "x": 640,
+      "x": 840,
       "y": 420,
-      "label": "ROM output",
+      "label": "ROM output · bit 0",
       "enabled": true,
       "params": {
-        "range": 255
+        "range": 1
       }
     },
     {
       "id": "reg-view",
       "type": "scope",
-      "x": 940,
-      "y": 420,
-      "label": "Register output",
+      "x": 1240,
+      "y": 660,
+      "label": "Register output · bit 0",
       "enabled": true,
       "params": {
-        "range": 255
+        "range": 1
       }
     }
   ],
   "wires": [
     {
-      "id": "address-nibble-ram-address",
+      "id": "address-nibble-ram-address-bit0",
       "from": {
         "node": "address",
-        "port": "nibble"
+        "port": "nibble0"
       },
       "to": {
         "node": "ram",
-        "port": "address"
+        "port": "address0"
       },
-      "width": 4
+      "width": 1
     },
     {
-      "id": "data-out-ram-data",
+      "id": "address-nibble-ram-address-bit1",
       "from": {
-        "node": "data",
-        "port": "out"
+        "node": "address",
+        "port": "nibble1"
       },
       "to": {
         "node": "ram",
-        "port": "data"
+        "port": "address1"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "address-nibble-ram-address-bit2",
+      "from": {
+        "node": "address",
+        "port": "nibble2"
+      },
+      "to": {
+        "node": "ram",
+        "port": "address2"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble-ram-address-bit3",
+      "from": {
+        "node": "address",
+        "port": "nibble3"
+      },
+      "to": {
+        "node": "ram",
+        "port": "address3"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-ram-data-bit0",
+      "from": {
+        "node": "data",
+        "port": "out0"
+      },
+      "to": {
+        "node": "ram",
+        "port": "data0"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-ram-data-bit1",
+      "from": {
+        "node": "data",
+        "port": "out1"
+      },
+      "to": {
+        "node": "ram",
+        "port": "data1"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-ram-data-bit2",
+      "from": {
+        "node": "data",
+        "port": "out2"
+      },
+      "to": {
+        "node": "ram",
+        "port": "data2"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-ram-data-bit3",
+      "from": {
+        "node": "data",
+        "port": "out3"
+      },
+      "to": {
+        "node": "ram",
+        "port": "data3"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-ram-data-bit4",
+      "from": {
+        "node": "data",
+        "port": "out4"
+      },
+      "to": {
+        "node": "ram",
+        "port": "data4"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-ram-data-bit5",
+      "from": {
+        "node": "data",
+        "port": "out5"
+      },
+      "to": {
+        "node": "ram",
+        "port": "data5"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-ram-data-bit6",
+      "from": {
+        "node": "data",
+        "port": "out6"
+      },
+      "to": {
+        "node": "ram",
+        "port": "data6"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-ram-data-bit7",
+      "from": {
+        "node": "data",
+        "port": "out7"
+      },
+      "to": {
+        "node": "ram",
+        "port": "data7"
+      },
+      "width": 1
     },
     {
       "id": "clock-out-ram-clk",
@@ -208,25 +328,61 @@
       "id": "ram-out-ram-view-in",
       "from": {
         "node": "ram",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "ram-view",
         "port": "in"
       },
-      "width": 8
+      "width": 1
     },
     {
-      "id": "address-nibble-rom-address",
+      "id": "address-nibble-rom-address-bit0",
       "from": {
         "node": "address",
-        "port": "nibble"
+        "port": "nibble0"
       },
       "to": {
         "node": "rom",
-        "port": "address"
+        "port": "address0"
       },
-      "width": 4
+      "width": 1
+    },
+    {
+      "id": "address-nibble-rom-address-bit1",
+      "from": {
+        "node": "address",
+        "port": "nibble1"
+      },
+      "to": {
+        "node": "rom",
+        "port": "address1"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble-rom-address-bit2",
+      "from": {
+        "node": "address",
+        "port": "nibble2"
+      },
+      "to": {
+        "node": "rom",
+        "port": "address2"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-nibble-rom-address-bit3",
+      "from": {
+        "node": "address",
+        "port": "nibble3"
+      },
+      "to": {
+        "node": "rom",
+        "port": "address3"
+      },
+      "width": 1
     },
     {
       "id": "chip-out-rom-cs",
@@ -256,49 +412,181 @@
       "id": "rom-out-rom-view-in",
       "from": {
         "node": "rom",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "rom-view",
         "port": "in"
       },
-      "width": 8
+      "width": 1
     },
     {
-      "id": "address-address-registers-read",
+      "id": "address-address-registers-read-bit0",
       "from": {
         "node": "address",
-        "port": "address"
+        "port": "address0"
       },
       "to": {
         "node": "registers",
-        "port": "read"
+        "port": "read0"
       },
-      "width": 3
+      "width": 1
     },
     {
-      "id": "address-address-registers-write",
+      "id": "address-address-registers-read-bit1",
       "from": {
         "node": "address",
-        "port": "address"
+        "port": "address1"
       },
       "to": {
         "node": "registers",
-        "port": "write"
+        "port": "read1"
       },
-      "width": 3
+      "width": 1
     },
     {
-      "id": "data-out-registers-data",
+      "id": "address-address-registers-read-bit2",
+      "from": {
+        "node": "address",
+        "port": "address2"
+      },
+      "to": {
+        "node": "registers",
+        "port": "read2"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-address-registers-write-bit0",
+      "from": {
+        "node": "address",
+        "port": "address0"
+      },
+      "to": {
+        "node": "registers",
+        "port": "write0"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-address-registers-write-bit1",
+      "from": {
+        "node": "address",
+        "port": "address1"
+      },
+      "to": {
+        "node": "registers",
+        "port": "write1"
+      },
+      "width": 1
+    },
+    {
+      "id": "address-address-registers-write-bit2",
+      "from": {
+        "node": "address",
+        "port": "address2"
+      },
+      "to": {
+        "node": "registers",
+        "port": "write2"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-registers-data-bit0",
       "from": {
         "node": "data",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "registers",
-        "port": "data"
+        "port": "data0"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "data-out-registers-data-bit1",
+      "from": {
+        "node": "data",
+        "port": "out1"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data1"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-registers-data-bit2",
+      "from": {
+        "node": "data",
+        "port": "out2"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data2"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-registers-data-bit3",
+      "from": {
+        "node": "data",
+        "port": "out3"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data3"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-registers-data-bit4",
+      "from": {
+        "node": "data",
+        "port": "out4"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data4"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-registers-data-bit5",
+      "from": {
+        "node": "data",
+        "port": "out5"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data5"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-registers-data-bit6",
+      "from": {
+        "node": "data",
+        "port": "out6"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data6"
+      },
+      "width": 1
+    },
+    {
+      "id": "data-out-registers-data-bit7",
+      "from": {
+        "node": "data",
+        "port": "out7"
+      },
+      "to": {
+        "node": "registers",
+        "port": "data7"
+      },
+      "width": 1
     },
     {
       "id": "clock-out-registers-clk",
@@ -328,13 +616,13 @@
       "id": "registers-out-reg-view-in",
       "from": {
         "node": "registers",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "reg-view",
         "port": "in"
       },
-      "width": 8
+      "width": 1
     }
   ],
   "exampleId": "ram"

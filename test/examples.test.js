@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { EXAMPLES, createExample } from '../examples/index.js';
 import { validateProject, parseProject, serializeProject } from '../src/project.js';
 import { createRuntime, simulate } from '../src/simulator.js';
+import { dimensions } from '../src/geometry.js';
 
 function open(id) {
   const project = createExample(id),
@@ -19,8 +20,8 @@ function advance(context, seconds, interval = 0.0005) {
   const count = Math.ceil(seconds / interval);
   for (let i = 0; i < count; i++) simulate(context.project, context.runtime, seconds / count);
 }
-const output = (context, node, port = 'out') => context.runtime.outputs[node][port];
-const input = (context, node, port = 'in') => context.runtime.inputs[node][port];
+const output = (context, node, port = 'out') => context.runtime.signals.outputs[node][port];
+const input = (context, node, port = 'in') => context.runtime.signals.inputs[node][port];
 
 test('all learning examples have valid fresh circuits and complete bilingual lessons', () => {
   assert.equal(EXAMPLES.length, 19);
@@ -66,6 +67,42 @@ test('all learning examples have valid fresh circuits and complete bilingual les
     );
   }
   assert.throws(() => createExample('missing-lesson'), /Unknown example/);
+});
+
+test('expanded example components have room for all separate bit contacts', () => {
+  for (const example of EXAMPLES) {
+    const { nodes } = example.create();
+    for (let index = 0; index < nodes.length; index++) {
+      const a = nodes[index],
+        da = dimensions(a);
+      for (const b of nodes.slice(index + 1)) {
+        const db = dimensions(b);
+        assert.ok(
+          a.x + da.w <= b.x || b.x + db.w <= a.x || a.y + da.h <= b.y || b.y + db.h <= a.y,
+          `${example.id}: ${a.id} overlaps ${b.id}`,
+        );
+      }
+    }
+  }
+});
+
+test('byte observation scopes trace one selected bit while components retain full values', () => {
+  for (const [example, source, signal, probe] of [
+    ['alu', 'alu', 'out', 'result'],
+    ['bus-mux', 'demux', 'a', 'left'],
+    ['bus-mux', 'demux', 'b', 'right'],
+    ['ram', 'ram', 'out', 'ram-view'],
+    ['ram', 'rom', 'out', 'rom-view'],
+    ['ram', 'registers', 'out', 'reg-view'],
+  ]) {
+    const context = open(example);
+    const word = output(context, source, signal);
+    assert.equal(context.runtime.inputs[probe].in, typeof word === 'number' ? word & 1 : word);
+    const wire = context.project.wires.find((candidate) => candidate.to.node === probe);
+    assert.equal(wire.width, 1);
+    assert.equal(wire.from.port, `${signal}0`);
+    assert.equal(context.project.nodes.find((node) => node.id === probe).params.range, 1);
+  }
 });
 
 test('gate and arithmetic lessons reproduce all stated switch combinations', () => {
@@ -147,58 +184,58 @@ test('BCD lesson displays every decimal digit and blanks non-BCD codes', () => {
   assert.equal(input(context, 'display'), 0);
 });
 
-test('bus-routing lesson preserves split/merged bytes and switches destination', () => {
+test('individual routing lines preserve bytes and switch destination', () => {
   const context = open('bus-mux');
   assert.equal(output(context, 'mux'), 42);
   assert.equal(output(context, 'merger'), 42);
-  assert.equal(input(context, 'left'), 42);
-  assert.equal(input(context, 'right'), 0);
+  assert.equal(output(context, 'demux', 'a'), 42);
+  assert.equal(output(context, 'demux', 'b'), 0);
   value(context, 'select', 1);
   assert.equal(output(context, 'mux'), 165);
   assert.equal(output(context, 'merger'), 165);
-  assert.equal(input(context, 'left'), 0);
-  assert.equal(input(context, 'right'), 165);
+  assert.equal(output(context, 'demux', 'a'), 0);
+  assert.equal(output(context, 'demux', 'b'), 165);
 });
 
 test('ALU lesson operation codes and overflow flags match its instructions', () => {
   const context = open('alu');
-  assert.equal(input(context, 'result'), 8);
+  assert.equal(output(context, 'alu'), 8);
   value(context, 'op', 2);
-  assert.equal(input(context, 'result'), 1);
+  assert.equal(output(context, 'alu'), 1);
   value(context, 'op', 4);
-  assert.equal(input(context, 'result'), 6);
+  assert.equal(output(context, 'alu'), 6);
   value(context, 'op', 1);
-  assert.equal(input(context, 'result'), 2);
+  assert.equal(output(context, 'alu'), 2);
   value(context, 'a', 255);
   value(context, 'b', 1);
   value(context, 'op', 0);
-  assert.equal(input(context, 'result'), 0);
+  assert.equal(output(context, 'alu'), 0);
   assert.equal(input(context, 'carry'), 1);
   assert.equal(input(context, 'zero'), 1);
 });
 
 test('memory lesson writes on a manual edge, retains address data and releases outputs', () => {
   const context = open('ram');
-  assert.equal(input(context, 'ram-view'), 0);
-  assert.equal(input(context, 'rom-view'), 20);
-  assert.equal(input(context, 'reg-view'), 0);
+  assert.equal(output(context, 'ram'), 0);
+  assert.equal(output(context, 'rom'), 20);
+  assert.equal(output(context, 'registers'), 0);
   value(context, 'write', 1);
-  assert.equal(input(context, 'ram-view'), 'Z');
+  assert.equal(output(context, 'ram'), 'Z');
   value(context, 'clock', 1);
   value(context, 'write', 0);
-  assert.equal(input(context, 'ram-view'), 42);
-  assert.equal(input(context, 'reg-view'), 42);
+  assert.equal(output(context, 'ram'), 42);
+  assert.equal(output(context, 'registers'), 42);
   value(context, 'address', 3);
-  assert.equal(input(context, 'ram-view'), 0);
-  assert.equal(input(context, 'rom-view'), 30);
-  assert.equal(input(context, 'reg-view'), 0);
+  assert.equal(output(context, 'ram'), 0);
+  assert.equal(output(context, 'rom'), 30);
+  assert.equal(output(context, 'registers'), 0);
   value(context, 'address', 2);
-  assert.equal(input(context, 'ram-view'), 42);
-  assert.equal(input(context, 'reg-view'), 42);
+  assert.equal(output(context, 'ram'), 42);
+  assert.equal(output(context, 'registers'), 42);
   value(context, 'read', 0);
-  assert.equal(input(context, 'ram-view'), 'Z');
-  assert.equal(input(context, 'rom-view'), 'Z');
-  assert.equal(input(context, 'reg-view'), 42);
+  assert.equal(output(context, 'ram'), 'Z');
+  assert.equal(output(context, 'rom'), 'Z');
+  assert.equal(output(context, 'registers'), 42);
 });
 
 test('wired-AND lesson permits strong lows, released highs and a floating line', () => {

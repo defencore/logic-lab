@@ -217,7 +217,9 @@ test('position windows measure actual millimeters and dynamic TARGET overrides T
     node('target', 'dac', { vcc: 8 }),
   );
   fixture.project.wires.push(
-    wire('code-target', 'code', 'out', 'target', 'in'),
+    ...Array.from({ length: 8 }, (_, bit) =>
+      wire(`code-target-${bit}`, 'code', `out${bit}`, 'target', `in${bit}`),
+    ),
     wire('target-sensor', 'target', 'out', 'sensor', 'target'),
   );
   simulate(fixture.project, fixture.runtime, 0);
@@ -239,7 +241,7 @@ test('position sensors preserve Z/X measurements and reject invalid modes rather
   fixture.project.wires = [];
   simulate(fixture.project, fixture.runtime, 0);
   assert.deepEqual(fixture.read(), { position: 'Z', out: 'X' });
-  fixture.project.nodes.push(node('bad', 'not'));
+  fixture.project.nodes.push(node('bad', 'dac'));
   fixture.project.wires.push(wire('unknown', 'bad', 'out', 'sensor', 'position'));
   simulate(fixture.project, fixture.runtime, 0);
   assert.deepEqual(fixture.read(), { position: 'X', out: 'X' });

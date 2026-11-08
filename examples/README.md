@@ -17,7 +17,7 @@ These 19 reusable laboratories accompany the browser workbench. Each laboratory 
 | [One-bit memory](./d-memory/README.md)                       | sequential   | beginner     | 20 min | [JSON](./d-memory/circuit.json)         |
 | [Binary counter](./counter/README.md)                        | sequential   | beginner     | 20 min | [JSON](./counter/circuit.json)          |
 | [BCD display](./bcd-display/README.md)                       | basics       | beginner     | 15 min | [JSON](./bcd-display/circuit.json)      |
-| [Route an eight-bit bus](./bus-mux/README.md)                | architecture | intermediate | 25 min | [JSON](./bus-mux/circuit.json)          |
+| [Route eight separate data lines](./bus-mux/README.md)       | architecture | intermediate | 25 min | [JSON](./bus-mux/circuit.json)          |
 | [Arithmetic & logic unit](./alu/README.md)                   | architecture | intermediate | 25 min | [JSON](./alu/circuit.json)              |
 | [Read & write memory](./ram/README.md)                       | architecture | intermediate | 30 min | [JSON](./ram/circuit.json)              |
 | [Open-drain wired AND](./wired-and/README.md)                | physical     | intermediate | 25 min | [JSON](./wired-and/circuit.json)        |

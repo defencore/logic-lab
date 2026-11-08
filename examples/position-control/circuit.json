@@ -17,7 +17,7 @@
     {
       "id": "target-dac",
       "type": "dac",
-      "x": 320,
+      "x": 440,
       "y": 40,
       "label": "Target · 0–8 mm",
       "enabled": true,
@@ -29,7 +29,7 @@
       "id": "clock",
       "type": "clock",
       "x": 40,
-      "y": 280,
+      "y": 580,
       "label": "Step clock · 50 Hz",
       "enabled": true,
       "params": {
@@ -41,7 +41,7 @@
       "id": "run",
       "type": "switch",
       "x": 40,
-      "y": 480,
+      "y": 760,
       "label": "Motion enable",
       "enabled": true,
       "params": {
@@ -52,7 +52,7 @@
       "id": "reset",
       "type": "switch",
       "x": 40,
-      "y": 680,
+      "y": 940,
       "label": "Reset to 0 mm",
       "enabled": true,
       "params": {
@@ -62,8 +62,8 @@
     {
       "id": "axis",
       "type": "stepper",
-      "x": 380,
-      "y": 240,
+      "x": 440,
+      "y": 380,
       "label": "X axis · STEP / DIR",
       "enabled": true,
       "params": {
@@ -78,7 +78,7 @@
     {
       "id": "direction-sensor",
       "type": "position_sensor",
-      "x": 700,
+      "x": 840,
       "y": 120,
       "label": "Below target → DIR",
       "enabled": true,
@@ -91,7 +91,7 @@
     {
       "id": "target-sensor",
       "type": "position_sensor",
-      "x": 700,
+      "x": 840,
       "y": 400,
       "label": "At target ±0.03 mm",
       "enabled": true,
@@ -104,7 +104,7 @@
     {
       "id": "not-target",
       "type": "not",
-      "x": 1020,
+      "x": 1240,
       "y": 400,
       "label": "Not at target",
       "enabled": true,
@@ -113,7 +113,7 @@
     {
       "id": "allow",
       "type": "and",
-      "x": 1280,
+      "x": 1560,
       "y": 400,
       "label": "Enabled AND not at target",
       "enabled": true,
@@ -122,7 +122,7 @@
     {
       "id": "target-led",
       "type": "led",
-      "x": 1020,
+      "x": 1240,
       "y": 660,
       "label": "Target reached",
       "enabled": true,
@@ -131,7 +131,7 @@
     {
       "id": "position",
       "type": "scope",
-      "x": 700,
+      "x": 840,
       "y": 700,
       "label": "Axis position · mm",
       "enabled": true,
@@ -142,16 +142,100 @@
   ],
   "wires": [
     {
-      "id": "target-out-target-dac-in",
+      "id": "target-out-target-dac-in-bit0",
       "from": {
         "node": "target",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "target-dac",
-        "port": "in"
+        "port": "in0"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "target-out-target-dac-in-bit1",
+      "from": {
+        "node": "target",
+        "port": "out1"
+      },
+      "to": {
+        "node": "target-dac",
+        "port": "in1"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-out-target-dac-in-bit2",
+      "from": {
+        "node": "target",
+        "port": "out2"
+      },
+      "to": {
+        "node": "target-dac",
+        "port": "in2"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-out-target-dac-in-bit3",
+      "from": {
+        "node": "target",
+        "port": "out3"
+      },
+      "to": {
+        "node": "target-dac",
+        "port": "in3"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-out-target-dac-in-bit4",
+      "from": {
+        "node": "target",
+        "port": "out4"
+      },
+      "to": {
+        "node": "target-dac",
+        "port": "in4"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-out-target-dac-in-bit5",
+      "from": {
+        "node": "target",
+        "port": "out5"
+      },
+      "to": {
+        "node": "target-dac",
+        "port": "in5"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-out-target-dac-in-bit6",
+      "from": {
+        "node": "target",
+        "port": "out6"
+      },
+      "to": {
+        "node": "target-dac",
+        "port": "in6"
+      },
+      "width": 1
+    },
+    {
+      "id": "target-out-target-dac-in-bit7",
+      "from": {
+        "node": "target",
+        "port": "out7"
+      },
+      "to": {
+        "node": "target-dac",
+        "port": "in7"
+      },
+      "width": 1
     },
     {
       "id": "target-dac-out-direction-sensor-target",

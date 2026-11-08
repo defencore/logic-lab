@@ -16,7 +16,7 @@
     {
       "id": "dac",
       "type": "dac",
-      "x": 320,
+      "x": 440,
       "y": 200,
       "label": "DAC · 5 V",
       "enabled": true,
@@ -27,7 +27,7 @@
     {
       "id": "adc",
       "type": "adc",
-      "x": 620,
+      "x": 840,
       "y": 200,
       "label": "ADC · 5 V",
       "enabled": true,
@@ -38,7 +38,7 @@
     {
       "id": "compare",
       "type": "comparator",
-      "x": 920,
+      "x": 1240,
       "y": 200,
       "label": "Compare original and decoded",
       "enabled": true,
@@ -47,7 +47,7 @@
     {
       "id": "equal",
       "type": "led",
-      "x": 1220,
+      "x": 1640,
       "y": 40,
       "label": "Original = decoded",
       "enabled": true,
@@ -56,7 +56,7 @@
     {
       "id": "less",
       "type": "led",
-      "x": 1220,
+      "x": 1640,
       "y": 240,
       "label": "Original < decoded",
       "enabled": true,
@@ -65,7 +65,7 @@
     {
       "id": "greater",
       "type": "led",
-      "x": 1220,
+      "x": 1640,
       "y": 440,
       "label": "Original > decoded",
       "enabled": true,
@@ -74,8 +74,8 @@
     {
       "id": "voltage",
       "type": "scope",
-      "x": 320,
-      "y": 460,
+      "x": 440,
+      "y": 540,
       "label": "Analog voltage",
       "enabled": true,
       "params": {
@@ -85,16 +85,100 @@
   ],
   "wires": [
     {
-      "id": "value-out-dac-in",
+      "id": "value-out-dac-in-bit0",
       "from": {
         "node": "value",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "dac",
-        "port": "in"
+        "port": "in0"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "value-out-dac-in-bit1",
+      "from": {
+        "node": "value",
+        "port": "out1"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in1"
+      },
+      "width": 1
+    },
+    {
+      "id": "value-out-dac-in-bit2",
+      "from": {
+        "node": "value",
+        "port": "out2"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in2"
+      },
+      "width": 1
+    },
+    {
+      "id": "value-out-dac-in-bit3",
+      "from": {
+        "node": "value",
+        "port": "out3"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in3"
+      },
+      "width": 1
+    },
+    {
+      "id": "value-out-dac-in-bit4",
+      "from": {
+        "node": "value",
+        "port": "out4"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in4"
+      },
+      "width": 1
+    },
+    {
+      "id": "value-out-dac-in-bit5",
+      "from": {
+        "node": "value",
+        "port": "out5"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in5"
+      },
+      "width": 1
+    },
+    {
+      "id": "value-out-dac-in-bit6",
+      "from": {
+        "node": "value",
+        "port": "out6"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in6"
+      },
+      "width": 1
+    },
+    {
+      "id": "value-out-dac-in-bit7",
+      "from": {
+        "node": "value",
+        "port": "out7"
+      },
+      "to": {
+        "node": "dac",
+        "port": "in7"
+      },
+      "width": 1
     },
     {
       "id": "dac-out-adc-in",
@@ -109,28 +193,196 @@
       "width": 1
     },
     {
-      "id": "value-out-compare-a",
+      "id": "value-out-compare-a-bit0",
       "from": {
         "node": "value",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "compare",
-        "port": "a"
+        "port": "a0"
       },
-      "width": 8
+      "width": 1
     },
     {
-      "id": "adc-out-compare-b",
+      "id": "value-out-compare-a-bit1",
       "from": {
-        "node": "adc",
-        "port": "out"
+        "node": "value",
+        "port": "out1"
       },
       "to": {
         "node": "compare",
-        "port": "b"
+        "port": "a1"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "value-out-compare-a-bit2",
+      "from": {
+        "node": "value",
+        "port": "out2"
+      },
+      "to": {
+        "node": "compare",
+        "port": "a2"
+      },
+      "width": 1
+    },
+    {
+      "id": "value-out-compare-a-bit3",
+      "from": {
+        "node": "value",
+        "port": "out3"
+      },
+      "to": {
+        "node": "compare",
+        "port": "a3"
+      },
+      "width": 1
+    },
+    {
+      "id": "value-out-compare-a-bit4",
+      "from": {
+        "node": "value",
+        "port": "out4"
+      },
+      "to": {
+        "node": "compare",
+        "port": "a4"
+      },
+      "width": 1
+    },
+    {
+      "id": "value-out-compare-a-bit5",
+      "from": {
+        "node": "value",
+        "port": "out5"
+      },
+      "to": {
+        "node": "compare",
+        "port": "a5"
+      },
+      "width": 1
+    },
+    {
+      "id": "value-out-compare-a-bit6",
+      "from": {
+        "node": "value",
+        "port": "out6"
+      },
+      "to": {
+        "node": "compare",
+        "port": "a6"
+      },
+      "width": 1
+    },
+    {
+      "id": "value-out-compare-a-bit7",
+      "from": {
+        "node": "value",
+        "port": "out7"
+      },
+      "to": {
+        "node": "compare",
+        "port": "a7"
+      },
+      "width": 1
+    },
+    {
+      "id": "adc-out-compare-b-bit0",
+      "from": {
+        "node": "adc",
+        "port": "out0"
+      },
+      "to": {
+        "node": "compare",
+        "port": "b0"
+      },
+      "width": 1
+    },
+    {
+      "id": "adc-out-compare-b-bit1",
+      "from": {
+        "node": "adc",
+        "port": "out1"
+      },
+      "to": {
+        "node": "compare",
+        "port": "b1"
+      },
+      "width": 1
+    },
+    {
+      "id": "adc-out-compare-b-bit2",
+      "from": {
+        "node": "adc",
+        "port": "out2"
+      },
+      "to": {
+        "node": "compare",
+        "port": "b2"
+      },
+      "width": 1
+    },
+    {
+      "id": "adc-out-compare-b-bit3",
+      "from": {
+        "node": "adc",
+        "port": "out3"
+      },
+      "to": {
+        "node": "compare",
+        "port": "b3"
+      },
+      "width": 1
+    },
+    {
+      "id": "adc-out-compare-b-bit4",
+      "from": {
+        "node": "adc",
+        "port": "out4"
+      },
+      "to": {
+        "node": "compare",
+        "port": "b4"
+      },
+      "width": 1
+    },
+    {
+      "id": "adc-out-compare-b-bit5",
+      "from": {
+        "node": "adc",
+        "port": "out5"
+      },
+      "to": {
+        "node": "compare",
+        "port": "b5"
+      },
+      "width": 1
+    },
+    {
+      "id": "adc-out-compare-b-bit6",
+      "from": {
+        "node": "adc",
+        "port": "out6"
+      },
+      "to": {
+        "node": "compare",
+        "port": "b6"
+      },
+      "width": 1
+    },
+    {
+      "id": "adc-out-compare-b-bit7",
+      "from": {
+        "node": "adc",
+        "port": "out7"
+      },
+      "to": {
+        "node": "compare",
+        "port": "b7"
+      },
+      "width": 1
     },
     {
       "id": "compare-eq-equal-in",

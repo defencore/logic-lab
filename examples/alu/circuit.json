@@ -17,7 +17,7 @@
       "id": "b",
       "type": "bus_input",
       "x": 80,
-      "y": 260,
+      "y": 580,
       "label": "Operand B",
       "enabled": true,
       "params": {
@@ -28,7 +28,7 @@
       "id": "op",
       "type": "bus_input",
       "x": 80,
-      "y": 480,
+      "y": 1120,
       "label": "Operation · value 0–7",
       "enabled": true,
       "params": {
@@ -38,7 +38,7 @@
     {
       "id": "alu",
       "type": "alu",
-      "x": 420,
+      "x": 480,
       "y": 220,
       "label": "8-bit ALU",
       "enabled": true,
@@ -47,19 +47,19 @@
     {
       "id": "result",
       "type": "scope",
-      "x": 740,
+      "x": 880,
       "y": 40,
-      "label": "Result · decimal byte",
+      "label": "Result · decimal bit 0",
       "enabled": true,
       "params": {
-        "range": 255
+        "range": 1
       }
     },
     {
       "id": "carry",
       "type": "led",
-      "x": 740,
-      "y": 300,
+      "x": 880,
+      "y": 320,
       "label": "Carry / borrow",
       "enabled": true,
       "params": {}
@@ -67,7 +67,7 @@
     {
       "id": "zero",
       "type": "led",
-      "x": 740,
+      "x": 880,
       "y": 500,
       "label": "Zero result",
       "enabled": true,
@@ -76,52 +76,244 @@
   ],
   "wires": [
     {
-      "id": "a-out-alu-a",
+      "id": "a-out-alu-a-bit0",
       "from": {
         "node": "a",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "alu",
-        "port": "a"
+        "port": "a0"
       },
-      "width": 8
+      "width": 1
     },
     {
-      "id": "b-out-alu-b",
+      "id": "a-out-alu-a-bit1",
+      "from": {
+        "node": "a",
+        "port": "out1"
+      },
+      "to": {
+        "node": "alu",
+        "port": "a1"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-alu-a-bit2",
+      "from": {
+        "node": "a",
+        "port": "out2"
+      },
+      "to": {
+        "node": "alu",
+        "port": "a2"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-alu-a-bit3",
+      "from": {
+        "node": "a",
+        "port": "out3"
+      },
+      "to": {
+        "node": "alu",
+        "port": "a3"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-alu-a-bit4",
+      "from": {
+        "node": "a",
+        "port": "out4"
+      },
+      "to": {
+        "node": "alu",
+        "port": "a4"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-alu-a-bit5",
+      "from": {
+        "node": "a",
+        "port": "out5"
+      },
+      "to": {
+        "node": "alu",
+        "port": "a5"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-alu-a-bit6",
+      "from": {
+        "node": "a",
+        "port": "out6"
+      },
+      "to": {
+        "node": "alu",
+        "port": "a6"
+      },
+      "width": 1
+    },
+    {
+      "id": "a-out-alu-a-bit7",
+      "from": {
+        "node": "a",
+        "port": "out7"
+      },
+      "to": {
+        "node": "alu",
+        "port": "a7"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-alu-b-bit0",
       "from": {
         "node": "b",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "alu",
-        "port": "b"
+        "port": "b0"
       },
-      "width": 8
+      "width": 1
     },
     {
-      "id": "op-address-alu-op",
+      "id": "b-out-alu-b-bit1",
       "from": {
-        "node": "op",
-        "port": "address"
+        "node": "b",
+        "port": "out1"
       },
       "to": {
         "node": "alu",
-        "port": "op"
+        "port": "b1"
       },
-      "width": 3
+      "width": 1
+    },
+    {
+      "id": "b-out-alu-b-bit2",
+      "from": {
+        "node": "b",
+        "port": "out2"
+      },
+      "to": {
+        "node": "alu",
+        "port": "b2"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-alu-b-bit3",
+      "from": {
+        "node": "b",
+        "port": "out3"
+      },
+      "to": {
+        "node": "alu",
+        "port": "b3"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-alu-b-bit4",
+      "from": {
+        "node": "b",
+        "port": "out4"
+      },
+      "to": {
+        "node": "alu",
+        "port": "b4"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-alu-b-bit5",
+      "from": {
+        "node": "b",
+        "port": "out5"
+      },
+      "to": {
+        "node": "alu",
+        "port": "b5"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-alu-b-bit6",
+      "from": {
+        "node": "b",
+        "port": "out6"
+      },
+      "to": {
+        "node": "alu",
+        "port": "b6"
+      },
+      "width": 1
+    },
+    {
+      "id": "b-out-alu-b-bit7",
+      "from": {
+        "node": "b",
+        "port": "out7"
+      },
+      "to": {
+        "node": "alu",
+        "port": "b7"
+      },
+      "width": 1
+    },
+    {
+      "id": "op-address-alu-op-bit0",
+      "from": {
+        "node": "op",
+        "port": "address0"
+      },
+      "to": {
+        "node": "alu",
+        "port": "op0"
+      },
+      "width": 1
+    },
+    {
+      "id": "op-address-alu-op-bit1",
+      "from": {
+        "node": "op",
+        "port": "address1"
+      },
+      "to": {
+        "node": "alu",
+        "port": "op1"
+      },
+      "width": 1
+    },
+    {
+      "id": "op-address-alu-op-bit2",
+      "from": {
+        "node": "op",
+        "port": "address2"
+      },
+      "to": {
+        "node": "alu",
+        "port": "op2"
+      },
+      "width": 1
     },
     {
       "id": "alu-out-result-in",
       "from": {
         "node": "alu",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "result",
         "port": "in"
       },
-      "width": 8
+      "width": 1
     },
     {
       "id": "alu-carry-carry-in",

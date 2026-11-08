@@ -17,7 +17,7 @@ Keep the simulation running for timed observations; use Pause and Step when reco
 
 ## Procedure
 
-1. **Inspect the starting address.** Address=2 and Write data=42. RAM and Register file initially read 0; the fixed ROM reads 20. Select their outputs or scopes to inspect them.
+1. **Inspect the starting address.** Address=2 and Write data=42. RAM and Register file initially read 0; the fixed ROM reads 20. Read the complete bytes on the memory components; each scope traces only output bit 0.
 
 2. **Write one byte.** Turn Write enable on, then switch Write clock from 0 to 1. This writes 42 into RAM and the register file. RAM output is Z while Write enable=1. Turn Write enable off to read back 42.
 

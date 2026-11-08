@@ -16,7 +16,7 @@
     {
       "id": "decoder",
       "type": "decoder",
-      "x": 420,
+      "x": 500,
       "y": 220,
       "label": "BCD → seven segments",
       "enabled": true,
@@ -25,7 +25,7 @@
     {
       "id": "display",
       "type": "sevenseg",
-      "x": 740,
+      "x": 900,
       "y": 220,
       "label": "Decimal digit",
       "enabled": true,
@@ -34,28 +34,148 @@
   ],
   "wires": [
     {
-      "id": "digit-nibble-decoder-in",
+      "id": "digit-nibble-decoder-in-bit0",
       "from": {
         "node": "digit",
-        "port": "nibble"
+        "port": "nibble0"
       },
       "to": {
         "node": "decoder",
-        "port": "in"
+        "port": "in0"
       },
-      "width": 4
+      "width": 1
     },
     {
-      "id": "decoder-out-display-in",
+      "id": "digit-nibble-decoder-in-bit1",
+      "from": {
+        "node": "digit",
+        "port": "nibble1"
+      },
+      "to": {
+        "node": "decoder",
+        "port": "in1"
+      },
+      "width": 1
+    },
+    {
+      "id": "digit-nibble-decoder-in-bit2",
+      "from": {
+        "node": "digit",
+        "port": "nibble2"
+      },
+      "to": {
+        "node": "decoder",
+        "port": "in2"
+      },
+      "width": 1
+    },
+    {
+      "id": "digit-nibble-decoder-in-bit3",
+      "from": {
+        "node": "digit",
+        "port": "nibble3"
+      },
+      "to": {
+        "node": "decoder",
+        "port": "in3"
+      },
+      "width": 1
+    },
+    {
+      "id": "decoder-out-display-in-bit0",
       "from": {
         "node": "decoder",
-        "port": "out"
+        "port": "out0"
       },
       "to": {
         "node": "display",
-        "port": "in"
+        "port": "in0"
       },
-      "width": 8
+      "width": 1
+    },
+    {
+      "id": "decoder-out-display-in-bit1",
+      "from": {
+        "node": "decoder",
+        "port": "out1"
+      },
+      "to": {
+        "node": "display",
+        "port": "in1"
+      },
+      "width": 1
+    },
+    {
+      "id": "decoder-out-display-in-bit2",
+      "from": {
+        "node": "decoder",
+        "port": "out2"
+      },
+      "to": {
+        "node": "display",
+        "port": "in2"
+      },
+      "width": 1
+    },
+    {
+      "id": "decoder-out-display-in-bit3",
+      "from": {
+        "node": "decoder",
+        "port": "out3"
+      },
+      "to": {
+        "node": "display",
+        "port": "in3"
+      },
+      "width": 1
+    },
+    {
+      "id": "decoder-out-display-in-bit4",
+      "from": {
+        "node": "decoder",
+        "port": "out4"
+      },
+      "to": {
+        "node": "display",
+        "port": "in4"
+      },
+      "width": 1
+    },
+    {
+      "id": "decoder-out-display-in-bit5",
+      "from": {
+        "node": "decoder",
+        "port": "out5"
+      },
+      "to": {
+        "node": "display",
+        "port": "in5"
+      },
+      "width": 1
+    },
+    {
+      "id": "decoder-out-display-in-bit6",
+      "from": {
+        "node": "decoder",
+        "port": "out6"
+      },
+      "to": {
+        "node": "display",
+        "port": "in6"
+      },
+      "width": 1
+    },
+    {
+      "id": "decoder-out-display-in-bit7",
+      "from": {
+        "node": "decoder",
+        "port": "out7"
+      },
+      "to": {
+        "node": "display",
+        "port": "in7"
+      },
+      "width": 1
     }
   ],
   "exampleId": "bcd-display"

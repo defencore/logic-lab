@@ -13,7 +13,7 @@ export default {
       steps: [
         {
           title: 'Inspect the starting address',
-          text: 'Address=2 and Write data=42. RAM and Register file initially read 0; the fixed ROM reads 20. Select their outputs or scopes to inspect them.',
+          text: 'Address=2 and Write data=42. RAM and Register file initially read 0; the fixed ROM reads 20. Read the complete bytes on the memory components; each scope traces only output bit 0.',
           nodes: ['address', 'data', 'ram', 'rom', 'registers'],
         },
         {
@@ -40,7 +40,7 @@ export default {
       steps: [
         {
           title: 'Перевірте початкову адресу',
-          text: 'Address=2, Write data=42. RAM та Register file спочатку читають 0; постійна ROM читає 20. Оберіть їхні виходи або осцилографи.',
+          text: 'Address=2, Write data=42. RAM та Register file спочатку читають 0; постійна ROM читає 20. Цілі байти читайте на компонентах пам’яті; кожен осцилограф відстежує лише вихідний біт 0.',
           nodes: ['address', 'data', 'ram', 'rom', 'registers'],
         },
         {
@@ -79,13 +79,13 @@ export default {
     },
     tasks: {
       en: [
-        'Address=2 and Write data=42. RAM and Register file initially read 0; the fixed ROM reads 20. Select their outputs or scopes to inspect them.',
+        'Address=2 and Write data=42. RAM and Register file initially read 0; the fixed ROM reads 20. Read the complete bytes on the memory components; each scope traces only output bit 0.',
         'Turn Write enable on, then switch Write clock from 0 to 1. This writes 42 into RAM and the register file. RAM output is Z while Write enable=1. Turn Write enable off to read back 42.',
         'Set Address Value to 3: RAM/registers read 0 and ROM reads 30. Set it back to 2: RAM/registers still contain 42. Register addresses use only the lowest three bits (0–7).',
         'Output enable=0 releases RAM and ROM to Z; Chip select=0 disables them. These controls do not gate the register file. Return both to 1. Before another write, return Write clock to 0.',
       ],
       ua: [
-        'Address=2, Write data=42. RAM та Register file спочатку читають 0; постійна ROM читає 20. Оберіть їхні виходи або осцилографи.',
+        'Address=2, Write data=42. RAM та Register file спочатку читають 0; постійна ROM читає 20. Цілі байти читайте на компонентах пам’яті; кожен осцилограф відстежує лише вихідний біт 0.',
         'Увімкніть Write enable, а потім перемкніть Write clock з 0 в 1. У RAM і регістровий файл запишеться 42. При Write enable=1 вихід RAM має Z. Вимкніть Write enable і прочитайте 42.',
         'Задайте Address=3: RAM/регістри покажуть 0, ROM — 30. Поверніть 2: RAM/регістри зберегли 42. Регістри використовують лише три молодші біти адреси (0–7).',
         'Output enable=0 переводить RAM і ROM у Z; Chip select=0 вимикає їх. На регістровий файл ці входи не впливають. Поверніть обидва в 1. Перед новим записом поверніть Write clock в 0.',

@@ -17,7 +17,7 @@ Keep the simulation running for timed observations; use Pause and Step when reco
 
 ## Procedure
 
-1. **Read digit 5.** The input value starts at 5. LOW4 carries its four-bit code; the decoder produces the eight-bit segment mask that lights a 5.
+1. **Read digit 5.** The input value starts at 5. The four BCD lines carry its code separately; the decoder produces the eight-bit segment mask that lights a 5.
 
 2. **Choose another digit.** Select the Digit component header. In Parameters, change Value to 0, then 8, then 9. The display updates immediately without Run.
 

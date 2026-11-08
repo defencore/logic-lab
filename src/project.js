@@ -99,6 +99,55 @@ function portFor(node, portId, direction) {
   return pin;
 }
 
+// Convert saved grouped connections once; the editor and simulator use only
+// individual contacts, and serialized projects always contain the expanded form.
+function expandImportedLines(value) {
+  if (!Array.isArray(value?.nodes) || !Array.isArray(value?.wires)) return value;
+  const nodes = new Map(
+    value.nodes.filter((node) => node && typeof node === 'object').map((node) => [node.id, node]),
+  );
+  const ids = new Set();
+  for (const wire of value.wires) {
+    record(wire, 'Wire');
+    const id = identifier(wire.id, 'Wire ID');
+    if (ids.has(id)) fail(`Duplicate wire ID "${id}".`);
+    ids.add(id);
+  }
+  const lineId = (id, bit) => {
+    let attempt = 0;
+    while (true) {
+      const suffix = `-b${bit}${attempt ? `-${attempt}` : ''}`;
+      const candidate = id.slice(0, 100 - suffix.length) + suffix;
+      if (!ids.has(candidate)) {
+        ids.add(candidate);
+        return candidate;
+      }
+      attempt++;
+    }
+  };
+  const wires = value.wires.flatMap((wire) => {
+    const source = getDefinition(nodes.get(wire.from?.node)?.type);
+    const target = getDefinition(nodes.get(wire.to?.node)?.type);
+    const output = source?.signals.outputs.find((port) => port.id === wire.from?.port);
+    const input = target?.signals.inputs.find((port) => port.id === wire.to?.port);
+    if (!output || !input || output.width === 1) return [wire];
+    if (!input.acceptAny && !!output.analog !== !!input.analog)
+      fail(`Wire "${wire.id}" connects incompatible analog and digital ports.`);
+    if (!input.acceptAny && output.width !== input.width)
+      fail(`Wire "${wire.id}" connects signals with different bit widths.`);
+    if (own(wire, 'width') && wire.width !== output.width)
+      fail(`Wire "${wire.id}" width must match its source signal (${output.width}).`);
+    return Array.from({ length: input.acceptAny ? 1 : output.width }, (_, bit) => ({
+      ...wire,
+      id: lineId(wire.id, bit),
+      from: { node: wire.from.node, port: `${output.id}${bit}` },
+      to: { node: wire.to.node, port: input.width > 1 ? `${input.id}${bit}` : input.id },
+      width: 1,
+    }));
+  });
+  return { ...value, wires };
+}
+
 export function validateProject(value) {
   record(value, 'Project');
   if (value.version !== 1) fail('Unsupported project version. Expected version 1.');
@@ -153,15 +202,12 @@ export function validateProject(value) {
     const targetPin = portFor(targetNode, to.port, 'inputs');
     if (!targetPin.acceptAny && !!sourcePin.analog !== !!targetPin.analog)
       fail(`Wire "${id}" connects incompatible analog and digital ports.`);
-    const width = sourcePin.width ?? 1;
-    if (!targetPin.acceptAny && width !== (targetPin.width ?? 1))
-      fail(`Wire "${id}" connects ports with different bit widths.`);
-    if (own(item, 'width') && item.width !== width)
-      fail(`Wire "${id}" width must match its source port (${width}).`);
+    if (own(item, 'width') && item.width !== 1)
+      fail(`Wire "${id}" width must match a single signal line (1).`);
     const connection = JSON.stringify([from.node, from.port, to.node, to.port]);
     if (connections.has(connection)) fail(`Wire "${id}" duplicates an existing connection.`);
     connections.add(connection);
-    const wire = { id, from, to, width };
+    const wire = { id, from, to, width: 1 };
     if (own(item, 'points')) {
       if (!Array.isArray(item.points) || item.points.length > 100)
         fail(`Wire "${id}" must contain at most 100 route points.`);
@@ -205,7 +251,7 @@ export function parseProject(source) {
   } catch {
     fail('This file is not valid JSON.');
   }
-  return validateProject(value);
+  return validateProject(expandImportedLines(value));
 }
 
 export function serializeProject(project) {
