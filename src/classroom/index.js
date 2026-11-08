@@ -60,14 +60,14 @@ export function createClassroom(adapter) {
   const operations = createClassroomOperations((busy) => {
     state.busy = busy;
     updateDock(true);
-    if (busy) $$('.classroom-content button').forEach((button) => (button.disabled = true));
+    if (busy) lockBusyFields();
     else refreshVisible();
   });
   const views = () =>
     createClassroomView({
       state,
       language: adapter.getLanguage(),
-      project: adapter.getProject(),
+      project: session.projectToSave(),
       example: adapter.getExample(),
     });
   const controls = createActionControls({ adapter, state, session, L, guardIdle });
@@ -94,9 +94,12 @@ export function createClassroom(adapter) {
     safe,
     bindFile,
     operations,
+    open,
+    refreshVisible,
+    controls,
   });
   const { bindTeacher } = createTeacherController({
-    adapter,
+    adapter: { ...adapter, getProject: session.projectToSave, openReviewedWork },
     state,
     teacher,
     L,
@@ -108,11 +111,20 @@ export function createClassroom(adapter) {
     operations,
     refreshVisible,
   });
+  function lockBusyFields() {
+    $$(
+      '.classroom-content button:not(#teacher-review-cancel), .classroom-content input, .classroom-content textarea, .classroom-content select',
+    ).forEach((element) => {
+      element.disabled = true;
+    });
+  }
   function updateDock(force = false) {
     dock.updateDock(force);
+    if ($('#project-name')) $('#project-name').disabled = controls.isLocked();
+    student.updateProgress();
   }
   function persistDraft() {
-    store.saveDraft(state);
+    store.saveDraft({ ...state, sequence: session.sequenceToSave() });
   }
   function safe(action) {
     return async (...args) => {
@@ -139,6 +151,18 @@ export function createClassroom(adapter) {
         L('Завершіть запис або зупиніть відтворення.', 'Finish recording or stop replay first.'),
       );
   }
+  function openReviewedWork(submission, { replay = false } = {}) {
+    guardEditableSession();
+    adapter.closeModal();
+    session.reviewWork(submission.project, replay ? submission.sequence : null);
+    adapter.fitProject?.();
+    adapter.notify(
+      L(
+        'Тимчасовий перегляд роботи. «Зупинити» поверне вашу схему й сценарій.',
+        'Temporary work review. Stop restores your circuit and sequence.',
+      ),
+    );
+  }
   function refreshVisible() {
     if ($('.classroom-modal')) open(activeTab);
   }
@@ -153,6 +177,7 @@ export function createClassroom(adapter) {
           store.saveProfile(state);
         }
         open(target);
+        updateDock(true);
         $(`#class-tab-${target}`).focus();
       };
       button.onclick = () => select(button.dataset.classTab);
@@ -178,6 +203,7 @@ export function createClassroom(adapter) {
     if (activeTab === 'sequence') bindSequence();
     else if (activeTab === 'teacher') bindTeacher();
     else student.bindStudent();
+    if (state.busy) lockBusyFields();
   }
   function bindFile(selector, action, multiple = false) {
     $(selector).onclick = safe(() => {
@@ -194,22 +220,29 @@ export function createClassroom(adapter) {
     });
   }
   return {
-    mount: dock.mount,
+    mount: () => {
+      dock.mount();
+      student.updateProgress();
+    },
     recovery: store.recovery,
     acknowledgeRecovery: store.acknowledgeRecovery,
     open,
     tick: controls.tick,
     inputChanged: controls.inputChanged,
-    allowEdit: controls.allowEdit,
+    allowEdit: () => student.isInstalling() || controls.allowEdit(),
     allowInput: controls.allowInput,
-    observeEdit: student.observeEdit,
+    observeEdit: () => {
+      student.observeEdit();
+      student.updateProgress();
+    },
     isLocked: controls.isLocked,
     isRecording: () => state.recording,
-    isPlaying: () => !!state.player,
+    isPlaying: () => !!state.player || !!state.preview,
     stopPlayback: session.stopPlayback,
     stopRecording: controls.stopRecording,
     recordingDelta: session.recordingDelta,
     projectToSave: session.projectToSave,
+    viewportToSave: session.viewportToSave,
     onSimulationStateChanged: session.simulationStateChanged,
   };
 }

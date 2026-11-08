@@ -1,3 +1,4 @@
+import { createLessonReflection } from './lesson-reflection.js';
 import { getDefinition } from '../components/catalog/index.js';
 import { EXAMPLES, createExample } from '../../examples/index.js';
 import { $, $$, esc, format, signalClass } from '../shared/ui.js';
@@ -23,6 +24,7 @@ export function createLearningController(
     primarySignal,
   },
 ) {
+  const reflection = createLessonReflection(workbench);
   function showExamples(filters = {}) {
     const state = { query: '', category: 'all', level: 'all', ...filters };
     showModal(exampleCatalogShell(workbench.lang, state), true);
@@ -135,6 +137,9 @@ export function createLearningController(
     const { example, lesson } = current;
     workbench.lessonStep = Math.max(0, Math.min(lesson.steps.length - 1, workbench.lessonStep));
     const step = lesson.steps[workbench.lessonStep];
+    const label = $('#lesson-toggle-label');
+    if (label)
+      label.textContent = `${workbench.lang === 'ua' ? 'Інструкція' : 'Instruction'} · ${workbench.lessonStep + 1}/${lesson.steps.length}`;
     const visible =
       workbench.lessonOpen && (!workbench.compactLayout.matches || workbench.compactLessonOpen);
     panel.hidden = !visible;
@@ -146,7 +151,8 @@ export function createLearningController(
       return;
     }
     workbench.highlighted = new Set(step.nodes || []);
-    panel.innerHTML = `<div class="lesson-heading"><span class="eyebrow">${t('lesson')} · ${esc(title(example))}</span><button id="lesson-close" class="icon-btn" aria-label="${t('hideLesson')}">${icon('close', 14)}</button></div><div class="lesson-content"><div><p class="lesson-goal">${esc(lesson.goal)}</p><strong>${workbench.lessonStep + 1}. ${esc(step.title)}</strong><p>${esc(step.text)}</p><div id="lesson-live" class="lesson-live"></div></div><div class="lesson-navigation"><span>${t('stepOf')} ${workbench.lessonStep + 1} ${t('of')} ${lesson.steps.length}</span><div><button id="lesson-prev" class="icon-btn" ${workbench.lessonStep === 0 ? 'disabled' : ''} aria-label="${t('previousStep')}">${icon('chevron', 15)}</button><button id="lesson-next" class="icon-btn" ${workbench.lessonStep === lesson.steps.length - 1 ? 'disabled' : ''} aria-label="${t('nextStep')}">${icon('chevron', 15)}</button></div><button id="lesson-inspect" class="text-btn">${t('inspectStep')}${icon('chevron', 12)}</button></div></div>${workbench.lessonStep === lesson.steps.length - 1 ? `<div class="lesson-result"><b>${t('expectedResult')}</b> ${esc(lesson.expected)}</div>` : ''}`;
+    panel.innerHTML = `<div class="lesson-heading"><span class="eyebrow">${t('lesson')} · ${esc(title(example))}</span><button id="lesson-close" class="icon-btn" aria-label="${t('hideLesson')}">${icon('close', 14)}</button></div><div class="lesson-content"><div><p class="lesson-goal">${esc(lesson.goal)}</p><strong>${workbench.lessonStep + 1}. ${esc(step.title)}</strong><p>${esc(step.text)}</p><div id="lesson-live" class="lesson-live"></div></div><div class="lesson-navigation"><span>${t('stepOf')} ${workbench.lessonStep + 1} ${t('of')} ${lesson.steps.length}</span><div><button id="lesson-prev" class="icon-btn" ${workbench.lessonStep === 0 ? 'disabled' : ''} aria-label="${t('previousStep')}">${icon('chevron', 15)}</button><button id="lesson-next" class="icon-btn" ${workbench.lessonStep === lesson.steps.length - 1 ? 'disabled' : ''} aria-label="${t('nextStep')}">${icon('chevron', 15)}</button></div><button id="lesson-inspect" class="text-btn">${t('inspectStep')}${icon('chevron', 12)}</button></div></div>${workbench.lessonStep === lesson.steps.length - 1 ? `<div class="lesson-result"><b>${t('expectedResult')}</b> ${esc(lesson.expected)}</div>` : ''}${reflection.markup(`${example.id}:${workbench.lessonStep}`)}`;
+    reflection.bind(`${example.id}:${workbench.lessonStep}`, step);
     $('#lesson-close').onclick = () => {
       workbench.compactLessonOpen = false;
       workbench.lessonOpen = false;

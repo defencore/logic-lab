@@ -20,6 +20,10 @@
 @import './src/styles/catalog/cards.css';
 @import './src/styles/learning/references.css';
 @import './src/styles/learning/lessons.css';
+@import './src/styles/learning/reflection.css';
+@import './src/styles/classroom/student.css';
+@import './src/styles/classroom/teacher.css';
+@import './src/styles/classroom/review.css';
 @import './src/styles/scenes/widgets.css';
 @import './src/styles/scenes/viewer.css';
 @import './src/styles/wiring.css';
@@ -28,3 +32,4 @@
 @import './src/styles/responsive/phone.css';
 @import './src/styles/responsive/touch.css';
 @import './src/styles/responsive/constrained.css';
+@import './src/styles/responsive/learning-space.css';

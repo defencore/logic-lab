@@ -1,3 +1,5 @@
+import { validateProject } from '../circuits/project.js';
+import { createRuntime, simulate } from '../simulation/index.js';
 import {
   SEQUENCE_LIMITS,
   createSequence,
@@ -20,18 +22,30 @@ export function createActionSession(
     observations: [],
     recording: false,
     player: null,
+    preview: null,
+    reviewMode: null,
     playbackRunning: false,
     simulationRunning: false,
     dockOpen: !!sequence,
   };
   let editable = null;
   let target = 0;
+  let reviewOriginal = null;
+  function preserveEditor() {
+    if (!editable)
+      editable = {
+        project: adapter.getProject(),
+        runtime: adapter.getRuntime(),
+        viewport: adapter.getViewport?.(),
+        lessonStep: adapter.getLessonStep?.(),
+      };
+  }
   const changed = (save = false) => {
     if (save) onSave();
     onChange();
   };
   function setSequence(value) {
-    if (state.recording || state.player)
+    if (state.recording || state.player || state.preview)
       throw new Error('Finish the current action session first.');
     state.sequence = validateSequence(value);
     state.observations = [];
@@ -39,6 +53,7 @@ export function createActionSession(
     changed(true);
   }
   function startRecording() {
+    if (state.reviewMode) throw new Error('Return to your circuit before recording.');
     if (state.recording) throw new Error('An action recording is already in progress.');
     const sequence = createSequence(editable?.project || adapter.getProject());
     if (state.player) stopPlayback();
@@ -72,11 +87,15 @@ export function createActionSession(
     else changed(true);
   }
   function beginPlayback() {
+    if (state.preview) throw new Error('Return to your circuit before replaying actions.');
     if (state.recording) throw new Error('Finish recording before replaying actions.');
     if (!state.sequence) throw new Error('Record or import an action sequence first.');
     // Validate before taking over the editor so an invalid import cannot change its state.
-    const next = createPlayback(state.sequence);
-    if (!editable) editable = { project: adapter.getProject(), runtime: adapter.getRuntime() };
+    const next = createPlayback(
+      state.sequence,
+      state.reviewMode === 'replay' ? { project: reviewOriginal.project } : {},
+    );
+    preserveEditor();
     adapter.setRunning(false);
     state.player = next;
     state.observations = next.observations;
@@ -105,16 +124,53 @@ export function createActionSession(
     changed();
   }
   function stopPlayback() {
-    if (!state.player && !editable) return;
+    if (!state.player && !state.preview && !editable) return;
+    state.preview = null;
+    state.reviewMode = null;
     state.player = null;
     state.playbackRunning = false;
     adapter.setRunning(false);
     if (editable) {
       const original = editable;
       editable = null;
+      if (original.lessonStep !== undefined) adapter.restoreLessonStep?.(original.lessonStep);
       adapter.adoptPlayback(original.project, original.runtime);
+      if (original.viewport) adapter.restoreViewport?.(original.viewport);
+    }
+    if (reviewOriginal) {
+      state.sequence = reviewOriginal.sequence;
+      state.observations = reviewOriginal.observations;
+      reviewOriginal = null;
     }
     adapter.refreshPlayback();
+    changed();
+  }
+  function reviewWork(project, sequence = null) {
+    if (state.recording || state.player || state.preview)
+      throw new Error('Finish the current action session first.');
+    // Validate and initialize completely before taking over the editor.
+    const next = sequence ? createPlayback(sequence, { project }) : null;
+    const reviewed = next?.project || validateProject(structuredClone(project));
+    const runtime = next?.runtime || createRuntime();
+    if (!next) simulate(reviewed, runtime, 0);
+    preserveEditor();
+    reviewOriginal = {
+      sequence: state.sequence,
+      observations: state.observations,
+      project: structuredClone(project),
+    };
+    adapter.setRunning(false);
+    state.dockOpen = true;
+    state.reviewMode = next ? 'replay' : 'circuit';
+    state.preview = next ? null : { name: reviewed.name };
+    state.player = next;
+    if (next) {
+      state.sequence = validateSequence(sequence);
+      state.observations = next.observations;
+      state.playbackRunning = true;
+      target = 0;
+    }
+    adapter.adoptPlayback(reviewed, runtime);
     changed();
   }
   function tick(dt) {
@@ -139,8 +195,8 @@ export function createActionSession(
       stopRecording();
       limitReached = true;
     }
-    if (state.recording || state.player) changed();
-    return { playing: !!state.player, completed, limitReached };
+    if (state.recording || state.player || state.preview) changed();
+    return { playing: !!state.player || !!state.preview, completed, limitReached };
   }
   function simulationStateChanged(running) {
     state.simulationRunning = !!running;
@@ -149,6 +205,7 @@ export function createActionSession(
   return {
     state,
     setSequence,
+    reviewWork,
     startRecording,
     stopRecording,
     inputChanged,
@@ -158,7 +215,9 @@ export function createActionSession(
     stopPlayback,
     tick,
     simulationStateChanged,
-    isLocked: () => state.recording || !!state.player,
+    isLocked: () => state.recording || !!state.player || !!state.preview,
+    sequenceToSave: () => (reviewOriginal ? reviewOriginal.sequence : state.sequence),
+    viewportToSave: () => editable?.viewport || adapter.getViewport?.(),
     recordingDelta: (dt) =>
       state.recording
         ? Math.min(dt, Math.max(0, SEQUENCE_LIMITS.duration - adapter.getRuntime().time))

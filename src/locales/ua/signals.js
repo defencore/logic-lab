@@ -10,9 +10,9 @@ export const signals = {
   simulationRateHint:
     'Час усієї симуляції: 2× — удвічі швидше, 0,5× — удвічі повільніше. Частоти генераторів не змінюються.',
   milliseconds: 'мс',
-  recordStart: 'Запис',
-  recordStop: 'Зупинити запис',
-  recordNew: 'Новий запис',
+  recordStart: 'Запис сигналів',
+  recordStop: 'Зупинити запис сигналів',
+  recordNew: 'Новий запис сигналів',
   recordActive: 'Триває запис',
   recordPaused: 'Запис на паузі',
   recordSaved: 'Записано',

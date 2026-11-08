@@ -1,0 +1,104 @@
+.teacher-route {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+.teacher-route a {
+  display: block;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #f5f8f7;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-decoration: none;
+}
+.teacher-route a:hover {
+  background: #e6f0e9;
+}
+.teacher-step {
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+  scroll-margin-top: 70px;
+}
+.teacher-step h4 {
+  margin: 0 0 10px;
+  color: var(--deep);
+  font-size: var(--text-base);
+}
+.teacher-state,
+.teacher-key-state {
+  padding: 12px;
+  margin-block: 12px;
+  border: 1px solid #afcbb8;
+  border-radius: 8px;
+  background: #f1f7f3;
+}
+.teacher-state[data-dirty='true'],
+.teacher-key-state[data-unsaved='true'] {
+  border-color: #c99b4d;
+  background: #fff7e8;
+}
+.teacher-state p,
+.teacher-key-state p {
+  margin-top: 0;
+}
+.teacher-key-state .primary-btn {
+  min-height: 40px;
+  white-space: normal;
+  text-align: left;
+}
+.starter-preview {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #f7f9fb;
+}
+.starter-preview .starter-map {
+  width: 100%;
+  height: 200px;
+  margin-block: 8px;
+  border: 1px solid #d0dce3;
+  background: #edf3f7;
+  border-radius: 6px;
+}
+.starter-map rect {
+  fill: #fff;
+  stroke: #6a8593;
+  stroke-width: 1.5px;
+}
+.starter-map text {
+  fill: #233d4d;
+  font-size: 12px;
+}
+.starter-preview ul {
+  padding-left: 20px;
+  overflow-wrap: anywhere;
+}
+.teacher-archives > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.teacher-workflow .classroom-actions > button,
+.teacher-step > .soft-btn,
+.teacher-step > .primary-btn {
+  white-space: normal;
+  text-align: left;
+}
+@media (max-width: 650px) {
+  .teacher-route li {
+    flex: 1 1 42%;
+  }
+  .teacher-route a {
+    height: 100%;
+  }
+  .starter-preview .starter-map {
+    height: 160px;
+  }
+}

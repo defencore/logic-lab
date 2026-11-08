@@ -20,7 +20,7 @@ export function createHistory(context) {
     clearTimeout(state.storageTimer);
     state.storageTimer = setTimeout(() => {
       const editable = services.classroom?.projectToSave() || state.project;
-      editable.viewport = { ...state.view };
+      editable.viewport = { ...(services.classroom?.viewportToSave?.() || state.view) };
       const ok = saveProject(editable);
       $('#save-state').innerHTML =
         icon(ok ? 'check' : 'help', 13) + esc(ok ? t('saved') : t('storageFailed'));
@@ -47,9 +47,15 @@ export function createHistory(context) {
     $('#project-name').value = state.project.name;
     services.learning.renderLesson();
   }
-  function bindLiveText(input, apply) {
+  function bindLiveText(
+    input,
+    apply,
+    { canApply = () => !services.classroom || services.classroom.allowEdit() } = {},
+  ) {
+    if (services.classroom?.isPlaying?.()) input.disabled = true;
     let editing = false;
     input.oninput = () => {
+      if (!canApply()) return;
       if (!editing) {
         actions.checkpoint();
         editing = true;

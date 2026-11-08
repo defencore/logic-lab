@@ -137,6 +137,33 @@
 
   .simulation-controls {
     gap: 2px;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .workspace-title {
+    order: -1;
+    flex: 1 0 100%;
+    font-size: 11px;
+  }
+
+  .lesson-toggle {
+    margin-left: auto;
+    font-size: 11px;
+    padding-inline: 7px;
+  }
+
+  .library-open {
+    font-size: 11px;
+    padding-inline: 7px;
+  }
+
+  .global-speed {
+    margin-right: auto;
+  }
+
+  .status-bar .save-state {
+    flex-basis: 100%;
   }
 }
 

@@ -237,3 +237,21 @@
 .file-menu-item:hover {
   background: #edf4ef;
 }
+
+.main .status-bar {
+  height: auto;
+  min-height: 30px;
+  flex-wrap: wrap;
+  row-gap: 3px;
+  padding-block: 5px;
+}
+.status-bar .save-state {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  margin-right: 0;
+  line-height: 1.4;
+  color: #334155;
+}

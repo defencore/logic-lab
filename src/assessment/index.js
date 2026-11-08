@@ -122,6 +122,7 @@ export async function gradeSubmission(source, teacherKey, { signal } = {}) {
     mismatches,
     evidence,
     observations: actual.observations,
+    studentObservations: submittedReplay.observations,
   };
 }
 function* comparisonPairs(sources, { assignmentKey, signal } = {}) {

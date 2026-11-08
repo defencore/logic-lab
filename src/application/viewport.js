@@ -19,6 +19,9 @@ export function createViewport(context) {
     state.view.zoom = clampZoom(state.view.zoom);
     $('#world').style.transform =
       `translate(${state.view.x}px,${state.view.y}px) scale(${state.view.zoom})`;
+    $('#world').style.setProperty('--contact-scale', state.view.zoom);
+    const contactHint = $('#contact-zoom-hint');
+    if (contactHint) contactHint.hidden = state.view.zoom >= 0.75;
     // Keep the grid readable while preserving its alignment with circuit coordinates.
     const gridSize =
       20 * state.view.zoom * 2 ** Math.max(0, Math.ceil(Math.log2(12 / (20 * state.view.zoom))));

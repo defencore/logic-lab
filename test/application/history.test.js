@@ -46,3 +46,45 @@ test('locked laboratory work cannot enter undo history and each text editing ses
   assert.equal(context.state.project.name, 'Third');
   assert.equal(context.state.undoStack.length, 2);
 });
+
+test('read-only review rejects text changes before creating undo checkpoints', (t) => {
+  withDocument(t);
+  const context = editingContext();
+  Object.assign(context.actions, createHistory(context));
+  context.services.classroom = { allowEdit: () => false, isPlaying: () => true };
+  const input = { value: 'Reviewed circuit' };
+  context.actions.bindLiveText(input, (value) => {
+    context.state.project.name = value;
+  });
+  assert.equal(input.disabled, true);
+  input.oninput();
+  assert.equal(context.state.project.name, 'Circuit');
+  assert.equal(context.state.undoStack.length, 0);
+});
+
+test('source text controls can use the input permission during recording without permitting edits', (t) => {
+  withDocument(t);
+  const context = editingContext();
+  Object.assign(context.actions, createHistory(context));
+  context.services.classroom = { allowEdit: () => false, allowInput: () => true };
+  let value = 0;
+  const input = { value: '50' };
+  context.actions.bindLiveText(
+    input,
+    (next) => {
+      value = Number(next);
+    },
+    {
+      canApply: () => context.services.classroom.allowInput(),
+    },
+  );
+  input.oninput();
+  assert.equal(value, 50);
+  assert.equal(context.state.undoStack.length, 1);
+  context.services.classroom.allowInput = () => false;
+  input.onblur();
+  input.value = '100';
+  input.oninput();
+  assert.equal(value, 50);
+  assert.equal(context.state.undoStack.length, 1);
+});

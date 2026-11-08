@@ -4,9 +4,20 @@ import { serializeProject } from '../circuits/project.js';
 import { icon } from '../shared/icons.js';
 import { $ } from '../shared/ui.js';
 import { snap } from '../circuits/geometry/index.js';
+import { findNodePlacement, revealNodePlacement } from '../circuits/placement.js';
 import { boundCoordinate, uid } from './model.js';
 export function createCommands(context) {
   const { state, services, actions, t } = context;
+  function newProject() {
+    if (services.classroom && !services.classroom.allowEdit()) return;
+    actions.confirmReplace(() => ({
+      version: 1,
+      name: t('newName'),
+      nodes: [],
+      wires: [],
+      wireStyle: state.project.wireStyle || 'orthogonal',
+    }));
+  }
   function addNode(type, point) {
     if (services.classroom && !services.classroom.allowEdit()) return;
     actions.setWorkspaceView('canvas');
@@ -16,35 +27,24 @@ export function createCommands(context) {
     }
     const d = getDefinition(type);
     if (!d) return;
-    actions.checkpoint();
     const r = $('#viewport').getBoundingClientRect();
-    const center = point || {
-      x: (r.width / 2 - state.view.x) / state.view.zoom - 80,
-      y: (r.height / 2 - state.view.y) / state.view.zoom - 50,
-    };
-    if (!point) {
-      let offset = 0;
-      while (
-        state.project.nodes.some(
-          (n) =>
-            Math.abs(n.x - snap(center.x + offset)) < 30 &&
-            Math.abs(n.y - snap(center.y + offset)) < 30,
-        )
-      )
-        offset += 40;
-      center.x += offset;
-      center.y += offset;
-    }
     const node = {
       id: uid('n'),
       type,
-      x: boundCoordinate(snap(center.x)),
-      y: boundCoordinate(snap(center.y)),
       label: '',
       enabled: true,
       params: structuredClone(d.defaults),
     };
+    const position = point
+      ? { x: boundCoordinate(snap(point.x)), y: boundCoordinate(snap(point.y)) }
+      : findNodePlacement(node, state.project.nodes, { view: state.view, viewport: r });
+    if (!position) return actions.notify(t('limitReached'));
+    Object.assign(node, position);
+    actions.checkpoint();
     state.project.nodes.push(node);
+    if (!point) {
+      state.view = revealNodePlacement(state.view, r, node);
+    }
     state.selected = new Set([node.id]);
     state.selectedWire = null;
     actions.changed();
@@ -175,6 +175,7 @@ export function createCommands(context) {
     services.classroom?.inputChanged(node.id, 'value', node.params.value);
   }
   return {
+    newProject,
     addNode,
     deleteSelection,
     duplicateSelection,

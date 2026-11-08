@@ -3,6 +3,7 @@ import { $ } from '../shared/ui.js';
 import { panBy, ZOOM_IN_FACTOR, ZOOM_OUT_FACTOR } from '../circuits/viewport.js';
 import { trapFocus } from '../workbench/dialogs.js';
 import { boundCoordinate } from './model.js';
+import { focusContact } from '../workbench/contact-interaction.js';
 export function bindApplicationEvents(context) {
   const { state, services, actions, t } = context;
   document.addEventListener('pointermove', actions.onPointerMove);
@@ -28,7 +29,11 @@ export function bindApplicationEvents(context) {
       } else if (services.dialogs.isOpen()) services.dialogs.close();
       else if ($('#component-library').classList.contains('mobile-open'))
         actions.setLibraryOpen(false);
-      else actions.cancelInteraction();
+      else {
+        const origin = state.pending;
+        actions.cancelInteraction();
+        if (origin) focusContact(origin);
+      }
       return;
     }
     if (services.dialogs.handleKey(e)) return;
@@ -164,7 +169,7 @@ export function bindApplicationEvents(context) {
   });
   window.addEventListener('beforeunload', () => {
     const editable = services.classroom?.projectToSave() || state.project;
-    editable.viewport = { ...state.view };
+    editable.viewport = { ...(services.classroom?.viewportToSave?.() || state.view) };
     saveProject(editable);
   });
 }

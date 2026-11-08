@@ -53,7 +53,9 @@ export function createInspectorController(state, actions) {
     }
     if (!state.selected.size) {
       el.innerHTML = `<div class="inspector-empty"><span class="empty-icon">${icon('mouse', 29)}</span><h3>${t('nothing')}</h3><p>${t('nothingDesc')}</p></div><div class="workspace-settings"><h4>${t('view')}</h4><label>${t('wireStyle')}<select id="routing"><option value="orthogonal">${t('orthogonal')}</option><option value="bezier" ${state.project.wireStyle === 'bezier' ? 'selected' : ''}>${t('bezier')}</option></select></label><div class="signal-legend"><span><i class="dot green"></i>${t('one')}</span><span><i class="dot gray"></i>${t('zero')}</span><span><i class="dot amber"></i>${t('unknown')}</span><span><i class="dot dashed"></i>${t('floating')}</span></div></div>`;
+      $('#routing').disabled = !!state.classroom?.isLocked();
       $('#routing').onchange = (e) => {
+        if (state.classroom && !state.classroom.allowEdit()) return;
         checkpoint();
         state.project.wireStyle = e.target.value;
         changed();

@@ -99,3 +99,49 @@ test('cancelled batch checking keeps completed rows and cannot claim a completed
   assert.match(markup, /Comparison of this batch was not completed/);
   assert.doesNotMatch(markup, /No significant structural/);
 });
+
+test('review cards expose explanations, actual work actions and recomputed student observations', () => {
+  const project = createExample('shift-register-sequence');
+  const state = {
+    teacherKey: { referenceProject: project },
+    pairs: [],
+    batchErrors: [],
+    busy: false,
+    batch: [
+      {
+        submission: {
+          student: { name: 'Learner', id: 's1', group: 'A' },
+          assignment: { variant: { id: 'variant' } },
+          notes: '<script>explanation</script>',
+          project,
+          sequence: { probes: [{ node: 'shift', port: 'out', side: 'outputs' }], actions: [] },
+          observations: [{ at: 0, after: -1, values: [999] }],
+        },
+        result: {
+          functionalPassed: true,
+          passed: true,
+          matched: 1,
+          totalChecks: 1,
+          mismatches: [],
+          integrity: true,
+          structureMatches: true,
+          observationsMatch: true,
+          studentObservations: [{ at: 0, after: -1, values: [1] }],
+          evidence: {},
+        },
+      },
+    ],
+  };
+  const markup = createReviewView({ state, language: 'en' }).reviewMarkup();
+  assert.match(markup, /&lt;script&gt;explanation&lt;\/script&gt;/);
+  assert.match(markup, /data-review-open="0"/);
+  assert.match(markup, /data-review-replay="0"/);
+  assert.match(markup, /Recomputed experiment/);
+  assert.match(markup, /<td>1<\/td>/);
+  assert.doesNotMatch(markup, /999/);
+  state.reviewQuery = 'no match';
+  assert.match(createReviewView({ state, language: 'en' }).cardsMarkup(), /No submissions match/);
+  state.reviewQuery = 'learner';
+  state.reviewFilter = 'passed';
+  assert.match(createReviewView({ state, language: 'en' }).cardsMarkup(), /Submissions shown/);
+});

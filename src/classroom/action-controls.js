@@ -81,7 +81,7 @@ export function createActionControls({ adapter, state, session, L, guardIdle }) 
     return false;
   }
   function allowInput() {
-    if (!state.player && !state.busy) return true;
+    if (!state.player && !state.preview && !state.busy) return true;
     adapter.notify(
       state.busy
         ? L(

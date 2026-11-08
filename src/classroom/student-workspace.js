@@ -1,12 +1,9 @@
 import { $, $$ } from '../shared/ui.js';
-import {
-  parseAssignment,
-  createAttempt,
-  recordEdit,
-  createSubmission,
-  serializeSubmission,
-} from '../assessment/index.js';
-import { cleanName, downloadFile, readClassroomFile } from './files.js';
+import { recordEdit } from '../assessment/index.js';
+import { readClassroomFile } from './files.js';
+import { createStudentActions } from './student-actions.js';
+import { createStudentReplacement } from './student-replacement.js';
+import { createStudentProgressController } from './student-progress-controller.js';
 
 export function createStudentWorkspace({
   adapter,
@@ -20,120 +17,117 @@ export function createStudentWorkspace({
   safe,
   bindFile,
   operations,
+  open,
+  controls,
 }) {
-  let installingStarter = false;
-  function readIdentity() {
-    state.student = {
-      name: $('#student-name').value.trim(),
-      id: $('#student-id').value.trim(),
-      group: $('#student-group').value.trim(),
-    };
-    state.notes = $('#student-notes').value;
-    store.saveProfile(state);
-    persistDraft();
-  }
-  function startAttempt() {
-    guardEditableSession();
-    if (!state.student.name || !state.student.id)
-      throw new Error(
-        L('Заповніть ім’я та ідентифікатор студента.', 'Enter the student name and ID.'),
-      );
-    if (
-      state.assignment.variant.studentId &&
-      state.assignment.variant.studentId !== state.student.id
-    )
-      throw new Error(
-        L(
-          'Цей варіант видано для іншого ідентифікатора студента.',
-          'This variant was issued for a different student ID.',
-        ),
-      );
-    const next = createAttempt(state.assignment, state.student);
-    // Installing the starter must succeed before replacing the existing attempt evidence.
-    installingStarter = true;
-    try {
-      adapter.loadProject(structuredClone(state.assignment.starterProject));
-    } finally {
-      installingStarter = false;
-    }
-    state.attempt = next;
-    state.sequence = null;
-    state.observations = [];
-    state.notes = '';
-    adapter.setRunning(false);
-    state.dockOpen = true;
+  let actions, progress;
+  const review = createStudentReplacement({
+    adapter,
+    state,
+    L,
+    safe,
+    operations,
+    guardEditableSession,
+    saveDraft: () => actions.saveDraft(),
+  });
+  function changed(reset = false) {
+    if (reset) progress?.reset();
     persistDraft();
     updateDock();
-    adapter.notify(
-      L(
-        'Спробу розпочато. Побудуйте схему, запишіть дії та поясніть результат.',
-        'Attempt started. Build the circuit, record actions and explain the result.',
-      ),
-    );
+    progress?.update();
+  }
+  actions = createStudentActions({
+    adapter,
+    state,
+    session,
+    store,
+    L,
+    guardEditableSession,
+    operations,
+    review,
+    changed,
+  });
+  progress = createStudentProgressController({
+    adapter,
+    state,
+    session,
+    actions,
+    controls,
+    open,
+    safe,
+    persistDraft,
+  });
+  function readIdentity() {
+    if (state.busy) return;
+    const previous = JSON.stringify([state.student, state.notes]);
+    if ($('#student-name'))
+      state.student = {
+        name: $('#student-name').value.trim(),
+        id: $('#student-id').value.trim(),
+        group: $('#student-group').value.trim(),
+      };
+    if ($('#student-notes')) state.notes = $('#student-notes').value;
+    if (previous !== JSON.stringify([state.student, state.notes])) state.studentDirty = true;
+    store.saveProfile(state);
+    changed();
   }
   function bindStudent() {
     $$('[id^="student-"]')
       .filter((element) => ['INPUT', 'TEXTAREA'].includes(element.tagName))
       .forEach((element) => (element.oninput = readIdentity));
-    bindFile('#student-task-import', async (files) => {
-      const assignment = parseAssignment(await readClassroomFile(files[0]));
-      state.assignment = assignment;
-      state.attempt = null;
-      state.sequence = null;
-      state.observations = [];
-      state.notes = '';
-      persistDraft();
-      updateDock();
-    });
+    bindFile('#student-task-import', async (files) =>
+      actions.importAssignment(await readClassroomFile(files[0])),
+    );
+    bindFile('#student-work-import', async (files) =>
+      actions.importWork(await readClassroomFile(files[0])),
+    );
     $('#student-start').onclick = safe(() => {
       readIdentity();
-      startAttempt();
+      actions.continueWork();
     });
-    $('#student-submit').onclick = safe(async () => {
+    if ($('#student-restart'))
+      $('#student-restart').onclick = safe(() => {
+        readIdentity();
+        actions.restartAttempt();
+      });
+    $('#student-rerecord').onclick = safe(progress.record);
+    $('#student-save-draft').onclick = safe(() => {
       readIdentity();
       guardEditableSession();
-      if (!state.notes.trim())
-        throw new Error(
-          L(
-            'Додайте пояснення результату перед здачею роботи.',
-            'Explain your result before exporting the work.',
-          ),
-        );
-      await operations.run(async () => {
-        const submission = await createSubmission({
-          assignment: state.assignment,
-          student: state.student,
-          attempt: state.attempt,
-          project: adapter.getProject(),
-          sequence: state.sequence,
-          notes: state.notes,
-        });
-        downloadFile(
-          serializeSubmission(submission),
-          `${cleanName(submission.student.id)}-${cleanName(submission.assignment.title)}.submission.json`,
-        );
-        adapter.notify(
-          L(
-            'Роботу збережено. Передайте файл викладачеві.',
-            'Work saved. Send the file to your instructor.',
-          ),
-        );
-      });
+      return operations.run(actions.saveDraft);
     });
+    $('#student-submit').onclick = safe(() => {
+      readIdentity();
+      return actions.submit();
+    });
+    progress.update();
   }
   function observeEdit() {
-    if (!state.attempt || installingStarter || session.isLocked() || state.busy) return;
-    try {
-      if (
-        recordEdit(state.attempt, adapter.getProject(), {
-          at: Math.max(0, (Date.now() - Date.parse(state.attempt.startedAt)) / 1000),
-          event: 'circuit-edit',
-        })
-      )
-        persistDraft();
-    } catch (error) {
-      adapter.notify(error.message);
+    if (actions.isInstalling()) return;
+    progress.refreshStaleness();
+    if (state.attempt && !state.player && !state.preview && !state.busy) {
+      state.studentDirty = true;
+      if (!session.isLocked())
+        try {
+          recordEdit(state.attempt, adapter.getProject(), {
+            at: Math.max(0, (Date.now() - Date.parse(state.attempt.startedAt)) / 1000),
+            event: 'circuit-edit',
+          });
+        } catch (error) {
+          adapter.notify(error.message);
+        }
+      persistDraft();
     }
+    progress.update();
   }
-  return { bindStudent, observeEdit };
+  return {
+    bindStudent,
+    observeEdit,
+    updateProgress: progress.update,
+    progressMarkup: progress.markup,
+    continueWork: actions.continueWork,
+    restartAttempt: actions.restartAttempt,
+    importWork: actions.importWork,
+    isInstalling: actions.isInstalling,
+  };
 }

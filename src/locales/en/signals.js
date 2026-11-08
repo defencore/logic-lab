@@ -10,9 +10,9 @@ export const signals = {
   simulationRateHint:
     'Global simulation time: 2× runs twice as fast; 0.5× runs half as fast. Generator frequencies stay unchanged.',
   milliseconds: 'ms',
-  recordStart: 'Record',
-  recordStop: 'Stop recording',
-  recordNew: 'New recording',
+  recordStart: 'Record signals',
+  recordStop: 'Stop signal recording',
+  recordNew: 'New signal recording',
   recordActive: 'Recording',
   recordPaused: 'Recording paused',
   recordSaved: 'Recorded',

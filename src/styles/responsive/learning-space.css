@@ -1,0 +1,48 @@
+/* On short screens the canvas keeps usable height; help remains one click away. */
+@media (max-width: 1200px), (max-height: 720px) {
+  .main[data-workspace-view='canvas'] {
+    overflow-y: auto;
+  }
+  .main > .status-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 12;
+    background: #f8faf5;
+  }
+  .main[data-workspace-view='canvas'] .canvas-bottom {
+    display: flex;
+  }
+  .canvas-bottom .navigation-hint {
+    display: none;
+  }
+  .canvas-bottom .canvas-tip {
+    font-size: 11px;
+    white-space: normal;
+    line-height: 1.4;
+  }
+  .student-workflow {
+    min-height: 130px;
+    max-height: 190px;
+  }
+}
+@media (max-width: 650px), (max-height: 600px) {
+  .student-workflow:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .student-workflow-heading {
+    order: 0;
+  }
+  .student-workflow-next {
+    order: 1;
+    gap: 6px;
+  }
+  .student-workflow .student-steps {
+    order: 2;
+    margin: 0;
+  }
+  .student-workflow > details {
+    order: 3;
+  }
+}

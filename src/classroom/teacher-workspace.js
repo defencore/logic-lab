@@ -1,4 +1,3 @@
-import { createPlayback, advancePlayback } from '../experiments/actions.js';
 import {
   createAssignment,
   issueAssignment,
@@ -10,44 +9,35 @@ import {
 } from '../assessment/index.js';
 import { readClassroomFile } from './files.js';
 import { sanitizeTeacherForm } from './storage.js';
+import { sameCircuitStructure } from '../assessment/topology.js';
 import { yieldToMain } from '../assessment/scheduling.js';
 
-export const probeKey = (probe) => `${probe.node}:${probe.side}:${probe.port}`;
-
-export async function inspectReference(key) {
-  const playback = createPlayback(
-    { ...key.sequence, probes: key.probes },
-    { project: key.referenceProject },
-  );
-  const complexity = Math.max(
-    1,
-    key.referenceProject.nodes.length + key.referenceProject.wires.length,
-  );
-  const budget = Math.min(250000, Math.floor(20000000 / complexity));
-  const chunk = Math.max(1, Math.min(250, Math.floor(20000 / complexity)));
-  let operations = 0;
-  while (!playback.done) {
-    operations += advancePlayback(playback, key.sequence.duration, { maxSteps: chunk }).steps;
-    if (operations > budget)
-      throw new Error('The reference scenario is too complex. Shorten its duration.');
-    if (!playback.done) await new Promise((resolve) => setTimeout(resolve, 0));
-  }
-  return {
-    constant: key.probes.every(
-      (probe, index) =>
-        new Set(playback.observations.map((observation) => observation.values[index])).size < 2,
-    ),
-    undefined: playback.observations.some((observation) =>
-      observation.values.some((value) => value === 'X' || value === 'Z'),
-    ),
-  };
-}
+import { inspectReference } from './reference-inspection.js';
+import { probeKey, teacherStatus, sequenceSignature, keySignature } from './teacher-state.js';
+import {
+  reviseAssignmentMetadata,
+  publicStarterPreview,
+} from '../assessment/assignment-revision.js';
+export { inspectReference } from './reference-inspection.js';
+export { probeKey } from './teacher-state.js';
 
 /** Teacher operations commit a complete result only after validation/replay succeeds. */
 export function createTeacherWorkspace(state, { onSave = () => {}, onProgress = () => {} } = {}) {
   let reviewController = null;
-  function setKey(key, warnings) {
+  function setKey(key, warnings, project, saved = false) {
+    if (state.teacherKey && keySignature(state.teacherKey) !== keySignature(key)) {
+      state.teacherArchives ||= [];
+      state.teacherArchives.push({
+        key: structuredClone(state.teacherKey),
+        downloaded: !teacherStatus(state).keyNeedsDownload,
+      });
+    }
+    state.teacherSequenceBaseline = sequenceSignature(state.sequence);
+    state.teacherEditorBaseline = project ? structuredClone(project) : null;
+    state.teacherUseSavedReference = null;
+    state.teacherSavedKeySignature = saved ? keySignature(key) : null;
     state.teacherKey = key;
+    state.teacherPreviewIndex = 0;
     state.referenceWarnings = warnings;
     state.issued = key.issued.map((variant) => assignmentForVariant(key, variant.id));
     state.batch = [];
@@ -63,7 +53,11 @@ export function createTeacherWorkspace(state, { onSave = () => {}, onProgress = 
     });
     onSave();
   }
-  async function createKey(probes) {
+  async function createKey(probes, project) {
+    if (project && sameCircuitStructure(project, state.sequence?.initialProject) !== true)
+      throw new Error(
+        'The reference circuit changed after recording. Record its final version before creating a new key.',
+      );
     const key = createAssignment({
       title: state.teacherForm.title,
       instructions: state.teacherForm.instructions,
@@ -72,13 +66,48 @@ export function createTeacherWorkspace(state, { onSave = () => {}, onProgress = 
       probes,
       starterMode: state.teacherForm.starterMode,
     });
-    setKey(key, await inspectReference(key));
+    setKey(key, await inspectReference(key), project);
   }
-  async function importKey(source) {
+  async function importKey(source, project) {
     const key = parseAssignmentKey(source);
-    setKey(key, await inspectReference(key));
+    setKey(key, await inspectReference(key), project, true);
   }
-  function issueVariants() {
+  function applyChanges(project) {
+    const status = teacherStatus(state, project);
+    if (!status.hasKey) throw new Error('Create or import an instructor key first.');
+    if (status.structuralChanged || (status.referenceChanged && !status.usingSavedReference))
+      throw new Error(
+        'The reference, observed signals or starter changed. Create a new reference key; previous keys and variants remain available separately.',
+      );
+    const revised = reviseAssignmentMetadata(state.teacherKey, state.teacherForm);
+    state.teacherKey = revised.key;
+    state.issued = revised.assignments;
+    onSave();
+    return revised.key;
+  }
+  function discardChanges(project) {
+    const key = state.teacherKey;
+    state.teacherForm = sanitizeTeacherForm({
+      ...state.teacherForm,
+      title: key.title,
+      instructions: key.instructions,
+      starterMode: key.starterMode,
+      probes: key.probes.map(probeKey),
+    });
+    state.teacherUseSavedReference = {
+      sequence: sequenceSignature(state.sequence),
+      project: project ? structuredClone(project) : null,
+    };
+    onSave();
+  }
+  function issueVariants(project) {
+    if (!state.teacherKey) throw new Error('Create or import an instructor key first.');
+    if (state.referenceWarnings?.undefined)
+      throw new Error('Resolve unknown or floating reference signals before issuing variants.');
+    if (teacherStatus(state, project).dirty)
+      throw new Error(
+        'There are unapplied changes. Apply the title/instructions or create a new reference key before generating variants.',
+      );
     const ids = [
       ...new Set(
         state.teacherForm.studentIds
@@ -149,6 +178,7 @@ export function createTeacherWorkspace(state, { onSave = () => {}, onProgress = 
       results: state.batch.map(({ submission, result }) => ({
         student: submission.student,
         variant: submission.assignment.variant.id,
+        notes: submission.notes,
         result,
       })),
       similarities: state.pairs,
@@ -162,6 +192,15 @@ export function createTeacherWorkspace(state, { onSave = () => {}, onProgress = 
     createKey,
     importKey,
     issueVariants,
+    applyChanges,
+    discardChanges,
+    status: (project) => teacherStatus(state, project),
+    preview: (variantId) =>
+      state.teacherKey ? publicStarterPreview(state.teacherKey, variantId) : null,
+    markKeyDownloaded: () => {
+      state.teacherSavedKeySignature = keySignature(state.teacherKey);
+      onSave();
+    },
     reviewFiles,
     report,
     cancelReview: () => reviewController?.abort(),

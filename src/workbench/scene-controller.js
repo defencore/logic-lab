@@ -93,29 +93,33 @@ export function createSceneController(state, actions) {
       $('#manual-railway-lab').onclick = () =>
         confirmReplace(() => createExample('railway-dispatch'));
     $$('[data-motion-clock],[data-motion-value]').forEach((input) =>
-      bindLiveText(input, (value) => {
-        if (value === '') return;
-        const number = Number(value);
-        if (!Number.isFinite(number)) return;
-        const isByte = !!input.dataset.motionValue;
-        const node = state.project.nodes.find(
-          (item) => item.id === (input.dataset.motionValue || input.dataset.motionClock),
-        );
-        if (state.classroom && !state.classroom.allowInput()) return;
-        node.params[isByte ? 'value' : 'frequency'] = isByte
-          ? Math.round(Math.min(255, Math.max(0, number)))
-          : Math.min(1000, Math.max(0, number));
-        simulate(state.project, state.runtime, 0);
-        renderBoard();
-        updateSignals();
-        state.classroom?.inputChanged(
-          node.id,
-          isByte ? 'value' : 'frequency',
-          node.params[isByte ? 'value' : 'frequency'],
-        );
-        state.classroom?.observeEdit();
-        persist();
-      }),
+      bindLiveText(
+        input,
+        (value) => {
+          if (value === '') return;
+          const number = Number(value);
+          if (!Number.isFinite(number)) return;
+          const isByte = !!input.dataset.motionValue;
+          const node = state.project.nodes.find(
+            (item) => item.id === (input.dataset.motionValue || input.dataset.motionClock),
+          );
+          if (state.classroom && !state.classroom.allowInput()) return;
+          node.params[isByte ? 'value' : 'frequency'] = isByte
+            ? Math.round(Math.min(255, Math.max(0, number)))
+            : Math.min(1000, Math.max(0, number));
+          simulate(state.project, state.runtime, 0);
+          renderBoard();
+          updateSignals();
+          state.classroom?.inputChanged(
+            node.id,
+            isByte ? 'value' : 'frequency',
+            node.params[isByte ? 'value' : 'frequency'],
+          );
+          state.classroom?.observeEdit();
+          persist();
+        },
+        { canApply: () => !state.classroom || state.classroom.allowInput() },
+      ),
     );
     const token = motionViewToken;
     const onStatus = (message) => {

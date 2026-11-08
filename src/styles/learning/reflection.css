@@ -1,0 +1,46 @@
+.lesson-reflection {
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+  padding-top: 8px;
+  font-size: 12px;
+}
+.lesson-reflection summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 4px 0;
+}
+.lesson-reflection label {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+}
+.lesson-reflection textarea {
+  width: 100%;
+  min-height: 44px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px;
+  background: var(--surface, #fff);
+  color: var(--text-color);
+  font: inherit;
+}
+.lesson-reflection p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+.lesson-reflection output {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 8px;
+  border-radius: 5px;
+  background: #fff9;
+  font:
+    11px ui-monospace,
+    monospace;
+}
+#lesson-reflection-status {
+  color: var(--muted);
+  font-size: 11px;
+}

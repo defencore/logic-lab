@@ -78,11 +78,11 @@ The motion sequence progresses from [STEP/DIR fundamentals](./examples/stepper-b
 
 ## Classroom: actions, student work, and instructor review
 
-Open **Classroom** in the header. Its **Student**, **Instructor**, and **Action sequence** tabs separate completing an exercise, preparing/reviewing assignments, and recording input operations. These are workspace modes on the same device, without accounts or authenticated roles.
+Open **Assignments & submission** in the header. Its **Student**, **Instructor**, and **Action sequence** tabs separate completing an exercise, preparing/reviewing assignments, and recording input operations. These are workspace modes on the same device, without accounts or authenticated roles.
 
 ### Record and replay input actions
 
-1. Build the circuit and open **Classroom → Action sequence**. Choose **Record actions** to capture the current source values as the baseline and restart the circuit's internal simulation state. Recording locks circuit construction and component settings outside the supported input sources.
+1. Build the circuit and open **Assignments & submission → Action sequence**. Choose **Record actions** to capture the current source values as the baseline and restart the circuit's internal simulation state. Recording locks circuit construction and component settings outside the supported input sources.
 2. Toggle input switches or edit supported source parameters, such as a byte value or a clock frequency. For a shift register, change the switches connected to SER, CLK, and RST in the required order. A rising CLK edge is a separate action from returning CLK to 0. The source controls in the 3D view operate the same inputs.
 3. Use the simulation's Run/Pause and Step controls when needed. Actions use simulation timestamps; changes made at the same paused time retain their recorded order. **Finish recording** retains the sequence and pauses the simulation.
 4. Choose **Replay** for real-time playback, pause/resume it from the action dock, or use **Next action** to inspect the ordered operations individually. Playback starts from the recorded baseline and recomputes the circuit rather than playing a picture of the earlier result. Circuit and manual input editing stay locked during playback.
@@ -90,7 +90,7 @@ Open **Classroom** in the header. Its **Student**, **Instructor**, and **Action 
 
 Action sessions support at most **120 simulated seconds, 2,000 actions, 200 components, and 32 observed signals**. Each imported or exported classroom JSON file is limited to **10 MB**. These are action-recording limits; ordinary editable projects retain their separate component and wire limits. Long intervals may be processed in several bounded steps to keep the interface responsive.
 
-The waveform monitor's **Record / CSV / PNG** controls capture measured channels and traces. **Record actions** captures the operations that drive the circuit. A student work file combines the circuit and action sequence with recomputed observations and the student's explanation; waveform images and CSV captures can provide additional evidence.
+The waveform monitor's **Record signals / CSV / PNG** controls capture measured channels and traces. **Record actions** captures the operations that drive the circuit. A student work file combines the circuit and action sequence with recomputed observations and the student's explanation; waveform images and CSV captures can provide additional evidence.
 
 ### Prepare and distribute an assignment
 
@@ -110,6 +110,16 @@ Individual variants bind work to the issued student identifier and vary supporte
 
 Browser storage restores the local classroom draft, student context, completed action sequence, and assignment form fields after a reload when storage is available. Instructor title/instructions, starter choice, and observed-signal choices also remain available when switching tabs. Importing an updated instructor key restores its issued student files for download and clears results from a previous key. It does not preserve an instantaneous RAM/register runtime or an in-progress simulation: replay the saved sequence to reconstruct the experiment. Download important work and the instructor key as portable backups; clearing site data or changing the browser profile can remove local drafts.
 
+### Guided workflow and portable drafts
+
+The persistent student panel shows **Task → Build → Record test → Explain → Save**, the current readiness, and the next action. Assignment instructions stay accessible while editing. After a first start, **Continue work** keeps the attempt; **Restart** offers a portable backup before resetting. **Save draft** works before the submission is complete. **Open my work** restores a draft or submission, including its assignment, identity, circuit, recorded actions, explanation, and existing attempt journal. Import does not invent construction evidence. Changing circuit structure or settings immediately flags an obsolete recording and offers a new test recording.
+
+Instructor preparation follows **Reference → Scenario → Probes → Starter → Variants → Issue**. Unapplied form changes block issuing variants until applied; a public preview shows the actual starter and warns when an observed internal component remains visible. Changed reference circuits, probes, or scenarios require a new key. The private key remains in memory, with an explicit reminder to download its latest issued registry. Group assignment ZIP files contain only public student tasks.
+
+Review cards show the student's explanation, circuit, recorded experiment, recomputed observations, and discrepancies. Opening a circuit or experiment is a temporary read-only review; **End preview** restores the instructor's circuit, viewport, and reference scenario. Filters and CSV reports support group review. Instructor hidden checks and student-recorded observations remain distinct.
+
+Learning instructions include **Predict → Do → Compare → Explain** with captured live readings and local notes. These notes support reflection and do not claim automatic grading. Compact layouts keep component addition, instructions, first-action help, and save status visible. Contacts support compatible-target highlighting and **Enter/Space on output → Enter/Space on input**, with Escape cancelling the connection.
+
 ### Review a batch of work
 
 In **Instructor** mode, open the matching updated instructor key and load up to **40 `.submission.json` files** at once. Each student's circuit is replayed with its submitted actions and with the instructor's reference checks. The review compares initial, intermediate, and final observed values instead of trusting values written into the file. It also checks the issued variant and assigned identifier. Save the batch outcome as `.review.json`.
@@ -124,7 +134,7 @@ All processing stays in the browser. The modes do not authenticate identities, p
 
 ### Короткий порядок роботи українською
 
-Відкрийте **Лабораторія** в заголовку. У вкладці **Сценарій дій** почніть **Записати дії**: поточні входи стають початковими значеннями, внутрішній стан схеми скидається, а редагування її будови блокується. Перемикайте SER, CLK, RST чи інші джерела, зупиніть запис і виберіть **Відтворити** або **Наступна дія**. Дії мають час симуляції та зберігають порядок навіть при однаковому часі. Для перенесення досліду збережіть `.actions.json`. Обмеження: 120 секунд симуляції, 2 000 дій, 200 елементів, 32 контрольовані сигнали та 10 МБ на файл.
+Відкрийте **Завдання та здача** в заголовку. У вкладці **Сценарій дій** почніть **Записати дії**: поточні входи стають початковими значеннями, внутрішній стан схеми скидається, а редагування її будови блокується. Перемикайте SER, CLK, RST чи інші джерела, зупиніть запис і виберіть **Відтворити** або **Наступна записана дія**. Дії мають час симуляції та зберігають порядок навіть при однаковому часі. Для перенесення досліду збережіть `.actions.json`. Обмеження: 120 секунд симуляції, 2 000 дій, 200 елементів, 32 контрольовані сигнали та 10 МБ на файл.
 
 У режимі **Викладач** підготуйте еталон, запишіть перевірочні дії та оберіть контрольовані сигнали. Якщо контролюється внутрішній регістр або пам’ять, цей компонент залишиться у студентській заготовці; зовнішній індикатор дозволяє залишити внутрішню реалізацію студенту. Створіть варіанти за ідентифікаторами студентів і передайте кожному його `.assignment.json`. Еталон і перевірочний сценарій є лише в `.teacher-key.json`: не передавайте цей ключ студентам і зберігайте його знову після видачі нових варіантів.
 

@@ -62,8 +62,21 @@ function current(storage) {
     assignment,
     attempt,
     sequence,
-    notes: typeof draft?.notes === 'string' ? draft.notes.slice(0, 10000) : '',
+    notes: typeof draft?.notes === 'string' ? draft.notes.slice(0, 20000) : '',
     teacherForm: sanitizeTeacherForm(draft?.teacherForm),
+    studentBuildReady: draft?.studentBuildReady === true,
+    studentDirty: draft?.studentDirty !== false,
+    studentLastSaveKind: ['draft', 'submission'].includes(draft?.studentLastSaveKind)
+      ? draft.studentLastSaveKind
+      : null,
+    studentSavedAt:
+      typeof draft?.studentSavedAt === 'string' ? draft.studentSavedAt.slice(0, 100) : null,
+    workOrigin:
+      draft?.workOrigin &&
+      /^[0-9a-f]{64}$/.test(draft.workOrigin.digest) &&
+      typeof draft.workOrigin.id === 'string'
+        ? { id: draft.workOrigin.id.slice(0, 100), digest: draft.workOrigin.digest }
+        : null,
   };
   return { state, issue: rejected.length ? { raw, reason: rejected.join(' ') } : null };
 }
@@ -77,7 +90,7 @@ export function readClassroomStorage(storage) {
 export function sanitizeTeacherForm(value = {}) {
   return {
     title: typeof value?.title === 'string' ? value.title.slice(0, 200) : '',
-    instructions: typeof value?.instructions === 'string' ? value.instructions.slice(0, 10000) : '',
+    instructions: typeof value?.instructions === 'string' ? value.instructions.slice(0, 20000) : '',
     starterMode: value?.starterMode === 'components' ? 'components' : 'interfaces',
     studentIds: typeof value?.studentIds === 'string' ? value.studentIds.slice(0, 5000) : '',
     probes: Array.isArray(value?.probes)
@@ -143,13 +156,29 @@ export function createClassroomStorage(storage, onFailure = () => {}) {
     recovery: getRecovery,
     acknowledgeRecovery,
     saveProfile: ({ mode, student }) => write(PROFILE, { mode, student: fields(student) }),
-    saveDraft: ({ assignment, attempt, sequence, notes, teacherForm }) =>
+    saveDraft: ({
+      assignment,
+      attempt,
+      sequence,
+      notes,
+      teacherForm,
+      studentBuildReady,
+      studentDirty,
+      studentLastSaveKind,
+      studentSavedAt,
+      workOrigin,
+    }) =>
       write(DRAFT, {
         assignment,
         attempt,
         sequence,
         notes,
         teacherForm: sanitizeTeacherForm(teacherForm),
+        studentBuildReady,
+        studentDirty,
+        studentLastSaveKind,
+        studentSavedAt,
+        workOrigin,
       }),
   };
 }

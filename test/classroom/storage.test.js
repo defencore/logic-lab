@@ -81,3 +81,11 @@ test('storage failure is reported once until a successful save', () => {
   store.saveProfile({ mode: 'student', student: {} });
   assert.equal(warnings, 2);
 });
+
+test('valid long assignment instructions survive the saved instructor form without truncation', () => {
+  const instructions = 'Full laboratory condition. '.repeat(600);
+  const storage = memoryStorage();
+  const store = createClassroomStorage(storage);
+  store.saveDraft({ teacherForm: { instructions } });
+  assert.equal(store.load().teacherForm.instructions, instructions);
+});

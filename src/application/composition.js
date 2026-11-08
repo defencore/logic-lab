@@ -141,6 +141,16 @@ export function composeWorkbench(context) {
   services.classroom = createClassroom({
     getProject: () => state.project,
     getRuntime: () => state.runtime,
+    getViewport: () => ({ ...state.view }),
+    getLessonStep: () => state.lessonStep,
+    restoreLessonStep: (step) => {
+      state.lessonStep = step;
+    },
+    restoreViewport: (view) => {
+      state.view = { ...view };
+      actions.applyView();
+    },
+    fitProject: () => actions.fit(),
     getLanguage: () => state.lang,
     isRunning: () => state.running,
     getExample: () => EXAMPLES.find((example) => example.id === state.project.exampleId),

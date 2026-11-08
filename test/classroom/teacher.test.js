@@ -106,7 +106,13 @@ test('variant batches are atomic when the teacher registry has insufficient capa
   const state = {
     teacherKey: key,
     issued: [],
-    teacherForm: sanitizeTeacherForm({ studentIds: 'new-a\nnew-b' }),
+    teacherForm: sanitizeTeacherForm({
+      title: key.title,
+      instructions: key.instructions,
+      starterMode: key.starterMode,
+      probes: key.probes.map(({ node, side, port }) => `${node}:${side}:${port}`),
+      studentIds: 'new-a\nnew-b',
+    }),
   };
   const workspace = createTeacherWorkspace(state);
   assert.throws(() => workspace.issueVariants(), /200/);

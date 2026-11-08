@@ -1,6 +1,7 @@
 import { $, $$ } from '../shared/ui.js';
 import { ZOOM_IN_FACTOR, ZOOM_OUT_FACTOR } from '../circuits/viewport.js';
 import { SIMULATION_RATES } from '../signals/time.js';
+import { updateSimulationStep } from '../workbench/simulation-step.js';
 export function createShellBindings(context) {
   const { state, services, actions, t } = context;
   function bindShell() {
@@ -47,6 +48,7 @@ export function createShellBindings(context) {
       actions.updateSignals();
     };
     $('#reset').onclick = actions.resetSimulation;
+    updateSimulationStep(state.simulationRate, state.lang, t);
     $('#undo').onclick = () => actions.undo();
     $('#redo').onclick = () => actions.undo(true);
     $('#fit').onclick = () => actions.fit();
@@ -60,6 +62,10 @@ export function createShellBindings(context) {
     $('#import').onclick = () => {
       $('.project-files').open = false;
       $('#import-file').click();
+    };
+    $('#new-project').onclick = () => {
+      $('.project-files').open = false;
+      actions.newProject();
     };
     $('#examples').onclick = () => services.learning.openExamples();
     $('#motion').onclick = () => services.scenes.open();
@@ -82,6 +88,7 @@ export function createShellBindings(context) {
       const value = Number(e.target.value);
       if (!SIMULATION_RATES.includes(value)) return;
       state.simulationRate = value;
+      updateSimulationStep(value, state.lang, t);
       services.monitor.saveSettings();
     };
     $('#record-toggle').onclick = services.monitor.toggleRecording;

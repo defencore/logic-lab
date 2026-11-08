@@ -2,13 +2,14 @@ import { icon } from '../shared/icons.js';
 import { $, $$ } from '../shared/ui.js';
 import { checkConnection } from '../circuits/connections.js';
 import { uid } from './model.js';
+import { updateContactTargets } from '../workbench/contact-interaction.js';
 export function createConnections(context) {
   const { state, services, actions, t } = context;
   function pinPointerDown(e) {
     e.preventDefault();
     e.stopPropagation();
     if (e.button !== 0) return;
-    $('#viewport').focus({ preventScroll: true });
+    e.currentTarget.focus({ preventScroll: true });
     if (services.wiring.pinPointerDown(e)) return;
     if (services.classroom && !services.classroom.allowEdit()) return;
     const pin = e.currentTarget;
@@ -20,6 +21,11 @@ export function createConnections(context) {
     state.pending = { ...current, points: [], startX: e.clientX, startY: e.clientY };
     pin.classList.add('connecting');
     $('#canvas-tip').textContent = t('connect');
+    updateContactTargets(state.project, state.pending);
+    if ($('#connection-status')) {
+      $('#connection-status').hidden = false;
+      $('#connection-status').textContent = t('connectKeyboard');
+    }
   }
   function completeWire(target) {
     if (!state.pending) return;
@@ -66,6 +72,8 @@ export function createConnections(context) {
     state.pending = null;
     $('#draft').setAttribute('d', '');
     $$('.connecting').forEach((el) => el.classList.remove('connecting'));
+    updateContactTargets(state.project, null);
+    if ($('#connection-status')) $('#connection-status').hidden = true;
     $('#canvas-tip').innerHTML =
       icon('wire', 15) + t(state.project.exampleId === 'half-adder' ? 'tutorial' : 'connectHint');
   }

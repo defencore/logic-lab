@@ -1,8 +1,17 @@
 import { getDefinition } from '../components/catalog/index.js';
 import { esc, format } from '../shared/ui.js';
+import { reviewMatches, reviewCardMarkup } from './review-cards.js';
 
 export function createReviewView({ state, language }) {
-  const { teacherKey, batch, pairs, batchErrors, busy, reviewing, reviewCancelled } = state;
+  const {
+    teacherKey,
+    batch = [],
+    pairs = [],
+    batchErrors = [],
+    busy,
+    reviewing,
+    reviewCancelled,
+  } = state;
   const adapter = { getLanguage: () => language };
   const L = (ua, en) => (language === 'ua' ? ua : en);
   function studentLabel(submission, index) {
@@ -12,7 +21,7 @@ export function createReviewView({ state, language }) {
   }
 
   function observedSignalLabel(probe) {
-    const node = teacherKey?.referenceProject.nodes.find(
+    const node = teacherKey?.referenceProject?.nodes.find(
       (candidate) => candidate.id === probe?.node,
     );
     if (!node) return L('Контрольний сигнал', 'Observed signal');
@@ -141,6 +150,15 @@ export function createReviewView({ state, language }) {
     return `<article><strong>${esc(left)} ↔ ${esc(right)}</strong><p>${pair.suspected ? L('Потребує індивідуального обговорення.', 'Discuss the work individually.') : L('Є спільні ознаки для перегляду.', 'There are shared features to review.')}</p><ul>${reasons.map((reason) => `<li>${esc(reason)}</li>`).join('')}</ul><p class="classroom-hint">${L('Правильні розв’язання можуть мати спільну структуру й однакові результати. Ці збіги не доводять списування; запропонуйте пояснити схему або виконати змінений дослід.', 'Correct solutions can share structure and results. These matches do not prove copying; ask the student to explain the circuit or perform a modified experiment.')}</p></article>`;
   }
 
+  function cardsMarkup() {
+    const cards = batch
+      .map((item, index) => ({ ...item, index }))
+      .filter(({ submission, result, index }) => reviewMatches(state, submission, result, index));
+    return cards.length
+      ? `<p class="classroom-hint">${L('Показано робіт', 'Submissions shown')}: ${cards.length}/${batch.length}</p><div class="review-card-list">${cards.map((item) => reviewCardMarkup({ ...item, state, language, studentLabel, referenceCheckMarkup, evidenceMarkup })).join('')}</div>`
+      : `<p>${L('За цим фільтром робіт немає.', 'No submissions match this filter.')}</p>`;
+  }
+
   function reviewMarkup() {
     const meaningfulPairs = pairs.filter(
       (pair) =>
@@ -152,8 +170,25 @@ export function createReviewView({ state, language }) {
         (pair.reasons?.length || 0) > Number(!!pair.resultsExact),
     );
     const visiblePairs = meaningfulPairs.slice(0, 100);
-    return `${busy ? `<div class="classroom-processing"><p>${L('Обробляю дані. Вікно можна закрити; робота продовжиться.', 'Processing data. You may close this window; work will continue.')}</p>${reviewing ? `<button id="teacher-review-cancel" class="soft-btn">${L('Зупинити перевірку', 'Cancel checking')}</button>` : ''}</div>` : ''}${reviewCancelled ? `<p class="classroom-error">${L('Перевірку зупинено. Показано лише завершені результати; порівняння схожості не завершено.', 'Checking was stopped. Only completed results are shown; similarity comparison is incomplete.')}</p>` : ''}${batchErrors.map((error) => `<p class="classroom-error">${esc(error)}</p>`).join('')}${batch.length ? `<div class="classroom-table-scroll"><table class="classroom-table"><thead><tr><th>${L('Студент', 'Student')}</th><th>${L('Варіант', 'Variant')}</th><th>${L('Еталонні перевірки', 'Reference checks')}</th><th>${L('Цілісність файлу', 'File integrity')}</th><th>${L('Свідчення роботи', 'Work evidence')}</th></tr></thead><tbody>${batch.map(({ submission, result }, index) => `<tr><td>${esc(studentLabel(submission, index))}</td><td><span class="classroom-variant" title="${esc(submission.assignment.variant.id)}">${esc(submission.assignment.variant.id.slice(0, 8))}</span></td><td>${referenceCheckMarkup(result)}</td><td>${result.integrity ? L('Контрольна сума збігається', 'Checksum matches') : L('Контрольна сума не збігається', 'Checksum mismatch')}<p class="classroom-hint">${L('Це перевірка цілісності, а не авторства.', 'This checks integrity, not authorship.')}</p></td><td>${evidenceMarkup(result)}</td></tr>`).join('')}</tbody></table></div><h4>${L('Збіги між роботами', 'Similarity between submissions')}</h4>${reviewCancelled ? `<p>${L('Порівняння цього набору робіт не завершено.', 'Comparison of this batch was not completed.')}</p>` : busy ? `<p>${L('Порівняння схожості буде готове після перевірки всіх файлів.', 'Similarity comparison will be available after every file is checked.')}</p>` : meaningfulPairs.length ? `<div class="classroom-similarities">${visiblePairs.map(similarityMarkup).join('')}</div>${meaningfulPairs.length > visiblePairs.length ? `<p class="classroom-hint">${L('Показано перші 100 пар. Повний перелік доступний у збереженому звіті.', 'Showing the first 100 pairs. The saved report contains the complete list.')}</p>` : ''}` : `<p>${L('Суттєвих збігів структури, сценарію чи ідентифікаторів у цьому наборі не виявлено. Самі по собі однакові правильні результати не позначаються як підозрілі.', 'No significant structural, sequence or identifier matches were found in this batch. Matching correct results alone are not flagged as suspicious.')}</p>`}` : ''}`;
+    return `${busy ? `<div class="classroom-processing"><p>${L('Обробляю дані. Вікно можна закрити; робота продовжиться.', 'Processing data. You may close this window; work will continue.')}</p>${reviewing ? `<button id="teacher-review-cancel" class="soft-btn">${L('Зупинити перевірку', 'Cancel checking')}</button>` : ''}</div>` : ''}${reviewCancelled ? `<p class="classroom-error">${L('Перевірку зупинено. Показано лише завершені результати; порівняння схожості не завершено.', 'Checking was stopped. Only completed results are shown; similarity comparison is incomplete.')}</p>` : ''}${batchErrors.map((error) => `<p class="classroom-error">${esc(error)}</p>`).join('')}${
+      batch.length
+        ? `<div class="review-filters"><label>${L('Пошук студента, групи або пояснення', 'Find student, group or explanation')}<input type="search" id="review-query" value="${esc(state.reviewQuery || '')}" ${busy ? 'disabled' : ''}></label><label>${L('Показати', 'Show')}<select id="review-filter" ${busy ? 'disabled' : ''}>${[
+            ['all', 'Усі роботи', 'All submissions'],
+            ['review', 'Потрібен перегляд', 'Needs review'],
+            ['failed', 'Є розбіжності', 'Differences'],
+            ['passed', 'Пройдено без зауважень', 'Passed without concerns'],
+            ['similar', 'Мають підозрілі збіги', 'Flagged similarity'],
+          ]
+            .map(
+              ([id, ua, en]) =>
+                `<option value="${id}" ${(state.reviewFilter || 'all') === id ? 'selected' : ''}>${L(ua, en)}</option>`,
+            )
+            .join(
+              '',
+            )}</select></label></div><div id="review-cards">${cardsMarkup()}</div><h4>${L('Збіги між роботами', 'Similarity between submissions')}</h4>${reviewCancelled ? `<p>${L('Порівняння цього набору робіт не завершено.', 'Comparison of this batch was not completed.')}</p>` : busy ? `<p>${L('Порівняння схожості буде готове після перевірки всіх файлів.', 'Similarity comparison will be available after every file is checked.')}</p>` : meaningfulPairs.length ? `<div class="classroom-similarities">${visiblePairs.map(similarityMarkup).join('')}</div>${meaningfulPairs.length > visiblePairs.length ? `<p class="classroom-hint">${L('Показано перші 100 пар. Повний перелік доступний у збереженому звіті.', 'Showing the first 100 pairs. The saved report contains the complete list.')}</p>` : ''}` : `<p>${L('Суттєвих збігів структури, сценарію чи ідентифікаторів у цьому наборі не виявлено. Самі по собі однакові правильні результати не позначаються як підозрілі.', 'No significant structural, sequence or identifier matches were found in this batch. Matching correct results alone are not flagged as suspicious.')}</p>`}`
+        : ''
+    }`;
   }
 
-  return { reviewMarkup };
+  return { reviewMarkup, cardsMarkup };
 }

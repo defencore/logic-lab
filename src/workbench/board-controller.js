@@ -6,6 +6,13 @@ import { componentPins } from '../components/pins.js';
 import { getSceneEntries, getSceneSnapshot, sceneHealth } from '../scenes/data/scenarios.js';
 import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
 import { drawMini } from '../signals/waveforms.js';
+import {
+  activateContactKey,
+  contactEndpoint,
+  focusContact,
+  revealContact,
+  updateContactTargets,
+} from './contact-interaction.js';
 
 export function createBoardController(
   state,
@@ -55,6 +62,8 @@ export function createBoardController(
     }
   }
   function renderBoard() {
+    const focused = document.activeElement?.closest?.('.pin');
+    const focusedEndpoint = focused ? contactEndpoint(focused) : null;
     $('#nodes').innerHTML = state.project.nodes
       .map((n) => {
         const d = getDefinition(n.type),
@@ -73,7 +82,12 @@ export function createBoardController(
     $('.canvas-heading').hidden = state.project.nodes.length > 0;
     $('#draft').setAttribute('d', '');
     $$('.circuit-node').forEach((el) => el.addEventListener('pointerdown', nodePointerDown));
-    $$('.pin').forEach((el) => el.addEventListener('pointerdown', pinPointerDown));
+    $$('.pin').forEach((el) => {
+      el.style.setProperty('--contact-gap', `${el.dataset.contactGap}px`);
+      el.addEventListener('pointerdown', pinPointerDown);
+      el.addEventListener('keydown', (event) => activateContactKey(event, pinPointerDown));
+      el.addEventListener('focus', () => revealContact(el, state, applyView));
+    });
     $$('[data-switch]').forEach((el) =>
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -82,6 +96,8 @@ export function createBoardController(
     );
     $$('[data-motion-open]').forEach((el) => (el.onclick = () => openScene(el.dataset.sceneNode)));
     applyView();
+    updateContactTargets(state.project, state.pending);
+    if (focusedEndpoint) focusContact(focusedEndpoint);
     state.wiring?.refresh();
   }
   function updateBoardSignals() {

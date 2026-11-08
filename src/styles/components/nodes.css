@@ -167,3 +167,43 @@
   color: var(--muted);
   opacity: 0.85;
 }
+
+/* The visual terminal stays fixed; its hit area expands only within neighbouring contact spacing. */
+.pin::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  width: min(44px, max(24px, calc(32px / var(--contact-scale, 1))));
+  height: min(var(--contact-gap, 23px), max(20px, calc(28px / var(--contact-scale, 1))));
+  transform: translate(-50%, -50%);
+}
+.pin-out::before {
+  left: auto;
+  right: 5px;
+  transform: translate(50%, -50%);
+}
+.pin-edge-bottom::before {
+  left: 50%;
+  right: auto;
+  width: min(var(--contact-gap, 20px), max(20px, calc(28px / var(--contact-scale, 1))));
+  height: min(44px, max(24px, calc(32px / var(--contact-scale, 1))));
+  transform: translate(-50%, -50%);
+}
+.pin:focus-visible {
+  outline: 2px solid #1e5894;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.pin.compatible-target i {
+  outline: 3px solid #167043;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px #d8f5df;
+}
+.pin.incompatible-target {
+  opacity: 0.45;
+}
+.pin.connecting i {
+  outline: 3px solid #245d9b;
+  outline-offset: 2px;
+}

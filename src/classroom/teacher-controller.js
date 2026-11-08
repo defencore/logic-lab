@@ -1,8 +1,13 @@
 import { $, $$ } from '../shared/ui.js';
 import { sanitizeTeacherForm } from './storage.js';
-import { probeKey } from './teacher-workspace.js';
-import { serializeAssignment, serializeAssignmentKey } from '../assessment/index.js';
+import { probeKey } from './teacher-state.js';
+import {
+  serializeAssignment,
+  serializeAssignmentKey,
+  assignmentForVariant,
+} from '../assessment/index.js';
 import { cleanName, downloadFile, readClassroomFile } from './files.js';
+import { studentTasksZip, reviewCsv } from './teacher-downloads.js';
 
 export function createTeacherController({
   adapter,
@@ -17,7 +22,72 @@ export function createTeacherController({
   operations,
   refreshVisible,
 }) {
+  const protect = (action) =>
+    safe(async (...args) => {
+      try {
+        return await action(...args);
+      } catch (error) {
+        const messages = [
+          [
+            /reference circuit changed after recording/i,
+            'Еталонну схему змінено після запису. Запишіть перевірку її остаточної версії та створіть новий ключ.',
+          ],
+          [
+            /unapplied changes/i,
+            'Є незастосовані зміни. Застосуйте назву й умову або створіть новий еталонний ключ перед видачею.',
+          ],
+          [
+            /reference, observed signals or starter changed/i,
+            'Змінено еталон, контрольні виходи або заготовку. Створіть новий ключ; попередній залишається окремо.',
+          ],
+          [
+            /Resolve unknown or floating/i,
+            'Еталон має невизначені контрольні виходи. Усуньте X/Z перед видачею завдань.',
+          ],
+          [
+            /Enter 1–40 student IDs/i,
+            'Вкажіть від 1 до 40 ідентифікаторів студентів, по одному в рядку, до 100 символів.',
+          ],
+          [
+            /at most 200 issued/i,
+            'У ключі може бути до 200 варіантів. Збережіть цей ключ і створіть новий для наступної групи.',
+          ],
+          [
+            /reference scenario is too complex/i,
+            'Перевірочний сценарій надто складний. Скоротіть його тривалість.',
+          ],
+          [
+            /archive exceeds 100 MB/i,
+            'Архів перевищує 100 МБ. Завантажуйте файли меншими групами.',
+          ],
+        ];
+        const match = messages.find(([pattern]) => pattern.test(error.message));
+        throw new Error(match ? L(match[1], error.message) : error.message);
+      }
+    });
+  function updateTeacherUi() {
+    const locked = !!(state.busy || state.recording || state.player || state.preview);
+    const status = teacher.status(adapter.getProject());
+    if ($('#teacher-status-message'))
+      $('#teacher-status-message').textContent = views().teacherStatusMarkup();
+    if ($('#teacher-edit-status')) $('#teacher-edit-status').dataset.dirty = String(status.dirty);
+    if ($('#teacher-apply'))
+      $('#teacher-apply').disabled =
+        !status.metadataChanged ||
+        status.structuralChanged ||
+        (status.referenceChanged && !status.usingSavedReference) ||
+        locked;
+    if ($('#teacher-discard'))
+      $('#teacher-discard').disabled = !status.hasKey || !status.dirty || locked;
+    if ($('#teacher-issue'))
+      $('#teacher-issue').disabled =
+        !status.hasKey || status.dirty || locked || !!state.referenceWarnings?.undefined;
+    if ($('#teacher-tasks-zip'))
+      $('#teacher-tasks-zip').disabled = !state.issued?.length || status.dirty || locked;
+    $$('[data-task-download]').forEach((button) => (button.disabled = status.dirty || locked));
+  }
   function readTeacherForm() {
+    if (state.busy) return;
     const choices = views().possibleProbes();
     state.teacherForm = sanitizeTeacherForm({
       title: $('#task-title').value,
@@ -29,6 +99,48 @@ export function createTeacherController({
       ),
     });
     persistDraft();
+    updateTeacherUi();
+  }
+  function selectedProbes() {
+    const selected = views()
+      .possibleProbes()
+      .filter((probe) => state.teacherForm.probes.includes(probeKey(probe)))
+      .map(({ node, port, side }) => ({ node, port, side }));
+    if (!selected.length || selected.length > 32)
+      throw new Error(
+        L('Оберіть від 1 до 32 сигналів для перевірки.', 'Choose 1–32 observed signals.'),
+      );
+    return selected;
+  }
+  function downloadTasks(tasks, title) {
+    downloadFile(
+      studentTasksZip(tasks),
+      `${cleanName(title)}-student-assignments.zip`,
+      'application/zip',
+    );
+  }
+  function bindReview() {
+    const root = $('#review-results');
+    if (!root) return;
+    root.onclick = protect(async (event) => {
+      const open = event.target.closest('[data-review-open],[data-review-replay]');
+      if (!open || open.disabled) return;
+      guardEditableSession();
+      const index = Number(open.dataset.reviewOpen ?? open.dataset.reviewReplay);
+      const submission = state.batch[index]?.submission;
+      if (!submission) return;
+      await adapter.openReviewedWork(submission, {
+        replay: open.dataset.reviewReplay !== undefined,
+      });
+    });
+    const filter = (event) => {
+      if (event.target.id === 'review-query') state.reviewQuery = event.target.value;
+      else if (event.target.id === 'review-filter') state.reviewFilter = event.target.value;
+      else return;
+      if ($('#review-cards')) $('#review-cards').innerHTML = views().reviewCardsMarkup();
+    };
+    root.oninput = filter;
+    root.onchange = filter;
   }
   function bindTeacher() {
     if ($('#teacher-review-cancel')) $('#teacher-review-cancel').onclick = teacher.cancelReview;
@@ -37,40 +149,55 @@ export function createTeacherController({
         element.type === 'checkbox' || element.tagName === 'SELECT' ? 'change' : 'input',
         readTeacherForm,
       );
-    $('#teacher-create').onclick = safe(async () => {
+    $('#teacher-edit-circuit').onclick = () => adapter.closeModal();
+    $('#teacher-record-sequence').onclick = () => $('#class-tab-sequence').click();
+    $('#teacher-apply').onclick = protect(() => {
       guardEditableSession();
       readTeacherForm();
-      const selected = views()
-        .possibleProbes()
-        .filter((probe) => state.teacherForm.probes.includes(probeKey(probe)))
-        .map(({ node, port, side }) => ({ node, port, side }));
-      if (!selected.length || selected.length > 32)
-        throw new Error(
-          L('Оберіть від 1 до 32 сигналів для перевірки.', 'Choose 1–32 observed signals.'),
-        );
+      teacher.applyChanges(adapter.getProject());
+      refreshVisible();
+    });
+    $('#teacher-discard').onclick = protect(() => {
+      guardEditableSession();
+      teacher.discardChanges(adapter.getProject());
+      refreshVisible();
+    });
+    $('#teacher-create').onclick = protect(async () => {
+      guardEditableSession();
+      readTeacherForm();
+      const selected = selectedProbes();
       if (!state.sequence?.actions.length)
         throw new Error(L('Спочатку запишіть перевірочні дії.', 'Record the test actions first.'));
-      await operations.run(() => teacher.createKey(selected));
+      await operations.run(() => teacher.createKey(selected, adapter.getProject()));
     });
     bindFile('#teacher-key-import', async (files) =>
-      teacher.importKey(await readClassroomFile(files[0])),
+      teacher.importKey(await readClassroomFile(files[0]), adapter.getProject()),
     );
-    $('#teacher-key-export').onclick = safe(() =>
+    $('#teacher-key-export').onclick = protect(() => {
       downloadFile(
         serializeAssignmentKey(state.teacherKey),
         `${cleanName(state.teacherKey.title)}.teacher-key.json`,
-      ),
-    );
-    if ($('#teacher-issue'))
-      $('#teacher-issue').onclick = safe(() => {
-        guardEditableSession();
-        readTeacherForm();
-        teacher.issueVariants();
-        refreshVisible();
-      });
+      );
+      teacher.markKeyDownloaded();
+      refreshVisible();
+    });
+    $('#teacher-issue').onclick = protect(() => {
+      guardEditableSession();
+      readTeacherForm();
+      teacher.issueVariants(adapter.getProject());
+      refreshVisible();
+    });
+    $('#teacher-tasks-zip').onclick = protect(() => {
+      readTeacherForm();
+      if (teacher.status(adapter.getProject()).dirty)
+        throw new Error(L('Спочатку застосуйте зміни.', 'Apply the changes first.'));
+      downloadTasks(state.issued, state.teacherKey.title);
+    });
     $$('[data-task-download]').forEach(
       (element) =>
-        (element.onclick = safe(() => {
+        (element.onclick = protect(() => {
+          if (teacher.status(adapter.getProject()).dirty)
+            throw new Error(L('Спочатку застосуйте зміни.', 'Apply the changes first.'));
           const task = state.issued[Number(element.dataset.taskDownload)];
           downloadFile(
             serializeAssignment(task),
@@ -78,34 +205,65 @@ export function createTeacherController({
           );
         })),
     );
+    if ($('#teacher-preview-variant'))
+      $('#teacher-preview-variant').onchange = (event) => {
+        state.teacherPreviewIndex = Number(event.target.value);
+        $('#teacher-starter-preview').innerHTML = views().starterPreviewMarkup();
+      };
+    $$('[data-archive-key]').forEach(
+      (button) =>
+        (button.onclick = protect(() => {
+          const entry = state.teacherArchives[Number(button.dataset.archiveKey)];
+          downloadFile(
+            serializeAssignmentKey(entry.key),
+            `${cleanName(entry.key.title)}-${entry.key.id.slice(0, 8)}.teacher-key.json`,
+          );
+          entry.downloaded = true;
+        })),
+    );
+    $$('[data-archive-tasks]').forEach(
+      (button) =>
+        (button.onclick = protect(() => {
+          const key = state.teacherArchives[Number(button.dataset.archiveTasks)].key;
+          downloadTasks(
+            key.issued.map((variant) => assignmentForVariant(key, variant.id)),
+            key.title,
+          );
+        })),
+    );
     bindFile(
       '#teacher-review',
       async (files) => {
         const outcome = await teacher.reviewFiles(files);
-        if (outcome.cancelled) {
-          adapter.notify(
-            L(
-              'Перевірку зупинено. Завершені результати збережено; порівняння схожості не завершено.',
-              'Checking stopped. Completed results are retained; similarity comparison is incomplete.',
-            ),
-          );
-          return;
-        }
         adapter.notify(
-          L(
-            `Перевірено робіт: ${state.batch.length}. Помилок файлів: ${state.batchErrors.length}.`,
-            `Reviewed ${state.batch.length} submissions; ${state.batchErrors.length} file errors.`,
-          ),
+          outcome.cancelled
+            ? L(
+                'Перевірку зупинено. Завершені результати збережено; порівняння схожості не завершено.',
+                'Checking stopped. Completed results are retained; similarity comparison is incomplete.',
+              )
+            : L(
+                `Перевірено робіт: ${state.batch.length}. Помилок файлів: ${state.batchErrors.length}.`,
+                `Reviewed ${state.batch.length} submissions; ${state.batchErrors.length} file errors.`,
+              ),
         );
       },
       true,
     );
-    $('#teacher-report').onclick = safe(() =>
+    $('#teacher-report').onclick = protect(() =>
       downloadFile(
         JSON.stringify(teacher.report(), null, 2),
         `${cleanName(state.teacherKey.title)}.review.json`,
       ),
     );
+    $('#teacher-report-csv').onclick = protect(() =>
+      downloadFile(
+        reviewCsv(teacher.report()),
+        `${cleanName(state.teacherKey.title)}.review.csv`,
+        'text/csv;charset=utf-8',
+      ),
+    );
+    bindReview();
+    updateTeacherUi();
   }
-  return { bindTeacher };
+  return { bindTeacher, bindReview };
 }
