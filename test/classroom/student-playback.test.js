@@ -12,7 +12,7 @@ import { createDockController } from '../../src/classroom/dock-controller.js';
 
 function panel() {
   const buttons = new Map(
-    ['replay', 'pause', 'next', 'stop'].map((action) => [
+    ['replay', 'pause', 'next', 'stop', 'trim'].map((action) => [
       action,
       { dataset: { studentPlaybackAction: action }, disabled: false, textContent: '' },
     ]),
@@ -31,6 +31,34 @@ function panel() {
   const root = { querySelector: () => element, querySelectorAll: () => [...buttons.values()] };
   return { root, element, buttons, status, summary };
 }
+
+test('unverified or oversized recordings never use the ready caption in the student playback panel', () => {
+  const state = {
+    mode: 'student',
+    assignment: {},
+    attempt: {},
+    sequence: { actions: [{}], duration: 45 },
+  };
+  const pending = studentPlaybackState(state, 'ua', 0, {
+    requiresVerification: true,
+    verified: false,
+    supported: false,
+  });
+  assert.match(pending.status, /потребує перевірки/);
+  const excessive = studentPlaybackState(state, 'ua', 0, {
+    requiresVerification: false,
+    verified: true,
+    supported: false,
+  });
+  assert.match(excessive.status, /перевищує межу/);
+  const verified = studentPlaybackState(state, 'ua', 0, {
+    requiresVerification: true,
+    verified: true,
+    supported: true,
+  });
+  assert.match(verified.status, /готовий/);
+  assert.equal(pending.trimDisabled, false);
+});
 
 test('visible student playback controls step, pause, finish and restore the actual editable circuit', () => {
   const f = fixture(),

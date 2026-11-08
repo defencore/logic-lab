@@ -1,12 +1,12 @@
 import { getDefinition } from '../components/catalog/index.js';
-import { simulate } from '../simulation/index.js';
 import { $, $$, esc, format, signalClass } from '../shared/ui.js';
 import { icon, gateIcon } from '../shared/icons.js';
 import { guideMarkup } from '../learning/views/guides.js';
 import { truthTableMarkup } from '../learning/truth-tables.js';
 import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
 import { SOURCE_PARAMETERS } from '../simulation/input-sources.js';
-import { parameterField, memoryBytes } from './component-parameters.js';
+import { parameterField } from './component-parameters.js';
+import { bindInspectorParameters } from './inspector-parameters.js';
 import { createHotkeyProperties, hotkeyPropertiesMarkup } from './hotkey-properties.js';
 import { audioParameterHelp } from './audio-node.js';
 import { inspectionMarkup } from './state-inspection/markup.js';
@@ -20,7 +20,6 @@ export function createInspectorController(state, actions) {
     t,
     title,
     checkpoint,
-    notify,
     changed,
     renderBoard,
     updateSignals,
@@ -90,11 +89,7 @@ export function createInspectorController(state, actions) {
     const params = { ...d.defaults, ...n.params };
     const parameterEntries = ['hotkey', 'button'].includes(n.type)
       ? []
-      : Object.entries(params).filter(
-          ([key]) =>
-            n.type !== 'keypad' ||
-            (key !== 'keys' && (key !== 'pulseDuration' || params.mode === 'pulse')),
-        );
+      : Object.entries(params).filter(([key]) => n.type !== 'keypad' || key !== 'keys');
     const header = `<div class="inspector-selected"><span class="inspector-symbol">${['and', 'or', 'not', 'nand', 'nor', 'xor', 'xnor'].includes(n.type) ? gateIcon(n.type, 36) : icon('box', 28)}</span><span class="eyebrow">${esc(n.type.toUpperCase().replaceAll('_', ' '))}</span><h3>${esc(title(d))}</h3><p>${esc(state.lang === 'ua' ? d.descriptionUa || d.description : d.description)}</p></div>`;
     const tabs = `<div class="inspector-tabs" role="tablist"><button role="tab" aria-selected="${state.inspectorTab === 'properties'}" data-inspector-tab="properties">${t('properties')}</button><button role="tab" aria-selected="${state.inspectorTab === 'guide'}" data-inspector-tab="guide">${icon('help', 13)}${t('usageGuide')}</button></div>`;
     if (state.inspectorTab === 'guide') {
@@ -109,7 +104,7 @@ export function createInspectorController(state, actions) {
     el.innerHTML = `${header}${tabs}${inspectionMarkup(n, state.lang)}${n.type === 'keypad' ? keypadNodeMarkup(n, state.lang) : ''}<div class="property-section"><h4>${t('properties')}</h4><label>${t('label')}<input id="node-label" value="${esc(n.label || '')}" placeholder="${esc(title(d))}" maxlength="100"></label><label class="toggle-row">${t('enabled')}<input type="checkbox" id="node-enabled" class="toggle-input" ${n.enabled !== false ? 'checked' : ''}></label></div>${
       parameterEntries.length
         ? `<div class="property-section"><h4>${t('parameters')}</h4>${audioParameterHelp(n.type, state.lang)}${SCENARIO_TYPES.includes(n.type) ? `<p class="parameter-help">${t('sceneParamReset')}</p>` : ''}${parameterEntries
-            .map(([key, value]) => parameterField(key, value, n.type, state.lang, t))
+            .map(([key, value]) => parameterField(key, value, n.type, state.lang, t, params))
             .join('')}</div>`
         : ''
     }${hotkeyPropertiesMarkup(n, state.lang)}<div class="property-section"><h4>${t('signalState')}</h4><div id="inspector-signals"></div></div><div class="inspector-node-actions"><button id="duplicate-node" class="soft-btn">${icon('layers', 15)}${t('duplicate')}</button><button id="delete-node" class="danger-btn" title="${t('delete')}">${icon('trash', 15)}</button></div>${truthTableMarkup(n.type, state.lang, n.id)}`;
@@ -137,108 +132,7 @@ export function createInspectorController(state, actions) {
       n.enabled = e.target.checked;
       changed();
     };
-    $$('[data-param],[data-slider]').forEach((input) => {
-      let editing = false;
-      const commit = () => {
-        const key = input.dataset.param || input.dataset.slider;
-        if (input.type === 'number' && input.value === '') return;
-        let value =
-          input.type === 'checkbox'
-            ? input.checked
-            : ['number', 'range'].includes(input.type)
-              ? Number(input.value)
-              : input.value;
-        if (input.dataset.memoryBytes) {
-          try {
-            value = memoryBytes(value);
-            input.removeAttribute('aria-invalid');
-          } catch {
-            input.setAttribute('aria-invalid', 'true');
-            return;
-          }
-        }
-        if (input.dataset.array) {
-          try {
-            value = JSON.parse(input.value);
-            if (!Array.isArray(value) || value.some((v) => !Number.isFinite(v))) throw Error();
-          } catch {
-            return;
-          }
-        }
-        if (typeof value === 'number') {
-          if (!Number.isFinite(value) || Math.abs(value) > Number.MAX_SAFE_INTEGER) return;
-          if (input.min !== '') value = Math.max(Number(input.min), value);
-          if (input.max !== '') value = Math.min(Number(input.max), value);
-          if (input.dataset.integer === 'true' && !Number.isInteger(value)) {
-            input.setAttribute('aria-invalid', 'true');
-            return;
-          }
-          input.removeAttribute('aria-invalid');
-        }
-        if (n.params[key] === value) return;
-        if (state.classroom?.isLocked()) {
-          if (!state.classroom.allowInput()) return;
-          if (!SOURCE_PARAMETERS[n.type]?.[key] && !state.classroom.allowEdit()) return;
-          const rule = SOURCE_PARAMETERS[n.type]?.[key];
-          if (
-            rule &&
-            (typeof value !== 'number' ||
-              value < rule[0] ||
-              value > rule[1] ||
-              (rule[2] && !Number.isInteger(value)))
-          ) {
-            notify(
-              state.lang === 'ua'
-                ? `Для запису задайте значення від ${rule[0]} до ${rule[1]}.`
-                : `For recording, enter a value between ${rule[0]} and ${rule[1]}.`,
-            );
-            input.value = n.params[key];
-            return;
-          }
-        }
-        if (!editing) {
-          checkpoint();
-          editing = true;
-        }
-        n.params[key] = value;
-        if (key === 'initial' || SCENARIO_TYPES.includes(n.type)) delete state.runtime.state[n.id];
-        const companion = $(`[data-${input.dataset.slider ? 'param' : 'slider'}="${key}"]`);
-        if (companion) companion.value = value;
-        simulate(state.project, state.runtime, 0);
-        renderBoard();
-        updateSignals();
-        if (SOURCE_PARAMETERS[n.type]?.[key]) state.classroom?.inputChanged(n.id, key, value);
-        state.classroom?.observeEdit();
-        persist();
-      };
-      input.oninput = commit;
-      input.onchange = commit;
-      input.onblur = () => {
-        editing = false;
-        const key = input.dataset.param || input.dataset.slider;
-        const value = n.params[key] ?? d.defaults[key];
-        if (input.type === 'number') {
-          if (input.getAttribute('aria-invalid') === 'true')
-            notify(
-              state.lang === 'ua'
-                ? 'Для цього параметра потрібне ціле значення.'
-                : 'This parameter requires a whole number.',
-            );
-          input.value = value;
-          input.removeAttribute('aria-invalid');
-        }
-        if (input.dataset.memoryBytes) {
-          if (input.getAttribute('aria-invalid') === 'true')
-            notify(
-              state.lang === 'ua'
-                ? 'Введіть байти від 0 до 255, розділені комами.'
-                : 'Enter bytes from 0 to 255, separated by commas.',
-            );
-          input.value = Array.isArray(value) ? value.join(', ') : value;
-          input.removeAttribute('aria-invalid');
-        }
-      };
-    });
+    bindInspectorParameters(el, n, state, actions);
     $('#duplicate-node').onclick = duplicateSelection;
     $('#delete-node').onclick = deleteSelection;
     updateInspectorSignals();

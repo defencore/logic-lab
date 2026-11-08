@@ -1,6 +1,13 @@
 import { validateProject } from '../circuits/project.js';
 import { createRuntime, simulate } from '../simulation/index.js';
 import { run } from '../assessment/replay.js';
+import { abortIfNeeded } from '../assessment/schema.js';
+import {
+  recordingWorkLimit,
+  sequenceWork,
+  changesReplayTiming,
+} from '../experiments/replay-work-policy.js';
+import { trimSequence } from '../experiments/sequence-trim.js';
 import {
   SEQUENCE_LIMITS,
   createSequence,
@@ -33,6 +40,27 @@ export function createActionSession(
   let editable = null;
   let target = 0;
   let reviewOriginal = null;
+  let recordingBound = null;
+  let recordingRuntime = null,
+    recordingLastSteps = 0,
+    recordingOperations = 0;
+  function recordingUsedSteps() {
+    const runtime = adapter.getRuntime(),
+      steps = runtime.steps || 0;
+    if (runtime !== recordingRuntime || steps < recordingLastSteps) {
+      recordingRuntime = runtime;
+      recordingLastSteps = 0;
+    }
+    recordingOperations += Math.max(0, steps - recordingLastSteps);
+    recordingLastSteps = steps;
+    return recordingOperations;
+  }
+  const recordingLimit = () =>
+    recordingBound || recordingWorkLimit(editable?.project || adapter.getProject());
+  const recordingStepAllowance = (maximum = 250) =>
+    state.recording && recordingLimit().requiresVerification
+      ? Math.max(0, Math.min(maximum, recordingLimit().stepBudget - recordingUsedSteps()))
+      : maximum;
   function preserveEditor() {
     if (!editable)
       editable = {
@@ -50,6 +78,7 @@ export function createActionSession(
     if (state.recording || state.player || state.preview)
       throw new Error('Finish the current action session first.');
     state.sequence = validateSequence(value);
+    recordingBound = null;
     state.observations = [];
     state.dockOpen = true;
     changed(true);
@@ -58,9 +87,15 @@ export function createActionSession(
     if (state.reviewMode) throw new Error('Return to your circuit before recording.');
     if (state.recording) throw new Error('An action recording is already in progress.');
     const sequence = createSequence(editable?.project || adapter.getProject(), { probes });
+    const bound = recordingWorkLimit(sequence.initialProject, sequence);
+    if (!(bound.maxDuration > 0))
+      throw new Error('Схема надто складна для запису. Спростіть її перед початком.');
     if (state.player) stopPlayback();
     adapter.resetForSequence();
+    recordingRuntime = null;
+    recordingLastSteps = recordingOperations = 0;
     state.sequence = sequence;
+    recordingBound = bound;
     state.recording = true;
     state.dockOpen = true;
     state.observations = [captureObservation(sequence, adapter.getRuntime(), -1)];
@@ -70,7 +105,10 @@ export function createActionSession(
   }
   function stopRecording() {
     if (!state.recording) return;
-    finishSequence(state.sequence, Math.min(SEQUENCE_LIMITS.duration, adapter.getRuntime().time));
+    finishSequence(
+      state.sequence,
+      Math.min(recordingLimit().maxDuration, adapter.getRuntime().time),
+    );
     state.recording = false;
     state.simulationRunning = false;
     adapter.setRunning(false);
@@ -79,13 +117,20 @@ export function createActionSession(
   function inputChanged(node, key, value) {
     if (!state.recording) return;
     appendAction(state.sequence, {
-      at: Math.min(SEQUENCE_LIMITS.duration, adapter.getRuntime().time),
+      at: Math.min(recordingLimit().maxDuration, adapter.getRuntime().time),
       node,
       key,
       value,
     });
     state.observations.push(captureObservation(state.sequence, adapter.getRuntime()));
-    if (state.sequence.actions.length >= SEQUENCE_LIMITS.actions) stopRecording();
+    if (changesReplayTiming({ key }))
+      recordingBound = recordingWorkLimit(
+        state.sequence.initialProject,
+        state.sequence,
+        adapter.getRuntime().time,
+      );
+    if (state.sequence.actions.length >= SEQUENCE_LIMITS.actions || recordingStepAllowance() === 0)
+      stopRecording();
     else changed(true);
   }
   function beginPlayback() {
@@ -210,7 +255,11 @@ export function createActionSession(
         completed = true;
       }
     }
-    if (state.recording && adapter.getRuntime().time >= SEQUENCE_LIMITS.duration - 1e-8) {
+    if (
+      state.recording &&
+      (adapter.getRuntime().time >= recordingLimit().maxDuration - 1e-8 ||
+        recordingStepAllowance() === 0)
+    ) {
       stopRecording();
       limitReached = true;
     }
@@ -220,6 +269,46 @@ export function createActionSession(
   function simulationStateChanged(running) {
     state.simulationRunning = !!running;
     if (state.recording) changed();
+  }
+  async function trimRecording(cutoff, { signal } = {}) {
+    if (state.recording || state.player || state.preview || !state.sequence)
+      throw new Error('Завершіть запис або перегляд перед скороченням сценарію.');
+    abortIfNeeded(signal);
+    const source = state.sequence,
+      before = JSON.stringify(source),
+      next = trimSequence(source, cutoff);
+    const playback = await run(next, next.initialProject, { signal });
+    abortIfNeeded(signal);
+    if (
+      state.sequence !== source ||
+      JSON.stringify(source) !== before ||
+      state.recording ||
+      state.player ||
+      state.preview
+    )
+      throw new Error('Запис змінився під час скорочення. Попередній сценарій збережено.');
+    state.sequence = next;
+    state.observations = playback.observations;
+    state.dockOpen = true;
+    recordingBound = null;
+    changed(true);
+    return {
+      removedActions: source.actions.length - next.actions.length,
+      previousDuration: source.duration,
+      duration: next.duration,
+    };
+  }
+  async function verifyRecording({ signal } = {}) {
+    if (state.recording || state.player || state.preview || !state.sequence)
+      throw new Error('Завершіть запис або перегляд перед перевіркою сценарію.');
+    const source = state.sequence,
+      before = JSON.stringify(source);
+    await run(source, source.initialProject, { signal });
+    abortIfNeeded(signal);
+    if (state.sequence !== source || JSON.stringify(source) !== before)
+      throw new Error('Запис змінився під час перевірки. Перевірте його ще раз.');
+    changed();
+    return sequenceWork(source, source.initialProject);
   }
   return {
     state,
@@ -235,12 +324,20 @@ export function createActionSession(
     stopPlayback,
     tick,
     simulationStateChanged,
+    trimRecording,
+    recordingLimit,
+    recordingStepAllowance,
+    verifyRecording,
+    sequenceWork: () =>
+      state.sequence ? sequenceWork(state.sequence, state.sequence.initialProject) : null,
     isLocked: () => state.recording || !!state.player || !!state.preview,
     sequenceToSave: () => (reviewOriginal ? reviewOriginal.sequence : state.sequence),
     viewportToSave: () => editable?.viewport || adapter.getViewport?.(),
     recordingDelta: (dt) =>
       state.recording
-        ? Math.min(dt, Math.max(0, SEQUENCE_LIMITS.duration - adapter.getRuntime().time))
+        ? recordingStepAllowance() === 0
+          ? 0
+          : Math.min(dt, Math.max(0, recordingLimit().maxDuration - adapter.getRuntime().time))
         : dt,
     projectToSave: () => editable?.project || adapter.getProject(),
   };

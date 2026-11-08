@@ -6,7 +6,7 @@ import { createRuntime, simulate } from '../../src/simulation/index.js';
 import { createSequence, appendAction, finishSequence } from '../../src/experiments/actions.js';
 import { node } from '../assessment/fixtures/lab-assessment.js';
 
-function fixture(t, { many = false, assignment = null } = {}) {
+function fixture(t, { many = false, assignment = null, example = null } = {}) {
   const previous = globalThis.document;
   const project = {
     version: 1,
@@ -45,6 +45,7 @@ function fixture(t, { many = false, assignment = null } = {}) {
     getProject: () => project,
     getRuntime: () => runtime,
     getLanguage: () => 'en',
+    getExample: () => example,
     resetForSequence() {
       resets++;
       runtime = createRuntime();
@@ -63,7 +64,12 @@ function fixture(t, { many = false, assignment = null } = {}) {
           checked: /\bchecked\b/.test(match[2]),
         }),
       );
-      for (const id of ['recording-cancel', 'recording-begin', 'recording-probe-count'])
+      for (const id of [
+        'recording-cancel',
+        'recording-begin',
+        'recording-probe-count',
+        'recording-probe-feedback',
+      ])
         elements.set('#' + id, { disabled: false, textContent: '' });
     },
   };
@@ -158,10 +164,10 @@ test('the chooser enforces 1–32 signals and rejects an invalid confirmation be
   assert.equal(f.inputs.filter((input) => input.checked).length, 32);
   f.inputs[32].checked = true;
   f.inputs[32].onchange();
-  assert.equal(f.element('recording-begin').disabled, true);
-  assert.match(f.element('recording-probe-count').textContent, /33\/32/);
-  f.element('recording-begin').onclick();
-  assert.match(f.notifications.at(-1), /1 and 32/);
+  assert.equal(f.inputs[32].checked, false, '33rd change is rolled back before confirmation');
+  assert.equal(f.element('recording-begin').disabled, false);
+  assert.match(f.element('recording-probe-count').textContent, /32\/32/);
+  assert.match(f.element('recording-probe-feedback').textContent, /at most 32/);
   f.inputs.forEach((input) => {
     input.checked = false;
   });
@@ -188,4 +194,36 @@ test('an operation that becomes busy after opening the chooser cannot start or r
   assert.equal(f.resets, 0);
   assert.equal(f.closed, 0);
   assert.match(f.notifications.at(-1), /Wait/);
+});
+
+test('without an assignment the learning example recommends its chosen signals; assignments take precedence', (t) => {
+  const f = fixture(t, {
+    example: { actionProbes: [{ node: 'lamp', port: 'in', side: 'inputs' }] },
+  });
+  f.controls.startRecording();
+  assert.deepEqual(
+    f.inputs.map((input) => input.checked),
+    [false, false, false, true],
+  );
+  f.element('recording-begin').onclick();
+  assert.deepEqual(f.state.sequence.probes, [{ node: 'lamp', port: 'in', side: 'inputs' }]);
+});
+
+test('missing assignment outputs are shown explicitly and cannot reset the current recording', (t) => {
+  const f = fixture(t, {
+    assignment: { probes: [{ node: 'removed', port: 'in', side: 'inputs' }] },
+  });
+  const originalRuntime = f.runtime;
+  f.controls.startRecording();
+  assert.match(f.markup, /\(missing\)/);
+  assert.equal(f.inputs.at(-1).checked, true);
+  assert.equal(
+    f.inputs.slice(0, -1).some((item) => item.checked),
+    false,
+  );
+  f.element('recording-begin').onclick();
+  assert.match(f.notifications.at(-1), /Restore missing contacts/);
+  assert.equal(f.state.sequence, f.original);
+  assert.equal(f.runtime, originalRuntime);
+  assert.equal(f.resets, 0);
 });

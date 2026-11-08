@@ -1,4 +1,4 @@
-import { parseSequence } from '../experiments/actions.js';
+import { parseSequence, SEQUENCE_LIMITS } from '../experiments/actions.js';
 import { parseAssignment, validateAttempt } from '../assessment/index.js';
 import { createStoredRecovery } from '../circuits/project-storage.js';
 
@@ -63,7 +63,8 @@ function current(storage) {
     attempt,
     sequence,
     notes: typeof draft?.notes === 'string' ? draft.notes.slice(0, 20000) : '',
-    teacherForm: sanitizeTeacherForm(draft?.teacherForm),
+    teacherForm:
+      checked(draft?.teacherForm, sanitizeTeacherForm, 'Teacher form') || sanitizeTeacherForm(),
     studentBuildReady: draft?.studentBuildReady === true,
     studentDirty: draft?.studentDirty !== false,
     studentLastSaveKind: ['draft', 'submission'].includes(draft?.studentLastSaveKind)
@@ -88,14 +89,38 @@ export function readClassroomStorage(storage) {
   }
 }
 export function sanitizeTeacherForm(value = {}) {
+  const probes = value?.probes ?? null;
+  const invalid = (code, message) => {
+    const error = new Error(message);
+    error.code = code;
+    throw error;
+  };
+  if (probes !== null) {
+    if (Array.isArray(probes) && probes.length > SEQUENCE_LIMITS.probes)
+      invalid(
+        'teacher_probe_limit',
+        `Choose at most ${SEQUENCE_LIMITS.probes} observed signals. No selection was saved.`,
+      );
+    if (
+      !Array.isArray(probes) ||
+      probes.some(
+        (probe) =>
+          typeof probe !== 'string' ||
+          !/^[a-zA-Z0-9_-]{1,100}:(inputs|outputs):[a-zA-Z0-9_-]{1,100}$/.test(probe),
+      ) ||
+      new Set(probes).size !== probes.length
+    )
+      invalid(
+        'teacher_probe_invalid',
+        'Observed signal selections contain invalid or duplicate contacts.',
+      );
+  }
   return {
     title: typeof value?.title === 'string' ? value.title.slice(0, 200) : '',
     instructions: typeof value?.instructions === 'string' ? value.instructions.slice(0, 20000) : '',
     starterMode: value?.starterMode === 'components' ? 'components' : 'interfaces',
     studentIds: typeof value?.studentIds === 'string' ? value.studentIds.slice(0, 5000) : '',
-    probes: Array.isArray(value?.probes)
-      ? value.probes.filter((item) => typeof item === 'string').slice(0, 32)
-      : null,
+    probes: probes === null ? null : [...probes],
   };
 }
 export function createClassroomStorage(storage, onFailure = () => {}) {
@@ -167,18 +192,23 @@ export function createClassroomStorage(storage, onFailure = () => {}) {
       studentLastSaveKind,
       studentSavedAt,
       workOrigin,
-    }) =>
-      write(DRAFT, {
-        assignment,
-        attempt,
-        sequence,
-        notes,
-        teacherForm: sanitizeTeacherForm(teacherForm),
-        studentBuildReady,
-        studentDirty,
-        studentLastSaveKind,
-        studentSavedAt,
-        workOrigin,
-      }),
+    }) => {
+      try {
+        return write(DRAFT, {
+          assignment,
+          attempt,
+          sequence,
+          notes,
+          teacherForm: sanitizeTeacherForm(teacherForm),
+          studentBuildReady,
+          studentDirty,
+          studentLastSaveKind,
+          studentSavedAt,
+          workOrigin,
+        });
+      } catch {
+        return failure();
+      }
+    },
   };
 }

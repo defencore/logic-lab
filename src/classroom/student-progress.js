@@ -1,4 +1,5 @@
 import { sameCircuitStructure } from '../assessment/topology.js';
+import { sequenceWork, workLimitMessage } from '../experiments/replay-work-policy.js';
 
 export function sequenceIsStale(sequence, project) {
   if (!sequence) return false;
@@ -21,6 +22,7 @@ export function studentProgress(
   const built =
     active && (!!state.studentBuildReady || !!state.attempt.journal.length || !!state.sequence);
   const recorded = !!state.sequence?.actions?.length && !stale && !state.recording;
+  const work = recorded ? sequenceWork(state.sequence, project) : null;
   const explained = !!state.notes?.trim();
   let code = !state.assignment
     ? 'task'
@@ -40,9 +42,13 @@ export function studentProgress(
                   ? 'build'
                   : !recorded
                     ? 'record'
-                    : !explained
-                      ? 'explain'
-                      : 'save';
+                    : work.requiresVerification && !work.verified
+                      ? 'verify'
+                      : !work.supported
+                        ? 'workLimit'
+                        : !explained
+                          ? 'explain'
+                          : 'save';
   if (state.busy) code = 'busy';
   const ready =
     !!state.assignment &&
@@ -50,6 +56,7 @@ export function studentProgress(
     !mismatch &&
     active &&
     recorded &&
+    work.supported &&
     explained &&
     !state.busy &&
     !state.player &&
@@ -64,10 +71,17 @@ export function studentProgress(
     active,
     built,
     recorded,
+    work,
     explained,
     identity,
     mismatch,
-    steps: [!!state.assignment && identity && !mismatch, built, recorded, explained, saved],
+    steps: [
+      !!state.assignment && identity && !mismatch,
+      built,
+      recorded && !!work?.supported,
+      explained,
+      saved,
+    ],
   };
 }
 const messages = {
@@ -115,6 +129,8 @@ const messages = {
   busy: ['Дочекайтеся завершення поточної операції.', 'Wait for the current operation to finish.'],
 };
 export function progressMessage(progress, language) {
+  if (progress.code === 'workLimit' || progress.code === 'verify')
+    return workLimitMessage(progress.work, language);
   if (progress.saved)
     return language === 'ua'
       ? 'Файл роботи підготовлено. Передайте його викладачеві.'

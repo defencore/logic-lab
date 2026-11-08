@@ -16,7 +16,7 @@ export default {
     ],
     [
       'Close the doors fully, set UP=1 and inspect POSITION in floor units. Return UP=0 near F2, then use OPEN=1. Floor sensors indicate alignment within ±0.015 floor; neither a floor sensor nor a request automatically stops the cabin.',
-      'Повністю зачиніть двері, задайте UP=1 та спостерігайте POSITION в одиницях поверху. Біля F1 поверніть UP=0, потім задайте OPEN=1. Датчики показують вирівнювання в межах ±0.015 поверху; датчик поверху або заявка самі не зупиняють кабіну.',
+      'Повністю зачиніть двері, задайте UP=1 та спостерігайте POSITION в одиницях поверху. Біля F2 поверніть UP=0, потім задайте OPEN=1. Датчики показують вирівнювання в межах ±0.015 поверху; датчик поверху або заявка самі не зупиняють кабіну.',
     ],
     [
       'Build a visible door_closed AND movement_request interlock, an external monostable for opening/dwell, and SR memories for released call buttons. Open the Elevator example to inspect a complete gate-based controller and its 3D feedback.',

@@ -11,9 +11,54 @@ export function availableProbes(project) {
     });
 }
 export const probeId = (probe) => `${probe.node}:${probe.side || 'outputs'}:${probe.port}`;
+
+/** Imported criteria may observe an input on a component which also has outputs. */
+export function hasProbe(project, probe) {
+  const node = project.nodes.find((node) => node.id === probe?.node);
+  return (
+    !!node &&
+    !!getDefinition(node.type)?.signals[probe.side || 'outputs']?.some(
+      (port) => port.id === probe.port,
+    )
+  );
+}
+export function probeChoices(project, preferred = []) {
+  const choices = availableProbes(project),
+    ids = new Set(choices.map(probeId));
+  for (const probe of preferred) {
+    if (hasProbe(project, probe) && !ids.has(probeId(probe))) {
+      choices.push({ node: probe.node, port: probe.port, side: probe.side || 'outputs' });
+      ids.add(probeId(probe));
+    }
+  }
+  return choices;
+}
 export function recommendedProbes(project, preferred = [], limit = 32) {
-  const available = availableProbes(project),
-    allowed = new Set(available.map(probeId));
-  const valid = preferred.filter((probe) => allowed.has(probeId(probe)));
-  return (valid.length ? valid : available).slice(0, limit);
+  if (preferred.length > limit)
+    throw Object.assign(
+      new Error(`Choose at most ${limit} observed signals; no selection was truncated.`),
+      { code: 'teacher_probe_limit' },
+    );
+  const valid = preferred.filter((probe) => hasProbe(project, probe));
+  const unique = [...new Map(valid.map((probe) => [probeId(probe), probe])).values()];
+  return unique.length ? unique : availableProbes(project).slice(0, limit);
+}
+
+export function recordingProbeOptions(project, { assignment, example } = {}) {
+  const preferred = assignment ? assignment.probes || [] : example?.actionProbes || [];
+  const defaults = recommendedProbes(project, preferred);
+  const choices = probeChoices(project, preferred),
+    ids = new Set(choices.map(probeId));
+  for (const probe of preferred) {
+    if (!ids.has(probeId(probe))) {
+      choices.push({ ...probe, missing: true });
+      ids.add(probeId(probe));
+    }
+  }
+  return {
+    choices,
+    // Missing task interfaces require correction, not replacement by unrelated early outputs.
+    recommended: preferred.length ? preferred : defaults,
+    preferred,
+  };
 }

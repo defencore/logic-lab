@@ -53,6 +53,8 @@ export function createStudentProgressController({
           } else if (action === 'record') record();
           else if (action === 'finish') controls.stopRecording();
           else if (action === 'stop') session.stopPlayback();
+          else if (action === 'trim') controls.trimRecording();
+          else if (action === 'verify') controls.verifyRecording();
           else if (action === 'save') return actions.submit();
           else {
             const progress = studentProgress(progressState(), session.projectToSave(), { stale });
@@ -95,7 +97,7 @@ export function createStudentProgressController({
         }
       }
     }
-    if (root && !root.hidden) playback.update(root);
+    if (root && !root.hidden) playback.update(root, progress.work);
     const form = $('.student-panel');
     if (form) updateStudentSteps(form, progress, adapter.getLanguage());
     const reason = progressMessage(progress, adapter.getLanguage());
@@ -106,6 +108,12 @@ export function createStudentProgressController({
     if ($('#student-rerecord'))
       $('#student-rerecord').disabled =
         !state.attempt || state.busy || !!state.player || !!state.preview || state.recording;
+    if ($('#student-trim'))
+      $('#student-trim').disabled =
+        !state.sequence || state.busy || !!state.player || !!state.preview || state.recording;
+    if ($('#student-verify'))
+      $('#student-verify').disabled =
+        !state.sequence || state.busy || !!state.player || !!state.preview || state.recording;
     return progress;
   }
   return {

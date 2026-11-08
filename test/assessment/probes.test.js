@@ -1,8 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { availableProbes, recommendedProbes, probeId } from '../../src/experiments/probes.js';
+import {
+  availableProbes,
+  recommendedProbes,
+  probeId,
+  recordingProbeOptions,
+} from '../../src/experiments/probes.js';
 import { createSequence, defaultProbes } from '../../src/experiments/actions.js';
 import { node } from './fixtures/lab-assessment.js';
+import { EXAMPLES, createExample } from '../../examples/index.js';
 
 const circuit = (nodes) => ({ version: 1, name: 'Observed signals', nodes, wires: [] });
 const probe = (node, port, side = 'outputs') => ({ node, port, side });
@@ -60,3 +66,45 @@ test('assignment recommendations retain valid chosen ports and discard missing o
     probe('memory', 'nq'),
   ]);
 });
+
+test('explicit recommendations above the recording cap fail instead of being silently truncated', () => {
+  const project = circuit(Array.from({ length: 33 }, (_, i) => node(`source${i}`, 'switch')));
+  assert.throws(
+    () => recommendedProbes(project, availableProbes(project)),
+    (error) => error.code === 'teacher_probe_limit',
+  );
+});
+
+test('recording offers imported input criteria even when the same component has semantic outputs', () => {
+  const project = circuit([node('memory', 'd_ff')]);
+  const probes = [probe('memory', 'd', 'inputs')];
+  const options = recordingProbeOptions(project, { assignment: { probes } });
+  assert.deepEqual(options.recommended, probes);
+  assert.ok(options.choices.some((item) => probeId(item) === probeId(probes[0])));
+});
+
+test('missing assigned interfaces remain explicit instead of being replaced by unrelated defaults', () => {
+  const project = circuit([node('memory', 'd_ff')]);
+  const probes = [probe('removed-lamp', 'in', 'inputs')];
+  const options = recordingProbeOptions(project, { assignment: { probes } });
+  assert.deepEqual(options.recommended, probes);
+  assert.deepEqual(options.choices.at(-1), { ...probes[0], missing: true });
+});
+
+for (const id of ['elevator-logic', 'keypad-code-lock']) {
+  test(`${id} recordings choose lab outcomes instead of the first 32 component outputs`, () => {
+    const example = EXAMPLES.find((item) => item.id === id),
+      project = createExample(id);
+    const options = recordingProbeOptions(project, { example });
+    assert.deepEqual(options.recommended, example.actionProbes);
+    assert.notDeepEqual(options.recommended, availableProbes(project).slice(0, 32));
+    assert.ok(options.recommended.length <= 32);
+    assert.deepEqual(
+      recordingProbeOptions(project, {
+        example,
+        assignment: { probes: [example.actionProbes.at(-1)] },
+      }).recommended,
+      [example.actionProbes.at(-1)],
+    );
+  });
+}

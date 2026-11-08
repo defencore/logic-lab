@@ -1,5 +1,8 @@
 import { createRecordingSetup } from './recording-setup.js';
-export function createActionControls({ adapter, state, session, L, guardIdle }) {
+import { createSequenceTrim } from './sequence-trim-controller.js';
+import { workLimitMessage } from '../experiments/replay-work-policy.js';
+export function createActionControls({ adapter, state, session, L, guardIdle, operations }) {
+  const trimRecording = createSequenceTrim({ adapter, state, session, L, guardIdle, operations });
   function beginRecording(probes) {
     guardIdle();
     session.startRecording({ probes });
@@ -21,6 +24,31 @@ export function createActionControls({ adapter, state, session, L, guardIdle }) 
   });
   function stopRecording() {
     session.stopRecording();
+  }
+  async function verifyRecording() {
+    guardIdle();
+    adapter.closeModal();
+    adapter.notify(
+      L(
+        'Перевіряється можливість обробки запису…',
+        'Checking whether the recording can be processed…',
+      ),
+    );
+    try {
+      const report = await operations.run(() => session.verifyRecording());
+      adapter.notify(
+        report.supported
+          ? L(
+              'Запис перевірено. Можна продовжити підготовку роботи.',
+              'Recording verified. Continue preparing your work.',
+            )
+          : workLimitMessage(report, adapter.getLanguage()),
+      );
+    } catch (error) {
+      if (error.code === 'replay_work_limit')
+        adapter.notify(workLimitMessage(error.work, adapter.getLanguage()));
+      else throw error;
+    }
   }
   function replay() {
     guardIdle();
@@ -52,8 +80,8 @@ export function createActionControls({ adapter, state, session, L, guardIdle }) 
       if (result.limitReached)
         adapter.notify(
           L(
-            'Запис завершено на межі 120 секунд. Збережіть сценарій або почніть новий.',
-            'Recording completed at the 120-second limit. Save the sequence or start another.',
+            `Запис завершено на межі ${session.recordingLimit().maxDuration.toFixed(3)} с для цієї схеми. Можна скоротити запис або зберегти результат.`,
+            `Recording reached this circuit’s ${session.recordingLimit().maxDuration.toFixed(3)} s limit. Shorten the recording or save the result.`,
           ),
         );
       return result.playing;
@@ -109,6 +137,8 @@ export function createActionControls({ adapter, state, session, L, guardIdle }) 
     stopRecording,
     replay,
     nextAction,
+    trimRecording,
+    verifyRecording,
     tick,
     inputChanged,
     isLocked,

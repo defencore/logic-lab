@@ -1,4 +1,5 @@
 import { createLessonReflection } from './lesson-reflection.js';
+import { recordingInputHint } from '../learning/recording-hints.js';
 import { getDefinition } from '../components/catalog/index.js';
 import { EXAMPLES, createExample } from '../../examples/index.js';
 import { $, $$, esc, format, signalClass } from '../shared/ui.js';
@@ -232,7 +233,7 @@ export function createLearningController(
   }
   function showHelp() {
     showModal(
-      `<span class="eyebrow">${workbench.lang === 'ua' ? 'ВІТАЄМО В ЛАБОРАТОРІЇ' : 'HELLO, CURIOUS MIND'}</span><h2>${t('guideTitle')}</h2><p>${t('guideBody')}</p><div class="guide-rows">${[
+      `<span class="eyebrow">${workbench.lang === 'ua' ? 'ВІТАЄМО В ЛАБОРАТОРІЇ' : 'HELLO, CURIOUS MIND'}</span><h2>${t('guideTitle')}</h2><p>${t('guideBody')}</p><p class="context-help">${esc(recordingInputHint(workbench.project, workbench.lang))}</p><div class="guide-rows">${[
         ['plus', 'guideAdd', 'guideAddText'],
         ['wire', 'guideWire', 'guideWireText'],
         ['play', 'guideSim', 'guideSimText'],

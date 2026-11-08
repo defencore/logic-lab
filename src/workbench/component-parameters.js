@@ -1,4 +1,5 @@
 import { parameterRule } from '../components/parameter-rules.js';
+import { KEYPAD_DEFAULTS } from '../components/keypad.js';
 import { esc } from '../shared/ui.js';
 
 export function memoryBytes(value) {
@@ -85,22 +86,35 @@ const PARAM_NAMES = {
   width: ['Width', 'Ширина'],
   height: ['Height', 'Висота'],
 };
-export function parameterField(key, value, componentType, lang, t) {
+export function parameterLabel(key, componentType, lang, parameters = {}) {
+  if (key === 'mode' && componentType === 'keypad')
+    return lang === 'ua' ? 'Режим кнопок' : 'Button mode';
   const baseLabel =
     PARAM_NAMES[key]?.[lang === 'ua' ? 1 : 0] ||
     key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
-  const label =
-    key === 'initialLevel'
-      ? `${baseLabel} (${componentType === 'water_tank' ? '%' : 'g'})`
-      : baseLabel;
+  if (componentType === 'position_sensor' && parameters.unit === 'floor') {
+    if (key === 'threshold')
+      return lang === 'ua'
+        ? 'Поріг / цільова позиція (поверхи)'
+        : 'Trip / target position (floors)';
+    if (key === 'tolerance')
+      return lang === 'ua' ? 'Допуск позиції (поверхи)' : 'Position tolerance (floors)';
+  }
+  return key === 'initialLevel'
+    ? `${baseLabel} (${componentType === 'water_tank' ? '%' : 'g'})`
+    : baseLabel;
+}
+export function parameterField(key, value, componentType, lang, t, parameters = {}) {
+  const label = parameterLabel(key, componentType, lang, parameters);
+  const caption = `<span data-parameter-label="${esc(key)}">${esc(label)}</span>`;
   if (key === 'mode' && componentType === 'keypad')
-    return `<label>${lang === 'ua' ? 'Режим кнопок' : 'Button mode'}<select data-param="mode"><option value="pulse" ${value === 'pulse' ? 'selected' : ''}>${lang === 'ua' ? 'Імпульс · звичайні кліки' : 'Pulse · ordinary clicks'}</option><option value="hold" ${value === 'hold' ? 'selected' : ''}>${lang === 'ua' ? 'Утримання · відпускання повертає 0' : 'Hold · release returns to 0'}</option><option value="toggle" ${value === 'toggle' ? 'selected' : ''}>${lang === 'ua' ? 'Фіксація · натисніть ще раз для 0' : 'Latch · press again for 0'}</option></select></label>`;
+    return `<label>${caption}<select data-param="mode"><option value="pulse" ${value === 'pulse' ? 'selected' : ''}>${lang === 'ua' ? 'Імпульс · звичайні кліки' : 'Pulse · ordinary clicks'}</option><option value="hold" ${value === 'hold' ? 'selected' : ''}>${lang === 'ua' ? 'Утримання · відпускання повертає 0' : 'Hold · release returns to 0'}</option><option value="toggle" ${value === 'toggle' ? 'selected' : ''}>${lang === 'ua' ? 'Фіксація · натисніть ще раз для 0' : 'Latch · press again for 0'}</option></select></label>`;
   if (key === 'text')
-    return `<label>${label}<textarea data-param="${key}" rows="3" maxlength="16384">${esc(value)}</textarea></label>`;
+    return `<label>${caption}<textarea data-param="${key}" rows="3" maxlength="16384">${esc(value)}</textarea></label>`;
   if (key === 'data')
-    return `<label>${esc(label)}<textarea data-param="data" data-memory-bytes="true" rows="3" maxlength="16384" placeholder="0, 1, 2, 255">${esc(Array.isArray(value) ? value.join(', ') : value)}</textarea></label>`;
+    return `<label>${caption}<textarea data-param="data" data-memory-bytes="true" rows="3" maxlength="16384" placeholder="0, 1, 2, 255">${esc(Array.isArray(value) ? value.join(', ') : value)}</textarea></label>`;
   if (key === 'unit' && componentType === 'position_sensor')
-    return `<label>${esc(label)}<select data-param="unit"><option value="mm" ${value === 'mm' ? 'selected' : ''}>mm</option><option value="floor" ${value === 'floor' ? 'selected' : ''}>${lang === 'ua' ? 'Поверхи' : 'Floors'}</option></select></label>`;
+    return `<label>${caption}<select data-param="unit"><option value="mm" ${value === 'mm' ? 'selected' : ''}>mm</option><option value="floor" ${value === 'floor' ? 'selected' : ''}>${lang === 'ua' ? 'Поверхи' : 'Floors'}</option></select></label>`;
   const type =
     typeof value === 'boolean'
       ? 'checkbox'
@@ -112,12 +126,16 @@ export function parameterField(key, value, componentType, lang, t) {
   if (key === 'mode' && ['limit_switch', 'position_sensor'].includes(componentType)) {
     const options =
       componentType === 'limit_switch' ? ['below', 'above'] : ['below', 'above', 'window'];
-    return `<label>${esc(label)}<select data-param="mode">${options.map((option) => `<option value="${option}" ${value === option ? 'selected' : ''}>${t(option)}</option>`).join('')}</select></label>`;
+    return `<label>${caption}<select data-param="mode">${options.map((option) => `<option value="${option}" ${value === option ? 'selected' : ''}>${t(option)}</option>`).join('')}</select></label>`;
   }
   const limits = parameterRule(componentType, key);
   const attributes =
     type === 'number'
       ? `step="${limits.step}"${limits.min === undefined ? '' : ` min="${limits.min}" max="${limits.max}"`}${limits.integer ? ' data-integer="true"' : ''}`
       : 'maxlength="16384"';
-  return `<label ${type === 'checkbox' ? 'class="toggle-row"' : ''}>${esc(label)}<input data-param="${esc(key)}" type="${type}" ${attributes} ${Array.isArray(value) ? 'data-array="true"' : ''} ${type === 'checkbox' ? (value ? 'checked' : '') : `value="${esc(Array.isArray(value) ? JSON.stringify(value) : value)}"`}>${key === 'duty' ? `<input class="duty-slider" data-slider="duty" type="range" aria-label="${esc(label)}" min="0" max="1" step="0.01" value="${esc(value)}">` : ''}</label>`;
+  const hidden =
+    componentType === 'keypad' &&
+    key === 'pulseDuration' &&
+    (parameters.mode ?? KEYPAD_DEFAULTS.mode) !== 'pulse';
+  return `<label ${type === 'checkbox' ? 'class="toggle-row"' : ''} ${hidden ? 'hidden' : ''}>${caption}<input data-param="${esc(key)}" type="${type}" ${attributes} ${Array.isArray(value) ? 'data-array="true"' : ''} ${type === 'checkbox' ? (value ? 'checked' : '') : `value="${esc(Array.isArray(value) ? JSON.stringify(value) : value)}"`}>${key === 'duty' ? `<input class="duty-slider" data-slider="duty" type="range" aria-label="${esc(label)}" min="0" max="1" step="0.01" value="${esc(value)}">` : ''}</label>`;
 }

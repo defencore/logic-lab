@@ -46,7 +46,7 @@ export function createApplicationModel() {
     pending: null,
     gesture: null,
     view: project.viewport || { x: 0, y: 0, zoom: 1 },
-    monitorOpen: true,
+    monitorOpen: false,
     undoStack: [],
     redoStack: [],
     storageTimer: null,

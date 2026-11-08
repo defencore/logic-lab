@@ -109,6 +109,7 @@ export function composeWorkbench(context) {
     duplicateSelection: actions.duplicateSelection,
     enableSelected: actions.enableSelected,
     beginHotkeyCapture: (request) => services.hotkeys.beginCapture(request),
+    reconcileKeypads: () => services.keypads?.reconcile(),
     setKeypadKey: actions.setKeypadKey,
     getKeypadStatus: (id) => services.keypads?.status(id),
   });

@@ -43,7 +43,8 @@ export function createSimulation(context) {
   }
   function drainSimulation() {
     try {
-      services.simulationRunner.process();
+      const maxSteps = services.classroom?.recordingStepAllowance?.(250) ?? 250;
+      if (maxSteps > 0) services.simulationRunner.process({ maxSteps });
     } catch (error) {
       services.simulationRunner.discard();
       services.monitor.stopCapture();

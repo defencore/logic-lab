@@ -91,6 +91,8 @@ export function createStudentWorkspace({
         actions.restartAttempt();
       });
     $('#student-rerecord').onclick = safe(progress.record);
+    $('#student-trim').onclick = safe(controls.trimRecording);
+    if ($('#student-verify')) $('#student-verify').onclick = safe(controls.verifyRecording);
     $('#student-save-draft').onclick = safe(() => {
       readIdentity();
       guardEditableSession();

@@ -31,6 +31,7 @@
 @import './src/styles/classroom/student.css';
 @import './src/styles/classroom/teacher.css';
 @import './src/styles/classroom/review.css';
+@import './src/styles/classroom/probe-picker.css';
 @import './src/styles/scenes/widgets.css';
 @import './src/styles/scenes/viewer.css';
 @import './src/styles/wiring.css';

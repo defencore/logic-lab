@@ -26,6 +26,9 @@ export function createSequenceController({
     );
     $('#class-replay').onclick = safe(replay);
     $('#class-next').onclick = safe(nextAction);
+    $('#class-sequence-trim').onclick = safe(controls.trimRecording);
+    if ($('#class-sequence-verify'))
+      $('#class-sequence-verify').onclick = safe(controls.verifyRecording);
     bindFile('#class-sequence-import', async (files) =>
       session.setSequence(
         parseClassroomImport(await readClassroomFile(files[0]), 'sequence', validateSequence),

@@ -9,6 +9,7 @@ import {
 import { cleanName, downloadFile, readClassroomFile } from './files.js';
 import { studentTasksZip, reviewCsv } from './teacher-downloads.js';
 import { bindReviewControls } from './review-controller.js';
+import { bindProbePicker, teacherProbeIds, probeCriteriaMessage } from './probe-picker.js';
 
 export function createTeacherController({
   adapter,
@@ -28,6 +29,8 @@ export function createTeacherController({
       try {
         return await action(...args);
       } catch (error) {
+        if (error.code?.startsWith('teacher_probe_'))
+          throw new Error(probeCriteriaMessage(error, adapter.getLanguage()));
         if (error.code?.startsWith('file_') || error.code?.startsWith('assessment_')) throw error;
         const messages = [
           [
@@ -104,15 +107,19 @@ export function createTeacherController({
     updateTeacherUi();
   }
   function selectedProbes() {
-    const selected = views()
-      .possibleProbes()
-      .filter((probe) => state.teacherForm.probes.includes(probeKey(probe)))
-      .map(({ node, port, side }) => ({ node, port, side }));
+    const choices = views().possibleProbes();
+    const selected = state.teacherForm.probes.map((id) =>
+      choices.find((probe) => probeKey(probe) === id),
+    );
+    if (selected.some((probe) => !probe || probe.missing))
+      throw Object.assign(new Error('Missing observed signals.'), {
+        code: 'teacher_probe_invalid',
+      });
     if (!selected.length || selected.length > 32)
       throw new Error(
         L('Оберіть від 1 до 32 сигналів для перевірки.', 'Choose 1–32 observed signals.'),
       );
-    return selected;
+    return selected.map(({ node, port, side }) => ({ node, port, side }));
   }
   function downloadTasks(tasks, title) {
     downloadFile(
@@ -139,11 +146,23 @@ export function createTeacherController({
   }
   function bindTeacher() {
     if ($('#teacher-review-cancel')) $('#teacher-review-cancel').onclick = teacher.cancelReview;
-    for (const element of $$('[id^="task-"],#issue-students,[data-task-probe]'))
-      element.addEventListener(
-        element.type === 'checkbox' || element.tagName === 'SELECT' ? 'change' : 'input',
-        readTeacherForm,
-      );
+    const readFromInput = () => {
+      try {
+        readTeacherForm();
+      } catch (error) {
+        adapter.notify(probeCriteriaMessage(error, adapter.getLanguage()));
+      }
+    };
+    for (const element of $$('#task-title,#task-instructions,#task-starter,#issue-students'))
+      element.addEventListener(element.tagName === 'SELECT' ? 'change' : 'input', readFromInput);
+    const choices = views().possibleProbes();
+    bindProbePicker({
+      choices,
+      selected: teacherProbeIds(state, choices),
+      language: adapter.getLanguage(),
+      canChange: () => !(state.busy || state.recording || state.player || state.preview),
+      onChange: readFromInput,
+    });
     $('#teacher-edit-circuit').onclick = () => adapter.closeModal();
     if ($('#teacher-view-reference'))
       $('#teacher-view-reference').onclick = protect(() => {

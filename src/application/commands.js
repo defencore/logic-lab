@@ -123,9 +123,9 @@ export function createCommands(context) {
     state.lessonStep = 0;
     state.lessonOpen = true;
     state.highlighted.clear();
-    actions.setRunning(true);
     $('#project-name').value = state.project.name;
     actions.changed();
+    actions.setRunning(true);
     services.learning.renderLesson();
     actions.fit({ readable: !state.project.viewport });
     services.dialogs.close();

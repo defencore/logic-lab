@@ -50,15 +50,17 @@ export function createDockController({ adapter, state, session, L, views, safe, 
         updateDock();
       };
     }
-    const status = state.preview
-      ? `${L('Перегляд роботи', 'Reviewing work')}: ${state.preview.name} · ${L('Зупинити — повернутися до своєї схеми', 'Stop to return to your circuit')}`
-      : state.recording
-        ? `${state.simulationRunning ? L('Запис', 'Recording') : L('Запис на паузі', 'Recording paused')} · ${state.sequence.actions.length} ${L('дій', 'actions')} · ${adapter.getRuntime().time.toFixed(3)} s`
-        : state.player
-          ? `${state.player.done ? L('Сценарій завершено', 'Replay complete') : state.playbackRunning ? L('Відтворення', 'Replay') : L('Відтворення на паузі', 'Replay paused')} · ${state.player.cursor}/${state.sequence.actions.length} · ${state.player.runtime.time.toFixed(3)} s`
-          : state.sequence
-            ? `${state.sequence.actions.length} ${L('дій', 'actions')} · ${state.sequence.duration.toFixed(3)} s`
-            : L('Ще немає запису', 'No sequence yet');
+    const status = state.busy
+      ? L('Обчислення…', 'Processing…')
+      : state.preview
+        ? `${L('Перегляд роботи', 'Reviewing work')}: ${state.preview.name} · ${L('Зупинити — повернутися до своєї схеми', 'Stop to return to your circuit')}`
+        : state.recording
+          ? `${state.simulationRunning ? L('Запис', 'Recording') : L('Запис на паузі', 'Recording paused')} · ${state.sequence.actions.length} ${L('дій', 'actions')} · ${adapter.getRuntime().time.toFixed(3)} s`
+          : state.player
+            ? `${state.player.done ? L('Сценарій завершено', 'Replay complete') : state.playbackRunning ? L('Відтворення', 'Replay') : L('Відтворення на паузі', 'Replay paused')} · ${state.player.cursor}/${state.sequence.actions.length} · ${state.player.runtime.time.toFixed(3)} s`
+            : state.sequence
+              ? `${state.sequence.actions.length} ${L('дій', 'actions')} · ${state.sequence.duration.toFixed(3)} s`
+              : L('Ще немає запису', 'No sequence yet');
     const visibleStatus =
       !state.reviewMode && state.sequenceVersion?.previous && !state.recording
         ? `${previousVersionMessage(state.sequenceVersion, adapter.getLanguage())} · ${status}`

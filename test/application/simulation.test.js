@@ -37,6 +37,25 @@ test('simulation steps include queued time once when the recording duration clam
   assert.equal(app.events[1], 'process');
 });
 
+test('recording limits constrain the real simulation runner and an exhausted budget performs no extra steps', () => {
+  const app = context(),
+    calls = [];
+  let allowance = 3;
+  app.services.classroom = {
+    recordingStepAllowance: (maximum) => {
+      assert.equal(maximum, 250);
+      return allowance;
+    },
+  };
+  app.services.simulationRunner.process = (options) => calls.push(options);
+  const simulation = createSimulation(app);
+  simulation.drainSimulation();
+  assert.deepEqual(calls, [{ maxSteps: 3 }]);
+  allowance = 0;
+  simulation.drainSimulation();
+  assert.equal(calls.length, 1);
+});
+
 test('refreshing an already paused shell preserves manual queued steps, while pausing live simulation discards its backlog', (t) => {
   withDocument(t);
   const app = context();

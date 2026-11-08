@@ -2,19 +2,14 @@ import { availableProbes } from './probes.js';
 import { getDefinition } from '../components/catalog/index.js';
 import { validateProject } from '../circuits/project.js';
 import { createRuntime, simulate } from '../simulation/index.js';
-import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
+import { SEQUENCE_LIMITS } from './limits.js';
+import { hasTimedReplay } from './replay-work-policy.js';
 import { SOURCE_PARAMETERS } from '../simulation/input-sources.js';
 import { nextSimulationInterval } from '../simulation/timing.js';
 export { SOURCE_PARAMETERS } from '../simulation/input-sources.js';
 export { nextSimulationInterval, simulationResolution } from '../simulation/timing.js';
 
-export const SEQUENCE_LIMITS = Object.freeze({
-  actions: 2000,
-  duration: 120,
-  probes: 32,
-  nodes: 200,
-  bytes: 10_000_000,
-});
+export { SEQUENCE_LIMITS } from './limits.js';
 const EPSILON = Number.EPSILON * 4;
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 const fail = (message) => {
@@ -210,11 +205,7 @@ export function createPlayback(source, { project: candidate } = {}) {
   const runtime = createRuntime();
   runtime.sampleInterval = 1 / 255;
   simulate(project, runtime, 0);
-  const timed = project.nodes.some((node) =>
-    ['clock', 'pwm', 'am', 'fm', 'monostable', 'servo', 'stepper', ...SCENARIO_TYPES].includes(
-      node.type,
-    ),
-  );
+  const timed = hasTimedReplay(project);
   const playback = { sequence, project, runtime, cursor: 0, done: false, observations: [], timed };
   playback.observations.push(captureObservation(sequence, runtime, -1));
   return playback;

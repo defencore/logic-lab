@@ -7,6 +7,10 @@ import { createReviewView } from './review-view.js';
 import { createTeacherView } from './teacher-view.js';
 import { studentPanel as renderStudentPanel } from './student-view.js';
 import { sequenceSignature, teacherStatus } from './teacher-state.js';
+import { describeProbeChoices } from './probe-picker.js';
+import { hasProbe, probeId } from '../experiments/probes.js';
+import { recordingInputHint } from '../learning/recording-hints.js';
+import { sequenceWork, workLimitMessage } from '../experiments/replay-work-policy.js';
 
 const sourceTypes = new Set(Object.keys(SOURCE_PARAMETERS));
 
@@ -64,7 +68,7 @@ export function createClassroomView({ state, language, project, example }) {
 
   function actionTable() {
     if (!sequence)
-      return `<p class="classroom-empty">${L('Запишіть зміни входів SER, CLK, RST чи значень адреси й даних. Відтворення починається з початкової схеми.', 'Record changes to SER, CLK, RST or address/data values. Replay starts from the initial circuit.')}</p>`;
+      return `<p class="classroom-empty">${esc(recordingInputHint(project, language))}</p>`;
     const nodes = new Map(sequence.initialProject.nodes.map((node) => [node.id, node]));
     return `<div class="classroom-table-scroll"><table class="classroom-table"><thead><tr><th>#</th><th>${L('Час, с', 'Time, s')}</th><th>${L('Вхід', 'Input')}</th><th>${L('Значення', 'Value')}</th></tr></thead><tbody>${sequence.actions
       .slice(0, 300)
@@ -93,7 +97,8 @@ export function createClassroomView({ state, language, project, example }) {
 
   function sequencePanel() {
     const preset = adapter.getExample()?.actionPreset;
-    return `<section class="classroom-section"><h3>${L('Запис і відтворення входів', 'Record and replay inputs')}</h3>${previousWarning}<p>${L('Запис зберігає початкову схему, порядок дій та час симуляції. SER, CLK і RST перемикайте на схемі. Навіть дії в одну мить відтворюються в записаному порядку.', 'A sequence stores the initial circuit, action order and simulation times. Toggle SER, CLK and RST on the canvas. Actions at the same time retain their order.')}</p><div class="classroom-actions">${button('class-record', recording ? L('Завершити запис', 'Finish recording') : L('Записати дії', 'Record actions'), !!player || !!state.preview || busy, true)}${button('class-replay', reviewRestartLabel || (previous || completed ? replayLabel : L('Відтворити на схемі', 'Replay on canvas')), replayDisabled)}${button('class-next', L('Наступна записана дія', 'Next recorded action'), nextDisabled)}${button('class-sequence-import', L('Відкрити сценарій', 'Open sequence'), isLocked())}${button('class-sequence-export', L('Зберегти сценарій', 'Save sequence'), !sequence || recording || !!state.preview || busy)}${preset ? button('class-preset', L('Навчальний сценарій прикладу', 'Example action sequence'), isLocked()) : ''}</div>${actionTable()}</section>`;
+    const work = sequence && !recording ? sequenceWork(sequence) : null;
+    return `<section class="classroom-section"><h3>${L('Запис і відтворення входів', 'Record and replay inputs')}</h3>${previousWarning}<p>${esc(recordingInputHint(project, language))}</p>${work ? `<p class="classroom-hint" role="status">${esc(workLimitMessage(work, language))}</p>` : ''}<div class="classroom-actions">${button('class-record', recording ? L('Завершити запис', 'Finish recording') : L('Записати дії', 'Record actions'), !!player || !!state.preview || busy, true)}${button('class-replay', reviewRestartLabel || (previous || completed ? replayLabel : L('Відтворити на схемі', 'Replay on canvas')), replayDisabled)}${button('class-next', L('Наступна записана дія', 'Next recorded action'), nextDisabled)}${button('class-sequence-import', L('Відкрити сценарій', 'Open sequence'), isLocked())}${button('class-sequence-export', L('Зберегти сценарій', 'Save sequence'), !sequence || recording || !!state.preview || busy)}${button('class-sequence-trim', L('Скоротити запис', 'Shorten recording'), !sequence || isLocked())}${work?.requiresVerification && !work.verified ? button('class-sequence-verify', L('Перевірити запис', 'Verify recording'), !sequence || isLocked()) : ''}${preset ? button('class-preset', L('Навчальний сценарій прикладу', 'Example action sequence'), isLocked()) : ''}</div>${actionTable()}</section>`;
   }
 
   function possibleProbes() {
@@ -118,20 +123,21 @@ export function createClassroomView({ state, language, project, example }) {
           side,
           label: `${node.label || node.id} · ${port.label || port.id}`,
         }));
-      })
-      .slice(0, 100);
-    for (const probe of useKey ? teacherKey.probes || [] : []) {
-      if (
-        choices.some(
-          (item) =>
-            item.node === probe.node && item.port === probe.port && item.side === probe.side,
-        )
-      )
-        continue;
-      const node = teacherKey.referenceProject.nodes.find((item) => item.id === probe.node);
-      if (node) choices.push({ ...probe, label: `${node.label || node.id} · ${probe.port}` });
+      });
+    const ids = new Set(choices.map(probeId));
+    const retained = [
+      ...(useKey ? teacherKey.probes || [] : sequence?.probes || []),
+      ...(state.teacherForm.probes || []).map((id) => {
+        const [node, side, port] = id.split(':');
+        return { node, side, port };
+      }),
+    ];
+    for (const probe of retained) {
+      if (ids.has(probeId(probe))) continue;
+      choices.push({ ...probe, missing: !hasProbe(circuit, probe) });
+      ids.add(probeId(probe));
     }
-    return choices;
+    return describeProbeChoices(circuit, choices, language);
   }
 
   function mainMarkup(tab = mode) {

@@ -1,21 +1,25 @@
-import { KEYPAD_KEYS } from '../components/keypad.js';
+import { KEYPAD_KEYS, KEYPAD_DEFAULTS } from '../components/keypad.js';
 import { esc } from '../shared/ui.js';
 import { bindMomentaryButton } from './momentary-button.js';
 
+export function keypadModeCaption(node, lang) {
+  const parameters = { ...KEYPAD_DEFAULTS, ...node.params };
+  const hold = parameters.mode !== 'toggle';
+  return parameters.mode === 'pulse'
+    ? lang === 'ua'
+      ? `Імпульс ≥ ${parameters.pulseDuration} с симуляції`
+      : `Pulse ≥ ${parameters.pulseDuration} simulation s`
+    : lang === 'ua'
+      ? hold
+        ? 'Утримання · 1 лише під час натискання'
+        : 'Фіксація · натисніть ще раз для відпускання'
+      : hold
+        ? 'Hold · active while pressed'
+        : 'Latch · press again to release';
+}
+
 export function keypadNodeMarkup(node, lang, { compact = false } = {}) {
-  const hold = node.params.mode !== 'toggle';
-  const caption =
-    node.params.mode === 'pulse'
-      ? lang === 'ua'
-        ? `Імпульс ≥ ${node.params.pulseDuration ?? 0.04} с симуляції`
-        : `Pulse ≥ ${node.params.pulseDuration ?? 0.04} simulation s`
-      : lang === 'ua'
-        ? hold
-          ? 'Утримання · 1 лише під час натискання'
-          : 'Фіксація · натисніть ще раз для відпускання'
-        : hold
-          ? 'Hold · active while pressed'
-          : 'Latch · press again to release';
+  const caption = keypadModeCaption(node, lang);
   return `<div class="keypad-widget ${compact ? 'compact-keypad' : ''}" data-keypad="${esc(node.id)}" data-language="${lang}" role="group" aria-label="${esc(node.label || (lang === 'ua' ? 'Матрична клавіатура' : 'Matrix keypad'))}"><div class="keypad-grid">${KEYPAD_KEYS.map(({ index, label, row, column }) => `<button type="button" data-keypad-key="${index}" aria-label="${esc(label)} · R${row + 1} C${column + 1}" aria-pressed="false">${esc(label)}</button>`).join('')}</div><p class="keypad-mode" title="${esc(caption)}">${caption}</p><p data-keypad-notice class="keypad-notice" role="status" hidden></p></div>`;
 }
 

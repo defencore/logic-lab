@@ -78,7 +78,7 @@ export function createClassroom(adapter) {
       project: session.projectToSave(),
       example: adapter.getExample(),
     });
-  const controls = createActionControls({ adapter, state, session, L, guardIdle });
+  const controls = createActionControls({ adapter, state, session, L, guardIdle, operations });
   const dock = createDockController({ adapter, state, session, L, views, safe, open, controls });
   const { bindSequence } = createSequenceController({
     adapter,
@@ -303,6 +303,7 @@ export function createClassroom(adapter) {
     stopPlayback: session.stopPlayback,
     stopRecording: controls.stopRecording,
     recordingDelta: session.recordingDelta,
+    recordingStepAllowance: session.recordingStepAllowance,
     projectToSave: session.projectToSave,
     viewportToSave: session.viewportToSave,
     onSimulationStateChanged: session.simulationStateChanged,
