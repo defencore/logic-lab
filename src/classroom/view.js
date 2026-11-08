@@ -1,4 +1,5 @@
 import { previousVersionMessage } from './sequence-version.js';
+import { referenceReviewPosition } from './review-position.js';
 import { getDefinition } from '../components/catalog/index.js';
 import { SOURCE_PARAMETERS } from '../experiments/actions.js';
 import { esc, format } from '../shared/ui.js';
@@ -31,9 +32,16 @@ export function createClassroomView({ state, language, project, example }) {
   function button(id, label, disabled = false, primary = false) {
     return `<button type="button" id="${id}" class="${primary ? 'primary-btn' : 'soft-btn'}" ${disabled ? 'disabled' : ''}>${esc(label)}</button>`;
   }
+  function reviewTitle() {
+    if (state.reviewMode === 'reference')
+      return `${L('Еталон ключа', 'Key reference')}: ${state.preview.label} · ${L('лише читання', 'read only')}`;
+    if (state.reviewMode === 'check')
+      return `${L('Еталонна перевірка на схемі студента', 'Instructor reference check on the student circuit')}: ${state.reviewCheck.label} · ${L('Обрана розбіжність', 'Selected difference')}: ${referenceReviewPosition(state.reviewCheck.checkpoint.after, sequence.actions.length, language)} · ${L('лише читання', 'read only')}`;
+    return L('Перегляд роботи студента · лише читання', 'Student work preview · read only');
+  }
   function dockMarkup() {
     if (state.reviewMode)
-      return `<div class="action-session-title"><strong>${state.reviewMode === 'reference' ? `${L('Еталон ключа', 'Key reference')}: ${esc(state.preview.label)} · ${L('лише читання', 'read only')}` : L('Перегляд роботи студента · лише читання', 'Student work preview · read only')}</strong><span id="action-status" role="status"></span></div><div class="action-session-buttons">${button('classroom-open', L('Повернутися до перевірки', 'Return to review'))}${button('action-record', L('Запис недоступний під час перегляду', 'Recording unavailable during preview'), true)}${button('action-replay', L('Відтворити', 'Replay'), true)}${button('action-next', L('Наступна записана дія', 'Next recorded action'), !player || playbackRunning || busy)}${button('action-pause', playbackRunning ? L('Пауза сценарію', 'Pause replay') : L('Продовжити', 'Resume replay'), !player || player.done || busy)}${button('action-stop', L('Завершити перегляд і повернути свою схему', 'End preview and restore my circuit'))}<button id="action-hide" hidden disabled></button></div>`;
+      return `<div class="action-session-title"><strong title="${esc(reviewTitle())}">${esc(reviewTitle())}</strong><span id="action-status" role="status"></span></div><div class="action-session-buttons">${button('classroom-open', L('Повернутися до перевірки', 'Return to review'))}${button('action-record', L('Запис недоступний під час перегляду', 'Recording unavailable during preview'), true)}${button('action-replay', L('Відтворити', 'Replay'), true)}${button('action-next', L('Наступна записана дія', 'Next recorded action'), !player || playbackRunning || busy)}${button('action-pause', playbackRunning ? L('Пауза сценарію', 'Pause replay') : L('Продовжити', 'Resume replay'), !player || player.done || busy)}${button('action-stop', L('Завершити перегляд і повернути свою схему', 'End preview and restore my circuit'))}<button id="action-hide" hidden disabled></button></div>`;
     return `<div class="action-session-title"><button id="classroom-open" class="text-btn">${L('Сценарій дій', 'Action sequence')}</button><span id="action-status" role="status" aria-live="off"></span></div><div class="action-session-buttons">${button('action-record', recording ? L('Завершити запис', 'Finish recording') : L('Записати дії', 'Record actions'), !!player || !!state.preview || busy, recording)}${button('action-replay', replayLabel, !sequence || recording || !!player || busy)}${button('action-next', L('Наступна записана дія', 'Next recorded action'), !sequence || recording || playbackRunning || busy)}${button('action-pause', playbackRunning ? L('Пауза сценарію', 'Pause replay') : L('Продовжити', 'Resume replay'), !player || player.done || busy)}${button('action-stop', L('Зупинити', 'Stop'), !player)}<button id="action-hide" class="soft-btn" aria-label="${L('Сховати панель сценарію', 'Hide action panel')}" title="${L('Сховати панель сценарію', 'Hide action panel')}" ${recording || player || busy ? 'disabled' : ''}>×</button></div>`;
   }
 

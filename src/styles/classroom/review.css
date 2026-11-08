@@ -128,3 +128,15 @@
     width: 100%;
   }
 }
+.teacher-review-recovery {
+  margin-block: 14px;
+  padding: 12px 14px;
+  border: 1px solid #bf8a2d;
+  border-radius: 8px;
+  background: #fff8e8;
+  color: #69420d;
+}
+.main:has(.classroom-dock[data-review-mode='check']) .canvas-tip,
+.main:has(.classroom-dock[data-review-mode='check']) .contact-zoom-hint {
+  display: none;
+}

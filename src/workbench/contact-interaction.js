@@ -67,6 +67,19 @@ export function activateContactKey(event, activate, beforeActivate = () => {}) {
   return true;
 }
 
+function consumeSelectionKey(event) {
+  if (event.isComposing || event.altKey) return false;
+  const modified = event.ctrlKey || event.metaKey;
+  const duplicate = modified && event.key.toLowerCase() === 'd';
+  const edit =
+    !modified &&
+    ['Delete', 'Backspace', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key);
+  if (!duplicate && !edit) return false;
+  event.preventDefault();
+  event.stopPropagation();
+  return true;
+}
+
 /** Only keyboard navigation reveals contacts; pointer focus preserves the chosen canvas view. */
 export function createContactNavigation(state, applyView, root = document) {
   let keyboard = false;
@@ -91,12 +104,14 @@ export function createContactNavigation(state, applyView, root = document) {
         keyboard = false;
         activate(event);
       });
-      pin.addEventListener('keydown', (event) =>
+      pin.addEventListener('keydown', (event) => {
+        // A focused contact is independent of the canvas's previously selected components.
+        if (consumeSelectionKey(event)) return;
         activateContactKey(event, activate, () => {
           keyboard = true;
           revealContact(pin, state, applyView, root);
-        }),
-      );
+        });
+      });
       pin.addEventListener('focus', () => {
         if (keyboard) revealContact(pin, state, applyView, root);
       });

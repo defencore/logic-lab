@@ -1,5 +1,6 @@
 import { validateProject } from '../circuits/project.js';
 import { createRuntime, simulate } from '../simulation/index.js';
+import { run } from '../assessment/replay.js';
 import {
   SEQUENCE_LIMITS,
   createSequence,
@@ -24,6 +25,7 @@ export function createActionSession(
     player: null,
     preview: null,
     reviewMode: null,
+    reviewCheck: null,
     playbackRunning: false,
     simulationRunning: false,
     dockOpen: !!sequence,
@@ -93,7 +95,7 @@ export function createActionSession(
     // Validate before taking over the editor so an invalid import cannot change its state.
     const next = createPlayback(
       state.sequence,
-      state.reviewMode === 'replay' ? { project: reviewOriginal.project } : {},
+      ['replay', 'check'].includes(state.reviewMode) ? { project: reviewOriginal.project } : {},
     );
     preserveEditor();
     adapter.setRunning(false);
@@ -127,6 +129,7 @@ export function createActionSession(
     if (!state.player && !state.preview && !editable) return;
     state.preview = null;
     state.reviewMode = null;
+    state.reviewCheck = null;
     state.player = null;
     state.playbackRunning = false;
     adapter.setRunning(false);
@@ -150,6 +153,9 @@ export function createActionSession(
       throw new Error('Finish the current action session first.');
     // Validate and initialize completely before taking over the editor.
     const next = sequence ? createPlayback(sequence, { project }) : null;
+    installReview(project, next, { label, kind });
+  }
+  function installReview(project, next, { label = '', kind = '', paused = false } = {}) {
     const reviewed = next?.project || validateProject(structuredClone(project));
     const runtime = next?.runtime || createRuntime();
     if (!next) simulate(reviewed, runtime, 0);
@@ -165,13 +171,24 @@ export function createActionSession(
     state.preview = next ? null : { name: reviewed.name, label };
     state.player = next;
     if (next) {
-      state.sequence = validateSequence(sequence);
+      state.sequence = next.sequence;
       state.observations = next.observations;
-      state.playbackRunning = true;
-      target = 0;
+      state.playbackRunning = !paused;
+      target = next.runtime.time;
     }
     adapter.adoptPlayback(reviewed, runtime);
     changed();
+  }
+  async function reviewCheck(project, sequence, checkpoint, { label = '' } = {}) {
+    if (state.recording || state.player || state.preview)
+      throw new Error('Finish the current action session first.');
+    if (!checkpoint) throw new Error('Choose a reference-check checkpoint.');
+    // Seek in a detached player; failures cannot take over or overwrite the editor.
+    const next = await run(sequence, project, { checkpoint });
+    if (state.recording || state.player || state.preview)
+      throw new Error('Finish the current action session first.');
+    state.reviewCheck = { label, checkpoint: { ...checkpoint } };
+    installReview(project, next, { label, kind: 'check', paused: true });
   }
   function tick(dt) {
     let completed = false;
@@ -206,6 +223,7 @@ export function createActionSession(
     state,
     setSequence,
     reviewWork,
+    reviewCheck,
     startRecording,
     stopRecording,
     inputChanged,

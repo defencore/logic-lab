@@ -17,6 +17,7 @@
     opacity 0.2s,
     transform 0.2s;
   max-width: 80vw;
+  width: max-content;
   overflow-wrap: anywhere;
   box-shadow: 0 6px 25px #1d392326;
 }

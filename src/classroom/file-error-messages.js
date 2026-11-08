@@ -9,8 +9,37 @@ const labels = {
 };
 
 export function fileErrorMessage(error, { language = 'ua', mode = 'student' } = {}) {
-  if (!error?.code?.startsWith('file_')) return error?.message || String(error);
   const L = (ua, en) => (language === 'ua' ? ua : en);
+  if (error?.code?.startsWith('assessment_')) {
+    const messages = {
+      assessment_variant_missing: L(
+        'У цьому ключі немає виданого варіанта. Відкрийте актуальну копію ключа, збережену після формування варіантів. Завантажені роботи збережено; після відкриття ключа повторіть перевірку.',
+        'This key does not contain the issued variant. Open the current key copy saved after generating the variants. Your loaded work files are retained; retry the review after opening the key.',
+      ),
+      assessment_assignment_mismatch: L(
+        'Ця робота належить до іншого завдання. Відкрийте ключ саме цього завдання та повторіть перевірку.',
+        'This work belongs to another assignment. Open that assignment’s key and retry the review.',
+      ),
+      assessment_variant_mismatch: L(
+        'Дані варіанта у роботі не збігаються з ключем. Перевірте актуальну копію ключа та оригінальний файл роботи.',
+        'The work’s variant data does not match the key. Check the current key copy and the original work file.',
+      ),
+      assessment_student_mismatch: L(
+        'Ідентифікатор студента у роботі не збігається з тим, для кого видано варіант. Перевірте файл роботи та видане завдання.',
+        'The work’s student ID does not match the student assigned this variant. Check the work file and issued assignment.',
+      ),
+      assessment_no_review_files: L(
+        'Спочатку завантажте роботи для перевірки.',
+        'Load student work files before retrying the review.',
+      ),
+      assessment_review_in_progress: L(
+        'Дочекайтеся завершення поточної перевірки.',
+        'Wait for the current review to finish.',
+      ),
+    };
+    return messages[error.code] || error.message;
+  }
+  if (!error?.code?.startsWith('file_')) return error?.message || String(error);
   const route = (kind) =>
     ({
       assignment: L(

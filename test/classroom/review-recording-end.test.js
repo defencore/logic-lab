@@ -53,10 +53,13 @@ test('hidden-check mismatch labels use the reference action count even when the 
     actual: 1,
   }));
   const markup = createReviewView({ state, language: 'en' }).cardMarkup(0);
-  assert.match(markup, /after action 100/);
-  assert.match(markup, /End of recording/);
-  assert.doesNotMatch(markup, /after action 101/);
-  assert.match(createReviewView({ state, language: 'ua' }).cardMarkup(0), /Кінець запису/);
+  assert.match(markup, /After instructor reference action #100/);
+  assert.match(markup, /End of instructor reference check/);
+  assert.doesNotMatch(markup, /reference action #101/);
+  assert.match(
+    createReviewView({ state, language: 'ua' }).cardMarkup(0),
+    /Кінець еталонної перевірки/,
+  );
 });
 
 test('a timed recording with no actions still distinguishes its initial and final observations', () => {

@@ -13,6 +13,8 @@ import { validateAssignmentKey, starterFor, variantSequence } from './assignment
 import { validateSubmission } from './submissions.js';
 import { run } from './replay.js';
 import { yieldToMain } from './scheduling.js';
+import { AssessmentError } from './errors.js';
+export { AssessmentError } from './errors.js';
 
 export { graphFingerprint } from './topology.js';
 export {
@@ -36,17 +38,29 @@ export {
   serializeSubmission,
 } from './submissions.js';
 
-export async function gradeSubmission(source, teacherKey, { signal } = {}) {
-  abortIfNeeded(signal);
+/** The same strict reference contract drives grading and an instructor's checkpoint replay. */
+export function buildReferenceCheck(source, teacherKey) {
   const submission = validateSubmission(source),
     key = validateAssignmentKey(teacherKey);
+  const details = {
+    keyId: key.id,
+    taskId: submission.assignment.taskId,
+    variantId: submission.assignment.id,
+  };
   if (submission.assignment.taskId !== key.id)
-    fail('The submission belongs to a different assignment.');
+    throw new AssessmentError('assessment_assignment_mismatch', details);
   const variant = key.issued.find((entry) => entry.id === submission.assignment.id);
-  if (!variant || stable(variant) !== stable(submission.assignment.variant))
-    fail('The submitted variant was not issued by this teacher key.');
+  if (!variant) throw new AssessmentError('assessment_variant_missing', details);
+  if (stable(variant) !== stable(submission.assignment.variant))
+    throw new AssessmentError('assessment_variant_mismatch', details);
   if (variant.studentId && variant.studentId !== submission.student.id)
-    fail('This variant was issued to a different student.');
+    throw new AssessmentError('assessment_student_mismatch', details);
+  return { submission, key, variant, sequence: variantSequence(key, variant) };
+}
+
+export async function gradeSubmission(source, teacherKey, { signal } = {}) {
+  abortIfNeeded(signal);
+  const { submission, key, variant, sequence: hidden } = buildReferenceCheck(source, teacherKey);
   const integrity = (await digest(payload(submission))) === submission.integrity.digest;
   abortIfNeeded(signal);
   const structureMatches =
@@ -56,7 +70,6 @@ export async function gradeSubmission(source, teacherKey, { signal } = {}) {
     submittedReplay.observations,
     submission.observations,
   );
-  const hidden = variantSequence(key, variant);
   const expected = await run(hidden, key.referenceProject, { signal });
   const actual = await run(hidden, submission.project, { signal });
   const mismatches = [];

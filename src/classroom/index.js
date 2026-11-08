@@ -14,6 +14,7 @@ import { createDockController } from './dock-controller.js';
 import { createSequenceController } from './sequence-controller.js';
 import { createStudentWorkspace } from './student-workspace.js';
 import { createTeacherController } from './teacher-controller.js';
+import { createReviewWorkController } from './review-work-controller.js';
 
 function browserStorage() {
   try {
@@ -117,6 +118,13 @@ export function createClassroom(adapter) {
     updateDock,
     persistDraft,
   });
+  const openReviewedWork = createReviewWorkController({
+    adapter,
+    session,
+    operations,
+    guardEditableSession,
+    L,
+  });
   const { bindTeacher } = createTeacherController({
     adapter: {
       ...adapter,
@@ -178,18 +186,6 @@ export function createClassroom(adapter) {
       throw new Error(
         L('Завершіть запис або зупиніть відтворення.', 'Finish recording or stop replay first.'),
       );
-  }
-  function openReviewedWork(submission, { replay = false } = {}) {
-    guardEditableSession();
-    adapter.closeModal();
-    session.reviewWork(submission.project, replay ? submission.sequence : null);
-    adapter.fitProject?.();
-    adapter.notify(
-      L(
-        'Тимчасовий перегляд роботи. «Зупинити» поверне вашу схему й сценарій.',
-        'Temporary work review. Stop restores your circuit and sequence.',
-      ),
-    );
   }
   function refreshVisible() {
     if ($('.classroom-modal')) open(activeTab);

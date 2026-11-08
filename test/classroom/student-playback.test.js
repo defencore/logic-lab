@@ -128,7 +128,7 @@ test('generic sequence dock remains available without an attempt and is replaced
     dockOpen: true,
   };
   const elements = new Map();
-  const root = { hidden: false, innerHTML: '', classList: { toggle() {} } };
+  const root = { hidden: false, innerHTML: '', dataset: {}, classList: { toggle() {} } };
   elements.set('#classroom-dock', root);
   for (const id of [
     'classroom-open',
@@ -164,6 +164,7 @@ test('generic sequence dock remains available without an attempt and is replaced
     state.preview = { name: 'Reviewed' };
     dock.updateDock();
     assert.equal(root.hidden, false);
+    assert.equal(root.dataset.reviewMode, 'circuit');
   } finally {
     globalThis.document = previous;
   }

@@ -28,7 +28,7 @@ export function createTeacherController({
       try {
         return await action(...args);
       } catch (error) {
-        if (error.code?.startsWith('file_')) throw error;
+        if (error.code?.startsWith('file_') || error.code?.startsWith('assessment_')) throw error;
         const messages = [
           [
             /reference circuit changed after recording/i,
@@ -123,6 +123,19 @@ export function createTeacherController({
   }
   function bindReview() {
     bindReviewControls({ adapter, state, guardEditableSession, protect, views });
+  }
+  function reportReview(outcome) {
+    adapter.notify(
+      outcome.cancelled
+        ? L(
+            'Перевірку зупинено. Завершені результати збережено; порівняння схожості не завершено.',
+            'Checking stopped. Completed results are retained; similarity comparison is incomplete.',
+          )
+        : L(
+            `Перевірено робіт: ${state.batch.length}. Помилок файлів: ${state.batchErrors.length}.`,
+            `Reviewed ${state.batch.length} submissions; ${state.batchErrors.length} file errors.`,
+          ),
+    );
   }
   function bindTeacher() {
     if ($('#teacher-review-cancel')) $('#teacher-review-cancel').onclick = teacher.cancelReview;
@@ -227,21 +240,17 @@ export function createTeacherController({
     bindFile(
       '#teacher-review',
       async (files) => {
-        const outcome = await teacher.reviewFiles(files);
-        adapter.notify(
-          outcome.cancelled
-            ? L(
-                'Перевірку зупинено. Завершені результати збережено; порівняння схожості не завершено.',
-                'Checking stopped. Completed results are retained; similarity comparison is incomplete.',
-              )
-            : L(
-                `Перевірено робіт: ${state.batch.length}. Помилок файлів: ${state.batchErrors.length}.`,
-                `Reviewed ${state.batch.length} submissions; ${state.batchErrors.length} file errors.`,
-              ),
-        );
+        reportReview(await teacher.reviewFiles(files));
       },
       true,
     );
+    if ($('#teacher-review-current-key'))
+      $('#teacher-review-current-key').onclick = () => $('#teacher-key-import').click();
+    if ($('#teacher-review-retry'))
+      $('#teacher-review-retry').onclick = protect(async () => {
+        guardEditableSession();
+        reportReview(await operations.run(() => teacher.retryReview()));
+      });
     $('#teacher-report').onclick = protect(() =>
       downloadFile(
         JSON.stringify(teacher.report(), null, 2),

@@ -2,6 +2,7 @@ import { $ } from '../shared/ui.js';
 import { createReviewView } from './review-view.js';
 import { setReviewPage, setReviewSection } from './review-detail-state.js';
 import { setReviewPairPage } from './review-similarities.js';
+import { referenceReviewReason, referenceCheckpointReason } from './review-reference.js';
 
 const toggleHandlers = new WeakMap();
 
@@ -40,6 +41,36 @@ export function bindReviewControls({ adapter, state, guardEditableSession, prote
           page.dataset.reviewPage,
           Number(page.dataset.reviewTarget),
         );
+      return;
+    }
+    const check = event.target.closest('[data-review-check]');
+    if (check) {
+      if (check.disabled) return;
+      guardEditableSession();
+      const index = Number(check.dataset.reviewCheck);
+      const mismatchIndex = Number(check.dataset.reviewMismatch);
+      const item = Number.isInteger(index) && index >= 0 ? state.batch[index] : null;
+      const mismatch =
+        Number.isInteger(mismatchIndex) && mismatchIndex >= 0
+          ? item?.result.mismatches?.[mismatchIndex]
+          : null;
+      const language = adapter.getLanguage();
+      if (!mismatch)
+        throw new Error(
+          language === 'ua'
+            ? 'Цієї розбіжності більше немає. Повторно перевірте роботу.'
+            : 'This difference is no longer available. Check the submission again.',
+        );
+      const checkpoint = { after: mismatch.after, at: mismatch.at };
+      const reason =
+        referenceReviewReason(state.teacherKey, item.submission, language) ||
+        referenceCheckpointReason(state.teacherKey?.sequence, checkpoint, language);
+      if (reason) throw new Error(reason);
+      await adapter.openReviewedWork(item.submission, {
+        replay: true,
+        referenceKey: state.teacherKey,
+        checkpoint,
+      });
       return;
     }
     const open = event.target.closest('[data-review-open],[data-review-replay]');

@@ -61,7 +61,9 @@ test('grading rejects unissued or modified variants and submissions must be reco
   const { submission, key, assignment, project, sequence } = await submissionFixture();
   const altered = structuredClone(submission);
   altered.assignment.variant.seed = 'tampered';
-  await assert.rejects(() => gradeSubmission(altered, key), /not issued/);
+  await assert.rejects(() => gradeSubmission(altered, key), {
+    code: 'assessment_variant_mismatch',
+  });
   const bad = structuredClone(project);
   bad.wires.pop();
   await assert.rejects(

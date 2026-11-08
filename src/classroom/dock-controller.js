@@ -16,6 +16,7 @@ export function createDockController({ adapter, state, session, L, views, safe, 
   function updateDock(force = false) {
     const root = $('#classroom-dock');
     if (!root) return;
+    root.dataset.reviewMode = state.reviewMode || '';
     const studentWorkflowActive = studentPlaybackActive(state);
     root.hidden =
       studentWorkflowActive ||

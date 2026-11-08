@@ -76,13 +76,12 @@ export function reviewTarget(dataset = {}, { value = '', id = '', disabled = fal
     matches: (selector) =>
       selector === '[data-review-page-input]' && dataset.reviewPageInput !== undefined,
     closest(selector) {
-      return selector === '[data-review-page]'
-        ? dataset.reviewPage !== undefined
-          ? this
-          : null
-        : dataset.reviewOpen !== undefined || dataset.reviewReplay !== undefined
-          ? this
-          : null;
+      if (selector === '[data-review-page]') return dataset.reviewPage !== undefined ? this : null;
+      if (selector === '[data-review-check]')
+        return dataset.reviewCheck !== undefined ? this : null;
+      if (selector === '[data-review-open],[data-review-replay]')
+        return dataset.reviewOpen !== undefined || dataset.reviewReplay !== undefined ? this : null;
+      return null;
     },
   };
 }

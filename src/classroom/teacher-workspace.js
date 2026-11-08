@@ -12,6 +12,8 @@ import { parseClassroomImport } from './import-file.js';
 import { sanitizeTeacherForm } from './storage.js';
 import { sameCircuitStructure } from '../assessment/topology.js';
 import { yieldToMain } from '../assessment/scheduling.js';
+import { AssessmentError } from '../assessment/errors.js';
+import { createReviewKeyRecovery } from './review-key-recovery.js';
 
 import { inspectReference } from './reference-inspection.js';
 import { probeKey, teacherStatus, sequenceSignature, keySignature } from './teacher-state.js';
@@ -28,6 +30,7 @@ export function createTeacherWorkspace(
   { onSave = () => {}, onProgress = () => {}, formatError = (error) => error.message } = {},
 ) {
   let reviewController = null;
+  const keyRecovery = createReviewKeyRecovery(state);
   function setKey(key, warnings, project, saved = false) {
     if (state.teacherKey && keySignature(state.teacherKey) !== keySignature(key)) {
       state.teacherArchives ||= [];
@@ -51,6 +54,7 @@ export function createTeacherWorkspace(
     state.reviewDetails = new Map();
     state.reviewCancelled = false;
     state.reviewComparisonComplete = false;
+    keyRecovery.keyChanged();
     state.teacherForm = sanitizeTeacherForm({
       title: key.title,
       instructions: key.instructions,
@@ -133,7 +137,9 @@ export function createTeacherWorkspace(
   }
   async function reviewFiles(files) {
     if (files.length > 40) throw new Error('Review up to 40 files at a time.');
+    if (reviewController) throw new AssessmentError('assessment_review_in_progress');
     const key = state.teacherKey;
+    keyRecovery.begin(files);
     state.batch = [];
     state.pairs = [];
     state.batchErrors = [];
@@ -158,6 +164,7 @@ export function createTeacherWorkspace(
           });
         } catch (error) {
           if (signal.aborted) throw error;
+          if (error.code === 'assessment_variant_missing') keyRecovery.missingVariant();
           state.batchErrors.push(`${file.name}: ${formatError(error)}`);
         }
         onProgress();
@@ -238,6 +245,7 @@ export function createTeacherWorkspace(
       onSave();
     },
     reviewFiles,
+    retryReview: () => keyRecovery.retry(reviewFiles),
     report,
     cancelReview: () => reviewController?.abort(),
   };
