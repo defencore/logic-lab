@@ -60,6 +60,22 @@ export function createClassroomView({ state, language, project, example }) {
     return L('Перегляд роботи студента · лише читання', 'Student work preview · read only');
   }
   function dockMarkup() {
+    if (state.reviewMode === 'demo') {
+      const title = L('Демонстрація прикладу · 1×', 'Example demonstration · 1×');
+      return `<div class="action-session-title"><strong>${title}</strong><span id="action-status" role="status" aria-live="off"></span></div>
+        <div class="action-session-buttons">
+        ${
+          completed
+            ? button('action-replay', L('Повторити демо', 'Replay demo'))
+            : button(
+                'action-pause',
+                playbackRunning
+                  ? L('Пауза демо', 'Pause demo')
+                  : L('Продовжити демо', 'Resume demo'),
+              )
+        }
+        ${button('action-stop', L('Повернутися до своєї схеми', 'Return to my circuit'))}</div>`;
+    }
     if (state.reviewMode) {
       return `<div class="action-session-title"><strong title="${esc(reviewTitle())}">${esc(reviewTitle())}</strong><span id="action-status" role="status"></span></div><div class="action-session-buttons">${button('classroom-open', L('Повернутися до перевірки', 'Return to review'))}${button('action-record', L('Запис недоступний під час перегляду', 'Recording unavailable during preview'), true)}${button('action-replay', reviewRestartLabel || L('Відтворити', 'Replay'), !reviewedRecording || !completed || recording || playbackRunning || busy)}${button('action-next', L('Наступна записана дія', 'Next recorded action'), !player || completed || playbackRunning || busy)}${button('action-pause', playbackRunning ? L('Пауза сценарію', 'Pause replay') : L('Продовжити', 'Resume replay'), !player || player.done || busy)}${button('action-stop', L('Завершити перегляд і повернути свою схему', 'End preview and restore my circuit'))}<button id="action-hide" hidden disabled></button></div>`;
     }

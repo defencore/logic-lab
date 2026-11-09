@@ -16,8 +16,8 @@
     {
       "id": "rs",
       "type": "switch",
-      "x": 80,
-      "y": 580,
+      "x": 400,
+      "y": 200,
       "label": "RS · command / data",
       "enabled": true,
       "params": {
@@ -27,8 +27,8 @@
     {
       "id": "enable",
       "type": "button",
-      "x": 300,
-      "y": 580,
+      "x": 400,
+      "y": 320,
       "label": "E · press and release",
       "enabled": true,
       "params": {
@@ -48,7 +48,7 @@
       "id": "lcd",
       "type": "lcd1602",
       "x": 600,
-      "y": 220,
+      "y": 240,
       "label": "LCD 1602",
       "enabled": true,
       "params": {}
@@ -161,7 +161,11 @@
         "node": "lcd",
         "port": "rs"
       },
-      "width": 1
+      "width": 1,
+      "points": [
+        { "x": 584, "y": 258 },
+        { "x": 584, "y": 298 }
+      ]
     },
     {
       "id": "write",
@@ -185,7 +189,11 @@
         "node": "lcd",
         "port": "e"
       },
-      "width": 1
+      "width": 1,
+      "points": [
+        { "x": 584, "y": 378 },
+        { "x": 584, "y": 348 }
+      ]
     }
   ],
   "exampleId": "lcd1602-parallel"

@@ -80,7 +80,7 @@ export function createClassroom(adapter) {
     });
   const controls = createActionControls({ adapter, state, session, L, guardIdle, operations });
   const dock = createDockController({ adapter, state, session, L, views, safe, open, controls });
-  const { bindSequence } = createSequenceController({
+  const { bindSequence, playExample } = createSequenceController({
     adapter,
     state,
     session,
@@ -286,6 +286,8 @@ export function createClassroom(adapter) {
     recovery: store.recovery,
     acknowledgeRecovery: store.acknowledgeRecovery,
     open,
+    playExample,
+    isDemonstrating: () => state.reviewMode === 'demo',
     tick: controls.tick,
     inputChanged: controls.inputChanged,
     allowEdit: () => student.isInstalling() || reference.isInstalling() || controls.allowEdit(),

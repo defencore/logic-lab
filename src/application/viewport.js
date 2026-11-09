@@ -30,8 +30,9 @@ export function createViewport(context) {
     $('#zoom-value').textContent = `${Math.round(state.view.zoom * 100)}%`;
     services.wiring?.renderEditor();
   }
-  function fit({ readable = false } = {}) {
-    const nodes = state.project.nodes;
+  function fit({ readable = false, focusNode } = {}) {
+    const target = state.project.nodes.find((node) => node.id === focusNode);
+    const nodes = target ? [target] : state.project.nodes;
     if (!nodes.length) {
       state.view = { x: 80, y: 80, zoom: 1 };
       actions.applyView();
@@ -42,7 +43,7 @@ export function createViewport(context) {
       minY = Math.min(...nodes.map((n) => n.y)),
       maxX = Math.max(...nodes.map((n) => n.x + dimensions(n).w)),
       maxY = Math.max(...nodes.map((n) => n.y + dimensions(n).h));
-    for (const wire of state.project.wires) {
+    for (const wire of target ? [] : state.project.wires) {
       for (const point of wire.points || []) {
         minX = Math.min(minX, point.x);
         minY = Math.min(minY, point.y);

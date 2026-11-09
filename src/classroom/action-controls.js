@@ -70,7 +70,7 @@ export function createActionControls({ adapter, state, session, L, guardIdle, op
   function tick(dt) {
     try {
       const result = session.tick(dt);
-      if (result.completed)
+      if (result.completed && state.reviewMode !== 'demo')
         adapter.notify(
           L(
             'Сценарій відтворено. Натисніть «Зупинити», щоб повернутися до своєї схеми.',

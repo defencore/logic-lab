@@ -24,6 +24,7 @@ export function createLearningController(
     setWorkspaceView,
     primarySignal,
     addObservation,
+    playExample,
   },
 ) {
   const reflection = createLessonReflection(workbench, { showModal, addObservation, renderLesson });
@@ -45,6 +46,10 @@ export function createLearningController(
       $$('[data-example]').forEach(
         (el) => (el.onclick = () => confirmReplace(() => createExample(el.dataset.example))),
       );
+      $$('[data-example-demo]').forEach((el) => {
+        el.onclick = () =>
+          playExample(EXAMPLES.find((example) => example.id === el.dataset.exampleDemo));
+      });
       $$('[data-lab-guide]').forEach(
         (el) => (el.onclick = () => showLaboratory(el.dataset.labGuide)),
       );
@@ -132,6 +137,11 @@ export function createLearningController(
       current = currentLesson();
     workbench.highlighted.clear();
     $('#lesson-toggle').hidden = !current;
+    const demo = $('#example-demo');
+    const demoLabel = current?.example.demoLabel?.[workbench.lang];
+    demo.hidden = !demoLabel;
+    demo.textContent = demoLabel || '';
+    demo.onclick = demoLabel ? () => playExample(current.example) : null;
     if (!current) {
       panel.hidden = true;
       return;

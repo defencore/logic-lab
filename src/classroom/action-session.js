@@ -190,6 +190,7 @@ export function createActionSession(
     if (reviewOriginal) {
       state.sequence = reviewOriginal.sequence;
       state.observations = reviewOriginal.observations;
+      if (reviewOriginal.dockOpen !== undefined) state.dockOpen = reviewOriginal.dockOpen;
       reviewOriginal = null;
     }
     adapter.refreshPlayback();
@@ -211,6 +212,7 @@ export function createActionSession(
       sequence: state.sequence,
       observations: state.observations,
       project: structuredClone(project),
+      ...(kind === 'demo' && { dockOpen: state.dockOpen }),
     };
     adapter.setRunning(false);
     state.dockOpen = true;

@@ -82,6 +82,7 @@ export function composeWorkbench(context) {
     setWorkspaceView: actions.setWorkspaceView,
     primarySignal: (node) => services.monitor.primarySignal(node),
     addObservation: (text) => services.classroom.addObservation(text),
+    playExample: (example) => services.classroom.playExample(example),
   });
   services.monitor = createSignalMonitor(state, {
     t,
@@ -198,6 +199,11 @@ export function composeWorkbench(context) {
       actions.applyView();
     },
     fitProject: () => actions.fit(),
+    showDemoCanvas: (focusNode) => {
+      actions.setWorkspaceView('canvas');
+      actions.fit({ focusNode: state.compactLayout.matches ? focusNode : undefined });
+      $('#viewport').focus({ preventScroll: true });
+    },
     getLanguage: () => state.lang,
     isRunning: () => state.running,
     getExample: () => EXAMPLES.find((example) => example.id === state.project.exampleId),

@@ -6,6 +6,10 @@ export function syncPlaybackControls(state, language) {
   const player = state.player,
     preview = state.preview;
   const active = !!player || !!preview;
+  const demo = $('#example-demo');
+  if (demo) demo.disabled = active || state.recording || state.busy;
+  const speed = $('.global-speed');
+  if (speed) speed.hidden = state.reviewMode === 'demo';
   const L = (ua, en) => (language === 'ua' ? ua : en);
   for (const selector of ['#step', '#reset', '#motion-reset']) {
     const element = $(selector);

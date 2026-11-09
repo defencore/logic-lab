@@ -37,18 +37,23 @@ export function createDockController({ adapter, state, session, L, views, safe, 
     if (key !== lastDockState || force) {
       lastDockState = key;
       root.innerHTML = views().dockMarkup();
-      $('#classroom-open').onclick = () => open(state.reviewMode ? 'teacher' : 'sequence');
-      $('#action-record').onclick = safe(() =>
-        state.recording ? stopRecording() : startRecording(),
+      const bind = (id, action) => {
+        const element = $(`#${id}`);
+        if (element) element.onclick = action;
+      };
+      bind('classroom-open', () => open(state.reviewMode ? 'teacher' : 'sequence'));
+      bind(
+        'action-record',
+        safe(() => (state.recording ? stopRecording() : startRecording())),
       );
-      $('#action-replay').onclick = safe(replay);
-      $('#action-next').onclick = safe(nextAction);
-      $('#action-pause').onclick = session.pausePlayback;
-      $('#action-stop').onclick = session.stopPlayback;
-      $('#action-hide').onclick = () => {
+      bind('action-replay', safe(replay));
+      bind('action-next', safe(nextAction));
+      bind('action-pause', session.pausePlayback);
+      bind('action-stop', session.stopPlayback);
+      bind('action-hide', () => {
         state.dockOpen = false;
         updateDock();
-      };
+      });
     }
     const status = state.busy
       ? L('Обчислення…', 'Processing…')

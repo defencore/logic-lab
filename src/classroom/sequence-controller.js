@@ -9,6 +9,15 @@ import {
 } from '../experiments/actions.js';
 import { cleanName, downloadFile, readClassroomFile } from './files.js';
 
+function exampleSequence(example) {
+  const sequence = createSequence(example.create(), { probes: example.actionProbes });
+  for (const action of example.actionPreset) appendAction(sequence, action);
+  return finishSequence(
+    sequence,
+    Math.max(0, ...example.actionPreset.map((action) => action.at)) + 0.1,
+  );
+}
+
 export function createSequenceController({
   adapter,
   state,
@@ -43,16 +52,16 @@ export function createSequenceController({
     if ($('#class-preset'))
       $('#class-preset').onclick = safe(() => {
         guardEditableSession();
-        const example = adapter.getExample();
-        const sequence = createSequence(example.create(), { probes: example.actionProbes });
-        for (const action of example.actionPreset) appendAction(sequence, action);
-        finishSequence(
-          sequence,
-          Math.max(0, ...example.actionPreset.map((action) => action.at)) + 0.1,
-        );
-        session.setSequence(sequence);
+        session.setSequence(exampleSequence(adapter.getExample()));
         refreshVisible();
       });
   }
-  return { bindSequence };
+  const playExample = safe((example) => {
+    guardEditableSession();
+    const sequence = exampleSequence(example);
+    session.reviewWork(sequence.initialProject, sequence, { kind: 'demo' });
+    adapter.closeModal();
+    adapter.showDemoCanvas(example.demoFocus);
+  });
+  return { bindSequence, playExample };
 }

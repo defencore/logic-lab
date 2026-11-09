@@ -4,7 +4,9 @@
 
 ## Starting circuit
 
-Open **LCD 1602: write a message** in **Learning examples**, or import [circuit.json](./circuit.json). [lesson.js](./lesson.js) supplies the bilingual worksheet and a runnable action sequence. The byte source connects D0…D7 separately. RS is a toggle, E is a momentary button and R/W is grounded.
+Open **LCD 1602: write a message** in **Learning examples**, or import [circuit.json](./circuit.json). Click **Run LCD demo** on the catalog card or above the circuit. The LCD starts with its display off, then the demonstration initializes it and writes `LOGIC LAB` and `PARALLEL LCD`. Wait for both lines, then click **Return to my circuit**. [lesson.js](./lesson.js) supplies the bilingual worksheet and runnable sequence.
+
+The byte source connects D0…D7 separately. RS is a toggle, E is a momentary button and R/W is grounded.
 
 ## Objectives
 
@@ -13,7 +15,7 @@ Open **LCD 1602: write a message** in **Learning examples**, or import [circuit.
 
 ## Procedure
 
-Set RS and the source's decimal **Value** while E=0. Press and release E once to send that byte. The release is the falling edge, which accepts the transfer.
+Choose **Reset simulation** to clear the LCD and restore its initial 8-bit mode with the display off. Set RS=0 and leave E released. Select **BYTE**, then edit its decimal value in **Properties → Parameters → Value**. Set the value while E=0, then return to the circuit and press and release E once to send that byte. The release is the falling edge, which accepts the transfer.
 
 | RS  | Byte in hex | Decimal | Action                                     |
 | --- | ----------- | ------- | ------------------------------------------ |
@@ -28,7 +30,7 @@ Set RS and the source's decimal **Value** while E=0. Press and release E once to
 
 The table starts from a freshly reset simulator. After writing, send `08` then `0C` with RS=0. Observe the text disappear and return. Send `02` to return home and `01` to clear. Repeat with different messages.
 
-To watch the supplied demonstration, load **Example action sequence** in **Assignments & submission → Action sequence** and replay it. The probes observe RS, R/W, E and the assembled byte. Watch the characters on the LCD to verify the message itself.
+To inspect the supplied demonstration one action at a time, load **Example action sequence** in **Assignments & submission → Action sequence** and choose **Next recorded action**. The probes observe RS, R/W, E and the assembled byte. Watch the characters on the LCD to verify the message itself.
 
 ### Four-bit extension
 
@@ -52,7 +54,9 @@ Manual transfers show `HI` and `OK`. The replay writes `LOGIC LAB` and `PARALLEL
 
 ## Українською
 
-Відкрийте **«LCD 1602: запис повідомлення»** або імпортуйте схему. Земля тримає R/W=0, перемикач RS вибирає команду чи символ, а кнопка E приймає байт при відпусканні. Перед кожним імпульсом задайте значення байта при E=0.
+Відкрийте **«LCD 1602: запис повідомлення»** або імпортуйте схему. В інструкції натисніть **«Запустити демо LCD»**. Готовий сценарій увімкне екран і запише `LOGIC LAB` та `PARALLEL LCD`. Дочекайтеся обох рядків і натисніть **«Повернутися до своєї схеми»** на панелі сценарію, щоб повернутися до редагування.
+
+Для ручного запису натисніть **«Скинути симуляцію»**, задайте RS=0 і залиште E відпущеною. Оберіть **BYTE** та відкрийте **«Властивості → Параметри → Значення»**. Вводьте число при E=0. Після кожного числа поверніться до схеми, натисніть і відпустіть E. Земля тримає R/W=0, а RS вибирає команду чи символ.
 
 1. Із RS=0 послідовно надішліть десяткові 56, 8, 1, 6, 12. Це налаштує 8 біт і два рядки, очистить пам’ять та увімкне екран.
 2. Із RS=1 надішліть 72 і 73, щоб записати `HI`. Для початку другого рядка поверніть RS=0 та надішліть 192 (`0xC0`), потім із RS=1 надішліть 79 і 75 для `OK`.

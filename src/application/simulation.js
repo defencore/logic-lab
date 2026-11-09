@@ -58,7 +58,8 @@ export function createSimulation(context) {
     services.hotkeys?.reconcile();
     services.buttons?.reconcile();
     services.keypads?.reconcile();
-    const elapsed = frameSimulationDelta(now, state.lastFrame, state.simulationRate);
+    const rate = services.classroom?.isDemonstrating?.() ? 1 : state.simulationRate;
+    const elapsed = frameSimulationDelta(now, state.lastFrame, rate);
     services.audio?.sync();
     if (services.classroom?.isPlaying()) {
       services.simulationRunner.discard();
