@@ -32,7 +32,7 @@ export function readMemoryBits(node, inputs, incoming, state, parameters) {
         ...new Set(
           choices(control(node, 'cs', inputs, incoming, 1)).flatMap((cs) =>
             choices(control(node, 'oe', inputs, incoming, 1)).flatMap((oe) =>
-              choices(node.type === 'ram' ? control(node, 'we', inputs, incoming) : 0).map((we) =>
+              choices(node.type === 'rom' ? 0 : control(node, 'we', inputs, incoming)).map((we) =>
                 Number(cs === 1 && oe === 1 && we === 0),
               ),
             ),
@@ -54,18 +54,18 @@ export function readMemoryBits(node, inputs, incoming, state, parameters) {
 
 /** A possible write merges old/new bits in every address the uncertain pins can select. */
 export function writeMemory(node, state, inputs, incoming, edges, time) {
-  const ram = node.type === 'ram';
+  const registerFile = node.type === 'register_file';
   const permissions = [
     ...new Set(
       edges.flatMap((edge) =>
-        choices(ram ? control(node, 'cs', inputs, incoming, 1) : 1).flatMap((cs) =>
+        choices(registerFile ? 1 : control(node, 'cs', inputs, incoming, 1)).flatMap((cs) =>
           choices(control(node, 'we', inputs, incoming)).map((we) => Number(edge && cs && we)),
         ),
       ),
     ),
   ];
   if (!permissions.includes(1)) return state;
-  const locations = addresses(inputs, ram ? 'address' : 'write', ram ? 4 : 3);
+  const locations = addresses(inputs, registerFile ? 'write' : 'address', registerFile ? 3 : 4);
   const data = bitInputs(inputs, 'data');
   const next = { ...state, memory: [...state.memory], memoryBits: [...state.memoryBits] };
   const definite = permissions.length === 1 && locations.length === 1;

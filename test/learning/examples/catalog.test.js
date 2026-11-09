@@ -8,7 +8,7 @@ import { createRuntime, simulate } from '../../../src/simulation/index.js';
 import { dimensions } from '../../../src/circuits/geometry/index.js';
 
 test('all learning examples have valid fresh circuits and complete bilingual lessons', () => {
-  assert.equal(EXAMPLES.length, 43);
+  assert.equal(EXAMPLES.length, 45);
   assert.equal(new Set(EXAMPLES.map((example) => example.id)).size, EXAMPLES.length);
   for (const example of EXAMPLES) {
     assert.ok(

@@ -1,0 +1,192 @@
+{
+  "version": 1,
+  "name": "LCD 1602 · Parallel write",
+  "nodes": [
+    {
+      "id": "byte",
+      "type": "bus_input",
+      "x": 80,
+      "y": 80,
+      "label": "BYTE · D0…D7",
+      "enabled": true,
+      "params": {
+        "value": 56
+      }
+    },
+    {
+      "id": "rs",
+      "type": "switch",
+      "x": 80,
+      "y": 580,
+      "label": "RS · command / data",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "enable",
+      "type": "button",
+      "x": 300,
+      "y": 580,
+      "label": "E · press and release",
+      "enabled": true,
+      "params": {
+        "value": 0
+      }
+    },
+    {
+      "id": "ground",
+      "type": "gnd",
+      "x": 380,
+      "y": 80,
+      "label": "R/W · logic 0",
+      "enabled": true,
+      "params": {}
+    },
+    {
+      "id": "lcd",
+      "type": "lcd1602",
+      "x": 600,
+      "y": 220,
+      "label": "LCD 1602",
+      "enabled": true,
+      "params": {}
+    }
+  ],
+  "wires": [
+    {
+      "id": "d0",
+      "from": {
+        "node": "byte",
+        "port": "out0"
+      },
+      "to": {
+        "node": "lcd",
+        "port": "d0"
+      },
+      "width": 1
+    },
+    {
+      "id": "d1",
+      "from": {
+        "node": "byte",
+        "port": "out1"
+      },
+      "to": {
+        "node": "lcd",
+        "port": "d1"
+      },
+      "width": 1
+    },
+    {
+      "id": "d2",
+      "from": {
+        "node": "byte",
+        "port": "out2"
+      },
+      "to": {
+        "node": "lcd",
+        "port": "d2"
+      },
+      "width": 1
+    },
+    {
+      "id": "d3",
+      "from": {
+        "node": "byte",
+        "port": "out3"
+      },
+      "to": {
+        "node": "lcd",
+        "port": "d3"
+      },
+      "width": 1
+    },
+    {
+      "id": "d4",
+      "from": {
+        "node": "byte",
+        "port": "out4"
+      },
+      "to": {
+        "node": "lcd",
+        "port": "d4"
+      },
+      "width": 1
+    },
+    {
+      "id": "d5",
+      "from": {
+        "node": "byte",
+        "port": "out5"
+      },
+      "to": {
+        "node": "lcd",
+        "port": "d5"
+      },
+      "width": 1
+    },
+    {
+      "id": "d6",
+      "from": {
+        "node": "byte",
+        "port": "out6"
+      },
+      "to": {
+        "node": "lcd",
+        "port": "d6"
+      },
+      "width": 1
+    },
+    {
+      "id": "d7",
+      "from": {
+        "node": "byte",
+        "port": "out7"
+      },
+      "to": {
+        "node": "lcd",
+        "port": "d7"
+      },
+      "width": 1
+    },
+    {
+      "id": "select",
+      "from": {
+        "node": "rs",
+        "port": "out"
+      },
+      "to": {
+        "node": "lcd",
+        "port": "rs"
+      },
+      "width": 1
+    },
+    {
+      "id": "write",
+      "from": {
+        "node": "ground",
+        "port": "out"
+      },
+      "to": {
+        "node": "lcd",
+        "port": "rw"
+      },
+      "width": 1
+    },
+    {
+      "id": "enable",
+      "from": {
+        "node": "enable",
+        "port": "out"
+      },
+      "to": {
+        "node": "lcd",
+        "port": "e"
+      },
+      "width": 1
+    }
+  ],
+  "exampleId": "lcd1602-parallel"
+}

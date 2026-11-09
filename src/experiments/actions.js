@@ -210,7 +210,7 @@ export function createPlayback(source, { project: candidate } = {}) {
   playback.observations.push(captureObservation(sequence, runtime, -1));
   return playback;
 }
-function runPlayback(playback, targetTime, maxSteps, oneAction) {
+function runPlayback(playback, targetTime, maxSteps, oneAction, onStep) {
   const target = Math.min(playback.sequence.duration, time(targetTime, 'Playback target'));
   if (target + EPSILON < playback.runtime.time) fail('Playback cannot move backwards.');
   if (!Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 250_000)
@@ -226,6 +226,7 @@ function runPlayback(playback, targetTime, maxSteps, oneAction) {
       );
       playback.cursor++;
       steps++;
+      onStep?.(playback);
       if (oneAction) break;
       continue;
     }
@@ -238,6 +239,7 @@ function runPlayback(playback, targetTime, maxSteps, oneAction) {
     simulate(playback.project, playback.runtime, Math.max(0, next - playback.runtime.time));
     playback.runtime.time = next;
     steps++;
+    onStep?.(playback);
   }
   const atTarget =
     playback.runtime.time >= target &&
@@ -251,13 +253,19 @@ function runPlayback(playback, targetTime, maxSteps, oneAction) {
     );
   return { atTarget, doneAtTarget: atTarget, done: playback.done, steps };
 }
-export function advancePlayback(playback, targetTime, { maxSteps = 1000 } = {}) {
-  return runPlayback(playback, targetTime, maxSteps, false);
+export function advancePlayback(playback, targetTime, { maxSteps = 1000, onStep } = {}) {
+  return runPlayback(playback, targetTime, maxSteps, false, onStep);
 }
-export function stepPlayback(playback, { maxSteps = 1000 } = {}) {
+export function stepPlayback(playback, { maxSteps = 1000, onStep } = {}) {
   const next = playback.sequence.actions[playback.cursor];
   const before = playback.cursor;
-  const result = runPlayback(playback, next?.at ?? playback.sequence.duration, maxSteps, true);
+  const result = runPlayback(
+    playback,
+    next?.at ?? playback.sequence.duration,
+    maxSteps,
+    true,
+    onStep,
+  );
   return { ...result, actionApplied: playback.cursor !== before };
 }
 export function replaySequence(sequence, options) {

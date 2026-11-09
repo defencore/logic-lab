@@ -1,6 +1,10 @@
 import { GATES } from './categories/gates.js';
 import { IO } from './categories/io.js';
 import { KEYPAD } from './categories/keypad.js';
+import { BUS_MONITORS } from './categories/bus-monitors.js';
+import { LCD1602 } from './categories/lcd1602.js';
+import { MEMORY_CHIPS } from './categories/memory-chips.js';
+import { PERIPHERAL_INPUTS } from './categories/peripheral-inputs.js';
 import { AUDIO } from './categories/audio.js';
 import { COMBINATIONAL } from './categories/combinational.js';
 import { SEQUENTIAL } from './categories/sequential.js';
@@ -20,7 +24,7 @@ const categories = [
     id: 'io',
     label: 'Inputs & outputs',
     ua: 'Джерела та індикатори',
-    definitions: [...IO, ...KEYPAD],
+    definitions: [...IO, ...PERIPHERAL_INPUTS, ...KEYPAD, ...LCD1602, ...BUS_MONITORS],
   },
   { id: 'audio', label: 'Sound', ua: 'Звук', definitions: AUDIO },
   {
@@ -33,7 +37,7 @@ const categories = [
     id: 'sequential',
     label: 'Sequential & memory',
     ua: 'Послідовна логіка та пам’ять',
-    definitions: SEQUENTIAL,
+    definitions: [...SEQUENTIAL, ...MEMORY_CHIPS],
   },
   { id: 'analog', label: 'Mixed signals', ua: 'Змішані сигнали', definitions: ANALOG },
   {

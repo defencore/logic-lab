@@ -56,7 +56,9 @@ export function relatedSceneSources(project, entry) {
   return project.nodes.filter(
     (node) =>
       ids.has(node.id) &&
-      ['switch', 'button', 'keypad', 'hotkey', 'clock', 'bus_input'].includes(node.type),
+      ['switch', 'button', 'keypad', 'keypad_4x4', 'hotkey', 'clock', 'bus_input'].includes(
+        node.type,
+      ),
   );
 }
 

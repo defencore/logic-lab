@@ -11,9 +11,13 @@ import gndGuide from './io/gnd.js';
 import vccGuide from './io/vcc.js';
 import switchGuide from './io/switch.js';
 import buttonGuide from './io/button.js';
-import keypadGuide from './io/keypad.js';
+import keypadGuide, { keypad4x4Guide } from './io/keypad.js';
 import hotkeyGuide from './io/hotkey.js';
 import busInputGuide from './io/bus-input.js';
+import { busMonitorGuide } from './io/bus-monitor.js';
+import contactSwitchGuide from './io/contact-switch.js';
+import potentiometerGuide from './io/potentiometer.js';
+import lcdGuide from './io/lcd1602.js';
 import clockGuide from './io/clock.js';
 import ledGuide from './io/led.js';
 import activeBuzzerGuide from './io/active-buzzer.js';
@@ -35,6 +39,8 @@ import tFfGuide from './sequential/t-ff.js';
 import registerGuide from './sequential/register.js';
 import shiftRegisterGuide from './sequential/shift-register.js';
 import counterGuide from './sequential/counter.js';
+import hc595Guide from './sequential/hc595.js';
+import eepromGuide from './sequential/eeprom.js';
 import ramGuide from './sequential/ram.js';
 import romGuide from './sequential/rom.js';
 import registerFileGuide from './sequential/register-file.js';
@@ -83,8 +89,14 @@ const manuals = [
   ['switch', switchGuide],
   ['button', buttonGuide],
   ['keypad', keypadGuide],
+  ['keypad_4x4', keypad4x4Guide],
   ['hotkey', hotkeyGuide],
   ['bus_input', busInputGuide],
+  ['bus_monitor_4', busMonitorGuide(4)],
+  ['bus_monitor_8', busMonitorGuide(8)],
+  ['contact_switch', contactSwitchGuide],
+  ['potentiometer', potentiometerGuide],
+  ['lcd1602', lcdGuide],
   ['clock', clockGuide],
   ['led', ledGuide],
   ['active_buzzer', activeBuzzerGuide],
@@ -107,6 +119,8 @@ const manuals = [
   ['shift_register', shiftRegisterGuide],
   ['counter', counterGuide],
   ['ram', ramGuide],
+  ['eeprom', eepromGuide],
+  ['hc595', hc595Guide],
   ['rom', romGuide],
   ['register_file', registerFileGuide],
   ['dac', dacGuide],

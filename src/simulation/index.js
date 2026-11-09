@@ -35,6 +35,9 @@ const optionalInputs = {
   stepper: ['enable', 'reset'],
   position_sensor: ['target'],
   ram: ['cs', 'oe', 'we'],
+  eeprom: ['cs', 'oe', 'we'],
+  hc595: ['mr', 'oe'],
+  lcd1602: ['d'],
   rom: ['cs', 'oe'],
 };
 

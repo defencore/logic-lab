@@ -17,6 +17,26 @@ const locations = (addresses) =>
   addresses.length === 1 ? String(addresses[0]) : `{${addresses.join(', ')}}`;
 const at = (time) => (Number.isFinite(time) ? `${time.toFixed(4)} s` : '');
 
+function byteStatus(data, language, compact) {
+  if (data.shift)
+    return data.parallel === 'Z' || data.parallel === 'X' || !compact
+      ? `QA–QH=${data.parallel}`
+      : '';
+  if (compact) return data.enabled ? '' : 'OUT Z';
+  if (!data.enabled) {
+    return L(
+      language,
+      data.stored ? 'Стан збережено; виходи вимкнені (Z).' : 'Виходи вимкнені (Z).',
+      data.stored ? 'State retained; outputs disabled (Z).' : 'Outputs disabled (Z).',
+    );
+  }
+  return L(
+    language,
+    data.stored ? 'Поточний збережений байт.' : 'Поточний вихідний байт.',
+    data.stored ? 'Current stored byte.' : 'Current output byte.',
+  );
+}
+
 function updateByte(root, node, runtime, language) {
   const data = inspectByte(node, runtime);
   const compact = root.dataset.inspectionCompact === 'true';
@@ -30,29 +50,21 @@ function updateByte(root, node, runtime, language) {
     text(element, '[data-bit-label]', data.labels[bit]);
   }
   for (const key of ['bin', 'hex', 'dec']) text(root, `[data-byte-${key}]`, data.formats[key]);
-  text(
-    root,
-    '[data-byte-status]',
-    compact
-      ? data.enabled
-        ? ''
-        : 'OUT Z'
-      : !data.enabled
-        ? L(
-            language,
-            data.stored ? 'Стан збережено; виходи вимкнені (Z).' : 'Виходи вимкнені (Z).',
-            data.stored ? 'State retained; outputs disabled (Z).' : 'Outputs disabled (Z).',
-          )
-        : L(
-            language,
-            data.stored ? 'Поточний збережений байт.' : 'Поточний вихідний байт.',
-            data.stored ? 'Current stored byte.' : 'Current output byte.',
-          ),
-  );
+  text(root, '[data-byte-status]', byteStatus(data, language, compact));
+  if (data.shift) {
+    text(root, '[data-chip-shift]', data.shift.bin);
+    text(root, '[data-chip-serial]', data.serial);
+  }
   if (!data.stored) return;
   const change = data.change;
   const kind =
-    node.type === 'shift_register' ? 'shift' : node.type === 'counter' ? 'count' : 'capture';
+    { shift_register: 'shift', counter: 'count', hc595: 'latch' }[node.type] ?? 'capture';
+  const compactLabels = {
+    shift: L(language, 'Зсув', 'Shift'),
+    count: L(language, 'Лічба', 'Count'),
+    capture: L(language, 'Запис', 'Capture'),
+    latch: 'RCLK',
+  };
   const labels = {
     shift: L(
       language,
@@ -69,13 +81,18 @@ function updateByte(root, node, runtime, language) {
       change?.definite ? 'Останнє захоплення' : 'Можливе захоплення',
       change?.definite ? 'Last capture' : 'Possible capture',
     ),
+    latch: L(
+      language,
+      change?.definite ? 'Остання фіксація RCLK' : 'Можлива фіксація RCLK',
+      change?.definite ? 'Last RCLK latch' : 'Possible RCLK latch',
+    ),
   };
   text(
     root,
     '[data-byte-event]',
     compact
       ? change
-        ? `${L(language, kind === 'shift' ? 'Зсув' : kind === 'count' ? 'Лічба' : 'Запис', kind === 'shift' ? 'Shift' : kind === 'count' ? 'Count' : 'Capture')} #${change.sequence}${change.definite ? '' : '?'}${kind === 'shift' ? ` · SER=${change.ser}` : ''}`
+        ? `${compactLabels[kind]} #${change.sequence}${change.definite ? '' : '?'}${kind === 'shift' ? ` · SER=${change.ser}` : ''}`
         : '—'
       : change
         ? `${labels[kind]} #${change.sequence} · ${at(change.at)}${kind === 'shift' ? ` · SER=${change.ser}` : ''}`
@@ -99,6 +116,7 @@ function updateByte(root, node, runtime, language) {
     shift: L(language, 'зсувом', 'shift'),
     count: L(language, 'кроком лічби', 'count'),
     capture: L(language, 'захопленням', 'capture'),
+    latch: L(language, 'фронтом RCLK', 'RCLK latch'),
   };
   text(
     root,

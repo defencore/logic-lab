@@ -1,3 +1,5 @@
+import { paintLogicTrace } from './logic-trace.js';
+
 const isSample = (value) => typeof value === 'number' && Number.isFinite(value);
 
 function plot(
@@ -92,14 +94,17 @@ export function paintTraces(canvas, traces, pixelRatio = window.devicePixelRatio
   const context = canvas.getContext('2d');
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   context.clearRect(0, 0, width, height);
-  const rowHeight = height / Math.max(1, traces.length);
+  const logic = !!traces[0]?.transitions;
+  const plotHeight = logic ? Math.max(0, height - 18) : height;
+  const rowHeight = plotHeight / Math.max(1, traces.length);
   context.strokeStyle = '#e8ece8';
   context.lineWidth = 1;
   context.setLineDash([2, 4]);
   context.beginPath();
-  for (let x = 0; x < width; x += 60) {
+  const gridStep = logic ? width / 4 : 60;
+  for (let x = 0; x < width; x += gridStep) {
     context.moveTo(x, 0);
-    context.lineTo(x, height);
+    context.lineTo(x, plotHeight);
   }
   for (let row = 0; row <= traces.length; row++) {
     context.moveTo(0, rowHeight * row);
@@ -107,6 +112,29 @@ export function paintTraces(canvas, traces, pixelRatio = window.devicePixelRatio
   }
   context.stroke();
   context.setLineDash([]);
+  if (logic) {
+    const end = traces[0].endTime || traces[0].timeWindow;
+    const start = Math.max(0, end - traces[0].timeWindow);
+    context.font = '10px ui-monospace, monospace';
+    context.fillStyle = '#536174';
+    for (let tick = 0; tick <= 4; tick++) {
+      context.textAlign = tick === 0 ? 'left' : tick === 4 ? 'right' : 'center';
+      const time = start + ((end - start) * tick) / 4;
+      context.fillText(`${Number(time.toFixed(6))} s`, (width * tick) / 4, height - 3);
+    }
+    traces.forEach((trace, index) => {
+      context.lineWidth = 1.7;
+      paintLogicTrace(context, trace.transitions, {
+        width,
+        top: index * rowHeight,
+        height: rowHeight,
+        start,
+        end,
+        color: trace.color,
+      });
+    });
+    return;
+  }
   traces.forEach((trace, index) => {
     const history = trace.history.length ? trace.history : [trace.current];
     const numbers = history.filter(isSample);

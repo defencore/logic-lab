@@ -9,6 +9,10 @@ import { readMemoryBits } from './memory.js';
 import { initialServoState } from './servo.js';
 import { periodicLevel } from './timing.js';
 import { evaluateKeypad } from './keypad.js';
+import { potentiometerValue } from '../components/peripheral-inputs.js';
+import { evaluateHc595, initialHc595State } from './hc595.js';
+import { initialEepromState } from './eeprom.js';
+import { initialLcd1602State } from './lcd1602.js';
 import { TAU, unknown, logic, clamp, number, complement, allKnown, packBits } from './signals.js';
 
 const decimalSegments = [0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f];
@@ -35,6 +39,9 @@ export function initialState(node) {
   if (isScenarioType(node.type)) return { scenario: initialScenarioState(node) };
   const parameters = { ...getDefinition(node.type)?.defaults, ...node.params };
   const initial = Math.round(number(parameters.initial));
+  if (node.type === 'lcd1602') return initialLcd1602State();
+  if (node.type === 'hc595') return initialHc595State();
+  if (node.type === 'eeprom') return initialEepromState(parameters);
   if (['d_ff', 'jk_ff', 't_ff', 'sr_latch', 'schmitt'].includes(node.type))
     return { q: Number(initial !== 0), lastClock: 0 };
   if (['register', 'shift_register'].includes(node.type))
@@ -111,7 +118,12 @@ export function evaluate(node, runtime, incoming) {
     case 'button':
       return out(p.value === 0 || p.value === 1 ? p.value : 'X');
     case 'keypad':
-      return evaluateKeypad(p, i);
+    case 'keypad_4x4':
+      return evaluateKeypad(p, i, node.type);
+    case 'potentiometer':
+      return out(potentiometerValue(p.value));
+    case 'hc595':
+      return evaluateHc595(node, s, i, incoming);
     case 'switch':
       return out(Number(number(p.value) !== 0));
     case 'hotkey':
@@ -205,6 +217,7 @@ export function evaluate(node, runtime, incoming) {
       return { out: s.q, serial: unknown(s.q) ? 'X' : (s.q >> 7) & 1 };
     case 'ram':
     case 'rom':
+    case 'eeprom':
     case 'register_file':
       return out(packBits(readMemoryBits(node, runtime.inputs[node.id], incoming, s, p)));
     case 'dac':

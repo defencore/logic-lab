@@ -47,23 +47,19 @@ export function teacherProbeIds(state, choices) {
 }
 
 /** One selection owner keeps hidden rows selected and rejects the 33rd change atomically. */
-export function createProbeSelection(choices, selected = []) {
+export function createProbeSelection(choices, selected = [], limit = SEQUENCE_LIMITS.probes) {
   const allowed = new Set(choices.map(probeId));
   const ids = new Set(selected);
-  if (
-    ids.size !== selected.length ||
-    ids.size > SEQUENCE_LIMITS.probes ||
-    [...ids].some((id) => !allowed.has(id))
-  )
+  if (ids.size !== selected.length || ids.size > limit || [...ids].some((id) => !allowed.has(id)))
     throw Object.assign(new Error('Invalid observed signal selection.'), {
-      code: ids.size > SEQUENCE_LIMITS.probes ? 'teacher_probe_limit' : 'teacher_probe_invalid',
+      code: ids.size > limit ? 'teacher_probe_limit' : 'teacher_probe_invalid',
     });
   return {
     ids: () => [...ids],
     has: (id) => ids.has(id),
     change(id, checked) {
       if (!allowed.has(id)) return false;
-      if (checked && !ids.has(id) && ids.size >= SEQUENCE_LIMITS.probes) return false;
+      if (checked && !ids.has(id) && ids.size >= limit) return false;
       checked ? ids.add(id) : ids.delete(id);
       return true;
     },
@@ -78,6 +74,7 @@ export function probePickerMarkup({
   marked = [],
   markedLabel,
   locked = false,
+  limit = SEQUENCE_LIMITS.probes,
 }) {
   const L = local(language),
     chosen = new Set(selected),
@@ -87,7 +84,7 @@ export function probePickerMarkup({
     if (!groups.has(probe.node)) groups.set(probe.node, []);
     groups.get(probe.node).push({ ...probe, index });
   });
-  return `<fieldset class="classroom-probes probe-picker" data-probe-picker="${prefix}"><legend>${L('Сигнали спостереження', 'Observed signals')} · ≤${SEQUENCE_LIMITS.probes}</legend><label class="probe-picker-search">${L('Знайти елемент або контакт', 'Find a component or signal')}<input type="search" id="${prefix}-probe-search" data-probe-search="${prefix}" autocomplete="off" ${locked ? 'disabled' : ''}></label><p id="${prefix}-probe-count" class="probe-picker-count" role="status"></p><p id="${prefix}-probe-feedback" class="probe-picker-feedback" role="status" aria-live="polite"></p><div class="probe-picker-groups">${[
+  return `<fieldset class="classroom-probes probe-picker" data-probe-picker="${prefix}"><legend>${L('Сигнали спостереження', 'Observed signals')} · ≤${limit}</legend><label class="probe-picker-search">${L('Знайти елемент або контакт', 'Find a component or signal')}<input type="search" id="${prefix}-probe-search" data-probe-search="${prefix}" autocomplete="off" ${locked ? 'disabled' : ''}></label><p id="${prefix}-probe-count" class="probe-picker-count" role="status"></p><p id="${prefix}-probe-feedback" class="probe-picker-feedback" role="status" aria-live="polite"></p><div class="probe-picker-groups">${[
     ...groups,
   ]
     .map(
@@ -115,13 +112,15 @@ export function bindProbePicker({
   onChange = () => {},
   onCount = () => {},
   canChange = () => true,
+  limit = SEQUENCE_LIMITS.probes,
+  limitMessage = probeCriteriaMessage({ code: 'teacher_probe_limit' }, language),
 }) {
   const L = local(language),
-    selection = createProbeSelection(choices, selected);
+    selection = createProbeSelection(choices, selected, limit);
   const inputs = $$(`[data-${prefix}-probe]`);
   const count = () => {
     const number = selection.ids().length;
-    const message = `${L('Обрано', 'Selected')}: ${number}/${SEQUENCE_LIMITS.probes} · ${L('Залишилось', 'Remaining')}: ${SEQUENCE_LIMITS.probes - number} · ${L('Усього сигналів', 'Available signals')}: ${choices.length}`;
+    const message = `${L('Обрано', 'Selected')}: ${number}/${limit} · ${L('Залишилось', 'Remaining')}: ${limit - number} · ${L('Усього сигналів', 'Available signals')}: ${choices.length}`;
     if ($(`#${prefix}-probe-count`)) $(`#${prefix}-probe-count`).textContent = message;
     onCount(number);
   };
@@ -137,12 +136,12 @@ export function bindProbePicker({
         return;
       }
       const checked = inputs.filter((item) => item.checked);
-      if (!probe || checked.length > SEQUENCE_LIMITS.probes) {
+      if (!probe || checked.length > limit) {
         for (const other of inputs) {
           const item = choices[Number(other.dataset[`${prefix}Probe`])];
           other.checked = !!item && selection.has(probeId(item));
         }
-        feedback(probeCriteriaMessage({ code: 'teacher_probe_limit' }, language));
+        feedback(limitMessage);
       } else {
         // Remove before adding so a valid batch replacement works even at the limit.
         for (const other of inputs) {
@@ -181,13 +180,13 @@ export function bindProbePicker({
         .map((input) => choices[Number(input.dataset[`${prefix}Probe`])]);
       if (
         !selected.length ||
-        selected.length > SEQUENCE_LIMITS.probes ||
+        selected.length > limit ||
         selected.some((probe) => !probe || probe.missing)
       )
         throw new Error(
           L(
-            'Оберіть від 1 до 32 наявних сигналів. Відсутні контакти потрібно відновити або прибрати з вибору.',
-            'Choose 1–32 available signals. Restore missing contacts or deselect them.',
+            `Оберіть від 1 до ${limit} наявних сигналів. Відсутні контакти потрібно відновити або прибрати з вибору.`,
+            `Choose 1–${limit} available signals. Restore missing contacts or deselect them.`,
           ),
         );
       return selected.map(({ node, port, side }) => ({ node, port, side }));

@@ -7,6 +7,7 @@ export function createSimulation(context) {
   function newRuntime() {
     services.simulationRunner?.discard();
     services.monitor?.stopCapture();
+    services.monitor?.resetTrace?.();
     const value = createRuntime();
     value.sampleInterval = state.timeBase / 255;
     return value;

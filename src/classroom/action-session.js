@@ -160,7 +160,7 @@ export function createActionSession(
       return { actionApplied: false, atTarget: true, doneAtTarget: true, done: true, steps: 0 };
     if (!state.player) beginPlayback();
     state.playbackRunning = false;
-    const result = stepPlayback(state.player, { maxSteps: 1000 });
+    const result = stepPlayback(state.player, { maxSteps: 1000, onStep: adapter.observePlayback });
     state.observations = state.player.observations;
     target = state.player.runtime.time;
     adapter.refreshPlayback(state.player.project, state.player.runtime);
@@ -243,7 +243,7 @@ export function createActionSession(
     if (state.player && state.playbackRunning) {
       target = Math.min(state.sequence.duration, target + dt);
       const cursor = state.player.cursor;
-      advancePlayback(state.player, target, { maxSteps: 150 });
+      advancePlayback(state.player, target, { maxSteps: 150, onStep: adapter.observePlayback });
       state.observations = state.player.observations;
       adapter.refreshPlayback(
         state.player.project,

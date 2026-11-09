@@ -1,0 +1,34 @@
+:is(.type-bus_monitor_4, .type-bus_monitor_8) .node-content {
+  inset-inline-start: 54px;
+}
+
+.bus-monitor-widget {
+  width: 100%;
+  margin: 0;
+  padding: 7px 9px;
+  background: #edf3ef;
+  color: #204331;
+  border: 1px solid #bccfc2;
+  border-radius: 6px;
+  font:
+    600 14px ui-monospace,
+    monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.bus-monitor-widget div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 5px;
+  padding-block: 3px;
+}
+
+.bus-monitor-widget dt {
+  color: #476556;
+  font-size: 10px;
+}
+
+.bus-monitor-widget dd {
+  margin: 0;
+}

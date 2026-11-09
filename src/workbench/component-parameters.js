@@ -1,5 +1,5 @@
 import { parameterRule } from '../components/parameter-rules.js';
-import { KEYPAD_DEFAULTS } from '../components/keypad.js';
+import { KEYPAD_DEFAULTS, isKeypad } from '../components/keypad.js';
 import { esc } from '../shared/ui.js';
 
 export function memoryBytes(value) {
@@ -87,7 +87,11 @@ const PARAM_NAMES = {
   height: ['Height', 'Висота'],
 };
 export function parameterLabel(key, componentType, lang, parameters = {}) {
-  if (key === 'mode' && componentType === 'keypad')
+  if (key === 'value' && componentType === 'potentiometer')
+    return lang === 'ua' ? 'Напруга (В)' : 'Voltage (V)';
+  if (key === 'mode' && componentType === 'contact_switch')
+    return lang === 'ua' ? 'Режим контакту' : 'Contact mode';
+  if (key === 'mode' && isKeypad(componentType))
     return lang === 'ua' ? 'Режим кнопок' : 'Button mode';
   const baseLabel =
     PARAM_NAMES[key]?.[lang === 'ua' ? 1 : 0] ||
@@ -107,8 +111,13 @@ export function parameterLabel(key, componentType, lang, parameters = {}) {
 export function parameterField(key, value, componentType, lang, t, parameters = {}) {
   const label = parameterLabel(key, componentType, lang, parameters);
   const caption = `<span data-parameter-label="${esc(key)}">${esc(label)}</span>`;
-  if (key === 'mode' && componentType === 'keypad')
+  if (key === 'mode' && isKeypad(componentType))
     return `<label>${caption}<select data-param="mode"><option value="pulse" ${value === 'pulse' ? 'selected' : ''}>${lang === 'ua' ? 'Імпульс · звичайні кліки' : 'Pulse · ordinary clicks'}</option><option value="hold" ${value === 'hold' ? 'selected' : ''}>${lang === 'ua' ? 'Утримання · відпускання повертає 0' : 'Hold · release returns to 0'}</option><option value="toggle" ${value === 'toggle' ? 'selected' : ''}>${lang === 'ua' ? 'Фіксація · натисніть ще раз для 0' : 'Latch · press again for 0'}</option></select></label>`;
+  if (key === 'mode' && componentType === 'contact_switch')
+    return `<label>${caption}<select data-param="mode">
+      <option value="momentary" ${value === 'momentary' ? 'selected' : ''}>${lang === 'ua' ? 'Утримання' : 'Momentary'}</option>
+      <option value="toggle" ${value === 'toggle' ? 'selected' : ''}>${lang === 'ua' ? 'Фіксація' : 'Latching'}</option>
+    </select></label>`;
   if (key === 'text')
     return `<label>${caption}<textarea data-param="${key}" rows="3" maxlength="16384">${esc(value)}</textarea></label>`;
   if (key === 'data')
@@ -134,7 +143,7 @@ export function parameterField(key, value, componentType, lang, t, parameters = 
       ? `step="${limits.step}"${limits.min === undefined ? '' : ` min="${limits.min}" max="${limits.max}"`}${limits.integer ? ' data-integer="true"' : ''}`
       : 'maxlength="16384"';
   const hidden =
-    componentType === 'keypad' &&
+    isKeypad(componentType) &&
     key === 'pulseDuration' &&
     (parameters.mode ?? KEYPAD_DEFAULTS.mode) !== 'pulse';
   return `<label ${type === 'checkbox' ? 'class="toggle-row"' : ''} ${hidden ? 'hidden' : ''}>${caption}<input data-param="${esc(key)}" type="${type}" ${attributes} ${Array.isArray(value) ? 'data-array="true"' : ''} ${type === 'checkbox' ? (value ? 'checked' : '') : `value="${esc(Array.isArray(value) ? JSON.stringify(value) : value)}"`}>${key === 'duty' ? `<input class="duty-slider" data-slider="duty" type="range" aria-label="${esc(label)}" min="0" max="1" step="0.01" value="${esc(value)}">` : ''}</label>`;

@@ -93,6 +93,7 @@ export function createShellBindings(context) {
       updateSimulationStep(value, state.lang, t);
       services.monitor.saveSettings();
     };
+    $('#logic-analyzer').onclick = services.monitor.configureAnalyzer;
     $('#record-toggle').onclick = services.monitor.toggleRecording;
     $('#record-download').onclick = services.monitor.downloadRecording;
     $('#trace-image').onclick = services.monitor.downloadImage;

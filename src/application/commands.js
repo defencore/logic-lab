@@ -7,6 +7,12 @@ import { snap } from '../circuits/geometry/index.js';
 import { findNodePlacement, revealNodePlacement } from '../circuits/placement.js';
 import { boundCoordinate, uid } from './model.js';
 import { createSelectionCommands } from './selection-commands.js';
+import { normalizeMomentaryInputs } from './momentary-controller.js';
+import {
+  isLatchingInput,
+  POTENTIOMETER_DEFAULTS,
+  potentiometerValue,
+} from '../components/peripheral-inputs.js';
 export function createCommands(context) {
   const { state, services, actions, t } = context;
   function newProject() {
@@ -114,7 +120,7 @@ export function createCommands(context) {
     actions.setWorkspaceView('canvas');
     actions.cancelInteraction();
     actions.checkpoint();
-    state.project = next;
+    state.project = normalizeMomentaryInputs(next);
     actions.cancelWire();
     state.runtime = actions.newRuntime();
     state.selected.clear();
@@ -148,12 +154,42 @@ export function createCommands(context) {
   }
   function toggleSource(id) {
     if (services.classroom && !services.classroom.allowInput()) return;
-    const node = state.project.nodes.find((item) => item.id === id && item.type === 'switch');
-    if (!node) return;
+    const node = state.project.nodes.find((item) => item.id === id && isLatchingInput(item));
+    if (!node || node.enabled === false) return;
+    const value = node.params.value ? 0 : 1;
+    if (node.type === 'contact_switch') {
+      applyLiveSourceValue(node, value, true);
+      services.wiring?.refresh();
+      return true;
+    }
     actions.checkpoint();
-    node.params.value = node.params.value ? 0 : 1;
+    node.params.value = value;
     actions.changed();
     services.classroom?.inputChanged(node.id, 'value', node.params.value);
+  }
+  function applyLiveSourceValue(node, value, checkpoint) {
+    if (checkpoint) actions.checkpoint();
+    node.params.value = value;
+    simulate(state.project, state.runtime, 0);
+    actions.updateSignals();
+    services.classroom?.inputChanged(node.id, 'value', value);
+    services.classroom?.observeEdit?.();
+    actions.persist();
+  }
+  function setPotentiometer(id, value, { checkpoint = true } = {}) {
+    const node = state.project.nodes.find(
+      (item) => item.id === id && item.type === 'potentiometer',
+    );
+    if (
+      !node ||
+      node.enabled === false ||
+      potentiometerValue(value) === 'X' ||
+      (node.params.value ?? POTENTIOMETER_DEFAULTS.value) === value ||
+      (services.classroom && !services.classroom.allowInput())
+    )
+      return false;
+    applyLiveSourceValue(node, value, checkpoint);
+    return true;
   }
   return {
     newProject,
@@ -167,6 +203,7 @@ export function createCommands(context) {
     confirmReplace,
     resetSimulation,
     toggleSource,
+    setPotentiometer,
     setMomentarySource: (id, value) =>
       value === 1 ? !!services.buttons?.press(id) : value === 0 && !!services.buttons?.release(id),
     setKeypadKey: (id, index, value) => {

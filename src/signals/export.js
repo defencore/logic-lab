@@ -1,3 +1,5 @@
+import { paintLogicTrace } from './logic-trace.js';
+
 const finite = (value) => typeof value === 'number' && Number.isFinite(value);
 const numberLabel = (value) =>
   finite(value) ? String(Number(value.toPrecision(7))) : String(value ?? '—');
@@ -98,6 +100,18 @@ export async function waveformPng(
     context.fillText(numberLabel(minimum), plotLeft + 7, top + rowHeight - 7);
     context.strokeStyle = color;
     context.lineWidth = 2;
+    if (trace.transitions) {
+      paintLogicTrace(context, trace.transitions, {
+        left: plotLeft,
+        width: plotWidth,
+        top,
+        height: rowHeight,
+        start: startTime,
+        end: endTime,
+        color,
+      });
+      return;
+    }
     context.beginPath();
     let previous;
     let onlyPoint;

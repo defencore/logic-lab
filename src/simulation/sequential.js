@@ -13,6 +13,8 @@ import {
 } from './controls.js';
 import { applyReset, RESET_TYPES } from './asynchronous.js';
 import { writeMemory } from './memory.js';
+import { advanceHc595 } from './hc595.js';
+import { advanceLcd1602 } from './lcd1602.js';
 import { motionParameters } from './models.js';
 
 const clocked = new Set([
@@ -23,6 +25,7 @@ const clocked = new Set([
   'shift_register',
   'counter',
   'ram',
+  'eeprom',
   'register_file',
 ]);
 const chooseState = (edge, hold, capture) =>
@@ -32,7 +35,7 @@ const chooseBits = (edge, hold, capture) =>
 
 function capture(node, state, inputs, incoming, edges, time) {
   if (!edges.includes(1)) return state;
-  if (node.type === 'ram' || node.type === 'register_file')
+  if (node.type === 'ram' || node.type === 'eeprom' || node.type === 'register_file')
     return writeMemory(node, state, inputs, incoming, edges, time);
   let next = { ...state };
   if (node.type === 'd_ff') next.q = chooseState(edges, state.q, logic(inputs.d));
@@ -132,11 +135,14 @@ export function advanceSequential(nodes, runtime, incoming) {
       inputs = runtime.inputs[node.id];
     let next;
     if (node.type === 'stepper') next = advanceStepper(node, state, inputs, incoming);
+    else if (node.type === 'hc595')
+      next = advanceHc595(node, state, inputs, incoming, runtime.time);
+    else if (node.type === 'lcd1602') next = advanceLcd1602(node, state, inputs);
     else if (node.type === 'monostable')
       next = advancePulse(node, state, inputs, incoming, runtime.time);
     else if (clocked.has(node.type)) {
       const clock = logic(inputs.clk),
-        edges = risingOptions(state.lastClock, clock);
+        edges = state.lastClock === null ? [0] : risingOptions(state.lastClock, clock);
       next =
         node.enabled === false
           ? { ...state }

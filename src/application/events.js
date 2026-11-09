@@ -65,7 +65,7 @@ export function bindApplicationEvents(context) {
       return;
     }
     if (e.target.closest('input,textarea,select,[contenteditable]')) return;
-    if (e.target.closest('.memory-map-scroll')) return;
+    if (e.target.closest('.memory-map-scroll,[data-contact-control]')) return;
     if (
       e.target.closest('#scene-panel') &&
       (['Delete', 'Backspace', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) ||

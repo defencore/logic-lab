@@ -1,3 +1,4 @@
+import { isKeypad } from '../components/keypad.js';
 import { getDefinition } from '../components/catalog/index.js';
 import { parameterLabel } from './component-parameters.js';
 import { keypadModeCaption } from './keypad-node.js';
@@ -5,7 +6,7 @@ import { keypadModeCaption } from './keypad-node.js';
 /** Patch dependent captions/visibility in place: native editors retain their focus and drafts. */
 export function refreshParameterDependencies(container, node, language) {
   const parameters = { ...getDefinition(node.type).defaults, ...node.params };
-  if (node.type === 'keypad') {
+  if (isKeypad(node.type)) {
     const field = container.querySelector('[data-param="pulseDuration"]')?.closest('label');
     if (field) field.hidden = parameters.mode !== 'pulse';
     const caption = container.querySelector('.keypad-mode');

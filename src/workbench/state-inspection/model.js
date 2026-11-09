@@ -3,8 +3,8 @@ import { compileCircuit } from '../../simulation/network.js';
 import { memoryImage } from '../../simulation/memory.js';
 import { addresses, control, choices } from '../../simulation/controls.js';
 
-export const MEMORY_TYPES = new Set(['ram', 'rom', 'register_file']);
-export const BYTE_TYPES = new Set(['bus_input', 'register', 'shift_register', 'counter']);
+export const MEMORY_TYPES = new Set(['ram', 'rom', 'eeprom', 'register_file']);
+export const BYTE_TYPES = new Set(['bus_input', 'register', 'shift_register', 'counter', 'hc595']);
 const known = (value) => value === 0 || value === 1;
 const symbol = (value) => (known(value) ? String(value) : value === 'Z' ? 'Z' : 'X');
 const packed = (bits) =>
@@ -41,6 +41,13 @@ export function inspectByte(node, runtime) {
       .outputs.filter((pin) => pin.group === 'out')
       .map((pin) => pin.label),
     change: (node.type === 'shift_register' ? state?.lastShift : state?.lastByteChange) || null,
+    ...(node.type === 'hc595'
+      ? {
+          shift: byteFormats(state?.shiftBits || Array(8).fill('X')),
+          serial: runtime.outputs[node.id]?.serial ?? 'Z',
+          parallel: runtime.signals.outputs[node.id]?.out ?? 'Z',
+        }
+      : {}),
   };
 }
 

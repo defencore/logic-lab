@@ -13,6 +13,9 @@
 @import './src/styles/components/hotkey.css';
 @import './src/styles/components/momentary-button.css';
 @import './src/styles/components/keypad.css';
+@import './src/styles/components/bus-monitor.css';
+@import './src/styles/components/lcd1602.css';
+@import './src/styles/components/peripheral-inputs.css';
 @import './src/styles/components/audio.css';
 @import './src/styles/components/widgets.css';
 @import './src/styles/components/annotations.css';

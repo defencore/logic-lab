@@ -1,3 +1,5 @@
+import { isMomentaryInput } from '../components/peripheral-inputs.js';
+import { isKeypad } from '../components/keypad.js';
 import { validateProject } from './project.js';
 
 const KIND = 'logic-lab-fragment';
@@ -50,12 +52,12 @@ function checkedFragment(value) {
   });
   // Transient presses and copied keyboard toggle state never activate a pasted source.
   nodes
-    .filter((node) => ['hotkey', 'button'].includes(node.type))
+    .filter((node) => node.type === 'hotkey' || isMomentaryInput(node))
     .forEach((node) => {
       node.params.value = 0;
     });
   nodes
-    .filter((node) => node.type === 'keypad')
+    .filter((node) => isKeypad(node.type))
     .forEach((node) => {
       node.params.keys = 0;
     });

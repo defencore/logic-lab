@@ -1,6 +1,7 @@
 import { getDefinition } from '../components/catalog/index.js';
 import { number, unknown } from './signals.js';
 import { control, choices, consensus, mergeBits, equalBits, withBits } from './controls.js';
+import { clearHc595 } from './hc595.js';
 
 export const RESET_TYPES = new Set([
   'd_ff',
@@ -51,13 +52,15 @@ export function advanceAsynchronous(nodes, runtime, incoming) {
       const high = Math.max(number(p.low, 1.5), number(p.high, 3.5));
       const value = inputs.in;
       next = { ...state, q: unknown(value) ? 'X' : value >= high ? 1 : value <= low ? 0 : state.q };
-    } else if (RESET_TYPES.has(node.type)) next = applyReset(node, state, inputs, incoming);
+    } else if (node.type === 'hc595') next = clearHc595(node, state, inputs, incoming);
+    else if (RESET_TYPES.has(node.type)) next = applyReset(node, state, inputs, incoming);
     const differs =
       next.q !== state.q ||
       next.pulseUntil !== state.pulseUntil ||
       next.pulseMaybe !== state.pulseMaybe ||
       next.lastShift !== state.lastShift ||
       next.lastByteChange !== state.lastByteChange ||
+      next.shiftBits !== state.shiftBits ||
       (next.qBits && !equalBits(next.qBits, state.qBits));
     if (differs) {
       updates.set(node.id, next);

@@ -1,3 +1,4 @@
+import { isKeypad } from '../../components/keypad.js';
 import { getDefinition } from '../../components/catalog/index.js';
 import { SCENARIO_TYPES } from '../../scenes/models/scenarios/index.js';
 export const GRID = 20;
@@ -18,8 +19,9 @@ export function dimensions(node) {
       h: Math.max(100, Math.min(3000, Number(node.params.height) || 260)),
     };
   if (node.type === 'note') return { w: 240, h: 130 };
+  if (node.type === 'lcd1602') return { w: 340, h: 180 };
   if (node.type === 'matrix') return { w: 260, h: 270 };
-  if (node.type === 'keypad') return { w: 210, h: 260 };
+  if (isKeypad(node.type)) return { w: node.type === 'keypad_4x4' ? 252 : 210, h: 260 };
   if (['active_buzzer', 'passive_buzzer'].includes(node.type)) return { w: 204, h: 158 };
   const byteWidgetHeight =
     node.type === 'shift_register'
@@ -52,10 +54,12 @@ export function pinPlacement(node, port, side) {
   const pins = side === 'out' ? definition.outputs : definition.inputs;
   const index = pins.findIndex((pin) => pin.id === port);
   const pin = pins[index];
-  if (node.type === 'keypad')
+  if (isKeypad(node.type))
     return side === 'in'
       ? { x: 0, y: 60 + index * 41, edge: 'left' }
       : { x: 55 + index * 50, y: dimensions(node).h, edge: 'bottom' };
+  if (node.type === 'lcd1602' && pin?.group === 'd')
+    return { x: 45 + pin.bit * 36, y: dimensions(node).h, edge: 'bottom' };
   if (node.type === 'matrix' && pin?.group === 'rows')
     return { x: 0, y: 58 + pin.bit * 22, edge: 'left' };
   if (node.type === 'matrix' && pin?.group === 'cols')

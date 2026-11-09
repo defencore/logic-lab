@@ -1,4 +1,6 @@
 export const signals = {
+  logicAnalyzer: 'Logic analyzer',
+  logicAnalyzerHint: 'Selected digital contacts · timed transitions',
   samplingNotice:
     'Fast changes may be lost at this time window. Use a shorter window or lower the source frequency.',
   fitTimeWindow: 'Fit time window',

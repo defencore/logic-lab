@@ -2,7 +2,9 @@ import { getDefinition } from '../components/catalog/index.js';
 import { MIN_ZOOM, MAX_ZOOM } from './viewport.js';
 import { createProjectStorage } from './project-storage.js';
 import { validateHotkeyNodes } from './hotkey-config.js';
-import { keypadParameterError } from '../components/keypad.js';
+import { decodeEepromData } from '../components/eeprom.js';
+import { peripheralInputParameterError } from '../components/peripheral-inputs.js';
+import { isKeypad, keypadParameterError } from '../components/keypad.js';
 
 export { STORAGE_KEY, PROJECT_RECOVERY_KEY } from './project-storage.js';
 const MAX_NODES = 1000;
@@ -186,9 +188,13 @@ export function validateProject(value) {
   });
   validateHotkeyNodes(nodes);
   for (const node of nodes) {
-    if (node.type !== 'keypad') continue;
-    const error = keypadParameterError({ ...getDefinition(node.type).defaults, ...node.params });
+    const params = { ...getDefinition(node.type).defaults, ...node.params };
+    const error = isKeypad(node.type)
+      ? keypadParameterError(params, node.type)
+      : peripheralInputParameterError(node);
     if (error) fail(`Parameters of ${node.id}: ${error}`);
+    if (node.type === 'eeprom' && !decodeEepromData(params.data))
+      fail(`Parameters of ${node.id}: EEPROM data must contain at most 16 bytes from 0 to 255.`);
   }
   const nodeMap = new Map(nodes.map((node) => [node.id, node]));
   const wireIds = new Set();

@@ -1,3 +1,4 @@
+import { isKeypad } from '../components/keypad.js';
 import { getDefinition } from '../components/catalog/index.js';
 import { relatedSceneSources, sceneNodeIds } from '../circuits/scene-links.js';
 import { esc } from '../shared/ui.js';
@@ -39,7 +40,7 @@ function controlsMarkup(state, entry, t, title) {
     sources
       .map((node) => {
         const label = esc(node.label || title(getDefinition(node.type)));
-        if (node.type === 'keypad')
+        if (isKeypad(node.type))
           return `<div class="scene-keypad-controls" data-scene-source="${esc(node.id)}"><h4 data-scene-source-label>${label}</h4>${keypadNodeMarkup(node, state.lang)}</div>`;
         if (node.type === 'button')
           return `<button type="button" class="motion-source momentary-source" data-scene-source="${esc(node.id)}" data-motion-button="${esc(node.id)}" aria-pressed="false"><span data-scene-source-label>${label}</span><b>0</b></button>`;

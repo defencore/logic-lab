@@ -103,6 +103,7 @@ export function createView(context) {
     services.learning.updateLessonSignals();
     services.scenes?.update();
     $('#sim-time').textContent = (state.runtime.time || 0).toFixed(3);
+    services.monitor.capture?.();
     services.monitor.updateUi();
     const diagnostics = $('#diagnostics');
     diagnostics.hidden = !state.runtime.diagnostics?.length;

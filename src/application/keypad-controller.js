@@ -1,8 +1,14 @@
-import { KEYPAD_KEYS, KEYPAD_DEFAULTS, keypadParameterError } from '../components/keypad.js';
+import {
+  keypadLayout,
+  isKeypad,
+  KEYPAD_DEFAULTS,
+  keypadParameterError,
+} from '../components/keypad.js';
 
 export const KEYPAD_QUEUE_LIMIT = 128;
 export const KEYPAD_RELEASE_GAP = 0.01;
 const parameters = (node) => ({ ...KEYPAD_DEFAULTS, ...node.params });
+const keysFor = (node) => keypadLayout(node.type).keys;
 const EPSILON = 1e-10;
 
 /** Physical holds, latched contacts and explicit timed pulse queues share one recorded mask. */
@@ -28,14 +34,15 @@ export function createKeypadController({
     if (!entry) return false;
     if (!all && --entry.count > 0) return true;
     held.delete(key);
-    write(entry, entry.node.params.keys & ~KEYPAD_KEYS[index].mask);
+    write(entry, entry.node.params.keys & ~keysFor(entry.node)[index].mask);
     return true;
   }
   function clearPulse(id) {
     const entry = pulses.get(id);
     if (!entry) return;
     pulses.delete(id);
-    if (entry.active) write(entry, entry.node.params.keys & ~KEYPAD_KEYS[entry.active.index].mask);
+    if (entry.active)
+      write(entry, entry.node.params.keys & ~keysFor(entry.node)[entry.active.index].mask);
   }
   function pump(entry, now) {
     entry.lastTime = now;
@@ -50,7 +57,7 @@ export function createKeypadController({
       }
       const request = entry.requests.shift();
       entry.active = { index: request.index, until: now + request.duration };
-      write(entry, KEYPAD_KEYS[request.index].mask);
+      write(entry, keysFor(entry.node)[request.index].mask);
     }
   }
   function suspend() {
@@ -63,7 +70,7 @@ export function createKeypadController({
     for (const entry of [...held.values()])
       if (
         !current(entry) ||
-        entry.node.type !== 'keypad' ||
+        !isKeypad(entry.node.type) ||
         entry.node.enabled === false ||
         parameters(entry.node).mode !== 'hold' ||
         !canWrite()
@@ -73,10 +80,10 @@ export function createKeypadController({
       const p = parameters(entry.node);
       if (
         !current(entry) ||
-        entry.node.type !== 'keypad' ||
+        !isKeypad(entry.node.type) ||
         entry.node.enabled === false ||
         p.mode !== 'pulse' ||
-        keypadParameterError(p) ||
+        keypadParameterError(p, entry.node.type) ||
         !canWrite() ||
         !Number.isFinite(now) ||
         now + EPSILON < entry.lastTime
@@ -85,7 +92,7 @@ export function createKeypadController({
     }
     if (!canWrite()) return;
     for (const node of project.nodes) {
-      if (node.type !== 'keypad' || keypadParameterError(parameters(node))) continue;
+      if (!isKeypad(node.type) || keypadParameterError(parameters(node), node.type)) continue;
       const mode = parameters(node).mode,
         previous = modes.get(node);
       modes.set(node, mode);
@@ -94,10 +101,10 @@ export function createKeypadController({
       if (mode === 'hold')
         keys &= [...held.values()]
           .filter((entry) => entry.node === node)
-          .reduce((mask, entry) => mask | KEYPAD_KEYS[entry.index].mask, 0);
+          .reduce((mask, entry) => mask | keysFor(node)[entry.index].mask, 0);
       else if (mode === 'pulse') {
         const active = pulses.get(node.id)?.active;
-        keys &= active ? KEYPAD_KEYS[active.index].mask : 0;
+        keys &= active ? keysFor(node)[active.index].mask : 0;
       }
       if (keys !== (node.params.keys || 0)) writeKeys(node, keys);
     }
@@ -105,13 +112,19 @@ export function createKeypadController({
   }
   function press(id, index) {
     reconcile();
-    if (!canPress() || !Number.isInteger(index) || !KEYPAD_KEYS[index]) return false;
+    if (!canPress() || !Number.isInteger(index)) return false;
     const project = getProject(),
-      node = project.nodes.find((node) => node.id === id && node.type === 'keypad');
-    if (!node || node.enabled === false || keypadParameterError(parameters(node))) return false;
+      node = project.nodes.find((node) => node.id === id && isKeypad(node.type));
+    if (
+      !node ||
+      node.enabled === false ||
+      !keysFor(node)[index] ||
+      keypadParameterError(parameters(node), node.type)
+    )
+      return false;
     const p = parameters(node),
       key = `${id}:${index}`,
-      mask = KEYPAD_KEYS[index].mask;
+      mask = keysFor(node)[index].mask;
     if (p.mode === 'pulse') {
       const now = getTime();
       if (!Number.isFinite(now) || now < 0) return false;

@@ -1,5 +1,6 @@
 import { isPassiveConnector, passiveContacts } from '../circuits/passive-contacts.js';
 import { getDefinition } from '../components/catalog/index.js';
+import { contactSwitchClosed } from '../components/peripheral-inputs.js';
 
 const compiled = new WeakMap();
 
@@ -14,7 +15,8 @@ function unchanged(project, cache) {
       node !== old.value ||
       node.id !== old.id ||
       node.type !== old.type ||
-      node.enabled !== old.enabled
+      node.enabled !== old.enabled ||
+      contactSwitchClosed(node) !== old.contactClosed
     )
       return false;
   }
@@ -45,6 +47,7 @@ export function compileCircuit(project) {
       id: value.id,
       type: value.type,
       enabled: value.enabled,
+      contactClosed: contactSwitchClosed(value),
     })),
     wires: (project.wires || []).map((wire) => ({
       id: wire.id,
@@ -111,11 +114,19 @@ function buildNetwork(project) {
     if (!driversByNet.has(net)) driversByNet.set(net, new Map());
     driversByNet.get(net).set(wire.sourceKey, wire);
   }
+  const driversAt = (contact) => [...(driversByNet.get(find(contact))?.values() || [])];
   for (const node of nodes) {
-    for (const port of getDefinition(node.type).inputs) {
+    const definition = getDefinition(node.type);
+    for (const port of definition.inputs) {
       const contact = `in:${node.id}:${port.id}`;
       if (!parents.has(contact)) continue;
-      incoming.set(`${node.id}:${port.id}`, [...(driversByNet.get(find(contact))?.values() || [])]);
+      incoming.set(`${node.id}:${port.id}`, driversAt(contact));
+    }
+    if (isPassiveConnector(node)) {
+      for (const port of definition.outputs) {
+        const contact = `out:${node.id}:${port.id}`;
+        if (parents.has(contact)) incoming.set(contact, driversAt(contact));
+      }
     }
   }
   return { nodes, incoming, validWires };

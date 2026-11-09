@@ -1,4 +1,5 @@
-import { KEYPAD_MAX_MASK, KEYPAD_PULSE_MIN, KEYPAD_PULSE_MAX } from './keypad.js';
+import { POTENTIOMETER_RANGE, POTENTIOMETER_STEP } from './peripheral-inputs.js';
+import { isKeypad, keypadLayout, KEYPAD_PULSE_MIN, KEYPAD_PULSE_MAX } from './keypad.js';
 
 const bounds = {
   carSpeed: [1, 40, 0.5],
@@ -78,13 +79,18 @@ export function parameterRule(type, key) {
   let limits = bounds[key];
   let integer = integerKeys.has(key);
   if (key === 'frequency' && type === 'active_buzzer') limits = [20, 20000, 1];
-  if (key === 'keys' && type === 'keypad') {
-    limits = [0, KEYPAD_MAX_MASK, 1];
+  if (key === 'keys' && isKeypad(type)) {
+    limits = [0, keypadLayout(type).maxMask, 1];
     integer = true;
   }
-  if (key === 'pulseDuration' && type === 'keypad')
+  if (key === 'pulseDuration' && isKeypad(type))
     limits = [KEYPAD_PULSE_MIN, KEYPAD_PULSE_MAX, 0.01];
-  if (key === 'value' && ['switch', 'button', 'hotkey', 'bus_input'].includes(type)) {
+  if (key === 'value' && type === 'potentiometer')
+    limits = [...POTENTIOMETER_RANGE, POTENTIOMETER_STEP];
+  if (
+    key === 'value' &&
+    ['switch', 'button', 'hotkey', 'contact_switch', 'bus_input'].includes(type)
+  ) {
     limits = [0, type === 'bus_input' ? 255 : 1, 1];
     integer = true;
   }

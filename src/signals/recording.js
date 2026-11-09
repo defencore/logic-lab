@@ -5,6 +5,7 @@ export function createRecording({
   traces,
   startedAt = 0,
   sampleInterval,
+  eventDriven = false,
   maxSamples = MAX_RECORDING_SAMPLES,
 }) {
   if (!Number.isFinite(startedAt) || startedAt < 0)
@@ -27,6 +28,7 @@ export function createRecording({
     traces: Object.freeze(columns),
     startedAt,
     sampleInterval,
+    eventDriven,
     nextSampleAt: 0,
     maxSamples,
     samples: [],
@@ -50,18 +52,31 @@ export function appendRecording(recording, time, values, { force = false } = {})
   const relativeTime = time - recording.startedAt;
   if (relativeTime < 0) return false;
   const previous = recording.samples.at(-1);
-  if (previous && relativeTime <= previous.time) return false;
+  if (
+    previous &&
+    (relativeTime < previous.time || (!recording.eventDriven && relativeTime === previous.time))
+  )
+    return false;
   const tolerance = Number.EPSILON * Math.max(1, Math.abs(time)) * 8;
-  if (!force && relativeTime + tolerance < recording.nextSampleAt) return false;
+  if (!recording.eventDriven && !force && relativeTime + tolerance < recording.nextSampleAt)
+    return false;
+  const resolved = recording.traces.map((_, index) => recordedValue(values[index]));
+  if (
+    recording.eventDriven &&
+    previous &&
+    (!force || relativeTime === previous.time) &&
+    resolved.every((value, index) => value === previous.values[index])
+  )
+    return false;
   recording.samples.push(
     Object.freeze({
       time: relativeTime,
-      values: Object.freeze(recording.traces.map((_, index) => recordedValue(values[index]))),
+      values: Object.freeze(resolved),
     }),
   );
   // Keep deadlines anchored to the session start instead of accumulating step
   // overshoot. Coarse physics steps skip deadlines without inventing samples.
-  if (relativeTime + tolerance >= recording.nextSampleAt)
+  if (!recording.eventDriven && relativeTime + tolerance >= recording.nextSampleAt)
     recording.nextSampleAt =
       (Math.floor((relativeTime + tolerance) / recording.sampleInterval) + 1) *
       recording.sampleInterval;

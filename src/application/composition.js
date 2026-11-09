@@ -42,6 +42,7 @@ export function composeWorkbench(context) {
     toggleSource: actions.toggleSource,
     setMomentarySource: actions.setMomentarySource,
     setKeypadKey: actions.setKeypadKey,
+    setPotentiometer: actions.setPotentiometer,
     getKeypadStatus: (id) => services.keypads?.status(id),
     canRenameNode: () => !services.classroom || services.classroom.allowEdit(),
     renameNode: actions.renameNode,
@@ -87,6 +88,8 @@ export function composeWorkbench(context) {
     title,
     notify: actions.notify,
     setWorkspaceView: actions.setWorkspaceView,
+    open: services.dialogs.open,
+    close: services.dialogs.close,
   });
   services.simulationRunner = createSimulationRunner({
     getProject: () => state.project,
@@ -110,6 +113,7 @@ export function composeWorkbench(context) {
     enableSelected: actions.enableSelected,
     beginHotkeyCapture: (request) => services.hotkeys.beginCapture(request),
     reconcileKeypads: () => services.keypads?.reconcile(),
+    reconcileButtons: () => services.buttons?.reconcile(),
     setKeypadKey: actions.setKeypadKey,
     getKeypadStatus: (id) => services.keypads?.status(id),
   });
@@ -212,7 +216,10 @@ export function composeWorkbench(context) {
       simulate(state.project, state.runtime, 0);
       actions.updateSignals();
     },
+    observePlayback: ({ project, runtime }) => services.monitor.capture(project, runtime),
     adoptPlayback: (nextProject, nextRuntime) => {
+      services.monitor.stopCapture();
+      services.monitor.inheritTrace(nextProject);
       services.buttons?.suspend();
       services.keypads?.suspend();
       actions.cancelInteraction();
@@ -251,6 +258,7 @@ export function composeWorkbench(context) {
       simulate(state.project, state.runtime, 0);
       actions.updateSignals();
       if (canWriteHotkey()) services.classroom.inputChanged(node.id, 'value', value);
+      if (node.type === 'contact_switch') services.wiring?.refresh();
       actions.persist();
     },
   });

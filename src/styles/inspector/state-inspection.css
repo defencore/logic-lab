@@ -206,21 +206,23 @@
 .circuit-node:is(
     .type-ram,
     .type-rom,
+    .type-eeprom,
     .type-register_file,
     .type-bus_input,
     .type-register,
     .type-shift_register,
-    .type-counter
+    .type-counter,
+    .type-hc595
   )
   > .node-content {
   inset: 42px var(--inspection-right, 40px) 12px var(--inspection-left, 40px);
   justify-content: flex-start;
   overflow: hidden;
 }
-.circuit-node:is(.type-ram, .type-rom, .type-register_file) {
+.circuit-node:is(.type-ram, .type-rom, .type-eeprom, .type-register_file) {
   --inspection-left: 60px;
 }
-.circuit-node:is(.type-register, .type-shift_register, .type-counter) {
+.circuit-node:is(.type-register, .type-shift_register, .type-counter, .type-hc595) {
   --inspection-left: 50px;
 }
 .circuit-node.type-shift_register {
@@ -252,6 +254,11 @@
 }
 .compact-byte .byte-output-status:empty {
   display: none;
+}
+.compact-byte > .chip-register-caption {
+  margin: 4px 0;
+  font-size: 9px;
+  line-height: 12px;
 }
 .compact-byte .byte-change-inspection {
   padding-top: 4px;

@@ -1,3 +1,5 @@
+import { decodeEepromData } from '../components/eeprom.js';
+import { isKeypad } from '../components/keypad.js';
 import { getDefinition } from '../components/catalog/index.js';
 import { simulate } from '../simulation/index.js';
 import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
@@ -22,7 +24,8 @@ export function bindInspectorParameters(container, n, state, actions) {
             : input.value;
       if (input.dataset.memoryBytes) {
         try {
-          value = memoryBytes(value);
+          if (n.type === 'eeprom' && !decodeEepromData(value)) throw new Error();
+          value = memoryBytes(n.type === 'eeprom' ? value.replaceAll(';', ',') : value);
           input.removeAttribute('aria-invalid');
         } catch {
           input.setAttribute('aria-invalid', 'true');
@@ -74,7 +77,11 @@ export function bindInspectorParameters(container, n, state, actions) {
       }
       n.params[key] = value;
       refreshParameterDependencies(container, n, state.lang);
-      if (n.type === 'keypad' && key === 'mode') actions.reconcileKeypads?.();
+      if (isKeypad(n.type) && key === 'mode') actions.reconcileKeypads?.();
+      if (n.type === 'contact_switch' && key === 'mode') {
+        n.params.value = 0;
+        actions.reconcileButtons?.();
+      }
       if (key === 'initial' || SCENARIO_TYPES.includes(n.type)) delete state.runtime.state[n.id];
       const companion = container.querySelector(
         `[data-${input.dataset.slider ? 'param' : 'slider'}="${key}"]`,
@@ -106,9 +113,13 @@ export function bindInspectorParameters(container, n, state, actions) {
       if (input.dataset.memoryBytes) {
         if (input.getAttribute('aria-invalid') === 'true')
           notify(
-            state.lang === 'ua'
-              ? 'Введіть байти від 0 до 255, розділені комами.'
-              : 'Enter bytes from 0 to 255, separated by commas.',
+            n.type === 'eeprom'
+              ? state.lang === 'ua'
+                ? 'Введіть до 16 байтів від 0 до 255, розділених комами.'
+                : 'Enter up to 16 bytes from 0 to 255, separated by commas.'
+              : state.lang === 'ua'
+                ? 'Введіть байти від 0 до 255, розділені комами.'
+                : 'Enter bytes from 0 to 255, separated by commas.',
           );
         input.value = Array.isArray(value) ? value.join(', ') : value;
         input.removeAttribute('aria-invalid');

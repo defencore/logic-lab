@@ -1,3 +1,17 @@
+import { isMomentaryInput } from '../components/peripheral-inputs.js';
+
+/** A live circuit starts released without modifying a saved or recorded baseline. */
+export function normalizeMomentaryInputs(project) {
+  const isHeld = (node) => isMomentaryInput(node) && node.params?.value === 1;
+  if (!project.nodes.some(isHeld)) return project;
+  return {
+    ...project,
+    nodes: project.nodes.map((node) =>
+      isHeld(node) ? { ...node, params: { ...node.params, value: 0 } } : node,
+    ),
+  };
+}
+
 /** Held inputs belong to the original node/project, never a later replay with the same IDs. */
 export function createMomentaryController({ getProject, canPress, canWrite, writeValue }) {
   const held = new Map();
@@ -5,7 +19,7 @@ export function createMomentaryController({ getProject, canPress, canWrite, writ
     reconcile();
     if (!canPress()) return false;
     const project = getProject(),
-      node = project.nodes.find((node) => node.id === id && node.type === 'button');
+      node = project.nodes.find((node) => node.id === id && isMomentaryInput(node));
     if (!node || node.enabled === false) return false;
     if (held.has(id)) {
       held.get(id).count++;
@@ -34,14 +48,14 @@ export function createMomentaryController({ getProject, canPress, canWrite, writ
       if (
         entry.project !== project ||
         !project.nodes.includes(entry.node) ||
-        entry.node.type !== 'button' ||
+        !isMomentaryInput(entry.node) ||
         entry.node.enabled === false ||
         !canWrite()
       )
         release(id, true);
     if (canWrite())
       for (const node of project.nodes)
-        if (node.type === 'button' && node.params.value === 1 && !held.has(node.id))
+        if (isMomentaryInput(node) && node.params.value === 1 && !held.has(node.id))
           writeValue(node, 0);
   }
   const hidden = () => {

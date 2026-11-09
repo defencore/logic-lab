@@ -15,15 +15,15 @@ export function recordingInputHint(project, language) {
           'Керуйте входами ліфта UP, DOWN, OPEN, CLOSE, RUN і RST через свою схему. Порівнюйте положення, датчики поверхів, двері та FAULT.',
           'Control elevator UP, DOWN, OPEN, CLOSE, RUN and RST through your circuit. Compare position, floor sensors, doors and FAULT.',
         );
-  if (types.has('keypad'))
+  if (types.has('keypad') || types.has('keypad_4x4'))
     return project.exampleId === 'keypad-code-lock'
       ? L(
           'Натискайте цифри на клавіатурі: # підтверджує код, * очищує спробу. Запустіть симуляцію для імпульсного вводу та спостерігайте за прогресом, відкриттям і помилкою. Код зберігається в SECRET.',
           'Press keypad digits: # confirms the code and * clears the attempt. Run simulation to process pulse input and observe progress, unlock and error. The code is stored in SECRET.',
         )
       : L(
-          'Натискайте клавіші матриці й спостерігайте за C1–C3 при скануванні R1–R4. Імпульсна черга виконується під час запуску симуляції; режим утримання вимагає повного циклу сканування.',
-          'Press matrix keys and observe C1–C3 while scanning R1–R4. The pulse queue runs when simulation runs; hold mode requires a complete scan cycle.',
+          'Натискайте клавіші матриці й спостерігайте за стовпцями при скануванні R1–R4. Імпульсна черга виконується під час запуску симуляції; режим утримання вимагає повного циклу сканування.',
+          'Press matrix keys and observe the columns while scanning R1–R4. The pulse queue runs when simulation runs; hold mode requires a complete scan cycle.',
         );
   if (types.has('shift_register'))
     return L(

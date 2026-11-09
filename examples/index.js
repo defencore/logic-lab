@@ -54,6 +54,10 @@ import dividerCircuit from './buzzer-clock-divider/circuit.json' with { type: 'j
 import dividerLesson from './buzzer-clock-divider/lesson.js';
 import elevatorCircuit from './elevator-logic/circuit.json' with { type: 'json' };
 import elevatorLesson from './elevator-logic/lesson.js';
+import hc595Circuit from './hc595-shift-latch/circuit.json' with { type: 'json' };
+import hc595Lesson from './hc595-shift-latch/lesson.js';
+import lcdCircuit from './lcd1602-parallel/circuit.json' with { type: 'json' };
+import lcdLesson from './lcd1602-parallel/lesson.js';
 import keypadLockCircuit from './keypad-code-lock/circuit.json' with { type: 'json' };
 import keypadLockLesson from './keypad-code-lock/lesson.js';
 import circuit1 from './logic-gates/circuit.json' with { type: 'json' };
@@ -107,6 +111,8 @@ export const EXAMPLES = [
   { ...dividerLesson, create: () => structuredClone(dividerCircuit) },
   { ...elevatorLesson, create: () => structuredClone(elevatorCircuit) },
   { ...keypadLockLesson, create: () => structuredClone(keypadLockCircuit) },
+  { ...lcdLesson, create: () => structuredClone(lcdCircuit) },
+  { ...hc595Lesson, create: () => structuredClone(hc595Circuit) },
   { ...lesson0, create: () => structuredClone(circuit0) },
   { ...lesson1, create: () => structuredClone(circuit1) },
   { ...lesson2, create: () => structuredClone(circuit2) },

@@ -11,6 +11,7 @@ import { createConnections } from './connections.js';
 import { createSimulation } from './simulation.js';
 import { createShellBindings } from './shell-bindings.js';
 import { createCanvasBindings } from './canvas-bindings.js';
+import { normalizeMomentaryInputs } from './momentary-controller.js';
 import { createProjectRecovery } from './project-recovery.js';
 export function startApplication() {
   const state = createApplicationModel(),
@@ -33,6 +34,7 @@ export function startApplication() {
   state.runtime = actions.newRuntime();
   composeWorkbench(context);
   bindApplicationEvents(context);
+  state.project = normalizeMomentaryInputs(state.project);
   simulate(state.project, state.runtime, 0);
   actions.shell();
   services.hotkeys.reconcile();
