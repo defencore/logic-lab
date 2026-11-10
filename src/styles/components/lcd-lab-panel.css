@@ -45,11 +45,38 @@
   line-height: 1.35;
 }
 
+.lcd-lab-preview .lcd-lab-target {
+  margin: 4px 0 0;
+  color: #244339;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.lcd-lab-setup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.lcd-lab-setup button {
+  flex-shrink: 0;
+}
+
+.lcd-lab-setup p,
+.lcd-lab-quick p {
+  margin: 0;
+}
+
 .lcd-lab-form {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
   align-items: end;
   gap: 6px;
+}
+
+.lcd-lab-row-form {
+  grid-template-columns: minmax(110px, 0.6fr) minmax(130px, 1fr) auto;
 }
 
 .lcd-lab-form label {
@@ -72,6 +99,7 @@
 }
 
 .lcd-lab-form button,
+.lcd-lab-setup button,
 .lcd-lab-quick button {
   min-height: 32px;
   min-width: 0;
@@ -83,8 +111,30 @@
 .lcd-lab-quick {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 5px;
   margin-top: 5px;
+}
+
+.lcd-lab-controls .lcd-lab-plan {
+  margin: 4px 0 2px;
+  font-weight: 600;
+  color: #244339;
+}
+
+.lcd-lab-manual {
+  margin-top: 6px;
+  border-top: 1px solid var(--border);
+  padding-top: 4px;
+}
+
+.lcd-lab-manual summary {
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.lcd-lab-manual p {
+  margin-top: 4px;
 }
 
 .lcd-lab-controls .lcd-lab-feedback {
@@ -119,19 +169,17 @@
   }
 
   .lcd-lab-form {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr) minmax(0, 0.85fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
+  }
+
+  .lcd-lab-form > button {
+    grid-column: 1 / -1;
   }
 
   .lcd-lab-form :is(input, select, button),
   .lcd-lab-quick button {
     font-size: 11px;
     padding-inline: 4px;
-  }
-
-  .lcd-lab-quick {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 4px;
   }
 }

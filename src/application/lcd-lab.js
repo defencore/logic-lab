@@ -1,15 +1,17 @@
+import { LCD_COLUMNS } from '../simulation/lcd1602.js';
+
 const isByte = (value) => Number.isInteger(value) && value >= 0 && value <= 255;
+const isTransfer = (entry) => (entry?.rs === 0 || entry?.rs === 1) && isByte(entry.byte);
 
 export function createLcdLabTransmitter({ state, services, actions, writeValue }) {
-  return function send({ rs, bytes }) {
+  return function send(transfers) {
     let sent = 0;
     const fail = (error) => ({ sent, error });
     if (
-      (rs !== 0 && rs !== 1) ||
-      !Array.isArray(bytes) ||
-      !bytes.length ||
-      bytes.length > 5 ||
-      !bytes.every(isByte)
+      !Array.isArray(transfers) ||
+      !transfers.length ||
+      transfers.length > LCD_COLUMNS + 1 ||
+      !Array.from(transfers).every(isTransfer)
     )
       return fail('input');
     const { project, runtime } = state;
@@ -38,12 +40,12 @@ export function createLcdLabTransmitter({ state, services, actions, writeValue }
       if (node.params.value !== value) writeValue(node, value);
     };
     let error;
-    write(select, rs);
-    for (const byte of bytes) {
+    for (const { rs, byte } of transfers) {
       if (runtime.state.lcd?.dataBits !== 8) {
         error = 'mode';
         break;
       }
+      write(select, rs);
       write(data, byte);
       const pins = inputs();
       if (pins.d !== byte || pins.rs !== rs || pins.rw !== 0 || pins.e !== 0) {

@@ -3,17 +3,22 @@ const steps = {
   en: [
     {
       title: 'Prepare the display',
-      text: 'Open the circuit and choose Prepare LCD in the control panel. It sends 0x38, 0x06 and 0x0C over D0–D7 with RS=0. The display is now on and ready for characters. It stays blank until you send text.',
+      text: 'Choose Prepare LCD. With RS=0, the panel sends 0x38 for 8 bits and two rows, 0x06 to advance one cell after each character, and 0x0C to turn the screen on. Preparation preserves any text already stored. If the display was shifted, Prepare LCD also returns it to its original position with 0x02.',
       nodes: ['byte', 'rs', 'enable', 'ground', 'lcd'],
     },
     {
       title: 'Write on both rows',
-      text: 'Select Character and send H, then I. Choose Row 2 and send O, then K. The row button sends command 0xC0. Each send puts a byte on D0–D7 and pulses E. The LCD accepts it as E returns to 0.',
+      text: 'Select row 1, type HI and choose Write row. Repeat with OK on row 2. You can use 1–16 printable ASCII characters per row. The panel reports an error for 17 characters. Shorter text overwrites only its own cells. Use Clear to erase both rows or send spaces over the unwanted characters.',
       nodes: ['byte', 'rs', 'enable', 'lcd'],
     },
     {
-      title: 'Hide, show and clear',
-      text: 'Select Command and send 0x08 to hide the text, then 0x0C to show it again. Choose Clear to erase both rows. Compare the address and display after each transfer.',
+      title: 'Follow a byte to its cell',
+      text: 'Write row first sends 0x80 or 0xC0 with RS=0 to select address 0x00 or 0x40. Each character then sends its ASCII byte with RS=1. R/W stays at 0. When E returns from 1 to 0, the LCD accepts the byte and advances to the next cell after a character. Follow the upcoming bytes and the next write location in the panel.',
+      nodes: ['byte', 'rs', 'enable', 'lcd'],
+    },
+    {
+      title: 'Try a single command or character',
+      text: 'Open Manual byte transfer. In Command mode, send 0x08 to hide the text, then 0x0C to show it again. The Start of row 1 and Start of row 2 shortcuts set the write address. Switch to Character and send A to try writing a single byte (0x41).',
       nodes: ['rs', 'enable', 'lcd'],
     },
     {
@@ -25,17 +30,22 @@ const steps = {
   ua: [
     {
       title: 'Підготуйте дисплей',
-      text: 'Відкрийте схему й натисніть «Підготувати LCD» на панелі керування. Вона передасть 0x38, 0x06 та 0x0C через D0–D7 із RS=0. Екран увімкнеться й залишатиметься порожнім, доки ви не надішлете текст.',
+      text: 'Натисніть «Підготувати LCD». Із RS=0 панель надсилає 0x38 для 8 бітів і двох рядків, 0x06 для переходу до наступної клітинки після символу та 0x0C для ввімкнення екрана. Підготовка зберігає текст у пам’яті. Якщо зображення було зсунуте, команда 0x02 поверне його у вихідне положення.',
       nodes: ['byte', 'rs', 'enable', 'ground', 'lcd'],
     },
     {
       title: 'Запишіть текст у два рядки',
-      text: 'Оберіть «Символ» і передайте H, потім I. Натисніть «Рядок 2» і передайте O, потім K. Кнопка рядка надсилає команду 0xC0. Під час кожного запису байт з’являється на D0–D7, а LCD приймає його, коли E повертається до 0.',
+      text: 'У полі «Куди записати» оберіть перший рядок, введіть HI й натисніть «Записати рядок». Повторіть з OK для другого рядка. Поле приймає 1–16 друкованих символів ASCII, зокрема латинські літери, цифри й пробіли. Для 17 символів панель покаже помилку. Коротший текст замінює лише зайняті ним клітинки. Щоб стерти залишок, допишіть пробіли або натисніть «Очистити».',
       nodes: ['byte', 'rs', 'enable', 'lcd'],
     },
     {
-      title: 'Приховайте, покажіть і очистіть текст',
-      text: 'Оберіть «Команда» й передайте 0x08, щоб приховати текст, а потім 0x0C, щоб показати його знову. «Очистити» стирає обидва рядки. Порівняйте адресу та екран після кожної передачі.',
+      title: 'Простежте шлях байта до клітинки',
+      text: '«Записати рядок» спершу надсилає 0x80 або 0xC0 з RS=0 і задає адресу 0x00 або 0x40. Далі кожен символ іде окремим байтом ASCII з RS=1. R/W залишається 0. LCD приймає байт, коли E переходить з 1 до 0. Після символу адреса просувається на одну клітинку. Простежте байти й наступну позицію запису на панелі.',
+      nodes: ['byte', 'rs', 'enable', 'lcd'],
+    },
+    {
+      title: 'Надішліть одну команду або символ',
+      text: 'Відкрийте «Ручна передача байтів». У режимі «Команда» передайте 0x08, щоб приховати текст, а потім 0x0C, щоб показати його знову. Кнопки «На початок рядка 1» і «На початок рядка 2» задають адресу запису. Перейдіть у режим «Символ» і передайте A, щоб записати один байт (0x41).',
       nodes: ['rs', 'enable', 'lcd'],
     },
     {
@@ -85,13 +95,12 @@ export default {
       goal: 'Initialize a parallel LCD and put different text on each row using DDRAM addresses.',
       steps: steps.en,
       expected:
-        'Manual writes show HI and OK. The preset writes LOGIC LAB and PARALLEL LCD with R/W=0.',
+        'Writing the two rows shows HI and OK. The demo writes LOGIC LAB and PARALLEL LCD with R/W=0.',
     },
     ua: {
       goal: 'Підготуйте паралельний LCD і запишіть різний текст у кожний рядок через адреси DDRAM.',
       steps: steps.ua,
-      expected:
-        'Ручний запис покаже HI й OK. Готовий сценарій запише LOGIC LAB і PARALLEL LCD із R/W=0.',
+      expected: 'Запис двох рядків покаже HI й OK. Демо запише LOGIC LAB і PARALLEL LCD із R/W=0.',
     },
   },
   circuitPath: `examples/${id}/circuit.json`,
@@ -111,11 +120,11 @@ export default {
     tasks: { en: steps.en.map(({ text }) => text), ua: steps.ua.map(({ text }) => text) },
     questions: {
       en: [
-        'Which edge of E accepts data, and what happens if RS changes while setting up a byte?',
+        'Which edge of E accepts a byte, and how does RS distinguish a row address command from a character?',
         'Why does writing the 17th character not begin the second visible row?',
       ],
       ua: [
-        'Який фронт E приймає дані й що станеться, якщо змінити RS під час підготовки байта?',
+        'На якому фронті E LCD приймає байт і як RS відрізняє команду адреси рядка від символу?',
         'Чому запис 17-го символу не починає другий видимий рядок?',
       ],
     },

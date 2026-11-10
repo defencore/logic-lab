@@ -1,4 +1,4 @@
-const COLUMNS = 16;
+export const LCD_COLUMNS = 16;
 const LINE_CAPACITY = 40;
 const RAM_CAPACITY = LINE_CAPACITY * 2;
 const SECOND_LINE = 0x40;
@@ -148,7 +148,7 @@ export function lcd1602Snapshot(state = initialLcd1602State()) {
     state.addressSpace === 'ddram' ? cellIndex(state.address, state.twoLines) : -1;
   let cursor = null;
   const rows = [0, 1].map((row) =>
-    Array.from({ length: COLUMNS }, (_, column) => {
+    Array.from({ length: LCD_COLUMNS }, (_, column) => {
       if (!state.displayOn || (row === 1 && !state.twoLines)) return ' ';
       const index = row * LINE_CAPACITY + wrap(column + state.shift, lineLength);
       if (index === cursorAddress && (state.cursorOn || state.blinkOn))
