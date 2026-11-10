@@ -2,10 +2,11 @@ import { $ } from '../../shared/ui.js';
 import {
   wireVertices,
   nearestWireSegment,
+  wireSegmentSpan,
   moveWireVertex,
-  moveWireSegment,
-  snap,
+  moveWireSegmentTo,
 } from '../../circuits/geometry/index.js';
+import { nearestAlignment, segmentAlignment } from './alignment.js';
 import { copyPoints, equalPoints } from './session.js';
 export function createGestures(context) {
   const { state, options, commands, project, wire, position, pinFromElement } = context;
@@ -13,16 +14,25 @@ export function createGestures(context) {
     if (options.canEdit && !options.canEdit()) return;
     const item = wire();
     if (!item) return;
+    const vertices = wireVertices(item, project());
+    const segment = kind === 'segment' ? wireSegmentSpan(vertices, index) : null;
+    if (kind === 'segment' && !segment) return;
     event.preventDefault();
     event.stopPropagation();
     $('#viewport').focus({ preventScroll: true });
     options.cancelConnection();
     state.action = null;
-    const vertices = wireVertices(item, project());
-    state.activeHandle = { kind, index };
+    const cross = segment
+      ? vertices[segment.start].y === vertices[segment.end].y
+        ? 'y'
+        : 'x'
+      : null;
+    state.activeHandle = { kind, index: segment?.start ?? index };
     state.drag = {
       kind,
-      index,
+      index: state.activeHandle.index,
+      segment,
+      cross,
       side: kind === 'endpoint' ? index : null,
       wireId: item.id,
       vertices,
@@ -74,65 +84,66 @@ export function createGestures(context) {
     return false;
   }
   function pointerMove(event) {
-    if (!state.drag) return false;
-    if (event.pointerId !== state.drag.pointerId) return true;
-    const item = project().wires.find((candidate) => candidate.id === state.drag.wireId);
+    const drag = state.drag;
+    if (!drag) return false;
+    if (event.pointerId !== drag.pointerId) return true;
+    const item = project().wires.find((candidate) => candidate.id === drag.wireId);
     if (!item) {
       commands.cancelGesture();
       return true;
     }
     const point = position(event);
-    const distance = Math.hypot(
-      event.clientX - state.drag.screen.x,
-      event.clientY - state.drag.screen.y,
-    );
-    if (distance < 3 && !state.drag.moved) return true;
-    state.drag.moved = true;
-    if (state.drag.kind === 'endpoint') {
-      state.drag.point = point;
+    const dx = event.clientX - drag.screen.x;
+    const dy = event.clientY - drag.screen.y;
+    const distance = drag.cross ? Math.abs(drag.cross === 'x' ? dx : dy) : Math.hypot(dx, dy);
+    if (distance < 3 && !drag.moved) return true;
+    drag.moved = true;
+    if (drag.kind === 'endpoint') {
+      drag.point = point;
       commands.renderEditor();
       return true;
     }
+    let target;
     let points;
-    if (state.drag.kind === 'bend') {
-      const base = state.drag.vertices[state.drag.index];
-      points = moveWireVertex(state.drag.vertices, state.drag.index, {
-        x: base.x + snap(point.x - state.drag.start.x),
-        y: base.y + snap(point.y - state.drag.start.y),
-      });
-    } else {
-      const a = state.drag.vertices[state.drag.index],
-        b = state.drag.vertices[state.drag.index + 1];
-      const delta =
-        a.y === b.y ? snap(point.y - state.drag.start.y) : snap(point.x - state.drag.start.x);
-      points = moveWireSegment(state.drag.vertices, state.drag.index, delta);
-    }
-    state.drag.previewPoints = points && points.length <= 100 ? points : null;
-    const preview = state.drag.previewPoints ? { ...item, points: state.drag.previewPoints } : item;
-    const vertices = wireVertices(preview, project());
-    if (state.drag.kind === 'bend') {
-      const base = state.drag.vertices[state.drag.index];
-      const target = {
-        x: base.x + snap(point.x - state.drag.start.x),
-        y: base.y + snap(point.y - state.drag.start.y),
+    if (drag.kind === 'bend') {
+      const base = drag.vertices[drag.index];
+      target = {
+        x: base.x + (point.x - drag.start.x),
+        y: base.y + (point.y - drag.start.y),
       };
-      let closest = 1;
+      points = moveWireVertex(drag.vertices, drag.index, target);
+    } else {
+      const { cross, vertices, segment } = drag;
+      const a = vertices[segment.start];
+      const b = vertices[segment.end];
+      const delta = point[cross] - drag.start[cross];
+      let coordinate = a[cross] + delta;
+      drag.guide = null;
+      if (delta && !event.altKey) {
+        drag.alignment ??= segmentAlignment(project(), item, vertices, segment);
+        drag.guide = nearestAlignment(drag.alignment, coordinate, options.getView().zoom);
+        coordinate = drag.guide?.coordinate ?? coordinate;
+      }
+      target = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, [cross]: coordinate };
+      points = moveWireSegmentTo(vertices, segment.start, coordinate);
+      if (!points && coordinate !== a[cross]) drag.guide = null;
+    }
+    drag.previewPoints = points;
+    const preview = points ? { ...item, points } : item;
+    const vertices = wireVertices(preview, project());
+    if (drag.kind === 'bend') {
+      let closest = vertices.length > 2 ? 1 : null;
       for (let i = 2; i < vertices.length - 1; i++)
         if (
           Math.hypot(vertices[i].x - target.x, vertices[i].y - target.y) <
           Math.hypot(vertices[closest].x - target.x, vertices[closest].y - target.y)
         )
           closest = i;
-      state.activeHandle = { kind: 'bend', index: closest };
+      state.activeHandle = closest === null ? null : { kind: 'bend', index: closest };
     } else {
-      const a = state.drag.vertices[state.drag.index],
-        b = state.drag.vertices[state.drag.index + 1];
-      const target =
-        a.y === b.y
-          ? { x: (a.x + b.x) / 2, y: a.y + snap(point.y - state.drag.start.y) }
-          : { x: a.x + snap(point.x - state.drag.start.x), y: (a.y + b.y) / 2 };
       const nearest = nearestWireSegment(vertices, target);
-      state.activeHandle = nearest ? { kind: 'segment', index: nearest.index } : null;
+      const span = nearest && wireSegmentSpan(vertices, nearest.index);
+      state.activeHandle = span ? { kind: 'segment', index: span.start } : null;
     }
     commands.updateGeometry(preview);
     return true;
@@ -145,6 +156,8 @@ export function createGestures(context) {
     if (!state.drag) return false;
     if (event.pointerId !== state.drag.pointerId) return true;
     const old = state.drag;
+    if (old.moved && old.kind !== 'endpoint') commands.pointerMove(event);
+    if (!state.drag) return true;
     state.drag = null;
     commands.releaseCapture(old.pointerId);
     const item = project().wires.find((candidate) => candidate.id === old.wireId);

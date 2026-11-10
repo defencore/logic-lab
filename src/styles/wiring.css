@@ -56,6 +56,15 @@
   opacity: 0.65;
 }
 
+.wire-alignment-guide {
+  fill: none;
+  stroke: #087e84;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
 .wire-net-halo,
 .wire-net-trace {
   display: none;

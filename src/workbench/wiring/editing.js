@@ -1,8 +1,10 @@
 import { $ } from '../../shared/ui.js';
 import { checkConnection } from '../../circuits/connections.js';
 import {
+  GRID,
   wireVertices,
   nearestWireSegment,
+  wireSegmentSpan,
   moveWireVertex,
   moveWireSegment,
   insertWirePoint,
@@ -35,7 +37,8 @@ export function createEditing(context) {
       const vertices = wireVertices(item, project());
       if (kind === 'segment') {
         const nearest = nearestWireSegment(vertices, target);
-        state.activeHandle = nearest ? { kind: 'segment', index: nearest.index } : null;
+        const span = nearest && wireSegmentSpan(vertices, nearest.index);
+        state.activeHandle = span ? { kind: 'segment', index: span.start } : null;
       } else {
         const index = vertices.findIndex(
           (point) => Math.hypot(point.x - target.x, point.y - target.y) < 0.01,
@@ -167,7 +170,7 @@ export function createEditing(context) {
       !state.activeHandle
     )
       return false;
-    const amount = event.shiftKey ? 100 : 20;
+    const amount = event.shiftKey ? GRID : 1;
     const dx = event.key === 'ArrowLeft' ? -amount : event.key === 'ArrowRight' ? amount : 0;
     const dy = event.key === 'ArrowUp' ? -amount : event.key === 'ArrowDown' ? amount : 0;
     const vertices = wireVertices(wire(), project());
@@ -180,19 +183,16 @@ export function createEditing(context) {
           { x: point.x + dx, y: point.y + dy },
         );
     } else if (state.activeHandle.kind === 'segment') {
-      const a = vertices[state.activeHandle.index],
-        b = vertices[state.activeHandle.index + 1];
-      if (a && b) {
+      const span = wireSegmentSpan(vertices, state.activeHandle.index);
+      if (span) {
+        const a = vertices[span.start];
+        const b = vertices[span.end];
         const delta = a.y === b.y ? dy : dx;
         const target =
           a.y === b.y
             ? { x: (a.x + b.x) / 2, y: a.y + delta }
             : { x: a.x + delta, y: (a.y + b.y) / 2 };
-        commands.commitPoints(
-          moveWireSegment(vertices, state.activeHandle.index, delta),
-          target,
-          'segment',
-        );
+        commands.commitPoints(moveWireSegment(vertices, span.start, delta), target, 'segment');
       }
     }
     return true;

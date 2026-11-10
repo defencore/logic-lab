@@ -184,14 +184,6 @@ test('moving either a full straight wire or a terminal segment keeps both contac
   assert.equal(moveWireSegment(stepped, -1, 20), null);
 });
 
-test('moving a marked section leaves the following inline section unchanged', () => {
-  const vertices = [point(160, 58), point(220, 58), point(280, 58), point(400, 58)];
-  const moved = edited(vertices, moveWireSegment(vertices, 0, 40));
-  assert.ok(moved.some((p) => p.x < 220 && p.y === 98));
-  assert.ok(moved.some((p) => p.x === 280 && p.y === 58));
-  assert.ok(moved.filter((p) => p.x > 220).every((p) => p.y === 58));
-});
-
 test('a straight marker can be inserted, moved into a detour, and removed', () => {
   const straight = [point(160, 58), point(400, 58)];
   const inserted = edited(straight, insertWirePoint(straight, point(260, 58)));

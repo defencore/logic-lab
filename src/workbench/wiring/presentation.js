@@ -2,6 +2,7 @@ import { $, $$, esc } from '../../shared/ui.js';
 import { icon } from '../../shared/icons.js';
 import {
   wireVertices,
+  wireSegmentSpan,
   wirePath,
   portPoint,
   portDirection,
@@ -49,9 +50,12 @@ export function createPresentation(context) {
       return;
     }
     let markup =
-      project().wireStyle === 'bezier' && !item.points?.length
+      project().wireStyle === 'bezier' && !preview.points?.length
         ? `<path class="wire-edit-plan" d="${vertices.map((point, i) => `${i ? 'L' : 'M'}${point.x},${point.y}`).join(' ')}"/>`
         : '';
+    const guide = state.drag?.guide;
+    if (guide)
+      markup += `<path class="wire-alignment-guide" d="M${guide.from.x},${guide.from.y} L${guide.to.x},${guide.to.y}"/>`;
     markup += vertices
       .slice(1, -1)
       .map((point, offset) =>
@@ -63,15 +67,28 @@ export function createPresentation(context) {
         ),
       )
       .join('');
+    const zoom = options.getView().zoom;
     for (let i = 0; i < vertices.length - 1; i++) {
-      const a = vertices[i],
-        b = vertices[i + 1];
-      if (Math.hypot(b.x - a.x, b.y - a.y) * options.getView().zoom < 24) continue;
+      const span = wireSegmentSpan(vertices, i);
+      if (!span) continue;
+      i = span.end - 1;
+      // Leave room for any point handles still on this straight section.
+      let longest = 0;
+      let center;
+      for (let index = span.start; index < span.end; index++) {
+        const a = vertices[index];
+        const b = vertices[index + 1];
+        const length = Math.hypot(b.x - a.x, b.y - a.y);
+        if (length <= longest) continue;
+        longest = length;
+        center = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      }
+      if (longest * zoom < 24) continue;
       markup += commands.marker(
-        { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+        center,
         'segment',
-        i,
-        state.activeHandle?.kind === 'segment' && state.activeHandle.index === i,
+        span.start,
+        state.activeHandle?.kind === 'segment' && state.activeHandle.index === span.start,
       );
     }
     markup += commands.marker(vertices[0], 'endpoint', 'out', state.action?.side === 'out');

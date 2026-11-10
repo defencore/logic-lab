@@ -30,7 +30,7 @@ The application is written as JavaScript modules. The build bundles Three.js and
 A new browser starts with the **Half adder** experiment, its two input switches, and visible sum/carry outputs. Open **Examples** to explore another laboratory, or choose **New empty circuit** there to begin without a template. A valid saved local circuit takes precedence over this first-run example.
 
 - Search or filter the component library and add a component to the canvas.
-- Drag components to reposition them. The grid helps align the circuit.
+- Drag components to reposition them. The grid helps align the circuit. Connected wires follow the contacts, and moving both ends together carries the saved route with them.
 - Click an output pin, then an input pin, to connect them. Choose orthogonal or curved routing. Each digital pin and wire carries one bit. Connect labeled lines such as A0…A7 individually and keep matching bit numbers together; bit 0 is the least significant bit.
 - The LED matrix has its eight row contacts vertically down the left edge and eight column contacts horizontally along the bottom. Numbered contacts line up with the corresponding pixel rows and columns; each remains an independently connectable bit. This keeps the matrix compact without combining its contacts into buses.
 - Select a component to edit its label, parameters, and enabled state in the inspector. Disabled components release their outputs to high impedance.
@@ -40,9 +40,9 @@ A new browser starts with the **Half adder** experiment, its two input switches,
 
 ### Edit wires and trace connections
 
-Select a wire in **Select** mode to highlight its full electrical net and show route handles. Drag the line or a circular midpoint handle to slide a segment perpendicular to itself. Drag a diamond bend handle to reshape its corner. The source and destination stay attached. Handles keep a usable screen size while the circuit zoom changes.
+Select a wire in **Select** mode to highlight its full electrical net and show route handles. Drag the line or its circular handle to slide the entire straight section perpendicular to itself. A dashed guide marks alignment with a nearby parallel section. Straightening a section removes redundant points along it. Hold **Alt** while dragging to move freely. Drag a diamond handle to edit an individual point. The source and destination stay attached. Handles keep a usable screen size while the circuit zoom changes.
 
-Use **Add point**, then click the selected line to insert an inline marker or click away from it to create a detour. Select a bend and use arrow keys to nudge it (Shift makes larger steps), or Delete/Backspace to remove just that point. Selected segment handles also support arrow nudging. The wire inspector can restore automatic routing. Every completed edit is one Undo step; Escape, pointer cancellation, and losing focus discard an unfinished drag.
+Use **Add point**, then click the selected line to insert an inline marker or click away from it to create a detour. Drag a bend freely or use the arrow keys for fine adjustments to a selected bend or segment. Hold Shift with an arrow key to move one grid step. Delete/Backspace removes a selected bend. The wire inspector can restore automatic routing. Every completed edit is one Undo step; Escape, pointer cancellation, and losing focus discard an unfinished drag.
 
 Drag an endpoint handle to a compatible pin, or click the endpoint and then choose a pin. Reconnection preserves the wire identity and validates direction, analog/digital type, and duplicate links. Dropping on an incompatible target leaves the original connection unchanged. Delete during a reconnect/add action cancels that action rather than removing the wire; the inspector has an explicit **Remove connection** action.
 

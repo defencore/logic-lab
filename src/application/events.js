@@ -3,10 +3,11 @@ import { fileErrorMessage } from '../classroom/file-error-messages.js';
 import { FileImportError } from '../shared/file-errors.js';
 import { protectUnsavedKeys } from './unload-guard.js';
 import { parseProject, saveProject } from '../circuits/project.js';
+import { GRID } from '../circuits/geometry/index.js';
 import { $ } from '../shared/ui.js';
 import { panBy, ZOOM_IN_FACTOR, ZOOM_OUT_FACTOR } from '../circuits/viewport.js';
 import { trapFocus } from '../workbench/dialogs.js';
-import { boundCoordinate } from './model.js';
+import { applyNodeMovement, prepareNodeMovement } from './node-movement.js';
 import { focusContact, contactEndpoint } from '../workbench/contact-interaction.js';
 export function bindApplicationEvents(context) {
   const { state, services, actions, t } = context;
@@ -138,6 +139,7 @@ export function bindApplicationEvents(context) {
     if (e.key.toLowerCase() === 't') actions.setTool('trace');
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
       e.preventDefault();
+      if (state.gesture?.kind === 'nodes') return;
       const dx = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
       const dy = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0;
       if (!state.selected.size || state.tool === 'pan' || state.spaceHeld || state.shiftHeld) {
@@ -149,10 +151,7 @@ export function bindApplicationEvents(context) {
       }
       if (services.classroom && !services.classroom.allowEdit()) return;
       actions.checkpoint();
-      for (const n of state.project.nodes.filter((n) => state.selected.has(n.id))) {
-        n.x = boundCoordinate(n.x + dx * 20);
-        n.y = boundCoordinate(n.y + dy * 20);
-      }
+      applyNodeMovement(prepareNodeMovement(state.project, state.selected), dx * GRID, dy * GRID);
       actions.changed();
     }
   });

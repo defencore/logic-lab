@@ -7,7 +7,7 @@ export const wiring = {
   wireAddBend: 'Add point',
   wireRemoveBend: 'Remove point',
   wireBend: 'Bend: drag or use arrow keys; Delete removes this point',
-  wireSegment: 'Segment: drag perpendicular to the line',
+  wireSegment: 'Segment: drag perpendicular to the line. Hold Alt to disable snapping.',
   wireEndpoint: 'Endpoint: drag or click, then choose another pin',
   wireAddHint: 'Choose a place on the canvas for the point. Escape cancels.',
   wireReconnectHint: 'Choose a compatible pin for this endpoint. Escape cancels.',
@@ -16,5 +16,5 @@ export const wiring = {
   wireAutoRoute: 'Reset to automatic route',
   wireDuplicate: 'These contacts are already connected.',
   wireEditHint:
-    'Drag a segment or bend on the canvas. Arrow keys nudge the selected handle; Delete removes a selected bend. Escape cancels the current edit.',
+    'Drag a segment or bend on the canvas. Segments snap to nearby parallel lines. Hold Alt to move a segment freely. Arrow keys make fine adjustments; Shift + arrow moves one grid step. Delete removes a selected bend. Escape cancels the current edit.',
 };

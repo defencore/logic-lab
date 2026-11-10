@@ -8,7 +8,7 @@ import {
   snap,
 } from '../circuits/geometry/index.js';
 import { panBy } from '../circuits/viewport.js';
-import { boundCoordinate } from './model.js';
+import { applyNodeMovement, prepareNodeMovement } from './node-movement.js';
 export function createGestures(context) {
   const { state, services, actions } = context;
   function nodePointerDown(e) {
@@ -36,15 +36,24 @@ export function createGestures(context) {
       kind: 'nodes',
       pointerId: e.pointerId,
       start: point,
-      origins: state.project.nodes
-        .filter((n) => state.selected.has(n.id))
-        .map((n) => ({ id: n.id, x: n.x, y: n.y })),
+      movement: prepareNodeMovement(state.project, state.selected),
       snapshot: actions.snapshot(),
+      dx: 0,
+      dy: 0,
       moved: false,
     };
   }
+  function finishNodeMovement() {
+    if (state.gesture?.kind !== 'nodes' || !state.gesture.moved) return;
+    state.undoStack.push(state.gesture.snapshot);
+    if (state.undoStack.length > 80) state.undoStack.shift();
+    state.redoStack = [];
+    actions.updateHistoryControls();
+    actions.persist();
+  }
   function cancelGesture() {
     services.wiring?.cancelGesture();
+    finishNodeMovement();
     if (
       state.gesture?.kind === 'pan' &&
       $('#viewport')?.hasPointerCapture(state.gesture.pointerId)
@@ -107,28 +116,23 @@ export function createGestures(context) {
       return;
     }
     if (state.gesture.kind === 'nodes') {
+      const gesture = state.gesture;
       const p = actions.worldPoint(e),
-        dx = snap(p.x - state.gesture.start.x),
-        dy = snap(p.y - state.gesture.start.y);
-      if (!dx && !dy && !state.gesture.moved) return;
-      if (!state.gesture.moved) {
-        state.undoStack.push(state.gesture.snapshot);
-        state.redoStack = [];
-        state.gesture.moved = true;
+        dx = snap(p.x - gesture.start.x),
+        dy = snap(p.y - gesture.start.y);
+      if (dx === gesture.dx && dy === gesture.dy) return;
+      gesture.dx = dx;
+      gesture.dy = dy;
+      gesture.moved = applyNodeMovement(gesture.movement, dx, dy);
+      for (const { node } of gesture.movement.nodes) {
+        const el = $(`[data-node="${node.id}"].circuit-node`);
+        el.style.left = `${node.x}px`;
+        el.style.top = `${node.y}px`;
       }
-      for (const old of state.gesture.origins) {
-        const n = state.project.nodes.find((n) => n.id === old.id);
-        n.x = boundCoordinate(old.x + dx);
-        n.y = boundCoordinate(old.y + dy);
-        const el = $(`[data-node="${n.id}"].circuit-node`);
-        el.style.left = `${n.x}px`;
-        el.style.top = `${n.y}px`;
+      for (const { wire } of gesture.movement.wires) {
+        const d = wirePath(wire, state.project);
+        $$(`[data-wire="${wire.id}"] path`).forEach((path) => path.setAttribute('d', d));
       }
-      for (const w of state.project.wires) {
-        const d = wirePath(w, state.project);
-        $$(`[data-wire="${w.id}"] path`).forEach((path) => path.setAttribute('d', d));
-      }
-      services.wiring.refresh();
       return;
     }
     if (state.gesture.kind === 'marquee') {
@@ -182,7 +186,7 @@ export function createGestures(context) {
       $('#marquee')?.remove();
       actions.selectionChanged();
     }
-    if (state.gesture.kind === 'nodes' && state.gesture.moved) actions.persist();
+    finishNodeMovement();
     if (state.gesture.kind === 'pan') {
       actions.persist();
       if ($('#viewport').hasPointerCapture(e.pointerId))

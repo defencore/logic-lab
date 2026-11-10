@@ -27,22 +27,44 @@ export function nearestWireSegment(vertices, target) {
   return nearest;
 }
 
+export function wireSegmentSpan(vertices, index) {
+  const a = vertices[index],
+    b = vertices[index + 1];
+  if (!a || !b || equal(a, b)) return null;
+  const along = axisOf(a, b),
+    across = crossAxis(along);
+  const direction = Math.sign(b[along] - a[along]);
+  let start = index,
+    end = index + 1;
+  while (
+    vertices[start - 1]?.[across] === a[across] &&
+    Math.sign(vertices[start][along] - vertices[start - 1][along]) === direction
+  )
+    start--;
+  while (
+    vertices[end + 1]?.[across] === a[across] &&
+    Math.sign(vertices[end + 1][along] - vertices[end][along]) === direction
+  )
+    end++;
+  return { start, end };
+}
+
 function terminalDirection(pin, neighbor) {
   return { x: Math.sign(neighbor.x - pin.x), y: Math.sign(neighbor.y - pin.y) };
 }
 
-function editPoints(original, updated) {
+function editPoints(original, updated, straightMarker = null) {
   if (updated.some((point) => !finitePoint(point))) return null;
-  const canonical = orthogonalVertices(
-    original[0],
-    original.at(-1),
-    compact(updated, true).slice(1, -1),
-    null,
-    {
-      start: terminalDirection(original[0], original[1]),
-      end: terminalDirection(original.at(-1), original.at(-2)),
-    },
-  );
+  const start = original[0],
+    end = original.at(-1);
+  const directions = {
+    start: terminalDirection(start, original[1]),
+    end: terminalDirection(end, original.at(-2)),
+  };
+  const requested = compact(updated, true).slice(1, -1);
+  let canonical = orthogonalVertices(start, end, requested, null, directions);
+  if (straightMarker && !requested.length && canonical.length > 2)
+    canonical = orthogonalVertices(start, end, [straightMarker], null, directions);
   const points = canonical.slice(1, -1);
   if (
     points.length > MAX_POINTS ||
@@ -57,33 +79,60 @@ function editPoints(original, updated) {
   return points;
 }
 
-// A segment moves perpendicular to itself; attached pins and the other sections stay fixed.
+function neighboringAnchor(vertices, index, step, across) {
+  const neighbor = vertices[index + step];
+  if (!neighbor || neighbor[across] === vertices[index][across]) return index;
+  const arm = wireSegmentSpan(vertices, Math.min(index, index + step));
+  return step < 0 ? arm.start : arm.end;
+}
+
 export function moveWireSegment(vertices, index, delta) {
   const a = vertices[index],
     b = vertices[index + 1];
-  if (!a || !b || !Number.isFinite(delta) || delta === 0) return null;
+  if (!a || !b || !Number.isFinite(delta)) return null;
+  return moveWireSegmentTo(vertices, index, a[crossAxis(axisOf(a, b))] + delta);
+}
+
+// Move the whole straight span, adjusting only its adjacent arms and pin leads.
+export function moveWireSegmentTo(vertices, index, coordinate) {
+  const span = wireSegmentSpan(vertices, index);
+  if (!span || !Number.isFinite(coordinate)) return null;
+  const { start, end } = span;
+  const a = vertices[start],
+    b = vertices[end];
   const along = axisOf(a, b),
     across = crossAxis(along);
-  const first = index === 0,
-    last = index === vertices.length - 2;
+  coordinate = bounded({ ...a, [across]: coordinate })[across];
+  if (coordinate === a[across]) return null;
   const inset = Math.min(LEAD, Math.abs(b[along] - a[along]) / 3);
   const direction = Math.sign(b[along] - a[along]);
-  const innerA = { ...a, [along]: a[along] + (first ? inset * direction : 0) };
-  const innerB = { ...b, [along]: b[along] - (last ? inset * direction : 0) };
-  const coordinate = bounded({
-    x: a.x + (across === 'x' ? delta : 0),
-    y: a.y + (across === 'y' ? delta : 0),
-  })[across];
-  const keepStart = first || vertices[index - 1]?.[across] === a[across];
-  const keepEnd = last || vertices[index + 2]?.[across] === b[across];
-  return editPoints(vertices, [
-    ...vertices.slice(0, index),
-    ...(keepStart ? [a, innerA] : []),
-    { ...innerA, [across]: coordinate },
-    { ...innerB, [across]: coordinate },
-    ...(keepEnd ? [innerB, b] : []),
-    ...vertices.slice(index + 2),
-  ]);
+  const leading = vertices.slice(0, neighboringAnchor(vertices, start, -1, across) + 1);
+  const trailing = vertices.slice(neighboringAnchor(vertices, end, 1, across));
+  const innerA = { ...a };
+  const innerB = { ...b };
+  if (start === 0) {
+    innerA[along] += inset * direction;
+    leading.push(innerA);
+  }
+  if (end === vertices.length - 1) {
+    innerB[along] -= inset * direction;
+    trailing.unshift(innerB);
+  }
+  const movedA = { ...innerA, [across]: coordinate };
+  const movedB = { ...innerB, [across]: coordinate };
+  if (equal(movedA, movedB)) return null;
+  const joinsStart = equal(leading.at(-1), movedA);
+  const joinsEnd = equal(trailing[0], movedB);
+  const updated = [
+    ...leading,
+    ...(joinsStart ? [] : [movedA]),
+    ...(joinsEnd ? [] : [movedB]),
+    ...trailing,
+  ];
+  const merged = wireSegmentSpan(updated, leading.length - Number(joinsStart));
+  updated.splice(merged.start + 1, merged.end - merged.start - 1);
+  // A short straight connection may need one marker to suppress an automatic detour.
+  return editPoints(vertices, updated, movedA);
 }
 
 function detour(a, b, target) {
