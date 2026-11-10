@@ -2,46 +2,46 @@ const id = 'lcd1602-parallel';
 const steps = {
   en: [
     {
-      title: 'Watch the LCD write two rows',
-      text: 'Choose Run LCD demo above the circuit or on its catalog card. The LCD starts with its display off, then the prepared sequence initializes it and writes LOGIC LAB and PARALLEL LCD through D0…D7. Wait for both rows to appear. Choose Return to my circuit when you are done.',
+      title: 'Prepare the display',
+      text: 'Open the circuit and choose Prepare LCD in the control panel. It sends 0x38, 0x06 and 0x0C over D0–D7 with RS=0. The display is now on and ready for characters. It stays blank until you send text.',
       nodes: ['byte', 'rs', 'enable', 'ground', 'lcd'],
     },
     {
-      title: 'Initialize both rows',
-      text: 'Choose Reset simulation, set RS=0 and leave E released. Select BYTE and open Properties → Parameters → Value. Enter the decimal values 56, 8, 1, 6, 12 in order. For each value, return to the circuit and press then release E once. Keep E low while entering the value. After 12 the display is on and ready for characters.',
+      title: 'Write on both rows',
+      text: 'Select Character and send H, then I. Choose Row 2 and send O, then K. The row button sends command 0xC0. Each send puts a byte on D0–D7 and pulses E. The LCD accepts it as E returns to 0.',
       nodes: ['byte', 'rs', 'enable', 'lcd'],
     },
     {
-      title: 'Write on two rows',
-      text: 'With R/W grounded, RS=1 selects character bytes. Enter 72 and 73 in Value, pulsing E after each, to write HI on the first row. Set RS=0 and send 192 (0xC0) to select row 2. Set RS=1 and send 79 then 75 for OK. The address counter shows where the next character goes.',
-      nodes: ['byte', 'rs', 'enable', 'lcd'],
-    },
-    {
-      title: 'Hide, restore and clear text',
-      text: 'Set RS=0 and send decimal 8 to hide the text, then 12 to reveal it again. Command 2 returns the address and view to their starting positions. Command 1 clears DDRAM. Record your own comparison and observe how the same eight data wires carry each command.',
+      title: 'Hide, show and clear',
+      text: 'Select Command and send 0x08 to hide the text, then 0x0C to show it again. Choose Clear to erase both rows. Compare the address and display after each transfer.',
       nodes: ['rs', 'enable', 'lcd'],
+    },
+    {
+      title: 'Watch the same signals in the demo',
+      text: 'Run the LCD demo, pause it and choose Next demo action. Watch RS, E and the byte in the panel. The text changes when E falls. Return to my circuit restores your own message.',
+      nodes: ['byte', 'rs', 'enable', 'lcd'],
     },
   ],
   ua: [
     {
-      title: 'Подивіться, як LCD записує два рядки',
-      text: 'Натисніть «Запустити демо LCD» над схемою або в каталозі. Екран спочатку вимкнений. Готовий сценарій увімкне його й запише LOGIC LAB та PARALLEL LCD через D0…D7. Дочекайтеся обох рядків. Після перегляду натисніть «Повернутися до своєї схеми».',
+      title: 'Підготуйте дисплей',
+      text: 'Відкрийте схему й натисніть «Підготувати LCD» на панелі керування. Вона передасть 0x38, 0x06 та 0x0C через D0–D7 із RS=0. Екран увімкнеться й залишатиметься порожнім, доки ви не надішлете текст.',
       nodes: ['byte', 'rs', 'enable', 'ground', 'lcd'],
     },
     {
-      title: 'Підготуйте обидва рядки',
-      text: 'Натисніть «Скинути симуляцію», задайте RS=0 і залиште E відпущеною. Оберіть елемент BYTE, відкрийте «Властивості → Параметри → Значення». Введіть десяткові числа 56, 8, 1, 6, 12 по черзі. Після кожного числа поверніться до схеми, натисніть і відпустіть E один раз. Вводьте значення при E=0. Після 12 екран увімкнено й готовий до запису символів.',
-      nodes: ['byte', 'rs', 'enable', 'lcd'],
-    },
-    {
       title: 'Запишіть текст у два рядки',
-      text: 'Земля тримає R/W=0. Із RS=1 введіть у «Значення» 72 і 73, натискаючи й відпускаючи E після кожного числа. У першому рядку з’явиться HI. Задайте RS=0 та надішліть 192 (0xC0) для другого рядка. Знову задайте RS=1 і надішліть 79 та 75 для OK. Лічильник адреси показує місце наступного символу.',
+      text: 'Оберіть «Символ» і передайте H, потім I. Натисніть «Рядок 2» і передайте O, потім K. Кнопка рядка надсилає команду 0xC0. Під час кожного запису байт з’являється на D0–D7, а LCD приймає його, коли E повертається до 0.',
       nodes: ['byte', 'rs', 'enable', 'lcd'],
     },
     {
-      title: 'Приховайте, відновіть і очистіть текст',
-      text: 'Задайте RS=0. Надішліть десяткове 8, щоб приховати текст, потім 12, щоб знову його показати. Команда 2 повертає адресу й вікно на початок. Команда 1 очищає DDRAM. Запишіть власне порівняння та простежте, як ті самі вісім дротів передають кожну команду.',
+      title: 'Приховайте, покажіть і очистіть текст',
+      text: 'Оберіть «Команда» й передайте 0x08, щоб приховати текст, а потім 0x0C, щоб показати його знову. «Очистити» стирає обидва рядки. Порівняйте адресу та екран після кожної передачі.',
       nodes: ['rs', 'enable', 'lcd'],
+    },
+    {
+      title: 'Простежте ті самі сигнали в демо',
+      text: 'Запустіть демо LCD, призупиніть його й оберіть «Наступна дія демо». Стежте за RS, E та байтом на панелі. Текст змінюється на спаді E. Кнопка «Повернутися до своєї схеми» відновить ваше повідомлення.',
+      nodes: ['byte', 'rs', 'enable', 'lcd'],
     },
   ],
 };

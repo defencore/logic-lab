@@ -15,6 +15,10 @@ The byte source connects D0…D7 separately. RS is a toggle, E is a momentary bu
 
 ## Procedure
 
+On the LCD panel, choose **Prepare LCD**, then select **Character** and send `H` and `I`. Choose **Row 2** and send `O` and `K`. The panel drives BYTE and RS and pulses the actual E input. It shows the resulting display and the levels on the circuit. Use **Command** to send a decimal byte or a hexadecimal byte such as `0x08`.
+
+### Trace the physical inputs
+
 Choose **Reset simulation** to clear the LCD and restore its initial 8-bit mode with the display off. Set RS=0 and leave E released. Select **BYTE**, then edit its decimal value in **Properties → Parameters → Value**. Set the value while E=0, then return to the circuit and press and release E once to send that byte. The release is the falling edge, which accepts the transfer.
 
 | RS  | Byte in hex | Decimal | Action                                     |
@@ -53,6 +57,8 @@ Manual transfers show `HI` and `OK`. The replay writes `LOGIC LAB` and `PARALLEL
 - A short command table for initialization, row selection, display off and clear.
 
 ## Українською
+
+На панелі натисніть **«Підготувати LCD»**. Оберіть **«Символ»**, передайте `H` та `I`, натисніть **«Рядок 2»** і передайте `O` та `K`. Панель керує джерелами BYTE, RS і E на схемі. Для передачі команди оберіть **«Команда»** і введіть число або байт у формі `0x08`.
 
 Відкрийте **«LCD 1602: запис повідомлення»** або імпортуйте схему. В інструкції натисніть **«Запустити демо LCD»**. Готовий сценарій увімкне екран і запише `LOGIC LAB` та `PARALLEL LCD`. Дочекайтеся обох рядків і натисніть **«Повернутися до своєї схеми»** на панелі сценарію, щоб повернутися до редагування.
 

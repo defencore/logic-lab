@@ -7,6 +7,7 @@ import { snap } from '../circuits/geometry/index.js';
 import { findNodePlacement, revealNodePlacement } from '../circuits/placement.js';
 import { boundCoordinate, uid } from './model.js';
 import { createSelectionCommands } from './selection-commands.js';
+import { createLcdLabTransmitter } from './lcd-lab.js';
 import { normalizeMomentaryInputs } from './momentary-controller.js';
 import {
   isLatchingInput,
@@ -127,7 +128,7 @@ export function createCommands(context) {
     state.selectedWire = null;
     state.pending = null;
     state.lessonStep = 0;
-    state.lessonOpen = true;
+    state.lessonOpen = next.exampleId !== 'lcd1602-parallel';
     state.highlighted.clear();
     $('#project-name').value = state.project.name;
     actions.changed();
@@ -158,7 +159,7 @@ export function createCommands(context) {
     if (!node || node.enabled === false) return;
     const value = node.params.value ? 0 : 1;
     if (node.type === 'contact_switch') {
-      applyLiveSourceValue(node, value, true);
+      applyLiveSourceValue(node, value);
       services.wiring?.refresh();
       return true;
     }
@@ -167,14 +168,17 @@ export function createCommands(context) {
     actions.changed();
     services.classroom?.inputChanged(node.id, 'value', node.params.value);
   }
-  function applyLiveSourceValue(node, value, checkpoint) {
+  function applyLiveSourceValue(node, value, { checkpoint = true, refresh = true } = {}) {
     if (checkpoint) actions.checkpoint();
     node.params.value = value;
     simulate(state.project, state.runtime, 0);
-    actions.updateSignals();
+    if (refresh) actions.updateSignals();
+    else services.monitor?.capture();
     services.classroom?.inputChanged(node.id, 'value', value);
-    services.classroom?.observeEdit?.();
-    actions.persist();
+    if (refresh) {
+      services.classroom?.observeEdit?.();
+      actions.persist();
+    }
   }
   function setPotentiometer(id, value, { checkpoint = true } = {}) {
     const node = state.project.nodes.find(
@@ -188,7 +192,7 @@ export function createCommands(context) {
       (services.classroom && !services.classroom.allowInput())
     )
       return false;
-    applyLiveSourceValue(node, value, checkpoint);
+    applyLiveSourceValue(node, value, { checkpoint });
     return true;
   }
   return {
@@ -204,6 +208,13 @@ export function createCommands(context) {
     resetSimulation,
     toggleSource,
     setPotentiometer,
+    sendLcdLabBytes: createLcdLabTransmitter({
+      state,
+      services,
+      actions,
+      writeValue: (node, value) =>
+        applyLiveSourceValue(node, value, { checkpoint: false, refresh: false }),
+    }),
     setMomentarySource: (id, value) =>
       value === 1 ? !!services.buttons?.press(id) : value === 0 && !!services.buttons?.release(id),
     setKeypadKey: (id, index, value) => {

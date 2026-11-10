@@ -10,6 +10,8 @@ export function syncPlaybackControls(state, language) {
   if (demo) demo.disabled = active || state.recording || state.busy;
   const speed = $('.global-speed');
   if (speed) speed.hidden = state.reviewMode === 'demo';
+  const badge = $('#simulation-badge');
+  if (badge) badge.hidden = state.reviewMode === 'demo';
   const L = (ua, en) => (language === 'ua' ? ua : en);
   for (const selector of ['#step', '#reset', '#motion-reset']) {
     const element = $(selector);

@@ -29,7 +29,7 @@ export function createApplicationModel() {
     runtime: null,
     running: true,
     inspectorTab: 'properties',
-    lessonOpen: true,
+    lessonOpen: project.exampleId !== 'lcd1602-parallel',
     compactLessonOpen: false,
     workspaceView: 'canvas',
     compactLayout: window.matchMedia('(max-width: 1200px), (max-height: 720px)'),

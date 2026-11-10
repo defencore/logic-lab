@@ -49,12 +49,17 @@ export function createSequenceController({
         `${cleanName(state.sequence.initialProject.name)}.actions.json`,
       ),
     );
-    if ($('#class-preset'))
-      $('#class-preset').onclick = safe(() => {
-        guardEditableSession();
-        session.setSequence(exampleSequence(adapter.getExample()));
-        refreshVisible();
-      });
+    const preset = $('#class-preset');
+    if (preset) {
+      const example = adapter.getExample();
+      preset.onclick = example.demoLabel
+        ? () => playExample(example)
+        : safe(() => {
+            guardEditableSession();
+            session.setSequence(exampleSequence(example));
+            refreshVisible();
+          });
+    }
   }
   const playExample = safe((example) => {
     guardEditableSession();

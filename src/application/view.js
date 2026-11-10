@@ -101,6 +101,7 @@ export function createView(context) {
     services.board.updateSignals();
     services.learning.updateGuideSignals();
     services.learning.updateLessonSignals();
+    services.lcdLab?.update();
     services.scenes?.update();
     $('#sim-time').textContent = (state.runtime.time || 0).toFixed(3);
     services.monitor.capture?.();

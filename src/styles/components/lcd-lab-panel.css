@@ -1,0 +1,137 @@
+#lcd-lab-panel {
+  flex: none;
+  min-width: 0;
+  padding: 8px 12px;
+  background: #f4f7f1;
+  border-bottom: 1px solid var(--border);
+}
+
+.lcd-lab-card {
+  display: grid;
+  grid-template-columns: minmax(205px, 270px) minmax(0, 1fr);
+  gap: 10px 16px;
+  align-items: start;
+  min-width: 0;
+  max-width: 920px;
+}
+
+.lcd-lab-preview,
+.lcd-lab-controls {
+  min-width: 0;
+}
+
+.lcd-lab-preview h2 {
+  margin: 0 0 5px;
+  color: #244339;
+  font-size: 13px;
+}
+
+.lcd-lab-pins {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  margin-top: 4px;
+  color: #405566;
+  font:
+    10px/1.4 ui-monospace,
+    SFMono-Regular,
+    monospace;
+}
+
+.lcd-lab-controls p {
+  margin: 0 0 5px;
+  color: #405566;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.lcd-lab-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 6px;
+}
+
+.lcd-lab-form label {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  font-size: 11px;
+}
+
+.lcd-lab-form :is(input, select) {
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  padding: 3px 6px;
+  font-size: 12px;
+}
+
+.lcd-lab-form [aria-invalid='true'] {
+  border-color: #ad4226;
+}
+
+.lcd-lab-form button,
+.lcd-lab-quick button {
+  min-height: 32px;
+  min-width: 0;
+  justify-content: center;
+  padding: 4px 7px;
+  font-size: 11px;
+}
+
+.lcd-lab-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.lcd-lab-controls .lcd-lab-feedback {
+  margin: 5px 0 0;
+  color: #21563b;
+}
+
+.lcd-lab-feedback[data-error='true'] {
+  color: #8b3e22;
+}
+
+@media (max-width: 1200px), (max-height: 720px) {
+  .main:is([data-workspace-view='inspector'], [data-workspace-view='signals']) #lcd-lab-panel {
+    display: none;
+  }
+}
+
+@media (max-width: 780px) {
+  .lcd-lab-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .lcd-lab-preview .lcd1602-widget {
+    max-width: 310px;
+  }
+}
+
+@media (max-width: 440px) {
+  #lcd-lab-panel {
+    padding: 6px 8px;
+  }
+
+  .lcd-lab-form {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr) minmax(0, 0.85fr);
+    gap: 4px;
+  }
+
+  .lcd-lab-form :is(input, select, button),
+  .lcd-lab-quick button {
+    font-size: 11px;
+    padding-inline: 4px;
+  }
+
+  .lcd-lab-quick {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+}

@@ -2,6 +2,7 @@ import { simulate } from '../simulation/index.js';
 import { EXAMPLES } from '../../examples/index.js';
 import { $ } from '../shared/ui.js';
 import { dimensions } from '../circuits/geometry/index.js';
+import { createLcdLabPanel } from '../workbench/lcd-lab-panel.js';
 import { createSignalMonitor } from '../workbench/signal-monitor.js';
 import { createWiringEditor } from '../workbench/wiring/index.js';
 import { createBoardController } from '../workbench/board-controller.js';
@@ -71,6 +72,7 @@ export function composeWorkbench(context) {
       }
     },
   });
+  services.lcdLab = createLcdLabPanel(state, { send: actions.sendLcdLabBytes });
   services.learning = createLearningController(state, {
     t,
     title,

@@ -74,6 +74,7 @@ export function createClassroomView({ state, language, project, example }) {
                   : L('Продовжити демо', 'Resume demo'),
               )
         }
+        ${player && !playbackRunning && !completed ? button('action-next', L('Наступна дія демо', 'Next demo action')) : ''}
         ${button('action-stop', L('Повернутися до своєї схеми', 'Return to my circuit'))}</div>`;
     }
     if (state.reviewMode) {
@@ -112,9 +113,12 @@ export function createClassroomView({ state, language, project, example }) {
   }
 
   function sequencePanel() {
-    const preset = adapter.getExample()?.actionPreset;
+    const example = adapter.getExample();
+    const presetLabel =
+      example?.demoLabel?.[language] ||
+      L('Навчальний сценарій прикладу', 'Example action sequence');
     const work = sequence && !recording ? sequenceWork(sequence) : null;
-    return `<section class="classroom-section"><h3>${L('Запис і відтворення входів', 'Record and replay inputs')}</h3>${previousWarning}<p>${esc(recordingInputHint(project, language))}</p>${work ? `<p class="classroom-hint" role="status">${esc(workLimitMessage(work, language))}</p>` : ''}<div class="classroom-actions">${button('class-record', recording ? L('Завершити запис', 'Finish recording') : L('Записати дії', 'Record actions'), !!player || !!state.preview || busy, true)}${button('class-replay', reviewRestartLabel || (previous || completed ? replayLabel : L('Відтворити на схемі', 'Replay on canvas')), replayDisabled)}${button('class-next', L('Наступна записана дія', 'Next recorded action'), nextDisabled)}${button('class-sequence-import', L('Відкрити сценарій', 'Open sequence'), isLocked())}${button('class-sequence-export', L('Зберегти сценарій', 'Save sequence'), !sequence || recording || !!state.preview || busy)}${button('class-sequence-trim', L('Скоротити запис', 'Shorten recording'), !sequence || isLocked())}${work?.requiresVerification && !work.verified ? button('class-sequence-verify', L('Перевірити запис', 'Verify recording'), !sequence || isLocked()) : ''}${preset ? button('class-preset', L('Навчальний сценарій прикладу', 'Example action sequence'), isLocked()) : ''}</div>${actionTable()}</section>`;
+    return `<section class="classroom-section"><h3>${L('Запис і відтворення входів', 'Record and replay inputs')}</h3>${previousWarning}<p>${esc(recordingInputHint(project, language))}</p>${work ? `<p class="classroom-hint" role="status">${esc(workLimitMessage(work, language))}</p>` : ''}<div class="classroom-actions">${button('class-record', recording ? L('Завершити запис', 'Finish recording') : L('Записати дії', 'Record actions'), !!player || !!state.preview || busy, true)}${button('class-replay', reviewRestartLabel || (previous || completed ? replayLabel : L('Відтворити на схемі', 'Replay on canvas')), replayDisabled)}${button('class-next', L('Наступна записана дія', 'Next recorded action'), nextDisabled)}${button('class-sequence-import', L('Відкрити сценарій', 'Open sequence'), isLocked())}${button('class-sequence-export', L('Зберегти сценарій', 'Save sequence'), !sequence || recording || !!state.preview || busy)}${button('class-sequence-trim', L('Скоротити запис', 'Shorten recording'), !sequence || isLocked())}${work?.requiresVerification && !work.verified ? button('class-sequence-verify', L('Перевірити запис', 'Verify recording'), !sequence || isLocked()) : ''}${example?.actionPreset ? button('class-preset', presetLabel, isLocked()) : ''}</div>${actionTable()}</section>`;
   }
 
   function possibleProbes() {
