@@ -164,7 +164,11 @@
   pointer-events: none;
 }
 .connection-status {
-  flex: 1 0 100%;
+  position: absolute;
+  z-index: 8;
+  inset: auto auto 58px 8px;
+  width: fit-content;
+  max-width: calc(100% - 16px);
   margin: 0;
   padding: 6px 8px;
   background: #edf8ee;
@@ -172,4 +176,5 @@
   border-radius: 5px;
   color: #174c2d;
   font-size: var(--text-xs);
+  pointer-events: none;
 }
