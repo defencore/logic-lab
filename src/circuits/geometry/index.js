@@ -7,7 +7,13 @@ export {
   portDirection,
   portPoint,
 } from './placement.js';
-export { wireVertices, wirePath, route } from './routing.js';
+export {
+  wireVertices,
+  wirePath,
+  route,
+  refreshWireRoutes,
+  usesAutomaticRouting,
+} from './routing.js';
 export { translateWirePoints } from './route-translation.js';
 export {
   nearestWireSegment,

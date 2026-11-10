@@ -41,6 +41,12 @@ export function createInspectorController(state, actions) {
     renderInspectorContent();
     state.wiring?.decorateInspector();
   }
+  function updateRoutingControls(locked = !!state.classroom?.isLocked()) {
+    const routing = $('#routing');
+    const automatic = $('#auto-routing');
+    if (routing) routing.disabled = locked;
+    if (automatic) automatic.disabled = locked || state.project.wireStyle === 'bezier';
+  }
   function renderInspectorContent() {
     const el = $('#inspector-content');
     const key = `${[...state.selected].join(',')}|${state.selectedWire}|${state.inspectorTab}`;
@@ -63,13 +69,25 @@ export function createInspectorController(state, actions) {
       return;
     }
     if (!state.selected.size) {
-      el.innerHTML = `<div class="inspector-empty"><span class="empty-icon">${icon('mouse', 29)}</span><h3>${t('nothing')}</h3><p>${t('nothingDesc')}</p></div><div class="workspace-settings"><h4>${t('view')}</h4><label>${t('wireStyle')}<select id="routing"><option value="orthogonal">${t('orthogonal')}</option><option value="bezier" ${state.project.wireStyle === 'bezier' ? 'selected' : ''}>${t('bezier')}</option></select></label><div class="signal-legend"><span><i class="dot green"></i>${t('one')}</span><span><i class="dot gray"></i>${t('zero')}</span><span><i class="dot amber"></i>${t('unknown')}</span><span><i class="dot dashed"></i>${t('floating')}</span></div></div>`;
-      $('#routing').disabled = !!state.classroom?.isLocked();
+      const curved = state.project.wireStyle === 'bezier';
+      el.innerHTML = `<div class="inspector-empty"><span class="empty-icon">${icon('mouse', 29)}</span><h3>${t('nothing')}</h3><p>${t('nothingDesc')}</p></div><div class="workspace-settings"><h4>${t('view')}</h4><label>${t('wireStyle')}<select id="routing"><option value="orthogonal">${t('orthogonal')}</option><option value="bezier" ${curved ? 'selected' : ''}>${t('bezier')}</option></select></label><label class="toggle-row">${t('automaticRouting')}<input id="auto-routing" class="toggle-input" type="checkbox" aria-describedby="auto-routing-help" ${state.project.autoRouting !== false ? 'checked' : ''}></label><p id="auto-routing-help" class="parameter-help">${t('automaticRoutingHelp')}</p><div class="signal-legend"><span><i class="dot green"></i>${t('one')}</span><span><i class="dot gray"></i>${t('zero')}</span><span><i class="dot amber"></i>${t('unknown')}</span><span><i class="dot dashed"></i>${t('floating')}</span></div></div>`;
+      updateRoutingControls();
       $('#routing').onchange = (e) => {
         if (state.classroom && !state.classroom.allowEdit()) return;
         checkpoint();
         state.project.wireStyle = e.target.value;
         changed();
+      };
+      const automatic = $('#auto-routing');
+      automatic.onchange = () => {
+        if (state.classroom && !state.classroom.allowEdit()) {
+          automatic.checked = state.project.autoRouting !== false;
+          return;
+        }
+        checkpoint();
+        state.project.autoRouting = automatic.checked;
+        changed();
+        $('#auto-routing')?.focus({ preventScroll: true });
       };
       return;
     }
@@ -204,5 +222,5 @@ export function createInspectorController(state, actions) {
     );
   }
 
-  return { render: renderInspector, updateSignals: updateInspectorSignals };
+  return { render: renderInspector, updateSignals: updateInspectorSignals, updateRoutingControls };
 }

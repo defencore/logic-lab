@@ -23,6 +23,21 @@ test('JSON round trip preserves routes, viewport, and circuit state', () => {
   assert.deepEqual(parseProject(serializeProject(project)), project);
 });
 
+test('the optional automatic routing setting accepts and preserves booleans', () => {
+  const project = fixture();
+  assert.equal(Object.hasOwn(parseProject(serializeProject(project)), 'autoRouting'), false);
+  for (const autoRouting of [false, true]) {
+    const configured = { ...project, autoRouting };
+    assert.deepEqual(parseProject(serializeProject(configured)), configured);
+  }
+  for (const autoRouting of ['false', 0, null, {}]) {
+    assert.throws(
+      () => parseProject(JSON.stringify({ ...project, autoRouting })),
+      /Automatic routing must be true or false/,
+    );
+  }
+});
+
 test('projects preserve the complete navigation zoom range', () => {
   for (const zoom of [0.01, 0.1, 1, 4]) {
     const project = fixture();

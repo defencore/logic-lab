@@ -1,5 +1,6 @@
 import { getDefinition } from '../../components/catalog/index.js';
-import { snap, portPoint, portDirection } from './placement.js';
+import { dimensions, snap, portPoint, portDirection } from './placement.js';
+import { optimizeWireLayout } from './wire-layout.js';
 import {
   LEAD,
   compact,
@@ -90,11 +91,13 @@ export function orthogonalVertices(
   return compact(vertices, true);
 }
 
-function wireEndpoints(wire, project) {
-  const a = project.nodes.find((node) => node.id === wire.from.node);
-  const b = project.nodes.find((node) => node.id === wire.to.node);
+function wireEndpoints(wire, project, nodes) {
+  const nodeFor = (id) => (nodes ? nodes.get(id) : project.nodes.find((node) => node.id === id));
+  const a = nodeFor(wire.from.node);
+  const b = nodeFor(wire.to.node);
   return a && b
     ? {
+        nodes: [a, b],
         points: [portPoint(a, wire.from.port, 'out'), portPoint(b, wire.to.port, 'in')],
         directions: {
           start: portDirection(a, wire.from.port, 'out'),
@@ -104,41 +107,95 @@ function wireEndpoints(wire, project) {
     : null;
 }
 
-function wireLane(wire, project) {
-  for (const [endpoint, side] of [
-    [wire.from, 'outputs'],
-    [wire.to, 'inputs'],
-  ]) {
-    const node = project.nodes.find((candidate) => candidate.id === endpoint.node);
-    const pin = getDefinition(node?.type)?.[side].find((port) => port.id === endpoint.port);
-    if (pin?.group) return pin;
+function groupedPin(node, endpoint, side) {
+  const pin = getDefinition(node.type)?.[side].find((port) => port.id === endpoint.port);
+  return pin?.group ? pin : null;
+}
+
+const layouts = new WeakMap();
+
+export function usesAutomaticRouting(project) {
+  return project.autoRouting !== false && project.wireStyle !== 'bezier';
+}
+
+export function refreshWireRoutes(project) {
+  if (!usesAutomaticRouting(project) || !project.wires.some((wire) => !wire.points?.length)) {
+    layouts.delete(project);
+    return;
   }
-  return null;
+  const geometry = JSON.stringify([
+    project.nodes.map(({ id, type, x, y }) => [id, type, x, y]),
+    project.wires.map(({ id, from, to, points }) => [
+      id,
+      from.node,
+      from.port,
+      to.node,
+      to.port,
+      points,
+    ]),
+  ]);
+  const previous = layouts.get(project);
+  if (
+    previous?.geometry === geometry &&
+    previous.wires.every((wire, index) => wire === project.wires[index])
+  )
+    return;
+  const nodes = new Map(project.nodes.map((node) => [node.id, node]));
+  const bodies = project.nodes
+    .filter((node) => node.type !== 'group')
+    .map((node) => {
+      const { w, h } = dimensions(node);
+      return { node: node.id, left: node.x, top: node.y, right: node.x + w, bottom: node.y + h };
+    });
+  const entries = [];
+  for (const wire of project.wires) {
+    const ends = wireEndpoints(wire, project, nodes);
+    if (!ends) continue;
+    const from = groupedPin(ends.nodes[0], wire.from, 'outputs');
+    const to = groupedPin(ends.nodes[1], wire.to, 'inputs');
+    const bundle =
+      from && to && JSON.stringify([wire.from.node, from.group, wire.to.node, to.group]);
+    const vertices = orthogonalVertices(...ends.points, wire.points, from || to, ends.directions);
+    entries.push({ wire, vertices, bundle, directions: ends.directions });
+  }
+  layouts.set(project, {
+    geometry,
+    wires: [...project.wires],
+    routes: optimizeWireLayout(entries, bodies),
+  });
+}
+
+function baseVertices(wire, ends) {
+  const lane =
+    groupedPin(ends.nodes[0], wire.from, 'outputs') || groupedPin(ends.nodes[1], wire.to, 'inputs');
+  return orthogonalVertices(...ends.points, wire.points, lane, ends.directions);
+}
+
+function resolvedVertices(wire, project, ends) {
+  if (!wire.points?.length && usesAutomaticRouting(project)) {
+    const planned = layouts.get(project)?.routes.get(wire);
+    // While a component is being dragged, the plan still describes its original position.
+    if (planned && equal(planned[0], ends.points[0]) && equal(planned.at(-1), ends.points[1]))
+      return planned;
+  }
+  return baseVertices(wire, ends);
 }
 
 export function wireVertices(wire, project) {
   const ends = wireEndpoints(wire, project);
-  return ends
-    ? orthogonalVertices(
-        ...ends.points,
-        wire.points || [],
-        wireLane(wire, project),
-        ends.directions,
-      )
-    : [];
+  return ends ? resolvedVertices(wire, project, ends) : [];
 }
 
 export function wirePath(wire, project) {
   const ends = wireEndpoints(wire, project);
-  return ends
-    ? route(
-        ...ends.points,
-        wire.points,
-        project.wireStyle,
-        wireLane(wire, project),
-        ends.directions,
-      )
-    : '';
+  if (!ends) return '';
+  if (project.wireStyle === 'bezier' && !wire.points?.length)
+    return route(...ends.points, [], 'bezier', null, ends.directions);
+  return pathFromVertices(resolvedVertices(wire, project, ends));
+}
+
+function pathFromVertices(vertices) {
+  return vertices.map((point, index) => `${index ? 'L' : 'M'}${point.x},${point.y}`).join(' ');
 }
 
 export function route(
@@ -155,7 +212,5 @@ export function route(
     const last = offsetPoint(b, directions.end, distance);
     return `M${a.x},${a.y}C${first.x},${first.y} ${last.x},${last.y} ${b.x},${b.y}`;
   }
-  return orthogonalVertices(a, b, points, lane, directions)
-    .map((point, index) => `${index ? 'L' : 'M'}${point.x},${point.y}`)
-    .join(' ');
+  return pathFromVertices(orthogonalVertices(a, b, points, lane, directions));
 }

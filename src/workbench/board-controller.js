@@ -5,7 +5,12 @@ import { updateLcd1602Node } from './lcd1602-node.js';
 import { bindPeripheralInput, updatePeripheralInput } from './peripheral-input-nodes.js';
 import { getDefinition } from '../components/catalog/index.js';
 import { $, $$, esc, format, safeColor, signalClass } from '../shared/ui.js';
-import { dimensions, wirePath } from '../circuits/geometry/index.js';
+import {
+  dimensions,
+  refreshWireRoutes,
+  usesAutomaticRouting,
+  wirePath,
+} from '../circuits/geometry/index.js';
 import { componentPins } from '../components/pins.js';
 import { getSceneEntries, getSceneSnapshot, sceneHealth } from '../scenes/data/scenarios.js';
 import { SCENARIO_TYPES } from '../scenes/models/scenarios/index.js';
@@ -75,11 +80,12 @@ export function createBoardController(
         return `<div class="circuit-node ${state.selected.has(n.id) ? 'selected' : ''} ${state.highlighted.has(n.id) ? 'lesson-highlight' : ''} ${n.enabled === false ? 'disabled' : ''} type-${n.type}" data-node="${n.id}" style="left:${n.x}px;top:${n.y}px;width:${w}px;height:${h}px;${special ? `--note-color:${safeColor(n.params.color)};` : ''}" role="group" aria-label="${esc(n.label || title(d))}">${componentHeaderMarkup(n, n.label || title(d), t('properties'), special ? '' : d.type.toUpperCase().replaceAll('_', ' '))}${special ? `<div class="note-content">${esc(n.params.text || '')}</div>` : `<div class="node-content">${nodeBody(n, { language: state.lang, t, title })}</div>${componentPins(n, { label: n.label || title(d), inputLabel: t('inputs'), outputLabel: t('outputs') })}`}</div>`;
       })
       .join('');
+    refreshWireRoutes(state.project);
     $('#wires').innerHTML = state.project.wires
-      .map(
-        (w) =>
-          `<g data-wire="${w.id}" class="wire-group ${state.selectedWire === w.id ? 'selected' : ''}"><path class="wire-hit" d="${wirePath(w, state.project)}"/><path class="wire-line" d="${wirePath(w, state.project)}"/><path class="wire-net-halo" d="${wirePath(w, state.project)}"/><path class="wire-net-trace" d="${wirePath(w, state.project)}"/></g>`,
-      )
+      .map((w) => {
+        const path = wirePath(w, state.project);
+        return `<g data-wire="${w.id}" class="wire-group ${state.selectedWire === w.id ? 'selected' : ''}"><path class="wire-hit" d="${path}"/><path class="wire-line" d="${path}"/><path class="wire-net-halo" d="${path}"/><path class="wire-net-trace" d="${path}"/></g>`;
+      })
       .join('');
     $('#empty-hint').hidden = state.project.nodes.length > 0;
     $('.canvas-heading').hidden = state.project.nodes.length > 0;
@@ -124,6 +130,21 @@ export function createBoardController(
     else if (focusedControl) components.restoreFocus(focusedControl);
     labels.restoreAfterRender();
     state.wiring?.refresh();
+  }
+  function updateWireRoutes() {
+    const { project } = state;
+    if (!usesAutomaticRouting(project)) return;
+    refreshWireRoutes(project);
+    const automatic = new Map(
+      project.wires.filter((wire) => !wire.points?.length).map((wire) => [wire.id, wire]),
+    );
+    for (const group of $$('.wire-group', $('#wires'))) {
+      const wire = automatic.get(group.dataset.wire);
+      if (!wire) continue;
+      const path = wirePath(wire, project);
+      if (group.firstElementChild?.getAttribute('d') === path) continue;
+      $$('path', group).forEach((element) => element.setAttribute('d', path));
+    }
   }
   function updateBoardSignals() {
     for (const n of state.project.nodes) {
@@ -289,6 +310,7 @@ export function createBoardController(
 
   return {
     render: renderBoard,
+    updateWireRoutes,
     updateSignals: updateBoardSignals,
     updateCounts,
     restoreComponentFocus: components.returnFocus,

@@ -19,6 +19,7 @@ export function createLearningController(
     showModal,
     closeModal,
     confirmReplace,
+    newProject,
     addNode,
     selectionChanged,
     setWorkspaceView,
@@ -62,8 +63,7 @@ export function createLearningController(
         refresh();
       };
     });
-    $('#empty-project').onclick = () =>
-      confirmReplace(() => ({ version: 1, name: t('newName'), nodes: [], wires: [] }));
+    $('#empty-project').onclick = newProject;
     refresh();
   }
   function showComponentGuide(type, nodeId = null) {

@@ -24,6 +24,9 @@ export function createCommands(context) {
       nodes: [],
       wires: [],
       wireStyle: state.project.wireStyle || 'orthogonal',
+      ...(state.project.autoRouting === undefined
+        ? {}
+        : { autoRouting: state.project.autoRouting }),
     }));
   }
   function addNode(type, point) {

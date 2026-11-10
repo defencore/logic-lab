@@ -30,7 +30,7 @@ The application is written as JavaScript modules. The build bundles Three.js and
 A new browser starts with the **Half adder** experiment, its two input switches, and visible sum/carry outputs. Open **Examples** to explore another laboratory, or choose **New empty circuit** there to begin without a template. A valid saved local circuit takes precedence over this first-run example.
 
 - Search or filter the component library and add a component to the canvas.
-- Drag components to reposition them. The grid helps align the circuit. Connected wires follow the contacts, and moving both ends together carries the saved route with them.
+- Drag components to reposition them. The grid helps align the circuit. After a move, automatic orthogonal wires look for paths around components with fewer crossings. Parallel data wires between grouped contacts can share a corridor with separate lanes. Manually routed wires follow their contacts and retain their distant bends. Moving both ends together carries the saved route with them.
 - Click an output pin, then an input pin, to connect them. Choose orthogonal or curved routing. Each digital pin and wire carries one bit. Connect labeled lines such as A0…A7 individually and keep matching bit numbers together; bit 0 is the least significant bit.
 - The LED matrix has its eight row contacts vertically down the left edge and eight column contacts horizontally along the bottom. Numbered contacts line up with the corresponding pixel rows and columns; each remains an independently connectable bit. This keeps the matrix compact without combining its contacts into buses.
 - Select a component to edit its label, parameters, and enabled state in the inspector. Disabled components release their outputs to high impedance.
@@ -39,6 +39,8 @@ A new browser starts with the **Half adder** experiment, its two input switches,
 - Use the included examples as starting points, including arithmetic, a BCD display, sequential logic, mixed signals, and PWM servo control.
 
 ### Edit wires and trace connections
+
+Use **Inspector → View → Automatic routing** to turn obstacle avoidance and crossing reduction on or off for the circuit. Clear the selection to see **View**. The setting is saved with the circuit and applies to automatic orthogonal wires.
 
 Select a wire in **Select** mode to highlight its full electrical net and show route handles. Drag the line or its circular handle to slide the entire straight section perpendicular to itself. A dashed guide marks alignment with a nearby parallel section. Straightening a section removes redundant points along it. Hold **Alt** while dragging to move freely. Drag a diamond handle to edit an individual point. The source and destination stay attached. Handles keep a usable screen size while the circuit zoom changes.
 

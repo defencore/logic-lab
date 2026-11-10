@@ -47,7 +47,8 @@
   border-bottom: 1px solid var(--border);
 }
 
-.property-section .toggle-row {
+.property-section .toggle-row,
+.workspace-settings .toggle-row {
   display: flex;
   flex-direction: row;
   align-items: center;

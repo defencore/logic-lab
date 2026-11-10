@@ -153,7 +153,9 @@ export function createClassroom(adapter) {
   function updateDock(force = false) {
     state.sequenceVersion = version.refresh();
     dock.updateDock(force);
-    if ($('#project-name')) $('#project-name').disabled = controls.isLocked();
+    const locked = controls.isLocked();
+    if ($('#project-name')) $('#project-name').disabled = locked;
+    adapter.updateRoutingControls?.(locked);
     student.updateProgress();
     syncPlaybackControls(state, adapter.getLanguage());
   }

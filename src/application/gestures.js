@@ -45,6 +45,7 @@ export function createGestures(context) {
   }
   function finishNodeMovement() {
     if (state.gesture?.kind !== 'nodes' || !state.gesture.moved) return;
+    services.board?.updateWireRoutes();
     state.undoStack.push(state.gesture.snapshot);
     if (state.undoStack.length > 80) state.undoStack.shift();
     state.redoStack = [];
@@ -155,7 +156,7 @@ export function createGestures(context) {
     if (services.wiring.pointerUp(e)) return;
     if (state.gesture && state.gesture.pointerId !== e.pointerId) return;
     if (
-      state.gesture?.kind !== 'pan' &&
+      !state.gesture &&
       state.pending &&
       Math.hypot(e.clientX - state.pending.startX, e.clientY - state.pending.startY) > 5
     ) {

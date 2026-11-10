@@ -98,3 +98,28 @@ test('component dragging reroutes incident wires from the original geometry and 
   assert.deepEqual(state.redoStack, []);
   assert.equal(saves, 1);
 });
+
+test('dropping a component cannot complete a pending wire over a contact', (t) => {
+  const elements = withDocument(t);
+  elements.set('#viewport', { classList: { remove() {} } });
+  const pin = { dataset: { node: 'target', pin: 'in', side: 'in' } };
+  document.elementsFromPoint = () => [{ closest: () => pin }];
+  const state = {
+    gesture: { kind: 'nodes', pointerId: 1, moved: false },
+    pending: { startX: 0, startY: 0 },
+  };
+  const completed = [];
+  const gestures = createGestures({
+    state,
+    services: { wiring: { pointerUp: () => false } },
+    actions: { completeWire: (endpoint) => completed.push(endpoint) },
+  });
+  const pointer = { clientX: 60, clientY: 0, pointerId: 1 };
+
+  gestures.onPointerUp(pointer);
+  assert.deepEqual(completed, []);
+  assert.equal(state.gesture, null);
+
+  gestures.onPointerUp(pointer);
+  assert.deepEqual(completed, [{ node: 'target', port: 'in', side: 'in' }]);
+});

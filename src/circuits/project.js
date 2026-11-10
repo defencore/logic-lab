@@ -244,6 +244,10 @@ export function validateProject(value) {
       fail('Wire style must be orthogonal or bezier.');
     result.wireStyle = value.wireStyle;
   }
+  if (own(value, 'autoRouting')) {
+    if (typeof value.autoRouting !== 'boolean') fail('Automatic routing must be true or false.');
+    result.autoRouting = value.autoRouting;
+  }
   if (own(value, 'viewport')) {
     record(value.viewport, 'Viewport');
     const zoom = finite(value.viewport.zoom, 'Zoom', MAX_ZOOM);

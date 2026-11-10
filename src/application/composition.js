@@ -79,6 +79,7 @@ export function composeWorkbench(context) {
     showModal: services.dialogs.open,
     closeModal: services.dialogs.close,
     confirmReplace: actions.confirmReplace,
+    newProject: actions.newProject,
     addNode: actions.addNode,
     selectionChanged: actions.selectionChanged,
     setWorkspaceView: actions.setWorkspaceView,
@@ -212,6 +213,7 @@ export function composeWorkbench(context) {
     showModal: services.dialogs.open,
     closeModal: services.dialogs.close,
     notify: actions.notify,
+    updateRoutingControls: services.inspector.updateRoutingControls,
     setRunning: (next) => {
       if (!next) services.simulationRunner.discard();
       actions.setRunning(next);

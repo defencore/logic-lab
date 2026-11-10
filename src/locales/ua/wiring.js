@@ -1,4 +1,7 @@
 export const wiring = {
+  automaticRouting: 'Автороутинг',
+  automaticRoutingHelp:
+    'Шукає маршрути для ортогональних дротів в обхід корпусів і з меншою кількістю перетинів.',
   netTrace: 'Продзвонювання',
   netTraceTool: 'Продзвонити з’єднання (T)',
   netConnections: 'З’єднані',

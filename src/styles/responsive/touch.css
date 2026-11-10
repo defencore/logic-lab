@@ -26,7 +26,8 @@
     min-height: 40px;
   }
 
-  .property-section .toggle-row {
+  .property-section .toggle-row,
+  .workspace-settings .toggle-row {
     min-height: 40px;
   }
 

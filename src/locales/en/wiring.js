@@ -1,4 +1,6 @@
 export const wiring = {
+  automaticRouting: 'Automatic routing',
+  automaticRoutingHelp: 'Finds orthogonal routes around components with fewer wire crossings.',
   netTrace: 'Continuity',
   netTraceTool: 'Trace connections (T)',
   netConnections: 'Connected',

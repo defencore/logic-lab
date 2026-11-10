@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createCommands } from '../../src/application/commands.js';
+import { createLearningController } from '../../src/workbench/learning-controller.js';
 import { simulationStepText } from '../../src/workbench/simulation-step.js';
 import { shellMarkup } from '../../src/workbench/shell-view.js';
 import { TEXT } from '../../src/locales/index.js';
-import { editingContext } from './fixture.js';
+import { editingContext, withDocument } from './fixture.js';
 
 test('New circuit requires confirmation and preserves the current project until it is approved', () => {
   const context = editingContext();
@@ -25,10 +26,45 @@ test('New circuit requires confirmation and preserves the current project until 
     wires: [],
     wireStyle: 'orthogonal',
   });
+  context.state.project.autoRouting = false;
+  commands.newProject();
+  assert.equal(factory().autoRouting, false);
   factory = null;
   context.services.classroom = { allowEdit: () => false };
   commands.newProject();
   assert.equal(factory, null);
+});
+
+test('the examples catalog uses the same confirmation and settings for an empty circuit', (t) => {
+  const elements = withDocument(t);
+  elements.set('.modal', { classList: { add() {} } });
+  document.querySelectorAll = () => [];
+  const context = editingContext();
+  context.state.lang = 'en';
+  context.state.project.wireStyle = 'bezier';
+  context.state.project.autoRouting = false;
+  let factory;
+  context.actions.confirmReplace = (value) => {
+    factory = value;
+  };
+  const { newProject } = createCommands(context);
+  const learning = createLearningController(context.state, {
+    t: context.t,
+    showModal() {},
+    newProject,
+  });
+
+  learning.openExamples();
+  elements.get('#empty-project').onclick();
+  assert.equal(context.state.project.name, 'Circuit');
+  assert.deepEqual(factory(), {
+    version: 1,
+    name: 'newName',
+    nodes: [],
+    wires: [],
+    wireStyle: 'bezier',
+    autoRouting: false,
+  });
 });
 
 test('simulation step duration is explicit at slow, normal and fast rates in both languages', () => {

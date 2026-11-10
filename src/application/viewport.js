@@ -1,5 +1,5 @@
 import { $, $$ } from '../shared/ui.js';
-import { dimensions } from '../circuits/geometry/index.js';
+import { dimensions, wireVertices } from '../circuits/geometry/index.js';
 import {
   clampZoom,
   zoomAt as zoomViewportAt,
@@ -44,7 +44,8 @@ export function createViewport(context) {
       maxX = Math.max(...nodes.map((n) => n.x + dimensions(n).w)),
       maxY = Math.max(...nodes.map((n) => n.y + dimensions(n).h));
     for (const wire of target ? [] : state.project.wires) {
-      for (const point of wire.points || []) {
+      if (state.project.wireStyle === 'bezier' && !wire.points?.length) continue;
+      for (const point of wireVertices(wire, state.project)) {
         minX = Math.min(minX, point.x);
         minY = Math.min(minY, point.y);
         maxX = Math.max(maxX, point.x);
